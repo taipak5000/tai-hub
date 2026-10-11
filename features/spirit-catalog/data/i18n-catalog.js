@@ -111,6 +111,7 @@ export const I18N = {
     markHeartsConfirmTemplate: { ja: 'このツリーの未獲得のハート {count} 件をすべて獲得済みにします。この操作は個別に取り消す必要があります。よろしいですか？', en: 'Mark all {count} remaining un-obtained hearts in this tree as obtained? You will need to undo them one by one if this was a mistake. Continue?' },
     markHeartsDoneToast: { ja: '{count}件のハートを獲得済みにしました', en: 'Marked {count} hearts as obtained' },
     tierVariantTitleTemplate: { ja: '同じアイテムのコスト違いバリエーション（{n}/{total}）', en: 'Cost-tier variant of the same item ({n} of {total})' },
+    capeTierTitleTemplate: { ja: 'ケープのティア{n}（全{total}段階）。アイテム所持管理でも別のアイテムとして管理されます', en: 'Cape tier {n} (of {total}). Tracked as a separate item in the Item Collection Tracker' },
     emoteLevelBadgeTitleTemplate: { ja: '同じエモートのレベル違いバリエーション（Lv{n}・全{total}レベル中）', en: 'Level variant of the same emote (Lv{n} of {total})' },
     syncBadgeTitle: { ja: '連携ツール（アイテム/エモート/羽トラッカー）の所持データから自動で解放されました', en: 'Auto-unlocked via sync with a connected tool (item/emote/wing tracker)' },
     resetAllBtn: { ja: 'このツリーを全て未解放に戻す', en: 'Reset entire tree to locked' },

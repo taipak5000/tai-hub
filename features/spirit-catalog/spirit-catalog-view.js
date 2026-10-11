@@ -87,6 +87,7 @@ export function mount(container, sub) {
   containerEl.querySelector('.spirit-catalog-view')?.classList.toggle('sc-cost-on', S.getCostDisplayEnabled());
   if (els.costToggle) els.costToggle.checked = S.getCostDisplayEnabled();
 
+  S.migrateRegularCapeTier2Link(); // 🩹 恒常精霊ティア2ケープのitem紐づけ修正に伴う、既存の解放済みデータの移行（1回のみ）
   renderGrid();
   renderRevisitBadge();
   startRevisitBadgeTimer();
@@ -808,7 +809,7 @@ function treeNodeHtml(spirit, n, style, prereqSatisfied) {
   const tierBadgeHtml = tierBadge
     ? (tierBadge.mode === 'emote'
       ? `<span class="tree-node-tier-badge" title="${escapeHtml(t('detail.emoteLevelBadgeTitleTemplate', { n: tierBadge.n, total: tierBadge.total }))}">Lv${tierBadge.n}</span>`
-      : `<span class="tree-node-tier-badge" title="${escapeHtml(t('detail.tierVariantTitleTemplate', { n: tierBadge.n, total: tierBadge.total }))}">T${tierBadge.n}</span>`)
+      : `<span class="tree-node-tier-badge" title="${escapeHtml(t(tierBadge.mode === 'cape' ? 'detail.capeTierTitleTemplate' : 'detail.tierVariantTitleTemplate', { n: tierBadge.n, total: tierBadge.total }))}">T${tierBadge.n}</span>`)
     : '';
   const syncBadge = unlockSource === 'sync' ? `<span class="tree-node-sync-badge" title="${escapeHtml(t('detail.syncBadgeTitle'))}">${icon('i-sync', 11)}</span>` : '';
   return `

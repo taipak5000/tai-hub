@@ -623,7 +623,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_005"
+                          "itemCostId":  "cape_014"
                       },
                       {
                           "guid":  "DVxfMEiGas",
@@ -2308,7 +2308,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_007"
+                          "itemCostId":  "cape_016"
                       },
                       {
                           "guid":  "nuIKpueg-5",
@@ -2462,7 +2462,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_012"
+                          "itemCostId":  "cape_021"
                       },
                       {
                           "guid":  "Wf7a6OmkyD",
@@ -3548,7 +3548,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_008"
+                          "itemCostId":  "cape_017"
                       },
                       {
                           "guid":  "Q2nSJ0lskK",
@@ -3755,7 +3755,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_010"
+                          "itemCostId":  "cape_019"
                       },
                       {
                           "guid":  "DBzXV9zGwT",
@@ -5197,7 +5197,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_011"
+                          "itemCostId":  "cape_020"
                       },
                       {
                           "guid":  "NujCnw47u5",
@@ -6010,7 +6010,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_006"
+                          "itemCostId":  "cape_015"
                       },
                       {
                           "guid":  "5k89do9E8E",
@@ -6627,7 +6627,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_013"
+                          "itemCostId":  "cape_022"
                       },
                       {
                           "guid":  "R6t0lBsWwM",
@@ -6939,7 +6939,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  null,
                           "ne":  null,
                           "itemCatKey":  "cape",
-                          "itemCostId":  "cape_009"
+                          "itemCostId":  "cape_018"
                       },
                       {
                           "guid":  "tThb_YDAl1",

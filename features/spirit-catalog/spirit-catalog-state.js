@@ -458,6 +458,27 @@ export function syncItemOwned(node, nowUnlocked) {
   if (nowUnlocked) removeWishItem(node.itemCatKey, node.itemCostId);
 }
 
+/* 🩹 恒常精霊のティア2ケープは、以前はティア1と同じitemCostId（itemの「…ケープ」）に紐づいていた
+   （itemには「…ケープ2」という別アイテムがある）。そのためティア2を解放しても、itemでは
+   ティア1が所持扱いになるだけでティア2は未所持のままだった。紐づけを直した後も、すでに
+   このツールでティア2を解放済みのユーザーのitem側（ケープ2）が未所持のまま残らないよう、
+   プロフィールごとに1回だけ、ティア2を解放済みのノードに対応するitemのケープ2を所持扱いにする。
+   追加のみ（所持の取り消しはしない）。ティア1側のitem所持は、item側で直接付けた所持と区別できないため触らない。 */
+export function migrateRegularCapeTier2Link() {
+  const flagKey = nsKey('capeTier2LinkMigrated_v1');
+  try { if (localStorage.getItem(flagKey)) return; } catch (_) { return; }
+  const unlocked = getUnlockedMap();
+  SPIRIT_TREE_DATA.forEach((s) => {
+    if (s.type !== 'Regular') return;
+    s.nodes.forEach((n) => {
+      if (n.itemType === 'Cape' && n.itemCatKey === 'cape' && / Cape 2$/.test(n.itemName) && unlocked[n.guid]) {
+        syncItemOwned(n, true);
+      }
+    });
+  });
+  try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
+}
+
 /* ================================================================
    emote（エモート所持率管理）の所持データと自動同期
    emoteOwned_v1 = { [emoteId]: [所持レベル番号の配列] }
@@ -830,13 +851,21 @@ export function getCostTierBadge(spirit, node) {
     if (group.length < 2) return null;
     return { n: node.emoteLevel, total: group.length, mode: 'emote' };
   }
-  if (!node.itemCostId || !node.itemType) return null;
-  const group = spirit.nodes.filter((n) => n.itemCostId === node.itemCostId && n.itemType === node.itemType);
+  // 恒常精霊のケープは「ティア1」「ティア2」の2段階で、item（アイテム所持管理）でも別のアイテム
+  // （ケープ／ケープ2、itemCostIdが別）として管理されている。そのため下の「同じitemCostId」判定には
+  // 掛からないので、同じ精霊のケープノードをコストの安い順に1始まりの段番号にして返す（mode: 'cape'）。
+  // （以前は両ノードが同じitemCostIdに紐づいていたため下の判定で拾えていたが、それ自体が
+  // 「片方を解放するともう片方も解放される」不具合の原因だった。）
+  const isRegularCape = spirit.type === 'Regular' && node.itemType === 'Cape';
+  if (!isRegularCape && (!node.itemCostId || !node.itemType)) return null;
+  const group = isRegularCape
+    ? spirit.nodes.filter((n) => n.itemType === 'Cape')
+    : spirit.nodes.filter((n) => n.itemCostId === node.itemCostId && n.itemType === node.itemType);
   if (group.length < 2) return null;
   const sorted = group.slice().sort((a, b) => nodeCostSum(a) - nodeCostSum(b) || (a.guid < b.guid ? -1 : 1));
   const idx = sorted.findIndex((n) => n.guid === node.guid);
   if (idx === -1) return null;
-  return { n: idx + 1, total: sorted.length, mode: 'cost' };
+  return { n: idx + 1, total: sorted.length, mode: isRegularCape ? 'cape' : 'cost' };
 }
 
 /* ================================================================
