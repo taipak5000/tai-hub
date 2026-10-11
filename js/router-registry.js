@@ -33,6 +33,7 @@ const itemImporters = {
   category: () => import('../features/item/category-view.js'),
   cost: () => import('../features/item/cost-view.js'),
   musicSheet: () => import('../features/item/music-sheet-view.js'),
+  allItems: () => import('../features/item/all-items-view.js'),
 };
 const itemMods = {};
 let itemToken = 0;
@@ -46,6 +47,8 @@ const itemEntry = {
       targetKey = 'dashboard';
     } else if (sub === 'cost') {
       targetKey = 'cost';
+    } else if (sub === 'all') {
+      targetKey = 'allItems';
     } else {
       cat = CATEGORY_REGISTRY.find(c => c.key === sub);
       if (cat && cat.section === 'special') {
@@ -79,6 +82,7 @@ const itemEntry = {
   title(sub) {
     if (!sub) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
     if (sub === 'cost') return CURRENT_LANG === 'en' ? 'Cost Calculator - tai-hub' : 'コスト集計 - tai-hub';
+    if (sub === 'all') return CURRENT_LANG === 'en' ? 'All Items - tai-hub' : '全アイテム一覧 - tai-hub';
     const cat = CATEGORY_REGISTRY.find(c => c.key === sub);
     if (cat) return `${CURRENT_LANG === 'en' ? cat.nameEn : cat.name} - tai-hub`;
     return 'tai-hub';

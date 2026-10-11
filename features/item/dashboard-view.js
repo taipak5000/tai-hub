@@ -202,6 +202,14 @@ function renderShell() {
 
       <div id="dashTitlesPanel"></div>
 
+      <p class="sec-label">${en ? 'All Items' : '全アイテム'}</p>
+      ${featureBtnHtml({
+        href: '#/item/all', icon: 'i-grid',
+        label: en ? 'Browse & Select All Items at Once' : '全アイテムを一覧で見る・選択',
+        desc: en ? 'View items from every category together as image tiles, and tap to mark what you own'
+                 : '全カテゴリのアイテムを画像タイルでまとめて表示し、タップで所持を一気に選択できます',
+      })}
+
       <p class="sec-label" id="dashCatLabel">${en ? 'Categories' : 'カテゴリ一覧'}</p>
       <div class="cat-grid" id="dashCatGrid">
         ${GRID_CATEGORIES.map(cat => catTileHtml(cat, null, null)).join('')}

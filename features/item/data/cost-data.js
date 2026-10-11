@@ -294,6 +294,7 @@ export const ITEM_COST_DATA = {
     { id: 'outfit_065', name: '大競技会スケートアウトフィット', nameEn: "Tournament Sleek Skating Outfit", source: '凱旋の大競技会', cost: { type: 'money', value: 1950, setId: 'set_taikyougikai_shoes_outfit', note: 'シューズとのセット価格です（単品の価格ではありません）。', noteEn: "This is the bundle price with the Shoes -- not the price of this item alone." }, dye: true },
     { id: 'outfit_066', name: '宝探しの装い', nameEn: "Adventurer's Garb", source: '宝探しの日々', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。', noteEn: "This item is exchanged with the event-limited \"Ticket\" currency (there is no regular Candle price or similar)." }, revisitCost: { type: 'unknown', note: '復刻時の価格は未確認です。判明次第このデータを更新してください。', noteEn: "The re-release price hasn't been confirmed yet. Please update this data once it's known." }, dye: true },
     { id: 'outfit_067', name: '自然のティアードドレス', nameEn: "Charming Creature Outfit", source: '自然の日々', cost: { type: 'money', value: 1950, setId: 'set_shizen_outfit_headacc', note: 'ヘッドアクセサリーとのセット価格です（単品の価格ではありません）。', noteEn: "This is the bundle price with the Head Accessory -- not the price of this item alone." }, dye: true },
+    { id: 'outfit_112', name: '月灯りトラウザーズ', nameEn: "Moonlight Trousers", source: '月灯りの日々', cost: { type: 'ticket', note: '通常のキャンドルではなく「チケット」46枚（月灯りの日々限定の交換通貨）での交換です。', noteEn: "Exchanged with 46 \"Tickets\" (a currency limited to the Days of Moonlight event), not regular Candles." }, revisitCost: { type: 'unknown', note: '復刻時の価格は未確認です。判明次第このデータを更新してください。', noteEn: "The re-release price hasn't been confirmed yet. Please update this data once it's known." }, dye: true },
     { id: 'outfit_068', name: '音と舞う幼子　服', nameEn: "Boogie Kid Outfit", source: '想いを編む季節（季節精霊・過去）', cost: { type: 'candle', value: 60 }, dye: true },
     { id: 'outfit_069', name: '一座の進行役　服', nameEn: "Troupe Greeter Outfit", source: 'リズムが弾ける季節（季節精霊・過去）', cost: { type: 'candle', value: 70 }, dye: true },
     { id: 'outfit_070', name: '一座の曲芸師　服', nameEn: "Troupe Juggler Outfit", source: 'リズムが弾ける季節（季節精霊・過去）', cost: { type: 'candle', value: 75 }, dye: true },
@@ -589,6 +590,7 @@ export const ITEM_COST_DATA = {
     { id: 'head_accessory_022b', name: '花笑むひまわり耳飾り', nameEn: "Bloom Sunflower Studs", source: '花笑む日々', cost: { type: 'money', value: 400, note: '元表記は$2.99。', noteEn: "Originally listed at $2.99." }, dye: false },
     { id: 'head_accessory_023', name: '自然のフィンイヤー', nameEn: "Charming Creature Head Accessory", source: '自然の日々', cost: { type: 'money', value: 1950, setId: 'set_shizen_outfit_headacc', note: 'アウトフィットとのセット価格です（単品の価格ではありません）。', noteEn: "This is the bundle price with the Outfit -- not the price of this item alone." }, dye: false },
     { id: 'head_accessory_024', name: '花火大会耳飾り', nameEn: "Festival Earrings", source: '花鳥花火大会', cost: { type: 'unknown' }, dye: true },
+    { id: 'head_accessory_025', name: '月灯りの耳', nameEn: "Moonlight Ears", source: '月灯りの日々', cost: { type: 'ticket', note: '通常のキャンドルではなく「チケット」16枚（月灯りの日々限定の交換通貨）での交換です。', noteEn: "Exchanged with 16 \"Tickets\" (a currency limited to the Days of Moonlight event), not regular Candles." }, revisitCost: { type: 'unknown', note: '復刻時の価格は未確認です。判明次第このデータを更新してください。', noteEn: "The re-release price hasn't been confirmed yet. Please update this data once it's known." }, dye: false },
   ],
   hair_accessory: [
     { id: 'hair_accessory_001', name: 'くつろぐ日光浴者 ヘアアクセサリー', nameEn: "Chill Sunbather Hair Accessory", source: '楽園の季節（季節精霊・過去）', cost: { type: 'candle', value: 44 }, dye: true },
@@ -676,6 +678,7 @@ export const ITEM_COST_DATA = {
     { id: 'hair_accessory_077', name: 'Floweryヘアアクセサリー', nameEn: "Flower Hair Accessory", source: '常設ショップ', cost: { type: 'money', value: 1950, setId: 'set_flow_pack', note: '「Flower + FlOw パック」のセット価格です（ケープとのセット価格、単品の価格ではありません）。', noteEn: "This is the \"Flower + FlOw Pack\" bundle price (bundled with the Cape) -- not the price of this item alone." }, dye: false },
     { id: 'hair_accessory_078', name: 'モス触角', nameEn: "Moth Antennae", source: '花鳥花火大会', cost: { type: 'money', value: 1300, setId: 'set_moth_pack', note: '「モスパック」のセット価格です（ケープとのセット価格、単品の価格ではありません）。', noteEn: "This is the \"Moss Pack\" bundle price (bundled with the Cape) -- not the price of this item alone." }, dye: false },
     { id: 'hair_accessory_079', name: '陽光海月ボンネット', nameEn: "Sunlight Bonnet", source: '陽光の日々', cost: { type: 'money', value: 1950, setId: 'set_youkou_outfit_hairacc', note: '「サンライト・ボンネット・バンドル」のセット価格です（アウトフィットとのセット価格、単品の価格ではありません）。', noteEn: "This is the \"Sunlight Bonnet Bundle\" price (bundled with the Outfit) -- not the price of this item alone." }, dye: false },
+    { id: 'hair_accessory_081', name: '月灯りの光背', nameEn: "Moonlight Nimbus", source: '月灯りの日々', cost: { type: 'money', value: 1300 }, dye: true },
   ],
   portable_item: [
     { id: 'portable_item_001', name: 'ハープ', nameEn: "Harp", source: '恒常精霊', cost: { type: 'heart', value: 5 }, dye: false },
@@ -742,6 +745,7 @@ export const ITEM_COST_DATA = {
     { id: 'portable_item_061b', name: 'TGCノートパソコン', nameEn: "Company-Issued Laptop", source: 'Skyアニバーサリー', cost: { type: 'ticket', note: '通常のキャンドルではなく「チケット」29枚（Skyアニバーサリー限定の交換通貨）での交換です。', noteEn: "Exchanged with 29 \"Tickets\" (a currency limited to the Sky Anniversary event), not regular Candles." }, revisitCost: { type: 'unknown', note: '復刻時の価格は未確認です。判明次第このデータを更新してください。', noteEn: "The re-release price hasn't been confirmed yet. Please update this data once it's known." }, dye: false },
     { id: 'portable_item_062', name: 'アニバーサリーポップコーン', nameEn: "Anniversary Popcorn Prop", source: 'Skyアニバーサリー', cost: { type: 'money', value: 650, setId: 'set_anniv_cinema', note: '「アニバーサリーシネマセット」（3Dメガネ＋ポップコーンバケツ）とのセット価格です（単品の価格ではありません）。', noteEn: "This is the bundle price with the \"Anniversary Cinema Set\" (3D Glasses + Popcorn Bucket) -- not the price of this item alone." }, dye: false },
     { id: 'portable_item_063', name: '聖なるスノーボード', nameEn: "Winter Feast Snowboard", source: '聖なる星の日々', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。', noteEn: "This item is exchanged with the event-limited \"Ticket\" currency (there is no regular Candle price or similar)." }, revisitCost: { type: 'candle', value: 145 }, dye: false },
+    { id: 'portable_item_065', name: '月灯りリュート', nameEn: "Moonlight Lute", source: '月灯りの日々', cost: { type: 'money', value: 1950 }, dye: false },
   ],
   mask: [
     { id: 'mask_001', name: 'デフォルト　マスク', nameEn: "Default Mask", source: '初期装備', cost: { type: 'na', note: '初期から所持している基本アイテムのため、コストはかかりません。', noteEn: "This is a basic item owned from the start, so it costs nothing." }, dye: true },
@@ -859,6 +863,7 @@ export const ITEM_COST_DATA = {
     { id: 'mask_111', name: '風ノ旅ビトパック', nameEn: "Journey Mask", source: '風ノ旅ビトパック', cost: { type: 'money', value: 3300, setId: 'set_kazenotabibito_trio', note: 'ケープ・フードとのセット価格です（単品の価格ではありません）。元表記は$24.99。', noteEn: "This is the bundle price with the Cape and Hood -- not the price of this item alone. Originally listed at $24.99." }, dye: false },
     { id: 'mask_112', name: '超越せし風ノ旅ビトマスク', nameEn: "Transcendent Journey Mask", source: '超越せし風ノ旅ビトパック', cost: { type: 'money', value: 3300, setId: 'set_choutetsu_kazenotabibito_trio', note: 'ケープ・フードとのセット価格です（単品の価格ではありません）。元表記は$24.99。', noteEn: "This is the bundle price with the Cape and Hood -- not the price of this item alone. Originally listed at $24.99." }, dye: false },
     { id: 'mask_113', name: '誇り高き勝者　マスク', nameEn: "Proud Victor Mask", source: '恒常精霊', cost: { type: 'heart', value: 30 }, dye: false },
+    { id: 'mask_116', name: '月灯りベール', nameEn: "Moonlight Veil", source: '月灯りの日々', cost: { type: 'money', value: 400 }, dye: false },
   ],
   small_placeable: [
     { id: 'small_placeable_001', name: '祖たる賢者 設置アイテム', nameEn: "Memory Lantern Prop", source: '想いを編む季節（季節精霊・過去）', cost: { type: 'candle', value: 10 }, dye: false },
@@ -1002,6 +1007,7 @@ export const ITEM_COST_DATA = {
     { id: 'small_placeable_132h', name: '黄色い家', nameEn: "The Yellow House Painting", source: '親愛なるファン・ゴッホへ', cost: { type: 'unknown' }, dye: false },
     { id: 'small_placeable_132i', name: 'カラスのいる麦畑', nameEn: "Wheatfield with Crows Painting Prop", source: '親愛なるファン・ゴッホへ', cost: { type: 'unknown' }, dye: false },
     { id: 'small_placeable_132j', name: '星月夜', nameEn: "Starry Night Painting Prop", source: '親愛なるファン・ゴッホへ', cost: { type: 'unknown' }, dye: false },
+    { id: 'small_placeable_134', name: '月灯りの蓮クッション', nameEn: "Moonlight Lotus Cushion", source: '月灯りの日々', cost: { type: 'ticket', note: '通常のキャンドルではなく「チケット」18枚（月灯りの日々限定の交換通貨）での交換です。', noteEn: "Exchanged with 18 \"Tickets\" (a currency limited to the Days of Moonlight event), not regular Candles." }, revisitCost: { type: 'unknown', note: '復刻時の価格は未確認です。判明次第このデータを更新してください。', noteEn: "The re-release price hasn't been confirmed yet. Please update this data once it's known." }, dye: false },
   ],
   cape: [
   { id: 'cape_001', name: 'デフォルトのケープ', nameEn: "Base Cape", source: '初期装備', cost: { type: 'na', note: '初期装備のため、購入コストはありません。', noteEn: "This is a Starting Item, so there is no purchase cost." }, dye: true },

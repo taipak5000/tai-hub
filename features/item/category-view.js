@@ -31,7 +31,7 @@ import { checkAndUnlockTitles } from './titles-panel.js';
    item/cape.html他、全カテゴリページで完全に同一の定数として定義されて
    いた（カテゴリ固有データではない）ため、ここに1つだけ持たせている。
    リストに無いイベント名（コラボ・単発イベント等）は登場順のまま末尾に続く。 */
-const EVENT_ORDER = [
+export const EVENT_ORDER = [
   '感謝の季節', '光の探求者の季節', '想いを編む季節', 'リズムが弾ける季節', '魔法の季節',
   '楽園の季節', '預言者の季節', '夢かなう季節', '大樹に集う季節', '星の王子さまの季節',
   '羽ばたく季節', '深淵の季節', '表現者たちの季節', '砕ケル闇ノ季節', 'AURORAの季節',
@@ -552,7 +552,7 @@ function notifyTitlesCheck() {
 /* ================================================================
    簡易トースト通知（ウィッシュリストに所持済みアイテムを追加しようとした時など）
    ================================================================ */
-function showCatViewToast(msg) {
+export function showCatViewToast(msg) {
   const t = document.createElement('div');
   t.className = 'cv-toast';
   t.textContent = msg;
@@ -745,3 +745,6 @@ function injectStyles() {
 `;
   document.head.appendChild(style);
 }
+
+// 全アイテム一覧(all-items-view.js)が同じ cv-* スタイルを再利用するための公開名
+export { injectStyles as injectCategoryViewStyles };
