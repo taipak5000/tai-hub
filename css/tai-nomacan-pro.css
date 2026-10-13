@@ -185,4 +185,6 @@
 .nmp-route-summary { margin-top: 10px; background: var(--npb-input-bg); border-radius: 8px; padding: 8px 10px; }
 .nmp-route-summary-row { display: flex; justify-content: space-between; font-size: 12px; }
 
-.nmp-footer { text-align: center; padding: 24px 16px; margin-top: 24px; font-size: 12px; color: var(--npb-text-2); border-top: 1px solid var(--npb-border); }
+.nmp-footer { text-align: center; padding: 24px 16px; margin-top: 24px; font-size: 12px; line-height: 1.8; color: var(--npb-text-2); border-top: 1px solid var(--npb-border); }
+.nmp-footer a { color: var(--npb-blue); text-decoration: underline; }
+.nmp-footer-sub { display: inline-block; margin-top: 4px; }

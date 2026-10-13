@@ -435,7 +435,16 @@ function renderShell() {
         </div>
       </div>
       <footer class="nmp-footer">
-        <p>${escHtml(t('footer.copyright'))}</p>
+        <span>${escHtml(t('footer.disclaimer'))}</span><br>
+        <span>${escHtml(t('footer.creditLabel'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escHtml(t('footer.requestForm'))}</a><br>
+        <span class="nmp-footer-sub">
+          ${escHtml(t('footer.referencesLabel'))}
+          <a href="https://sky-children-of-the-light.fandom.com/wiki/Pieces_of_Light" target="_blank" rel="noopener noreferrer">Pieces of Light (Sky Wiki)</a> |
+          <a href="https://sky-children-of-the-light.fandom.com/wiki/Additional_Light_Sources" target="_blank" rel="noopener noreferrer">Additional Light Sources (Sky Wiki)</a>
+        </span><br>
+        <span class="nmp-footer-sub">
+          <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer">${escHtml(t('footer.infoLink'))}</a>
+        </span>
       </footer>
     </div>
     <div class="nmp-toast-stack" id="nmpToastStack"></div>

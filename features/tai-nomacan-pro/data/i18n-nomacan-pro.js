@@ -92,8 +92,9 @@ export const NOMA_PRO_I18N = {
         tomorrow: { ja: "明日", en: "Tomorrow" },
     },
     footer: {
-        copyright: { ja: "© 2026 ノマキャン計算機プロ", en: "© 2026 Nomacan Calculator Pro" },
+        disclaimer: { ja: "このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。", en: "This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way." },
         creditLabel: { ja: "作成・ご意見:", en: "Created by / feedback:" },
+        requestForm: { ja: "リクエストフォーム", en: "Request form" },
         infoLink: { ja: "設定・クレジット・プライバシーポリシー", en: "Settings / Credits / Privacy Policy" },
         referencesLabel: { ja: "参考文献:", en: "References:" },
     },
