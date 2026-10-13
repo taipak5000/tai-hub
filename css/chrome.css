@@ -205,6 +205,11 @@
 .settings-row:last-child { border-bottom: 0; }
 .settings-btn { border: 0; background: var(--hub-sep); color: var(--hub-text); border-radius: 10px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .settings-btn.active { background: var(--hub-accent); color: #fff; }
+/* 設定一覧の「着せ替え」行（押すとシートの中身が着せ替え画面に切り替わる）。buttonなので見た目を明示する */
+.settings-nav-row { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--hub-sep); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer; }
+.settings-nav-row:active { background: var(--hub-sep); }
+.settings-nav-label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.settings-nav-value { display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: var(--hub-text-2); }
 .settings-lang-group { display: flex; gap: 8px; }
 .settings-danger-btn { width: 100%; padding: 10px; border: 0; border-radius: 10px; background: rgba(255, 69, 58, 0.12); color: #ff453a; font-weight: 700; cursor: pointer; margin-top: 8px; }
 

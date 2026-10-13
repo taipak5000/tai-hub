@@ -25,10 +25,6 @@ export function render(mountEl) {
         <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-menu"/></svg></span></span>
         <span class="site-dock-label">${CURRENT_LANG === 'en' ? 'Other Tools' : '他のツール'}</span>
       </button>
-      <button type="button" id="dockThemeBtn">
-        <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-palette"/></svg></span></span>
-        <span class="site-dock-label">${CURRENT_LANG === 'en' ? 'Themes' : '着せ替え'}</span>
-      </button>
       <button type="button" id="dockSettingsBtn">
         <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-settings"/></svg></span></span>
         <span class="site-dock-label">${CURRENT_LANG === 'en' ? 'Display Settings' : '表示設定'}</span>
@@ -38,8 +34,6 @@ export function render(mountEl) {
   document.getElementById('dockProfileBtn').addEventListener('click', () => pfModal.open());
   document.getElementById('dockDashboardBtn').addEventListener('click', () => dashModal.open());
   document.getElementById('dockToolsBtn').addEventListener('click', () => toolsDrawer.open());
-  // 着せ替えスタジオは使う時だけ読み込む（起動の依存グラフを増やさない）
-  document.getElementById('dockThemeBtn').addEventListener('click', () => import('./theme-studio.js').then(m => m.open()));
   document.getElementById('dockSettingsBtn').addEventListener('click', () => settingsModal.open());
 }
 

@@ -2,6 +2,11 @@
    設定モーダル：テーマ切替・言語切替・データのエクスポート/インポート/
    全削除。item/profiles.js の settingsOpen系 + dmExport/dmImportFileSelected
    /dmConfirmWipe を移植。
+
+   🎨 着せ替えは、この「表示設定」シートの中の1画面（表示設定 > 着せ替え）。
+   「着せ替え」の行を押すとシートの中身が着せ替え画面（chrome/theme-studio.js）に
+   切り替わり、「‹ 表示設定」で設定一覧へ戻る。着せ替え画面の間だけシートは背景を
+   暗くせず外側の操作も止めない（色を変えながら実際の画面で確かめられる。css/theme.css の .ts-live）。
    ================================================================ */
 import { CURRENT_LANG, setLang, escapeHtml } from '../i18n.js';
 import {
@@ -9,7 +14,7 @@ import {
   getShortcutsEnabled, setShortcutsEnabled, getShowTitlesEnabled, setShowTitlesEnabled,
   getStartRoute, setStartRoute,
 } from '../state.js';
-import { getActiveTheme, wipeWallpapers } from '../theme.js';
+import { getActiveTheme, wipeWallpapers, PRESETS, sameLook } from '../theme.js';
 import { ROUTES } from '../router-registry.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
@@ -22,6 +27,14 @@ function themeInfo(mode) {
   }[mode];
 }
 
+// 着せ替えの現在の状態（設定一覧の「着せ替え」行に出す）
+function currentThemeLabel() {
+  const th = getActiveTheme();
+  if (!th) return t('標準', 'Default');
+  const pr = PRESETS.find(p => sameLook(th, p.theme));
+  return pr ? t(pr.ja, pr.en) : t('カスタム', 'Custom');
+}
+
 // 「起動時に開くツール」の選択肢（ツール名はルーターの表示名から「 - tai-hub」を除いたもの）
 function startRouteOptions() {
   const cur = getStartRoute();
@@ -32,20 +45,36 @@ function startRouteOptions() {
   }).join('');
 }
 
+let overlayEl = null;
+let cardEl = null;
+let studio = null; // 着せ替え画面のモジュール（開いた時に読み込む）
+
 export function open() {
+  if (studio) studio.unmount(); // Escなどで着せ替え画面のまま閉じられていた場合の後始末
   document.getElementById('settingsModalOverlay')?.remove();
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'settingsModalOverlay';
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-  overlay.innerHTML = `
-    <div class="modal-card">
+  studio = null;
+  overlayEl = document.createElement('div');
+  overlayEl.className = 'modal-overlay';
+  overlayEl.id = 'settingsModalOverlay';
+  overlayEl.addEventListener('click', e => { if (e.target === overlayEl) close(); });
+  cardEl = document.createElement('div');
+  cardEl.className = 'modal-card';
+  overlayEl.appendChild(cardEl);
+  document.body.appendChild(overlayEl);
+  renderMain();
+  requestAnimationFrame(() => overlayEl.classList.add('open'));
+}
+
+// 設定一覧（シートの中身）を描く。着せ替え画面から戻ってきた時にも使う
+function renderMain() {
+  overlayEl.classList.remove('ts-live');
+  cardEl.innerHTML = `
       <button type="button" class="modal-close-btn" id="settingsCloseBtn"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></button>
       <div class="modal-title">${t('表示設定', 'Display Settings')}</div>
-      <div class="settings-row">
-        <span>${t('着せ替え', 'Themes')}</span>
-        <button type="button" class="settings-btn" id="settingsStudioBtn"><svg class="inline-icon" width="15" height="15"><use href="#i-palette"/></svg> ${t('開く', 'Open')}</button>
-      </div>
+      <button type="button" class="settings-row settings-nav-row" id="settingsStudioBtn">
+        <span class="settings-nav-label"><svg class="inline-icon" width="17" height="17"><use href="#i-palette"/></svg>${t('着せ替え', 'Themes')}</span>
+        <span class="settings-nav-value">${escapeHtml(currentThemeLabel())}<svg class="inline-icon" width="16" height="16"><use href="#i-chevron-right"/></svg></span>
+      </button>
       <div class="settings-row">
         <span>${t('テーマ', 'Theme')}</span>
         <button type="button" class="settings-btn" id="settingsThemeBtn"></button>
@@ -85,17 +114,12 @@ export function open() {
         <div id="settingsStatus" style="font-size:12px;color:var(--hub-text-2);"></div>
         <div id="settingsImportConfirmArea"></div>
       </div>
-      <button type="button" class="settings-danger-btn" id="settingsWipeBtn">${t('全データを削除', 'Erase all data')}</button>
-    </div>`;
-  document.body.appendChild(overlay);
+      <button type="button" class="settings-danger-btn" id="settingsWipeBtn">${t('全データを削除', 'Erase all data')}</button>`;
 
   document.getElementById('settingsCloseBtn').addEventListener('click', close);
   syncThemeBtn();
   document.getElementById('settingsThemeBtn').addEventListener('click', () => { toggleTheme(); syncThemeBtn(); });
-  document.getElementById('settingsStudioBtn').addEventListener('click', () => {
-    close();
-    import('./theme-studio.js').then(m => m.open());
-  });
+  document.getElementById('settingsStudioBtn').addEventListener('click', openThemeView);
   document.getElementById('settingsStartRoute').addEventListener('change', e => setStartRoute(e.target.value));
   document.getElementById('settingsLangJaBtn').addEventListener('click', () => setLang('ja'));
   document.getElementById('settingsLangEnBtn').addEventListener('click', () => setLang('en'));
@@ -113,8 +137,17 @@ export function open() {
       location.reload();
     }
   });
+  cardEl.scrollTop = 0;
+}
 
-  requestAnimationFrame(() => overlay.classList.add('open'));
+// 「着せ替え」画面へ切り替える（使う時だけ読み込む＝起動の依存グラフを増やさない）
+function openThemeView() {
+  import('./theme-studio.js').then(m => {
+    if (!overlayEl || !cardEl) return;
+    studio = m;
+    overlayEl.classList.add('ts-live');
+    m.mount(cardEl, { onBack: renderMain, onClose: close });
+  });
 }
 
 function syncThemeBtn() {
@@ -163,5 +196,7 @@ function onImportFileSelected(event) {
 }
 
 export function close() {
-  document.getElementById('settingsModalOverlay')?.classList.remove('open');
+  if (studio) studio.unmount(); // 着せ替え画面の変更が保留中なら反映してから閉じる
+  overlayEl?.classList.remove('open');
+  overlayEl?.classList.remove('ts-live');
 }

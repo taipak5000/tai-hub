@@ -152,8 +152,10 @@ const landingPoint = currentY + project(v);
 
 画面の色・質感・背景などを利用者が自由に着せ替えられる機能
 （`js/theme.js`＝配色の生成とCSS出力・保存、`js/theme-fx.js`＝背景のきらめき、
-`js/chrome/theme-studio.js`＝設定のボトムシート、`css/theme.css`）。ドックの
-「着せ替え」と表示設定から開く。起動時に開くツールの設定（`sky_hub_start_route`）も同じ画面群にある。
+`js/chrome/theme-studio.js`＝着せ替え画面、`css/theme.css`）。**独立したドックのボタンは持たず、
+「表示設定」シートの中の1画面（表示設定 > 着せ替え）**として開く（`chrome/settings-modal.js`が
+シートの中身を設定一覧⇔着せ替え画面で切り替える。着せ替え画面の間だけシートは背景を暗くせず外側の操作も
+止めない＝`#settingsModalOverlay.ts-live`）。起動時に開くツールの設定（`sky_hub_start_route`）も同じ設定一覧にある。
 
 ### 仕組み（なぜこの形か）
 

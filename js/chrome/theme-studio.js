@@ -1,11 +1,15 @@
 /* ================================================================
-   着せ替えスタジオ（ボトムシート）。画面の色・質感・背景などを自由に選び、
+   着せ替えスタジオ。画面の色・質感・背景などを自由に選び、
    気に入った組み合わせをお気に入りに保存できる。エンジンは js/theme.js。
 
+   ・「表示設定」シートの中の1画面として表示する（表示設定 > 着せ替え）。
+     chrome/settings-modal.js が mount() で表示設定のシート本体に差し込み、
+     「‹ 表示設定」で元の設定画面に戻る。独立したボタンやシートは持たない。
    ・変更は選んだ瞬間に画面へ反映し、そのまま保存する（OKボタンは無い）。
      「開いた時の見た目に戻す」と「標準に戻す」で、いつでも巻き戻せる。
-   ・他のモーダルと違い、背景を暗くせず、シートの外側の操作も止めない。
-     色を変えながら、シートの上に見える実際の画面で確かめられる。
+   ・この画面を表示している間は、表示設定のシートが背景を暗くせず、シートの外側の
+     操作も止めない（css/theme.css の .ts-live）。色を変えながら、シートの上に
+     見える実際の画面で確かめられる。
    ・タブ: テーマ（見本から選ぶ・おまかせ）／カスタム（細かく調整）／
      お気に入り（保存・共有コード）。
    ・開く演出は他のボトムシートと同じ@keyframes（CLAUDE.md参照）。
@@ -14,13 +18,13 @@ import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import * as T from '../theme.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
-const ID = 'themeStudioOverlay';
 const ICON = (id, size = 16) => `<svg class="inline-icon" width="${size}" height="${size}"><use href="#${id}"/></svg>`;
 
 const ACCENTS = ['#E9578A', '#F2603D', '#F5A524', '#D4A02C', '#2F9E5B', '#14A37F', '#1E88E5', '#6C63D8', '#8466E8', '#B0794C', '#FF2BD6', '#6B7280'];
 const BGS = ['#FFFFFF', '#FFF4E5', '#FDE7EF', '#E8F5EC', '#E6F1FD', '#EDE7F9', '#15161B', '#0D1B2A', '#1B1230', '#10201A'];
 
-let overlayEl = null;
+let rootEl = null;      // 表示設定のシート本体（.modal-card）。この中に描画する
+let host = null;        // { onBack, onClose }
 let tab = 'themes';
 let undoTheme = null;   // 開いた時点のテーマ（巻き戻し用）
 let pending;            // 次のフレームで適用する値（undefined＝なし／null＝標準）
@@ -256,13 +260,13 @@ function paneFavs() {
 const TABS = () => [['themes', t('テーマ', 'Themes')], ['custom', t('カスタム', 'Custom')], ['favs', t('お気に入り', 'Favorites')]];
 
 function renderTabs() {
-  overlayEl.querySelector('#tsTabs').innerHTML = TABS().map(([k, l]) =>
+  rootEl.querySelector('#tsTabs').innerHTML = TABS().map(([k, l]) =>
     `<button type="button" role="tab" data-tab="${k}" class="${tab === k ? 'active' : ''}" aria-selected="${tab === k}">${l}</button>`).join('');
 }
 
 function renderPane() {
-  const pane = overlayEl.querySelector('#tsPane');
-  const scroller = overlayEl.querySelector('.ts-card');
+  const pane = rootEl.querySelector('#tsPane');
+  const scroller = rootEl;
   const top = scroller.scrollTop;
   pane.innerHTML = tab === 'themes' ? paneThemes() : tab === 'custom' ? paneCustom() : paneFavs();
   scroller.scrollTop = top;
@@ -272,7 +276,7 @@ function renderPane() {
 }
 
 async function fillWallpaperThumb() {
-  const el = overlayEl && overlayEl.querySelector('#tsWpThumb');
+  const el = rootEl && rootEl.querySelector('#tsWpThumb');
   const cur = current();
   if (!el || !cur || !cur.wp) return;
   const token = ++lastThumbToken;
@@ -303,7 +307,7 @@ function onClick(e) {
   }
 
   const actEl = e.target.closest('[data-act]');
-  if (!actEl || !overlayEl.contains(actEl)) return;
+  if (!actEl || !rootEl.contains(actEl)) return;
   const act = actEl.dataset.act;
   const id = actEl.dataset.id || (actEl.closest('[data-id]') && actEl.closest('[data-id]').dataset.id);
 
@@ -324,7 +328,7 @@ function onClick(e) {
     case 'save-fav': {
       const cur = current();
       if (!cur) { toast(t('先に見た目を変えてから保存してください', 'Change the look first, then save it')); break; }
-      const name = overlayEl.querySelector('#tsFavName').value;
+      const name = rootEl.querySelector('#tsFavName').value;
       const fav = T.addFavorite(name, cur);
       if (!fav) { toast(t(`お気に入りは${T.MAX_FAVORITES}個までです`, `Up to ${T.MAX_FAVORITES} favorites`)); break; }
       toast(t(`「${fav.name}」をお気に入りに保存しました`, `Saved "${fav.name}" to favorites`));
@@ -353,7 +357,7 @@ function onClick(e) {
       break;
     }
     case 'import-code': {
-      const code = overlayEl.querySelector('#tsCode').value;
+      const code = rootEl.querySelector('#tsCode').value;
       const th = T.importThemeCode(code);
       if (!th) { toast(t('共有コードを読み取れませんでした', 'That share code could not be read')); break; }
       const fav = T.addFavorite(th.name || t('共有されたテーマ', 'Shared theme'), th);
@@ -371,7 +375,7 @@ function onInput(e) {
   const k = el.dataset && el.dataset.k;
   if (!k) return;
   const v = el.type === 'range' ? Number(el.value) : el.value;
-  const lab = overlayEl.querySelector(`[data-lab="${k}"]`);
+  const lab = rootEl.querySelector(`[data-lab="${k}"]`);
   if (lab && el.type === 'range') lab.textContent = `${v}${k === 'wpBlur' ? 'px' : k === 'tint' || k === 'wpDim' ? '%' : '°'}`;
   const cur = editBase();
   switch (k) {
@@ -418,7 +422,7 @@ function onKeydown(e) {
   }
 }
 function finishRename(save) {
-  const input = overlayEl.querySelector('#tsRenameInput');
+  const input = rootEl.querySelector('#tsRenameInput');
   if (!input || !renamingId) return;
   const id = renamingId;
   renamingId = null;
@@ -427,37 +431,53 @@ function finishRename(save) {
 }
 
 /* ================================================================
-   開閉
+   表示と取り外し（表示設定のシート本体に差し込む）
    ================================================================ */
-export function open(initialTab) {
-  document.getElementById(ID)?.remove();
+function onFocusout(e) { if (e.target.id === 'tsRenameInput') setTimeout(() => finishRename(true), 0); }
+
+/**
+ * 表示設定のシート本体（cardEl）を着せ替え画面にする。
+ * @param {HTMLElement} cardEl 表示設定の .modal-card
+ * @param {{onBack?: () => void, onClose?: () => void, initialTab?: string}} opts
+ *   onBack: 「‹ 表示設定」を押した時（設定画面を描き直す）／onClose: ×を押した時（シートごと閉じる）
+ */
+export function mount(cardEl, opts = {}) {
+  unmount();
+  rootEl = cardEl;
+  host = { onBack: opts.onBack, onClose: opts.onClose };
   undoTheme = T.getActiveTheme();
   pending = undefined;
   renamingId = null;
-  tab = ['themes', 'custom', 'favs'].includes(initialTab) ? initialTab : 'themes';
+  tab = ['themes', 'custom', 'favs'].includes(opts.initialTab) ? opts.initialTab : 'themes';
 
-  overlayEl = document.createElement('div');
-  overlayEl.className = 'modal-overlay';
-  overlayEl.id = ID;
-  overlayEl.innerHTML = `
-    <div class="modal-card ts-card" role="dialog" aria-label="${t('着せ替え', 'Themes')}">
-      <button type="button" class="modal-close-btn" id="tsClose" aria-label="${t('閉じる', 'Close')}">${ICON('i-close')}</button>
-      <div class="modal-title">${t('着せ替え', 'Themes')}</div>
-      <div class="ts-seg" id="tsTabs" role="tablist"></div>
-      <div id="tsPane"></div>
-    </div>`;
-  document.body.appendChild(overlayEl);
-  overlayEl.addEventListener('click', onClick);
-  overlayEl.addEventListener('input', onInput);
-  overlayEl.addEventListener('change', onChange);
-  overlayEl.addEventListener('keydown', onKeydown);
-  overlayEl.addEventListener('focusout', e => { if (e.target.id === 'tsRenameInput') setTimeout(() => finishRename(true), 0); });
-  overlayEl.querySelector('#tsClose').addEventListener('click', close);
+  rootEl.classList.add('ts-card');
+  rootEl.innerHTML = `
+    <button type="button" class="modal-close-btn" id="tsClose" aria-label="${t('閉じる', 'Close')}">${ICON('i-close')}</button>
+    <button type="button" class="ts-back" id="tsBack">${ICON('i-chevron-left', 18)}<span>${t('表示設定', 'Display Settings')}</span></button>
+    <div class="modal-title">${t('着せ替え', 'Themes')}</div>
+    <div class="ts-seg" id="tsTabs" role="tablist"></div>
+    <div id="tsPane"></div>`;
+  rootEl.addEventListener('click', onClick);
+  rootEl.addEventListener('input', onInput);
+  rootEl.addEventListener('change', onChange);
+  rootEl.addEventListener('keydown', onKeydown);
+  rootEl.addEventListener('focusout', onFocusout);
+  rootEl.querySelector('#tsClose').addEventListener('click', () => { const h = host; unmount(); if (h && h.onClose) h.onClose(); });
+  rootEl.querySelector('#tsBack').addEventListener('click', () => { const h = host; unmount(); if (h && h.onBack) h.onBack(); });
+  rootEl.scrollTop = 0;
   renderPane();
-  requestAnimationFrame(() => overlayEl.classList.add('open'));
 }
 
-export function close() {
+/** 着せ替え画面を取り外す（保留中の変更は反映してから）。表示設定が閉じる時・戻る時に呼ぶ */
+export function unmount() {
+  if (!rootEl) return;
   flushNow();
-  document.getElementById(ID)?.classList.remove('open');
+  rootEl.removeEventListener('click', onClick);
+  rootEl.removeEventListener('input', onInput);
+  rootEl.removeEventListener('change', onChange);
+  rootEl.removeEventListener('keydown', onKeydown);
+  rootEl.removeEventListener('focusout', onFocusout);
+  rootEl.classList.remove('ts-card');
+  rootEl = null;
+  host = null;
 }

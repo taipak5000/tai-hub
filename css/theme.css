@@ -13,18 +13,26 @@
 #hub-wallpaper .hub-wallpaper-dim { position: absolute; inset: 0; }
 #hub-fx { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
 
-/* ── 着せ替えスタジオ ──
-   他のモーダルと違い、背景を暗くしない・背面の操作を止めない。色や質感を
-   変えるたびに画面が変わる様子を、シートの上に見える部分で確かめながら
-   選べるようにするため（シートの外側はクリックを素通りする）。 */
-#themeStudioOverlay { background: transparent; pointer-events: none; }
-#themeStudioOverlay.open { animation: none; }
-#themeStudioOverlay .modal-card {
-  pointer-events: auto; max-height: min(62dvh, 560px); max-height: min(62vh, 560px);
+/* ── 着せ替え画面（表示設定のシートの中の1画面。js/chrome/theme-studio.js） ──
+   この画面を出している間だけ、表示設定のシート（#settingsModalOverlay.ts-live）は
+   背景を暗くしない・背面の操作を止めない。色や質感を変えるたびに画面が変わる様子を、
+   シートの上に見える部分で確かめながら選べるようにするため（シートの外側はクリックを
+   素通りする）。設定一覧へ戻ると、通常の暗い背景・外側タップで閉じる動作に戻る。
+   ⚠️ overlayのanimationは触らない（戻った時にフェードが再生されてシートごとちらつくため）。 */
+#settingsModalOverlay { transition: background-color 0.28s ease; }
+#settingsModalOverlay .modal-card { transition: max-width 0.3s cubic-bezier(0.25, 1, 0.5, 1), max-height 0.3s cubic-bezier(0.25, 1, 0.5, 1); }
+#settingsModalOverlay.ts-live { background: transparent; pointer-events: none; }
+#settingsModalOverlay.ts-live .modal-card {
+  pointer-events: auto; max-width: 520px; max-height: min(62vh, 560px);
   padding-top: 16px; box-shadow: 0 -10px 44px rgba(0, 0, 0, 0.3);
 }
-@supports (height: 1dvh) { #themeStudioOverlay .modal-card { max-height: min(62dvh, 560px); } }
-#themeStudioOverlay .modal-title { margin-bottom: 10px; padding-right: 40px; }
+@supports (height: 1dvh) { #settingsModalOverlay.ts-live .modal-card { max-height: min(62dvh, 560px); } }
+.ts-card .modal-title { margin-bottom: 10px; padding-right: 40px; }
+.ts-back {
+  display: inline-flex; align-items: center; gap: 2px; border: 0; background: none; color: var(--hub-accent);
+  font: inherit; font-size: 14px; font-weight: 700; padding: 2px 8px 2px 0; margin: 0 0 6px -4px; cursor: pointer;
+}
+.ts-back:active { opacity: 0.55; }
 
 .ts-seg {
   display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--hub-sep); margin-bottom: 14px;
