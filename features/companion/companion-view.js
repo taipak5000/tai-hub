@@ -105,9 +105,10 @@ const TRANSLATIONS = {
   ja: {
     app_title: 'Sky 精霊同行ポイント計算機',
     app_subtitle: '連れ歩き日数とアイテム交換の最適化シミュレーター',
-    countdown_label: '残り', countdown_day_suffix: '日', countdown_ended: 'シーズン終了しました',
+    countdown_label: '終了まで', countdown_label_start: '開始まで', countdown_day_suffix: '日', countdown_ended: 'シーズン終了しました',
     countdown_jst_note: '※ 日本時間（JST）で表示しています',
     season_day_label: '本日はシーズン{current}日目（全{total}日間）',
+    season_upcoming_label: 'シーズン開始前（全{total}日間）',
 
     dash_btn_title: '今日・今週・今月ダッシュボード',
     dash_title: '今日・今週・今月',
@@ -181,6 +182,9 @@ const TRANSLATIONS = {
     heart_node_name: 'シーズンハート', heart_node_got: '獲得!',
 
     preset_custom: '自由入力', preset_no_magic: '魔法スルー', preset_reset: 'リセット',
+    reset_all_btn: '全4体を一気にリセット',
+    reset_all_confirm: '全4体のチェックと連れ歩き日数を、初期状態に戻します。よろしいですか？',
+    reset_all_do: 'リセットする', reset_all_cancel: 'やめる', reset_all_done: '全4体をリセットしました',
 
     opt_title: '交換アイテムを取る順番の計算',
     opt_desc: '欲しいアイテムを優先順に登録すると、所持キャンドルと1日の獲得数から「いつ交換できるか」を上から順に計算し、シーズン終了日に間に合うかを表示します。',
@@ -233,9 +237,10 @@ const TRANSLATIONS = {
   en: {
     app_title: 'Sky Spirit Companion Tracker',
     app_subtitle: 'A simulator for optimizing walk days and item exchanges',
-    countdown_label: 'Remaining', countdown_day_suffix: 'd', countdown_ended: 'Season has ended',
+    countdown_label: 'Ends in', countdown_label_start: 'Starts in', countdown_day_suffix: 'd', countdown_ended: 'Season has ended',
     countdown_jst_note: '※ Times shown are in Japan Standard Time (JST)',
     season_day_label: 'Day {current} of the season ({total} days total)',
+    season_upcoming_label: 'Before the season starts ({total} days total)',
 
     dash_btn_title: 'Today / This Week / This Month Dashboard',
     dash_title: 'Today / This Week / This Month',
@@ -310,6 +315,9 @@ const TRANSLATIONS = {
     heart_node_name: 'Season Heart', heart_node_got: 'Got it!',
 
     preset_custom: 'Manual', preset_no_magic: 'Skip Spells', preset_reset: 'Reset',
+    reset_all_btn: 'Reset all 4 at once',
+    reset_all_confirm: 'This will reset the checks and walk days of all 4 spirits. Continue?',
+    reset_all_do: 'Reset all', reset_all_cancel: 'Cancel', reset_all_done: 'Reset all 4 spirits',
 
     opt_title: 'Exchange Optimizer (purchase order planner)',
     opt_desc: 'Register the items you want in priority order. Using your owned candles and daily candle income, it estimates when each can be exchanged and whether it fits within the season.',
@@ -389,7 +397,9 @@ const NAME_EN = {
 };
 const TYPE_LABELS_JA = { walk: 'エモート', magic: '魔法', seasonal: '季節アイテム', dye: '染料' };
 const TYPE_LABELS_EN = { walk: 'Emote', magic: 'Spell', seasonal: 'Seasonal Item', dye: 'Dye' };
-const SEASON_NAME_EN = 'Dear Van Gogh';
+// 「遥かなる真珠の季節」の公式の英語名は未確認のため、判明するまでは日本語名をそのまま表示する
+// （判明したら、ここを英語名に差し替える）。
+const SEASON_NAME_EN = CURRENT_SEASON_NAME;
 const FIRST_UNLOCK_SUFFIX = CURRENT_LANG === 'en' ? ' (Initial Unlock)' : ' (初回解放)';
 function spiritNameOf(spirit) { return CURRENT_LANG === 'en' ? (SPIRIT_NAME_EN[spirit.name] || spirit.name) : spirit.name; }
 function translateItemName(str) { return CURRENT_LANG === 'en' ? (NAME_EN[str] || str) : str; }
@@ -407,21 +417,18 @@ const TYPE_IMAGES = {
 /* ================================================================
    🕓 デイリーリセット（太平洋時間0時）関連ヘルパー。「本日はシーズン
    何日目か」の表示にのみ使う（companion/index.htmlのpacificWallClock/
-   getNextDailyReset/countDailyResetsUntilを完全移植）。
+   pacificDayNumber/countDailyResetsUntilを完全移植）。
    ================================================================ */
 function pacificWallClock(tm) { return new Date(tm.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })); }
-function getNextDailyReset(fromTime) {
-  const pacFrom = pacificWallClock(fromTime);
-  const realOffsetMs = fromTime.getTime() - pacFrom.getTime();
-  const next = new Date(pacFrom);
-  next.setHours(0, 0, 0, 0);
-  if (next.getTime() < pacFrom.getTime()) next.setDate(next.getDate() + 1);
-  return new Date(next.getTime() + realOffsetMs);
+// 🕓 fromTimeより後〜untilTime以前に発生するデイリーリセット（太平洋時間0時）の回数を数える。
+// 太平洋時間の「日付」の差がそのまま回数になる（「最初のリセット＋24時間刻み」で数えると、
+// 開始がちょうどリセット時刻の時に初日が2日目になったり、夏時間終了をまたぐと1日多く数える）。
+function pacificDayNumber(tm) {
+  const w = pacificWallClock(tm);
+  return Math.round(Date.UTC(w.getFullYear(), w.getMonth(), w.getDate()) / 86400000);
 }
 function countDailyResetsUntil(fromTime, untilTime) {
-  const next = getNextDailyReset(fromTime);
-  if (next > untilTime) return 0;
-  return Math.floor((untilTime - next) / (1000 * 60 * 60 * 24)) + 1;
+  return Math.max(0, pacificDayNumber(untilTime) - pacificDayNumber(fromTime));
 }
 function pfLocalDateStr(d = new Date()) {
   const tzOffsetMs = d.getTimezoneOffset() * 60000;
@@ -536,10 +543,11 @@ const TEMPLATE = `
     <div class="season-info-badge">
       <strong>{{ seasonNameDisplay }}</strong>
       <span class="season-info-dates">{{ seasonStartText }} 〜 {{ seasonEndText }}</span>
-      <div class="season-day-badge">{{ t('season_day_label', { current: seasonDayInfo.current, total: seasonDayInfo.total }) }}</div>
-      <div class="season-countdown" :class="{ 'is-ended': seasonCountdown.ended }">
+      <div class="season-day-badge" v-if="seasonCountdown.phase !== 'before'">{{ t('season_day_label', { current: seasonDayInfo.current, total: seasonDayInfo.total }) }}</div>
+      <div class="season-day-badge" v-else>{{ t('season_upcoming_label', { total: seasonDayInfo.total }) }}</div>
+      <div class="season-countdown" :class="{ 'is-ended': seasonCountdown.ended, 'is-upcoming': seasonCountdown.phase === 'before' }">
         <template v-if="!seasonCountdown.ended">
-          <span class="season-countdown-label"><svg class="inline-icon" width="11" height="11"><use href="#cp-i-clock"/></svg> {{ t('countdown_label') }}</span>
+          <span class="season-countdown-label"><svg class="inline-icon" width="11" height="11"><use href="#cp-i-clock"/></svg> {{ seasonCountdown.phase === 'before' ? t('countdown_label_start') : t('countdown_label') }}</span>
           <span class="season-countdown-value">
             <span class="cd-days">{{ seasonCountdown.days }}<i>{{ t('countdown_day_suffix') }}</i></span>
             <span class="cd-time">{{ pad2(seasonCountdown.hours) }}:{{ pad2(seasonCountdown.minutes) }}:{{ pad2(seasonCountdown.seconds) }}</span>
@@ -887,6 +895,15 @@ const TEMPLATE = `
         <button class="btn-sm" :class="{'btn-active': activeSpirit.currentPreset === 'custom'}" @click="activeSpirit.currentPreset = 'custom'">{{ t('preset_custom') }}</button>
         <button class="btn-sm" @click="applyPreset('no-magic')">{{ t('preset_no_magic') }}</button>
         <button class="btn-sm" @click="applyPreset('reset')" style="color: var(--text-gray);">{{ t('preset_reset') }}</button>
+      </div>
+      <!-- 🔁 4体まとめてリセット（誤操作防止のため、1回目のタップで確認表示→2回目で実行。ポップアップ(confirm)は使わない） -->
+      <div class="reset-all-row">
+        <button v-if="!resetAllConfirming" type="button" class="btn-sm reset-all-btn" @click="requestResetAll">{{ t('reset_all_btn') }}</button>
+        <template v-else>
+          <span class="reset-all-warn" role="alert">{{ t('reset_all_confirm') }}</span>
+          <button type="button" class="btn-sm reset-all-btn is-confirming" @click="requestResetAll">{{ t('reset_all_do') }}</button>
+          <button type="button" class="btn-sm" @click="cancelResetAll">{{ t('reset_all_cancel') }}</button>
+        </template>
       </div>
 
       <div class="section-card" style="padding-bottom: 16px;">
@@ -1619,13 +1636,36 @@ function buildSetup(Vue) {
     const incrementWalkDays = () => { if (activeSpirit.value.walkDays < 77) { activeSpirit.value.walkDays++; activeSpirit.value.currentPreset = 'custom'; } };
     const decrementWalkDays = () => { if (activeSpirit.value.walkDays > 0) { activeSpirit.value.walkDays--; activeSpirit.value.currentPreset = 'custom'; } };
     const setSpiritItems = (spirit, status) => { Object.values(spirit.treeData).forEach(tier => { tier.forEach(item => { item.checked = status; }); }); };
+    // 1体ぶんを初期状態へ戻す（連れ歩き日数0・全アイテム未取得・最初のエモートLv1だけ取得済み）。
+    // 「リセット」ボタン（その精霊だけ）と「全4体を一気にリセット」の両方がこれを使う。
+    const resetSpiritProgress = (spirit) => {
+      spirit.walkDays = 0;
+      setSpiritItems(spirit, false);
+      spirit.treeData.tier1[0].checked = true;
+      spirit.currentPreset = 'custom';
+    };
+    // 🔁 全4体まとめてリセット。誤操作で進捗を失わないよう、1回目で確認表示にして、
+    // 6秒以内にもう一度押した時だけ実行する（放置すると自動で通常表示に戻る）。
+    const resetAllConfirming = ref(false);
+    let resetAllTimer = null;
+    const cancelResetAll = () => {
+      resetAllConfirming.value = false;
+      if (resetAllTimer) { clearTimeout(resetAllTimer); resetAllTimer = null; }
+    };
+    const requestResetAll = () => {
+      if (!resetAllConfirming.value) {
+        resetAllConfirming.value = true;
+        resetAllTimer = setTimeout(cancelResetAll, 6000);
+        return;
+      }
+      cancelResetAll();
+      spirits.value.forEach(resetSpiritProgress);
+      showToast(t('reset_all_done'));
+    };
     const applyPreset = (type) => {
       activeSpirit.value.currentPreset = type;
       if (type === 'reset') {
-        activeSpirit.value.walkDays = 0;
-        setSpiritItems(activeSpirit.value, false);
-        activeSpirit.value.treeData.tier1[0].checked = true;
-        activeSpirit.value.currentPreset = 'custom';
+        resetSpiritProgress(activeSpirit.value);
       } else if (type === 'no-magic') {
         activeSpirit.value.walkDays = 9;
         setSpiritItems(activeSpirit.value, true);
@@ -1649,11 +1689,15 @@ function buildSetup(Vue) {
       const current = Math.min(totalDays, countDailyResetsUntil(SEASON_START, now) + 1);
       return { current, total: totalDays, ended: false };
     });
+    // 開始前（phase:'before'）は開始までを、開始後（'active'）は終了までを数え、終了後は ended:true。
+    // 開始の瞬間に自動で「終了までのカウントダウン」へ切り替わる（毎秒の再計算なので手動更新は不要）。
     const seasonCountdown = computed(() => {
-      const diffMs = SEASON_END - nowForCountdown.value;
-      if (diffMs <= 0) return { ended: true, days: 0, hours: 0, minutes: 0, seconds: 0 };
+      const now = nowForCountdown.value;
+      const before = now < SEASON_START;
+      const diffMs = (before ? SEASON_START : SEASON_END) - now;
+      if (diffMs <= 0) return { ended: true, phase: 'ended', days: 0, hours: 0, minutes: 0, seconds: 0 };
       const totalSeconds = Math.floor(diffMs / 1000);
-      return { ended: false, days: Math.floor(totalSeconds / 86400), hours: Math.floor((totalSeconds % 86400) / 3600), minutes: Math.floor((totalSeconds % 3600) / 60), seconds: totalSeconds % 60 };
+      return { ended: false, phase: before ? 'before' : 'active', days: Math.floor(totalSeconds / 86400), hours: Math.floor((totalSeconds % 86400) / 3600), minutes: Math.floor((totalSeconds % 3600) / 60), seconds: totalSeconds % 60 };
     });
     const seasonStartText = computed(() => new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_START));
     const seasonEndText = computed(() => new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_END));
@@ -2011,7 +2055,7 @@ function buildSetup(Vue) {
       activeIndex, spirits, activeSpirit, activePoints, totalHearts, activeTier2Total, activeTier3Total, activeTier4Total, getSpiritTier4Total, getSpiritPoints, toggleTreeItem, toggleExcluded,
       sharedCalcFormula, sharedCalcTotal, sharedNotes,
       activeStatusText, activeRemainingDays,
-      incrementWalkDays, decrementWalkDays, applyPreset,
+      incrementWalkDays, decrementWalkDays, applyPreset, resetAllConfirming, requestResetAll, cancelResetAll,
       getIcon, getItemImageUrl, TYPE_IMAGES, getLevel, cleanName, getItemLabel, getItemLabelForSpirit, isPhantomItem, getTier2Slots,
       showOptimizer, optSelectedId, estimatedDailyCandles, optimizerCandidates, optimizerRows, optimizerSummary, optAdd, optMove, optRemove,
       optCopyStatus, optCopyPlan, heartCopyStatus, heartCopyPlan,

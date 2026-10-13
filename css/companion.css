@@ -423,7 +423,12 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-        }.companion-view .btn-sm:hover{ filter: brightness(0.95); }.companion-view .btn-active{ background: rgba(255, 149, 0, 0.1); border-color: var(--accent-orange); color: var(--accent-orange); }.companion-view .walk-input-area{
+        }.companion-view .btn-sm:hover{ filter: brightness(0.95); }
+        /* 🔁 全4体まとめてリセット（確認表示つき） */
+        .companion-view .reset-all-row{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .companion-view .reset-all-btn{ color: var(--danger-text); border-color: rgba(255, 59, 48, 0.4); }
+        .companion-view .reset-all-btn.is-confirming{ background: var(--danger-text); border-color: var(--danger-text); color: #fff; }
+        .companion-view .reset-all-warn{ flex: 1 1 100%; font-size: 12px; font-weight: 700; color: var(--danger-text); line-height: 1.5; }.companion-view .btn-active{ background: rgba(255, 149, 0, 0.1); border-color: var(--accent-orange); color: var(--accent-orange); }.companion-view .walk-input-area{
             display: flex;
             align-items: center;
             justify-content: center;

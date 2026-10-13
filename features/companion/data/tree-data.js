@@ -77,12 +77,15 @@ export function createDefaultSpiritsData() {
 // 精霊idをキーに上書きする（例: { 4: { t2: 100, t3: 181, t4: 281 } }）。
 // 今は4体とも同じ形の仮データなので上書きは無い。
 export const TIER_TOTAL_OVERRIDES = {};
-// 🌸 現在のシーズン情報（ヘッダーのバナー表示用。開始日時まで必要なため、
+// 🌸 現在（次）のシーズン情報（ヘッダーのバナー表示用。開始日時まで必要なため、
 // features/item/data/season-data.js の CURRENT_SEASON とは別にこの1ファイルへ
 // 複製している——item側は終了日時しか持たない。次のイベントに切り替わったら
-// season-data.js の更新と同じタイミングでこちらも手動更新すること）
-export const CURRENT_SEASON_NAME = '親愛なるファン・ゴッホへ';
-export const SEASON_START = new Date('2026-07-17T16:00:00');
-export const SEASON_END = new Date('2026-10-02T15:59:00');
-export const SEASON_START_TEXT = '2026/7/17 16:00';
-export const SEASON_END_TEXT = '2026/10/2 15:59';
+// season-data.js の更新と同じタイミングでこちらも手動更新すること）。
+// 開始前は「開始までのカウントダウン」、開始後は「終了までのカウントダウン」を表示する。
+// 日時はJSTを明示してあるので、どのタイムゾーンで開いても同じ瞬間になる。終了は太平洋標準時
+// 12/31 23:59:59（＝日本時間 1/1 16:59:59。冬時間はデイリーリセットが日本時間17:00になる）。
+export const CURRENT_SEASON_NAME = '遥かなる真珠の季節';
+export const SEASON_START = new Date('2026-10-16T16:00:00+09:00');
+export const SEASON_END = new Date('2027-01-01T16:59:59+09:00');
+export const SEASON_START_TEXT = '2026/10/16 16:00';
+export const SEASON_END_TEXT = '2027/1/1 16:59';
