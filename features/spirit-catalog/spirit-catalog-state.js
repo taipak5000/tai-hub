@@ -43,6 +43,7 @@ import { REVISIT_SPIRIT_SCHEDULES } from '../item/data/season-data.js';
 import { ITEM_COST_DATA } from '../item/data/cost-data.js';
 import { GENERIC_ITEM_IMG } from './data/node-image-map.js';
 import { EMOTES } from '../emote/data/emotes.js';
+import { cycleIndexAt, cycleBounds } from '../../js/pacific-time.js';
 
 /* ================================================================
    季節名・種別のJA/EN対応表
@@ -901,14 +902,11 @@ function revisitScheduleStatus(schedule) {
   const now = new Date();
   if (schedule.intervalDays) {
     if (!schedule.anchorStart || !schedule.anchorEnd) return null;
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const k = Math.floor((now - start0) / intervalMs);
-    const start = new Date(start0.getTime() + k * intervalMs);
-    const end = new Date(start.getTime() + (end0 - start0));
+    const k = cycleIndexAt(schedule, now);
+    const start = cycleBounds(schedule, k).start;
+    const end = cycleBounds(schedule, k).end;
     if (start <= now && now <= end) return { active: true, target: end };
-    const nextStart = now < start ? start : new Date(start.getTime() + intervalMs);
+    const nextStart = now < start ? start : cycleBounds(schedule, k + 1).start;
     return { active: false, target: nextStart };
   }
   if (!schedule.start || !schedule.end) return null;

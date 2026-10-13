@@ -82,6 +82,7 @@
    ================================================================ */
 
 import { CURRENT_LANG } from '../../js/i18n.js';
+import { pacificFakeToReal, cycleBounds, cycleIndexAt, ptOffsetChanges, ptParts, ptToReal } from '../../js/pacific-time.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, CANDLE_BONUS_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES,
   seasonInProgress, scheduleWithUpcomingSeason,
@@ -128,14 +129,13 @@ function pacificNow() {
 }
 function nextEdenResetTarget() {
   const now = pacificNow();
-  const realOffsetMs = Date.now() - now.getTime();
   const todayMidnight = new Date(now);
   todayMidnight.setHours(0, 0, 0, 0);
   let addDays = (7 - todayMidnight.getDay()) % 7;
   if (addDays === 0 && now.getTime() > todayMidnight.getTime()) addDays = 7;
   const target = new Date(todayMidnight);
   target.setDate(target.getDate() + addDays);
-  return new Date(target.getTime() + realOffsetMs);
+  return pacificFakeToReal(target);
 }
 
 /* ================================================================
@@ -174,17 +174,15 @@ function shardInfoForOffset(dayOffset) {
   const hasShard = !group.noShardWkDay.includes(dayOfWk);
   const realm = SHARD_REALMS[realmIdx];
   const location = SHARD_LOCATIONS[groupIdx][realm];
-  const realOffsetMs = Date.now() - pacNow.getTime();
   const firstStartFake = new Date(today);
   firstStartFake.setHours(group.offsetH, group.offsetM, 0, 0);
   const intervalMs = group.intervalH * 3600000;
-  const occurrences = [0, 1, 2].map(i => new Date(firstStartFake.getTime() + intervalMs * i + realOffsetMs));
+  const occurrences = [0, 1, 2].map(i => pacificFakeToReal(new Date(firstStartFake.getTime() + intervalMs * i)));
   return { isRed, hasShard, realm, location, occurrences };
 }
 function shardInfo() { return shardInfoForOffset(0); }
 function nextShardTime() {
   const pacNow = pacificNow();
-  const realOffsetMs = Date.now() - pacNow.getTime();
   for (let dayOffset = 0; dayOffset <= 10; dayOffset++) {
     const base = new Date(pacNow);
     base.setHours(0, 0, 0, 0);
@@ -199,7 +197,7 @@ function nextShardTime() {
     firstStartFake.setHours(group.offsetH, group.offsetM, 0, 0);
     const intervalMs = group.intervalH * 3600000;
     for (let i = 0; i < 3; i++) {
-      const d = new Date(firstStartFake.getTime() + intervalMs * i + realOffsetMs);
+      const d = pacificFakeToReal(new Date(firstStartFake.getTime() + intervalMs * i));
       if (d.getTime() > Date.now()) return d;
     }
   }
@@ -226,24 +224,23 @@ function grandCandleRealm(dayOffset = 0) {
   return SHARD_REALMS[idx];
 }
 
-// ウニ焼き・パン焼き・亀闇：2時間おき（太平洋時間の偶数時）に発生する協力プレイイベント
+// ウニ焼き・パン焼き・亀闇：2時間おき（太平洋時間の偶数時）に発生する協力プレイイベント。
+// 太平洋時間基準で計算しているため、日本時間では夏時間中は偶数時、標準時（11月第1日曜〜3月）は奇数時に自動で切り替わる
 function nextEvenHourEvent(minuteOffset) {
   const pacNow = pacificNow();
-  const realOffsetMs = Date.now() - pacNow.getTime();
   const candidate = new Date(pacNow);
   candidate.setSeconds(0, 0);
   candidate.setMinutes(minuteOffset);
   const curHour = candidate.getHours();
   candidate.setHours(curHour % 2 === 0 ? curHour : curHour - 1);
   if (candidate.getTime() <= pacNow.getTime()) candidate.setTime(candidate.getTime() + 2 * 3600000);
-  return new Date(candidate.getTime() + realOffsetMs);
+  return pacificFakeToReal(candidate);
 }
 function nextPacificMidnight() {
   const pacNow = pacificNow();
-  const realOffsetMs = Date.now() - pacNow.getTime();
   const target = new Date(pacNow);
   target.setHours(24, 0, 0, 0);
-  return new Date(target.getTime() + realOffsetMs);
+  return pacificFakeToReal(target);
 }
 
 function countdown(target) {
@@ -289,14 +286,11 @@ function revisitStatus(schedule) {
   const now = new Date();
   if (schedule.intervalDays) {
     if (!schedule.anchorStart || !schedule.anchorEnd) return null;
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const k = Math.floor((now - start0) / intervalMs);
-    const start = new Date(start0.getTime() + k * intervalMs);
-    const end = new Date(start.getTime() + (end0 - start0));
+    const k = cycleIndexAt(schedule, now);
+    const start = cycleBounds(schedule, k).start;
+    const end = cycleBounds(schedule, k).end;
     if (start <= now && now <= end) return { active: true, daysLeft: Math.ceil((end - now) / 86400000), target: end };
-    const nextStart = now < start ? start : new Date(start.getTime() + intervalMs);
+    const nextStart = now < start ? start : cycleBounds(schedule, k + 1).start;
     return { active: false, daysUntil: Math.ceil((nextStart - now) / 86400000), target: nextStart };
   }
   if (!schedule.start || !schedule.end) return null;
@@ -318,16 +312,13 @@ function occurrencesInRange(schedule, rangeStart, rangeEnd) {
   if (!schedule) return [];
   if (schedule.intervalDays) {
     if (!schedule.anchorStart || !schedule.anchorEnd) return [];
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const durationMs = end0.getTime() - start0.getTime();
     const out = [];
-    let k = Math.floor((rangeStart.getTime() - start0.getTime()) / intervalMs) - 1;
+    let k = cycleIndexAt(schedule, rangeStart) - 1;
     for (let guard = 0; guard < 400; guard++, k++) {
-      const s = new Date(start0.getTime() + k * intervalMs);
+      const cycle = cycleBounds(schedule, k);
+      const s = cycle.start;
       if (s.getTime() > rangeEnd.getTime()) break;
-      const e = new Date(s.getTime() + durationMs);
+      const e = cycle.end;
       if (e.getTime() >= rangeStart.getTime()) out.push({ start: s, end: e });
     }
     return out;
@@ -851,6 +842,29 @@ function icsLocalDateStr(d) {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 }
+// 繰り返し予定（毎日0時PT・毎週日曜0時PT）は、UTCで繰り返すRRULEのままだと夏時間⇔標準時の切替で
+// 日本時間の時刻が1時間ずれる（夏時間中16:00 → 標準時17:00）。そこで切替の瞬間で系列を分け、
+// 切替後の系列は「切替後の最初の発生」から始める。occurrenceAfter(ms)は「ms より後の最初の発生」を返す
+function icsRecurringBlocks(firstStart, untilMs, occurrenceAfter) {
+  const blocks = [];
+  let start = firstStart;
+  ptOffsetChanges(firstStart.getTime(), untilMs).forEach((cut) => {
+    blocks.push({ start, until: new Date(cut - 1000) });
+    start = occurrenceAfter(cut);
+  });
+  blocks.push({ start, until: new Date(untilMs) });
+  return blocks.filter((b) => b.start.getTime() <= b.until.getTime());
+}
+function icsNextPacificMidnightAfter(ms) {
+  const p = ptParts(ms);
+  return ptToReal(p.year, p.month, p.day + 1, 0, 0, 0);
+}
+function icsNextEdenResetAfter(ms) {
+  const p = ptParts(ms);
+  const dow = new Date(Date.UTC(p.year, p.month - 1, p.day)).getUTCDay(); // 0=日
+  const days = (7 - dow) % 7 || 7; // 同じ日曜でも発生(0時)は過ぎているので、次の日曜は7日後
+  return ptToReal(p.year, p.month, p.day + days, 0, 0, 0);
+}
 function exportIcs(statusEl) {
   try {
     const now = new Date();
@@ -878,27 +892,29 @@ function exportIcs(statusEl) {
     const recurUntil = seasonEnd || new Date(now.getTime() + 90 * 86400000);
 
     // 大キャンドル・クエストキャンドルの切替（太平洋時間0時・毎日）
-    const dailyStart = nextPacificMidnight();
-    events.push(...icsBuildEvent({
-      uid: `edb-daily-candle@${uidHost}`,
-      start: dailyStart,
-      end: new Date(dailyStart.getTime() + 5 * 60000),
-      summary: t('大キャンドル・クエストキャンドルの切替', 'Grand/Quest Candle rotation'),
-      description: t('日替わりで訪れるエリアが変わります', 'Today\'s Grand/Quest Candle locations rotate'),
-      rrule: `FREQ=DAILY;UNTIL=${icsDate(recurUntil)}`,
-      alarmTrigger: '-PT10M',
-    }));
+    icsRecurringBlocks(nextPacificMidnight(), recurUntil.getTime(), icsNextPacificMidnightAfter).forEach((b, i) => {
+      events.push(...icsBuildEvent({
+        uid: `edb-daily-candle${i ? '-' + (i + 1) : ''}@${uidHost}`,
+        start: b.start,
+        end: new Date(b.start.getTime() + 5 * 60000),
+        summary: t('大キャンドル・クエストキャンドルの切替', 'Grand/Quest Candle rotation'),
+        description: t('日替わりで訪れるエリアが変わります', 'Today\'s Grand/Quest Candle locations rotate'),
+        rrule: `FREQ=DAILY;UNTIL=${icsDate(b.until)}`,
+        alarmTrigger: '-PT10M',
+      }));
+    });
 
     // 週間リセット（原罪など・毎週日曜0時＝太平洋時間）
-    const weeklyStart = nextEdenResetTarget();
-    events.push(...icsBuildEvent({
-      uid: `edb-weekly-eden@${uidHost}`,
-      start: weeklyStart,
-      end: new Date(weeklyStart.getTime() + 5 * 60000),
-      summary: t('原罪：週間リセット', 'Eye of Eden: weekly reset'),
-      rrule: `FREQ=WEEKLY;BYDAY=SU;UNTIL=${icsDate(recurUntil)}`,
-      alarmTrigger: '-PT30M',
-    }));
+    icsRecurringBlocks(nextEdenResetTarget(), recurUntil.getTime(), icsNextEdenResetAfter).forEach((b, i) => {
+      events.push(...icsBuildEvent({
+        uid: `edb-weekly-eden${i ? '-' + (i + 1) : ''}@${uidHost}`,
+        start: b.start,
+        end: new Date(b.start.getTime() + 5 * 60000),
+        summary: t('原罪：週間リセット', 'Eye of Eden: weekly reset'),
+        rrule: `FREQ=WEEKLY;BYDAY=SU;UNTIL=${icsDate(b.until)}`,
+        alarmTrigger: '-PT30M',
+      }));
+    });
 
     // 闇の破片（赤闇・黒闇）出現ウィンドウ：直近14日分（季節終了がそれより早ければ短縮する）
     const daysUntilEnd = seasonEnd ? Math.ceil((seasonEnd - now) / 86400000) : 14;

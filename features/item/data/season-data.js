@@ -9,6 +9,8 @@
    コピーであり、item本体の変更が自動反映されるわけではない）。
    ================================================================ */
 
+import { cycleIndexAt, cycleBounds } from '../../../js/pacific-time.js';
+
 // startDate（開始日時）は省略可能で、開始前の間だけ働く: まだ始まっていない季節は「開催中」とは
 // 扱わず、ダッシュボードには「開始まで」の予定として出し、アイテム検索の「現在開催中」にも含めない
 // （isSeasonStarted/seasonInProgress/scheduleWithUpcomingSeason参照）。開始日時を過ぎると自動で通常の表示へ切り替わる。
@@ -44,6 +46,9 @@ export function scheduleWithUpcomingSeason(schedule = EVENT_SCHEDULE, season = C
     .concat([{ name: season.name, start: season.startDate, end: season.endDate }]);
 }
 
+// ⚠️ ゲームの時刻は太平洋時間(PT)基準のため、夏時間が終わる2026/11/1 18:00(JST)から翌年3月までは、
+// デイリーリセットが日本時間17:00になる（例：11/12 17:00〜11/26 16:59）。11/1以降の日時は17:00始まり／
+// 16:59終わりで指定すること（太平洋時間のオフセット-08:00で書くと迷わない。例：'2026-11-12T00:00:00-08:00'）。
 export const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
   { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
@@ -57,6 +62,8 @@ export const NEXT_UPDATE = {
   date: null, // 次回アップデート日が未定（発表されたら '2026-XX-XXT00:00:00-07:00' の形式で設定）
 };
 
+// intervalDaysありの周期は「太平洋時間の壁時計」で数えるため、夏時間の切替（11/1・3月）をまたいでも
+// 日本時間の時刻（16:00→17:00）が自動で追従する（js/pacific-time.js）。
 export const REVISIT_SPIRIT_SCHEDULES = [
   {
     // 2週間おきに4日間だけ来る旅の精霊の再訪周期。来訪ごとに違う精霊が来るため、
@@ -101,12 +108,9 @@ export function getCurrentEventNames() {
 export function isRevisitScheduleActive(schedule) {
   const now = new Date();
   if (schedule.intervalDays) {
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const k = Math.floor((now - start0) / intervalMs);
-    const start = new Date(start0.getTime() + k * intervalMs);
-    const end = new Date(start.getTime() + (end0 - start0));
+    const k = cycleIndexAt(schedule, now);
+    const start = cycleBounds(schedule, k).start;
+    const end = cycleBounds(schedule, k).end;
     return start <= now && now <= end;
   }
   return new Date(schedule.start) <= now && now <= new Date(schedule.end);

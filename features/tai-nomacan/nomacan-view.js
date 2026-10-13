@@ -50,6 +50,7 @@ import * as History from './nomacan-history.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES, isSeasonStarted,
 } from '../item/data/season-data.js';
+import { cycleIndexAt, cycleBounds } from '../../js/pacific-time.js';
 
 const STYLE_LINK_ID = 'nomacan-view-styles';
 const ICON_SPRITE_ID = 'nomacan-icon-sprite';
@@ -1155,12 +1156,9 @@ function activeRevisitEnd(schedule) {
   const now = new Date();
   let start, end;
   if (schedule.intervalDays) {
-    const start0 = new Date(schedule.anchorStart);
-    const end0 = new Date(schedule.anchorEnd);
-    const intervalMs = schedule.intervalDays * 86400000;
-    const k = Math.floor((now - start0) / intervalMs);
-    start = new Date(start0.getTime() + k * intervalMs);
-    end = new Date(start.getTime() + (end0 - start0));
+    const k = cycleIndexAt(schedule, now);
+    start = cycleBounds(schedule, k).start;
+    end = cycleBounds(schedule, k).end;
   } else {
     start = new Date(schedule.start);
     end = new Date(schedule.end);
