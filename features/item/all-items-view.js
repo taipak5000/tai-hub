@@ -41,7 +41,7 @@ import {
 } from '../../js/state.js';
 import { CURRENT_LANG, trEvent, trCat, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
-import { CURRENT_SEASON } from './data/season-data.js';
+import { isSeasonLikeEvent } from './data/season-data.js';
 import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 import { injectCategoryViewStyles, showCatViewToast, EVENT_ORDER } from './category-view.js';
@@ -102,7 +102,6 @@ function q(sel) { return containerEl.querySelector(sel); }
 function normalizeSearchText(str) {
   return String(str).toLowerCase().replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
 }
-function isSeasonLikeEvent(e) { return e.includes('季節') || e === CURRENT_SEASON.name; }
 function isDayLikeEvent(e) { return !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー'); }
 
 /* ================================================================

@@ -48,7 +48,7 @@ import { TITLES } from './data/titles.js';
 import * as S from './nomacan-state.js';
 import * as History from './nomacan-history.js';
 import {
-  CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES,
+  CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES, isSeasonStarted,
 } from '../item/data/season-data.js';
 
 const STYLE_LINK_ID = 'nomacan-view-styles';
@@ -1171,7 +1171,7 @@ function renderDateQuickPresets() {
   if (!els.dateQuickPresetsEl) return;
   const now = new Date();
   const presets = [];
-  if (CURRENT_SEASON && CURRENT_SEASON.endDate) {
+  if (CURRENT_SEASON && CURRENT_SEASON.endDate && isSeasonStarted(CURRENT_SEASON)) {
     const seasonEnd = new Date(CURRENT_SEASON.endDate);
     if (!isNaN(seasonEnd.getTime()) && seasonEnd > now) presets.push({ label: t('goal.presetSeasonEnd'), dateStr: formatDateValue(seasonEnd) });
   }

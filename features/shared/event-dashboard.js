@@ -84,6 +84,7 @@
 import { CURRENT_LANG } from '../../js/i18n.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, CANDLE_BONUS_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES,
+  seasonInProgress, scheduleWithUpcomingSeason,
 } from '../item/data/season-data.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
@@ -385,7 +386,7 @@ function calendarBarItems(data, year, month) {
   }
 
   if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    pushItems({ end: data.season.endDate }, dashEventName(data.season.name));
+    pushItems({ start: data.season.startDate, end: data.season.endDate }, dashEventName(data.season.name));
   }
   (data.eventSchedule || []).forEach(ev => pushItems(ev, dashEventName(ev.name)));
   (data.candleBonusSchedule || []).forEach(ev => pushItems(ev, dashEventName(ev.name)));
@@ -507,8 +508,9 @@ function calendarHtml(data) {
    ================================================================ */
 function getData() {
   return {
-    season: CURRENT_SEASON,
-    eventSchedule: EVENT_SCHEDULE,
+    // 開始前の季節は「進行中の季節」ではなく、開始前のイベントとして渡す（season-data.js参照）
+    season: seasonInProgress(CURRENT_SEASON),
+    eventSchedule: scheduleWithUpcomingSeason(EVENT_SCHEDULE, CURRENT_SEASON),
     candleBonusSchedule: CANDLE_BONUS_SCHEDULE,
     revisitSchedules: REVISIT_SPIRIT_SCHEDULES,
     nextUpdate: NEXT_UPDATE,

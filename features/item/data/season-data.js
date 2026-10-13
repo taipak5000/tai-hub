@@ -9,14 +9,43 @@
    コピーであり、item本体の変更が自動反映されるわけではない）。
    ================================================================ */
 
+// startDate（開始日時）は省略可能で、開始前の間だけ働く: まだ始まっていない季節は「開催中」とは
+// 扱わず、ダッシュボードには「開始まで」の予定として出し、アイテム検索の「現在開催中」にも含めない
+// （isSeasonStarted/seasonInProgress/scheduleWithUpcomingSeason参照）。開始日時を過ぎると自動で通常の表示へ切り替わる。
+// 次の季節が発表済みなら、開始前でもここへ入れておいてよい（EVENT_SCHEDULEへ重複して入れないこと）。
 export const CURRENT_SEASON = {
-  name: '親愛なるファン・ゴッホへ',
-  endDate: '2026-10-01T23:59:00-07:00',
+  name: '遥かなる真珠の季節',
+  startDate: '2026-10-16T00:00:00-07:00', // 日本時間 2026/10/16 16:00（デイリーリセット）
+  endDate: '2026-12-31T23:59:59-08:00',   // 日本時間 2027/1/1 16:59:59
 };
+
+// 名前に「季節」を含まない季節（親愛なるファン・ゴッホへ）。CURRENT_SEASONが次の季節に切り替わっても
+// 季節扱いが外れないよう、名前で固定している（名前に「季節」を含まない季節が新しく登場したら追加する）
+export const SEASON_LIKE_EVENTS_WITHOUT_KISETSU = ['親愛なるファン・ゴッホへ'];
+// イベント名が「季節」系かどうか（item/index.htmlのisSeasonLikeEventと同一ロジック）
+export function isSeasonLikeEvent(e) {
+  return e.includes('季節') || e === CURRENT_SEASON.name || SEASON_LIKE_EVENTS_WITHOUT_KISETSU.includes(e);
+}
+
+// 季節が開始済みかどうか（startDateが無ければ開始済み扱い）
+export function isSeasonStarted(season = CURRENT_SEASON) {
+  return !season.startDate || Date.now() >= new Date(season.startDate).getTime();
+}
+// 「進行中の季節」として扱える季節だけを返す。開始前の季節は「進行中の季節なし」（終了済み扱い）にして、
+// 代わりにscheduleWithUpcomingSeason()でEVENT_SCHEDULEの1件（開始前のイベント）として渡す。
+export function seasonInProgress(season = CURRENT_SEASON) {
+  if (!season || isSeasonStarted(season)) return season;
+  return { name: season.name, endDate: '1970-01-01T00:00:00Z' };
+}
+export function scheduleWithUpcomingSeason(schedule = EVENT_SCHEDULE, season = CURRENT_SEASON) {
+  const list = schedule || [];
+  if (!season || isSeasonStarted(season)) return list;
+  return list.filter(ev => ev.name !== season.name)
+    .concat([{ name: season.name, start: season.startDate, end: season.endDate }]);
+}
 
 export const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
-  { name: '遥かなる真珠の季節', start: '2026-10-16T16:00:00+09:00', end: '2027-01-01T16:59:59+09:00' },
   { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
 ];
 
@@ -58,7 +87,7 @@ export const REVISIT_SPIRIT_SCHEDULES = [
 export function getCurrentEventNames() {
   const now = new Date();
   const names = [];
-  if (CURRENT_SEASON.endDate && now < new Date(CURRENT_SEASON.endDate)) {
+  if (CURRENT_SEASON.endDate && now < new Date(CURRENT_SEASON.endDate) && isSeasonStarted()) {
     names.push(CURRENT_SEASON.name);
   }
   EVENT_SCHEDULE.forEach(ev => {

@@ -62,7 +62,7 @@
 import { CURRENT_LANG, trEvent, trCat, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
 import { getCategoryState, saveCategoryState, recordItemAcquire, removeItemAcquireRecord } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
-import { CURRENT_SEASON, getCurrentEventNames, REVISIT_SPIRIT_SCHEDULES, isRevisitScheduleActive } from './data/season-data.js';
+import { isSeasonLikeEvent, getCurrentEventNames, REVISIT_SPIRIT_SCHEDULES, isRevisitScheduleActive } from './data/season-data.js';
 import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 
@@ -146,7 +146,6 @@ function normalizeSearchText(str) {
 // イベント名が「季節」系か「日々」系かを判定（季節・イベント欄のoptgroup分け、
 // 「現在開催中のみ」判定で共通利用。item/index.htmlのisSeasonLikeEvent/
 // isDayLikeEventと同一ロジック）
-function isSeasonLikeEvent(e) { return e.includes('季節') || e === CURRENT_SEASON.name; }
 function isDayLikeEvent(e) { return !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー'); }
 
 // 指定アイテムが「今まさに来訪中」の再訪精霊アイテムかどうか
