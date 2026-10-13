@@ -371,12 +371,9 @@ function t(key, vars) {
    🌐 精霊名・アイテム名・季節名の英語訳（元のSPIRIT_NAME_EN/NAME_EN/
    TYPE_LABELS_EN/SEASON_NAME_EN/FIRST_UNLOCK_SUFFIX_I18Nをja/en版だけ移植）
    ================================================================ */
-const SPIRIT_NAME_EN = {
-  'オランダの思い出': 'Dutch Memory',
-  '素朴な思い出': 'Rustic Memory',
-  '芸術の思い出': 'Artistic Memory',
-  '喜びの思い出': 'Joyful Memory',
-};
+// 精霊名の英語訳。次シーズンの精霊は仮データ（名前は「1〜4」）のため未収録。
+// 精霊名が決まったら「日本語名: 英語名」の形で追加する（未収録の名前はそのまま表示される）。
+const SPIRIT_NAME_EN = {};
 const NAME_EN = {
   'エモートLv3': 'Emote Lv3',
   '魔法③': 'Spell ③',
@@ -399,7 +396,7 @@ function translateItemName(str) { return CURRENT_LANG === 'en' ? (NAME_EN[str] |
 const TYPE_LABELS = CURRENT_LANG === 'en' ? TYPE_LABELS_EN : TYPE_LABELS_JA;
 const CIRCLED_NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
 const TYPE_ICONS = { walk: 'cp-i-tree-emote', magic: 'cp-i-tree-magic', seasonal: 'cp-i-tree-bloom', dye: 'cp-i-tree-dye' };
-// 🖼️ 種別ごとのカスタム画像。魔法アイテムの渦巻きアイコンは全精霊共通の実機画像（tree-data.jsのS3_ART_IMAGESと同じURL）。
+// 🖼️ 種別ごとのカスタム画像。魔法アイテムの渦巻きアイコンは全精霊共通の実機画像。
 const TYPE_IMAGES = {
   walk: '',
   seasonal: '',
