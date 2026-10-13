@@ -14,11 +14,39 @@
         document.documentElement.setAttribute('data-theme', 'light');
       }
     })();
+    // 🎨 着せ替え(js/theme.js)で保存済みの配色を、描画前に先に差し込む。これが無いと、
+    // 起動のたびに標準の配色が一瞬見えてから着せ替えに切り替わってしまう。
+    // キャッシュはjs/theme.jsが生成したCSSだけ（url()・@import・タグ終端を含まない）。
+    // 外部から取り込んだバックアップで書き換えられていても外部通信を起こさないよう、
+    // 念のため確認してから使う。
+    (function () {
+      try {
+        var c = JSON.parse(localStorage.getItem('sky_hub_theme_css_v1'));
+        if (!c || typeof c !== 'object') return;
+        var html = document.documentElement;
+        var scheme = (c.fixed === 'light' || c.fixed === 'dark') ? c.fixed : html.getAttribute('data-theme');
+        var css = c[scheme];
+        if (typeof css !== 'string' || /url\s*\(|@import|<\/style|<script/i.test(css)) return;
+        html.setAttribute('data-theme', scheme);
+        var st = document.createElement('style');
+        st.id = 'hub-theme-style';
+        st.textContent = css;
+        document.head.appendChild(st);
+        html.setAttribute('data-hub-theme', 'on');
+        html.setAttribute('data-hub-card', c.card === 'flat' || c.card === 'glass' ? c.card : 'soft');
+        if (typeof c.font === 'string' && c.font.indexOf('https://fonts.googleapis.com/') === 0) {
+          var l = document.createElement('link');
+          l.id = 'hub-theme-font'; l.rel = 'stylesheet'; l.href = c.font;
+          document.head.appendChild(l);
+        }
+      } catch (e) { /* キャッシュが無い・壊れている場合は標準の配色のまま */ }
+    })();
   </script>
   <title>tai-hub（試作）</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/chrome.css">
   <link rel="stylesheet" href="css/item.css">
+  <link rel="stylesheet" href="css/theme.css">
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; }
@@ -41,6 +69,7 @@
   <link rel="modulepreload" href="js/shortcuts.js">
   <link rel="modulepreload" href="js/chrome/site-dock.js">
   <link rel="modulepreload" href="js/i18n.js">
+  <link rel="modulepreload" href="js/theme.js">
 </head>
 <body>
   <div id="dock-root"></div>

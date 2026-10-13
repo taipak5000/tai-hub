@@ -7,6 +7,7 @@ import { injectIconSprite } from './icon-sprite.js';
 import { initRouter, startRouter } from './router.js';
 import { initShortcuts } from './shortcuts.js';
 import * as siteDock from './chrome/site-dock.js';
+import { initTheme } from './theme.js';
 
 // 🩹 applyThemeToDOM(isDark)は真偽値を受け取る（'light'/'dark'の文字列をそのまま
 // 渡すと、'light'も空でない文字列なので常にtruthy判定され、常にダークになって
@@ -14,6 +15,7 @@ import * as siteDock from './chrome/site-dock.js';
 // ——state.jsのtoggleTheme()と同じ規約）
 applyThemeToDOM(resolveSkyTheme(getSkyThemeMode() === 'system' ? null : getSkyThemeMode()) === 'dark');
 injectIconSprite();
+initTheme(); // 🎨 着せ替え（保存済みなら配色・壁紙・きらめきを反映。ライト/ダーク切替にも追従）
 initShortcuts();
 
 const dockMount = document.getElementById('dock-root');

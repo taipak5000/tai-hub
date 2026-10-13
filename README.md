@@ -38,6 +38,18 @@ GitHubリポジトリ（`taipak5000/tsts`）にpushしていますが、GitHub P
     CRUD・一括操作・称号。ルート遷移のたびにVueアプリをmount/unmountし、
     多重マウントが起きないことを確認済み。
 
+## 着せ替え（2026-10-13追加）
+
+ドックの「着せ替え」から、画面の色・質感・背景を自由に設定して、お気に入りとして保存できます。
+
+- **テーマ**: 見本14種（桜・ミント・夕焼け・夜空・ネオン…）から選ぶ／「おまかせ」で調和する配色を自動生成。
+- **カスタム**: アクセント色・背景の色合い/好きな色・グラデーション・壁紙（端末の画像）・背景のきらめき
+  （星・花びら・シャボン玉・ほたる・雪）・カードの質感（やわらか/フラット/ガラス）・角の丸さ・フォント。
+  文字色は背景から自動で読めるコントラストに補正されます。
+- **お気に入り**: 名前を付けて最大24個まで保存。共有コード（`skyhub1:…`）で友達とやり取りできます。
+- 表示設定の「起動時に開く画面」で、ハッシュ無しで開いた時に表示するツールを選べます。
+- 設計メモと「新しいツールを足した時の手順」は`CLAUDE.md`の「着せ替えエンジン」を参照。
+
 ## 動作確認方法
 
 ビルド不要ですが、ES Modulesは`file://`直接オープンでは動きません
@@ -107,8 +119,9 @@ GitHubリポジトリ（`taipak5000/tsts`）にpushしていますが、GitHub P
 
 ```
 index.html          シェル本体
-css/                 tokens.css(ハブ共通) / chrome.css(ドック・モーダル) / <tool>.css(各ツール専用・元配色維持)
-js/                  router.js / router-registry.js / state.js / i18n.js / icon-sprite.js / app.js / chrome/*.js
+css/                 tokens.css(ハブ共通) / chrome.css(ドック・モーダル) / theme.css(着せ替え) / <tool>.css(各ツール専用・元配色維持)
+js/                  router.js / router-registry.js / state.js / i18n.js / icon-sprite.js / app.js / chrome/*.js /
+                       theme.js(着せ替えエンジン) / theme-fx.js(背景のきらめき) / chrome/theme-studio.js(着せ替えスタジオ)
 features/item/        dashboard-view.js / category-view.js / cost-view.js / music-sheet-view.js /
                        titles-panel.js / search-modal.js / wishlist-cost-modal.js / acquire-log-modal.js /
                        coord/（random-coord.js・my-coord.js・closet-collage.js・coord-data.js）/

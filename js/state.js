@@ -366,6 +366,26 @@ export function toggleTheme() {
 }
 
 /* ================================================================
+   🏠 起動時に開くツール（ハッシュ無しで開いた時に表示する画面）。
+   tai-hub専用の端末単位の設定（プロフィール非依存なのでnsKey化しない）。
+   未設定＝従来どおり既定（item）。値の妥当性（ROUTESに存在するか）は
+   router.js側で確認する。
+   ================================================================ */
+export const SKY_START_ROUTE_KEY = 'sky_hub_start_route';
+export function getStartRoute() {
+  try {
+    const v = localStorage.getItem(SKY_START_ROUTE_KEY);
+    return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : '';
+  } catch (e) { return ''; }
+}
+export function setStartRoute(key) {
+  try {
+    if (key && /^[A-Za-z0-9_-]{1,40}$/.test(key)) localStorage.setItem(SKY_START_ROUTE_KEY, key);
+    else localStorage.removeItem(SKY_START_ROUTE_KEY);
+  } catch (e) { /* private browsing等 */ }
+}
+
+/* ================================================================
    ⌨️ キーボードショートカット有効/無効。taipak5000.github.io 配下の
    全ツール共通キー（未設定＝有効扱い。item/profiles.jsのskyShortcutsEnabled
    と同じ規約）。実際のキー入力ディスパッチはjs/shortcuts.jsが担う。

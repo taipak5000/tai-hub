@@ -9,6 +9,7 @@
    ================================================================ */
 
 import { ROUTES, DEFAULT_ROUTE } from './router-registry.js';
+import { getStartRoute } from './state.js';
 
 let appRoot = null;
 let currentRoute = null; // { toolKey, sub }
@@ -37,6 +38,15 @@ function parseHashRoute() {
 
 function applyRoute() {
   let { toolKey, sub } = parseHashRoute();
+  // 🏠 ハッシュ無しで開いた時だけ、設定した「起動時に開くツール」を使う（以後のURLにも反映する。
+  // replaceStateはhashchangeを起こさないので二重マウントにならない）
+  if (!toolKey) {
+    const start = getStartRoute();
+    if (start && ROUTES[start]) {
+      toolKey = start; sub = '';
+      history.replaceState(null, '', '#/' + start);
+    }
+  }
   if (!ROUTES[toolKey]) { toolKey = DEFAULT_ROUTE; sub = ''; }
   const entry = ROUTES[toolKey];
 
