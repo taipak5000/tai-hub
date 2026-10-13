@@ -293,13 +293,19 @@ export function derivePalette(theme, scheme) {
   // 意味色（エラー赤）は色味を保ったまま、その面で読める濃さにだけ補正する
   const redInk = ensureContrast('#FF3B30', faces, 4.5);
 
+  // 白い文字を載せる大きなカード用の「深い色」。accentSolid（白文字で4.5以上）をさらに暗くした
+  // グラデーションの終点と、アクセントの色相を帯びた夜色（暗い面。白文字がいつでも読める）
+  const accentDeep = mix(accentSolid, '#000000', 0.38);
+  const night1 = hsl(aHsl.h, 0.30, 0.17);
+  const night2 = hsl(aHsl.h, 0.34, 0.06);
+
   const [r, rs] = RADIUS[theme.radius];
   const glassA = theme.card === 'glass';
   return {
     dark, bg, bg2, card, surface2, fill, ink, text, text2, text3, sep,
     accent, accentFill, accentSolid, accentInk, accentBg,
     a2, accent2Fill, accent2Ink, accent2Bg,
-    accentLight, onGold, redInk,
+    accentLight, onGold, redInk, accentDeep, night1, night2,
     glass: rgba(card, dark ? 0.68 : 0.72),
     // 「ガラス」の質感では、カードの面をやや透かす
     cardSurface: glassA ? rgba(card, dark ? 0.55 : 0.62) : card,
@@ -413,6 +419,11 @@ const BRAND_RULES = p => [
   `.item-view .feature-icon{background:${p.accentBg};color:${p.accentInk}}`,
   `.item-view .titp-chip{background:${p.accentBg};border-color:${p.accent}}`,
   `.item-view .titp-chip-name{color:${p.accentInk}}`,
+  // wings: 合計サマリーカード（青のグラデーション）・ケープレベルカード（暗い夜色）・選択中のタブ。
+  // 白い文字を載せるので、アクセントから作った「白文字で読める深い色」を使う
+  `.wings-view .summary-card{background:linear-gradient(135deg,${p.accentSolid} 0%,${p.accentDeep} 100%);box-shadow:0 4px 14px ${rgba(p.accentSolid, 0.28)}}`,
+  `.wings-view .cape-card{background:linear-gradient(160deg,${p.night1} 0%,${p.night2} 100%);box-shadow:0 4px 14px ${rgba(p.night2, 0.4)}}`,
+  `.wings-view .mode-tab.active{background:${p.accentSolid};box-shadow:0 2px 8px ${rgba(p.accentSolid, 0.3)}}`,
   // star-candle: 金のグラデーション面（ボタン・バッジ・選択中の日付）の文字は、背景色ではなく読める濃さの色にする
   `.star-candle-view :is(.sc-add-current-btn,.sc-max-badge,.sc-active-badge,.sc-date-picker-cell.is-selected){color:${p.onGold}}`,
 ];
