@@ -523,6 +523,27 @@ function activeScheduledEvents(schedule) {
     return now <= end && (!start || now >= start);
   });
 }
+// これから開始するイベント（開始日時がまだ先のもの）を、開始の近い順に返す。startを持たない
+// エントリは「常に開催中」扱いなので対象外。ダッシュボードの今日/今週/今月は、開催中のものは
+// 「終了まで」、これから始まるものは「開始まで」の残り時間で振り分ける（例: 金曜に始まる季節は今週欄）。
+// 開始が約1か月より先のものは、今月欄が埋もれないよう載せない（先の予定はカレンダーで確認できる）。
+const UPCOMING_MAX_MS = 31 * 24 * 60 * 60 * 1000;
+function upcomingScheduledEvents(schedule) {
+  const now = Date.now();
+  return (schedule || [])
+    .filter(ev => {
+      if (!ev || !ev.start) return false;
+      const s = new Date(ev.start).getTime();
+      return s > now && s - now <= UPCOMING_MAX_MS;
+    })
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+// 「10/16(金) 16:00」形式（端末のローカル時刻）
+function formatStart(d) {
+  const wd = t('日,月,火,水,木,金,土', 'Sun,Mon,Tue,Wed,Thu,Fri,Sat').split(',')[d.getDay()] || '';
+  const hh = String(d.getHours()).padStart(2, '0'), mi = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()}${wd ? `(${wd})` : ''} ${hh}:${mi}`;
+}
 function row(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
 }
@@ -575,6 +596,16 @@ function buildHtml(data) {
   activeScheduledEvents(data.candleBonusSchedule).forEach(ev => {
     const bonusEnd = new Date(ev.end);
     bucketRows[bucketFor(bonusEnd)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(bonusEnd)}</span>`));
+  });
+  // 🆕 これから始まるイベント（開始が近いものは今日/今週、約1か月先までは今月）。
+  // 開催中のものが「終了まで」の残り時間で振り分けられるのと対称に、「開始まで」で振り分ける
+  upcomingScheduledEvents(data.eventSchedule).forEach(ev => {
+    const startDate = new Date(ev.start);
+    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${formatStart(startDate)}</span>`));
+  });
+  upcomingScheduledEvents(data.candleBonusSchedule).forEach(ev => {
+    const startDate = new Date(ev.start);
+    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${formatStart(startDate)}</span>`));
   });
   revisitStatuses(data.revisitSchedules).forEach(({ status: rv }) => {
     const revisitLabel = rv.active
