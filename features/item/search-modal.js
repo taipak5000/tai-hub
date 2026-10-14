@@ -33,36 +33,21 @@
    のように呼び出す想定（js/chrome/site-dock.js が pf-modal.js 等を
    呼び出しているのと同じ import-as-namespace の作法）。
 
-   ── 元実装からの意図的な簡略化（何を・なぜ省いたか） ────────────────
-   1. 「現在開催中のみ」チェック内の季節／日々／再訪のサブフィルター
-      （元実装の #gsCurrentType 相当）は実装していない。「現在開催中のみ」
-      の単一チェックボックスとしてのみ提供する。
-   2. 恒常精霊アイテムのみに現れるエリア・大精霊限定フィルター（元実装の
-      #gsRegularArea・#gsElderOnly、REGULAR_ITEM_AREA/REGULAR_ELDER_IDSという
-      手作業で精霊ツリーと突き合わせた専用データテーブルに依存）は実装して
-      いない。このデータテーブル自体がtai-hubに未移植のため、既存データを
-      勝手に作文しないという方針上、今回は見送った。季節・イベント欄で
-      「恒常精霊」を選ぶこと自体は可能（各アイテムのevent値そのものによる
-      絞り込みなので通常通り機能する）。
-   3. 「絞り込み結果をすべて所持済みにする」一括操作（元実装の
-      #gsMarkAllOwnedBtn・markFilteredItemsOwned()）は実装していない。
-      多数のアイテムを一括でtoggleする副作用の大きい操作のため、今回の
-      スコープでは見送った。
-   4. 検索結果の各行にあったウィッシュリスト追加ボタン（3つ目のトグル）は
-      実装していない。今回依頼された行内操作は「所持／お気に入りの
-      トグル」の2つのみのため、その範囲に絞った（ウィッシュリスト自体は
-      引き続き各カテゴリページから操作可能。state.jsのtoggleWishItem等の
-      保存レイヤーはそのまま利用できる状態で残っている）。
-   上記以外（季節・イベントの全履歴を含むプルダウン、カテゴリ・所持・
+   ── 元実装(item/index.html)と同じ機能をすべて備えている ───────────────
+   「現在開催中のみ」内の季節／日々／再訪のサブフィルター、恒常精霊のエリア・大精霊の
+   絞り込み、「絞り込み結果をすべて所持済みにする」一括操作、検索結果の行ごとの
+   ウィッシュリスト追加ボタン。
+   その他（季節・イベントの全履歴を含むプルダウン、カテゴリ・所持・
    お気に入りの絞り込み、詳細な絞り込み・並び替え[並び替え・課金/無課金・
    復刻・染色]、フィルター全クリア、結果件数表示「N件（所持M件）」）は
    元実装のロジック・文言をそのまま移植している。
    ================================================================ */
 
 import { CURRENT_LANG, trEvent, trCat, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
-import { getCategoryState, saveCategoryState, recordItemAcquire, removeItemAcquireRecord } from '../../js/state.js';
+import { getCategoryState, saveCategoryState, recordItemAcquire, removeItemAcquireRecord, isWishItem, toggleWishItem } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { isSeasonLikeEvent, getCurrentEventNames, REVISIT_SPIRIT_SCHEDULES, isRevisitScheduleActive } from './data/season-data.js';
+import { REGULAR_ITEM_AREA, REGULAR_ELDER_IDS, REGULAR_AREA_ORDER, REGULAR_AREA_JA, REGULAR_AREA_EN } from './data/regular-areas.js';
 import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 
@@ -120,7 +105,11 @@ function loadAllItemsOnce() {
     try {
       const mod = await loadCategoryItems(cat.key);
       const items = Array.isArray(mod.ITEMS) ? mod.ITEMS : [];
-      return items.map(item => ({ ...item, catKey: cat.key }));
+      return items.map(item => {
+        const area = REGULAR_ITEM_AREA[item.id];
+        // 恒常精霊アイテムのエリア・大精霊（item/index.htmlのloadAllItemsOnceと同じ）
+        return area ? { ...item, catKey: cat.key, regularArea: area, isElderItem: REGULAR_ELDER_IDS.has(item.id) } : { ...item, catKey: cat.key };
+      });
     } catch (e) {
       console.error(`[item search] failed to load item data: ${cat.key}`, e);
       return [];
@@ -147,6 +136,11 @@ function normalizeSearchText(str) {
 // 「現在開催中のみ」判定で共通利用。item/index.htmlのisSeasonLikeEvent/
 // isDayLikeEventと同一ロジック）
 function isDayLikeEvent(e) { return !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー'); }
+
+// 今、いずれかの再訪スケジュールが進行中かどうか（「現在開催中のみ」内の「再訪のみ」を出すか決める）
+function isRevisitSpiritCurrentlyActive() {
+  return REVISIT_SPIRIT_SCHEDULES.some(isRevisitScheduleActive);
+}
 
 // 指定アイテムが「今まさに来訪中」の再訪精霊アイテムかどうか
 // （item/index.htmlのisRevisitSpiritItemと同一ロジック。season-data.jsに
@@ -225,6 +219,11 @@ function renderModalHtml() {
             <span>${en ? 'Currently available only' : '現在開催中の季節・イベントのみ'}</span>
           </label>
         </div>
+        <div class="sm-row" id="smCurrentTypeRow" style="display:none;">
+          <select class="sm-select" id="smCurrentType">
+            <option value="all">${en ? 'All (Season/Day/Revisit)' : 'すべて（季節・日々・再訪）'}</option>
+          </select>
+        </div>
         <div class="sm-row">
           <select class="sm-select" id="smEvent">
             <option value="all">${en ? 'All Seasons/Events' : 'すべての季節・イベント'}</option>
@@ -244,6 +243,15 @@ function renderModalHtml() {
             <option value="all">${en ? 'All Favorites' : 'すべてのお気に入り'}</option>
             <option value="fav">${en ? 'Favorites Only' : 'お気に入り指定のみ'}</option>
           </select>
+        </div>
+        <div class="sm-row sm-row-multi" id="smRegularAreaRow" style="display:none;">
+          <select class="sm-select" id="smRegularArea">
+            <option value="all">${en ? 'All Areas' : 'すべてのエリア'}</option>
+          </select>
+          <label class="sm-toggle">
+            <input type="checkbox" id="smElderOnly">
+            <span>${en ? "Elders' items only" : '大精霊のアイテムのみ'}</span>
+          </label>
         </div>
         <div class="sm-row">
           <button type="button" class="sm-advanced-toggle" id="smAdvancedToggleBtn">
@@ -284,6 +292,14 @@ function renderModalHtml() {
         </div>
       </div>
 
+      <button type="button" class="sm-markall-btn" id="smMarkAllBtn" style="display:none;">
+        <svg class="inline-icon" width="18" height="18"><use href="#i-check"/></svg>
+        <span class="sm-markall-text">
+          <b id="smMarkAllLabel"></b>
+          <small>${en ? 'Marks every not-yet-owned item currently shown below as owned' : '下に表示中の未所持アイテムをすべて所持済みにします'}</small>
+        </span>
+      </button>
+
       <div class="sm-result-header">
         <p class="sm-result-label">${en ? 'Results' : '検索結果'}</p>
         <span class="sm-result-count" id="smResultCount"></span>
@@ -305,7 +321,9 @@ function wireControls() {
 
   q('#smName').addEventListener('input', render);
   q('#smCurrentOnly').addEventListener('change', render);
-  ['#smEvent', '#smCat', '#smOwned', '#smFav', '#smSort', '#smCostType', '#smReprint', '#smDye']
+  q('#smElderOnly').addEventListener('change', render);
+  q('#smMarkAllBtn').addEventListener('click', markFilteredOwned);
+  ['#smEvent', '#smCurrentType', '#smRegularArea', '#smCat', '#smOwned', '#smFav', '#smSort', '#smCostType', '#smReprint', '#smDye']
     .forEach(sel => q(sel).addEventListener('change', render));
 
   q('#smAdvancedToggleBtn').addEventListener('click', () => {
@@ -336,6 +354,7 @@ function wireControls() {
     const { cat, id } = row.dataset;
     if (actEl.dataset.act === 'toggle-owned') toggleOwned(cat, id);
     else if (actEl.dataset.act === 'toggle-fav') toggleFav(cat, id);
+    else if (actEl.dataset.act === 'toggle-wish') toggleWish(cat, id, actEl);
   });
 }
 
@@ -401,6 +420,43 @@ function buildStateCache() {
   return cache;
 }
 
+// 恒常精霊（イベント名が「恒常」で始まる）が選択されている間だけ、エリア・大精霊の絞り込み行を出し、
+// 選択肢はそのイベントに実在するエリアだけで組み立てる（item/index.htmlのsyncRegularAreaFilterUI）
+function syncRegularAreaFilterUI(fEvent) {
+  const row = overlayEl.querySelector('#smRegularAreaRow');
+  const isRegular = fEvent !== 'all' && fEvent.startsWith('恒常');
+  row.style.display = isRegular ? '' : 'none';
+  if (!isRegular) return;
+  const select = overlayEl.querySelector('#smRegularArea');
+  const areasPresent = new Set(allItemsCache.filter(it => it.event === fEvent && it.regularArea).map(it => it.regularArea));
+  const prev = select.value;
+  select.innerHTML = `<option value="all">${CURRENT_LANG === 'en' ? 'All Areas' : 'すべてのエリア'}</option>`
+    + REGULAR_AREA_ORDER.filter(a => areasPresent.has(a)).map(a =>
+      `<option value="${a}">${escapeHtml(CURRENT_LANG === 'en' ? REGULAR_AREA_EN[a] : REGULAR_AREA_JA[a])}</option>`).join('');
+  if ([...select.options].some(o => o.value === prev)) select.value = prev;
+}
+
+// 「現在開催中のみ」がオンの間だけ、その中を季節・日々・再訪でさらに絞り込める行を出す。
+// 選択肢は実際に今存在するものだけ（item/index.htmlのsyncCurrentTypeFilterUI）
+function syncCurrentTypeFilterUI() {
+  const row = overlayEl.querySelector('#smCurrentTypeRow');
+  const select = overlayEl.querySelector('#smCurrentType');
+  const isCurrentOnly = overlayEl.querySelector('#smCurrentOnly').checked;
+  row.style.display = isCurrentOnly ? '' : 'none';
+  if (!isCurrentOnly) { select.value = 'all'; return; }
+  const names = getCurrentEventNames();
+  const hasSeason = names.some(isSeasonLikeEvent);
+  const hasDay = names.some(isDayLikeEvent);
+  const hasRevisit = isRevisitSpiritCurrentlyActive();
+  const en = CURRENT_LANG === 'en';
+  const prev = select.value;
+  select.innerHTML = `<option value="all">${en ? 'All (Season/Day/Revisit)' : 'すべて（季節・日々・再訪）'}</option>`
+    + (hasSeason ? `<option value="season">${en ? 'Season Only' : '季節のみ'}</option>` : '')
+    + (hasDay ? `<option value="day">${en ? 'Day Event Only' : '日々のみ'}</option>` : '')
+    + (hasRevisit ? `<option value="revisit">${en ? 'Revisit Spirit Only' : '再訪のみ'}</option>` : '');
+  if ([...select.options].some(o => o.value === prev)) select.value = prev;
+}
+
 function getFilteredItems(stateCache) {
   if (!overlayEl || !allItemsCache) return [];
   const q = sel => overlayEl.querySelector(sel);
@@ -411,6 +467,10 @@ function getFilteredItems(stateCache) {
   const fOwned = q('#smOwned').value;
   const fFav = q('#smFav').value;
   const fCurrentOnly = q('#smCurrentOnly').checked;
+  const fCurrentType = q('#smCurrentType').value;
+  const fRegularArea = q('#smRegularArea').value;
+  const fElderOnly = q('#smElderOnly').checked;
+  const isRegularEvent = fEvent !== 'all' && fEvent.startsWith('恒常');
   const fSort = q('#smSort').value;
   const fCostType = q('#smCostType').value;
   const fReprint = q('#smReprint').value;
@@ -426,9 +486,15 @@ function getFilteredItems(stateCache) {
       && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
     if (fCurrentOnly) {
+      const isRevisitItem = isRevisitSpiritItem(item);
       const isCurrentEventItem = currentEventNames.includes(item.event);
-      if (!isCurrentEventItem && !isRevisitSpiritItem(item)) return false;
+      if (!isCurrentEventItem && !isRevisitItem) return false;
+      if (fCurrentType === 'revisit' && !isRevisitItem) return false;
+      if (fCurrentType === 'season' && !(isCurrentEventItem && isSeasonLikeEvent(item.event))) return false;
+      if (fCurrentType === 'day' && !(isCurrentEventItem && isDayLikeEvent(item.event))) return false;
     }
+    if (isRegularEvent && fRegularArea !== 'all' && item.regularArea !== fRegularArea) return false;
+    if (isRegularEvent && fElderOnly && !item.isElderItem) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
     if (fOwned !== 'all') {
       const isOwned = !!stateCache[item.catKey].owned[item.id];
@@ -472,6 +538,8 @@ function sortItems(items, mode, stateCache) {
 function render() {
   if (!overlayEl || !allItemsCache) return;
   const en = CURRENT_LANG === 'en';
+  syncRegularAreaFilterUI(overlayEl.querySelector('#smEvent').value);
+  syncCurrentTypeFilterUI();
   const stateCache = buildStateCache();
   const filtered = getFilteredItems(stateCache);
 
@@ -481,6 +549,17 @@ function render() {
     countEl.textContent = filtered.length > 0
       ? (en ? `${filtered.length} items (${ownedCount} owned)` : `${filtered.length}件（所持 ${ownedCount}件）`)
       : '';
+  }
+
+  // 季節・イベントが選ばれている間だけ「絞り込み結果をすべて所持済みにする」を出す
+  const notOwnedCount = filtered.length - ownedCount;
+  const markBtn = overlayEl.querySelector('#smMarkAllBtn');
+  if (markBtn) {
+    const show = overlayEl.querySelector('#smEvent').value !== 'all' && notOwnedCount > 0;
+    markBtn.style.display = show ? '' : 'none';
+    if (show) overlayEl.querySelector('#smMarkAllLabel').textContent = en
+      ? `Mark ${notOwnedCount} filtered item(s) as owned`
+      : `絞り込み結果の未所持${notOwnedCount}件を所持済みにする`;
   }
 
   const resultsEl = overlayEl.querySelector('#smResults');
@@ -498,6 +577,7 @@ function resultRowHtml(item, stateCache) {
   const en = CURRENT_LANG === 'en';
   const isOwned = !!stateCache[item.catKey].owned[item.id];
   const isFav = !!stateCache[item.catKey].fav[item.id];
+  const isWish = isWishItem(item.catKey, item.id);
 
   return `
     <div class="sm-result-row" data-cat="${item.catKey}" data-id="${item.id}">
@@ -508,6 +588,9 @@ function resultRowHtml(item, stateCache) {
           <span class="sm-result-name">${escapeHtml(trItem(item))}</span>
         </div>
       </div>
+      <button type="button" class="sm-wish-btn ${isWish ? 'is-wish' : ''}" data-act="toggle-wish" aria-label="${en ? 'Wishlist' : 'ウィッシュリスト'}" title="${en ? 'Wishlist' : 'ウィッシュリスト'}">
+        <svg class="inline-icon" width="17" height="17"><use href="#i-cart"/></svg>
+      </button>
       <button type="button" class="sm-fav-btn ${isFav ? 'is-fav' : ''}" data-act="toggle-fav" aria-label="${en ? 'Favorite' : 'お気に入り'}">
         <svg class="inline-icon" width="17" height="17" style="stroke:currentColor; fill:${isFav ? 'currentColor' : 'none'}; stroke-width:1.8;"><use href="#i-star"/></svg>
       </button>
@@ -567,6 +650,42 @@ function toggleFav(catKey, id) {
   state.fav[id] = !state.fav[id];
   saveCategoryState(catKey, state.owned, state.fav, items);
   render();
+}
+
+// 検索結果の行からウィッシュリストへ追加/解除（所持済みは追加できない）
+function toggleWish(catKey, id, btnEl) {
+  const en = CURRENT_LANG === 'en';
+  const added = toggleWishItem(catKey, id);
+  if (added === null) {
+    showSearchModalToast(en ? 'Owned items cannot be added to the wishlist' : '所持済みのアイテムはウィッシュリストに追加できません');
+    return;
+  }
+  if (btnEl) btnEl.classList.toggle('is-wish', added);
+  showSearchModalToast(added ? (en ? 'Added to wishlist' : 'ウィッシュリストに追加しました') : (en ? 'Removed from wishlist' : 'ウィッシュリストから外しました'));
+}
+
+// 現在の絞り込み結果のうち未所持のものを、確認のうえまとめて所持済みにする
+// （item/index.htmlのmarkFilteredItemsOwned。恒常精霊のフルコンプもこの操作でできる）
+function markFilteredOwned() {
+  if (!overlayEl || !allItemsCache) return;
+  const en = CURRENT_LANG === 'en';
+  const stateCache = buildStateCache();
+  const targets = getFilteredItems(stateCache).filter(it => !stateCache[it.catKey].owned[it.id]);
+  if (targets.length === 0) return;
+  if (!window.confirm(en ? `Mark ${targets.length} item(s) as owned?` : `${targets.length}件のアイテムを所持済みにします。よろしいですか？`)) return;
+  const touched = new Set();
+  targets.forEach(it => {
+    stateCache[it.catKey].owned[it.id] = true;
+    recordItemAcquire(it.catKey, it.id);
+    touched.add(it.catKey);
+  });
+  touched.forEach(catKey => {
+    const s = stateCache[catKey];
+    saveCategoryState(catKey, s.owned, s.fav, resolvedItemsByCat.get(catKey) || []);
+  });
+  notifySearchTitlesCheck();
+  render();
+  showSearchModalToast(en ? `${targets.length} item(s) marked as owned` : `${targets.length}件を所持済みにしました`);
 }
 
 /* ================================================================
@@ -644,6 +763,25 @@ function injectStyles() {
 }
 .sm-fav-btn:active { transform: scale(1.15); }
 .sm-fav-btn.is-fav { color: var(--sm-fav); }
+
+.sm-wish-btn {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: 0; background: none;
+  display: flex; align-items: center; justify-content: center; color: var(--hub-text-3); cursor: pointer; padding: 0;
+}
+.sm-wish-btn:active { transform: scale(1.15); }
+.sm-wish-btn.is-wish { color: var(--hub-accent); }
+.sm-wish-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.sm-markall-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 12px 14px; text-align: left;
+  background: var(--hub-bg); color: var(--hub-text); border: 1px solid var(--hub-sep); border-radius: var(--hub-r-sm);
+  font-family: inherit; cursor: pointer;
+}
+.sm-markall-btn:active { background: var(--hub-accent-bg); }
+.sm-markall-btn > svg { flex-shrink: 0; color: var(--sm-owned); }
+.sm-markall-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sm-markall-text b { font-size: 13.5px; font-weight: 700; }
+.sm-markall-text small { font-size: 11.5px; color: var(--hub-text-2); }
 
 .sm-owned-dot {
   flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--hub-sep);

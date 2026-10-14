@@ -31,11 +31,10 @@
    `import * as acquireLogModal from './acquire-log-modal.js'; acquireLogModal.open()`
    のように呼び出す想定（search-modal.js と同じ import-as-namespace の作法）。
 
-   ── 元実装からの意図的な簡略化・注記（何を・なぜ） ────────────────
-   1. 今月/今年の振り返りをX/Twitterへ画像シェアする機能（html2canvas+
-      Web Share API依存）は省略した。cost-view.jsの既知の簡略化事項1と
-      同じ理由（tai-hub全体として今回このスコープの共有系機能は対象外）。
-      件数の集計ロジック自体（今月/今年の入手数）は完全に移植している。
+   ── 元実装(item/index.html)との違い ────────────────────────────────
+   1. 今月/今年の振り返りの画像シェア（getRecapStats/buildRecapExportCardEl/
+      shareRecapOnTwitterの移植）は share/share-data.js の exportShareImage() を使う
+      （Web Share API→画像プレビュー＋Xの投稿画面へ、のフォールバック込み）。
    2. 各行の「カテゴリ」表示はタップ可能なリンクにし、タップすると
       モーダルを閉じてそのカテゴリページ（#/item/<catKey>）へ遷移する
       ようにした。元実装はページ内モーダルだったため遷移の概念が無かったが、
@@ -52,6 +51,7 @@
 import { CURRENT_LANG, trCat, trItem, escapeHtml } from '../../js/i18n.js';
 import { getItemAcquireLog, removeItemAcquireRecord } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
+import { SHARE_THEMES, SITE_URL, RECAP_SHARE_HASHTAG, itemIconHtml, exportShareImage, showShareToast, injectShareSharedStyles } from './share/share-data.js';
 
 // 12種のウェアラブルカテゴリのみ（section:'special'の楽譜は対象外。
 // music-sheet-view.jsはrecordItemAcquire()を呼ばないため、ログにも現れない）
@@ -183,6 +183,11 @@ function wireControls() {
       render();
       return;
     }
+    const shareBtn = e.target.closest('[data-act="share-recap"]');
+    if (shareBtn) {
+      shareRecap(shareBtn.dataset.scope);
+      return;
+    }
     const jumpEl = e.target.closest('[data-act="jump"]');
     if (jumpEl) {
       e.preventDefault();
@@ -271,7 +276,89 @@ function render() {
       <div class="alm-total-row"><span><svg class="inline-icon" width="16" height="16"><use href="#i-folder"/></svg> ${en ? 'Total recorded' : '記録件数'}</span><b>${entries.length}${en ? '' : ' 件'}</b></div>
       <div class="alm-total-row"><span><svg class="inline-icon" width="16" height="16"><use href="#i-calendar"/></svg> ${en ? 'Acquired this month' : '今月の入手数'}</span><b>${monthCount}${en ? '' : ' 件'}</b></div>
       <div class="alm-total-row"><span><svg class="inline-icon" width="16" height="16"><use href="#i-calendar"/></svg> ${en ? 'Acquired this year' : '今年の入手数'}</span><b>${yearCount}${en ? '' : ' 件'}</b></div>
+    </div>
+    <div class="alm-share-row">
+      <button type="button" class="alm-share-btn" data-act="share-recap" data-scope="month">${en ? 'Share This Month’s Recap' : '今月の振り返りを画像でシェア'}</button>
+      <button type="button" class="alm-share-btn" data-act="share-recap" data-scope="year">${en ? 'Share This Year’s Recap' : '今年の振り返りを画像でシェア'}</button>
     </div>`;
+}
+
+/* ================================================================
+   📤 今月/今年の振り返りを画像でシェア（item/index.htmlの
+   getRecapStats / buildRecapExportCardEl / buildRecapTweetText / shareRecapOnTwitter を移植）
+   ================================================================ */
+const RECAP_MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// 指定期間（'month'=今月 / 'year'=今年）に入手したアイテムを集計する（直近5件はカードのハイライト用）
+function getRecapStats(scope) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const entries = getEntries().filter(e => {
+    const d = new Date(e.at);
+    if (isNaN(d.getTime())) return false;
+    return scope === 'year' ? d.getFullYear() === y : (d.getFullYear() === y && d.getMonth() === m);
+  });
+  entries.sort((a, b) => new Date(b.at) - new Date(a.at));
+  return { count: entries.length, recent: entries.slice(0, 5), year: y, month: m };
+}
+
+function buildRecapCardEl(scope) {
+  const { count, recent, year, month } = getRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const periodTxt = scope === 'year' ? (en ? `${year}` : `${year}年`) : (en ? `${RECAP_MONTH_EN[month]} ${year}` : `${year}年${month + 1}月`);
+  const labelTxt = scope === 'year' ? (en ? 'Items Acquired This Year' : '今年獲得したアイテム数') : (en ? 'Items Acquired This Month' : '今月獲得したアイテム数');
+  const rows = recent.map(e => `
+    <div class="ish-exp-row">
+      <div class="ish-exp-icon">${itemIconHtml(e.cat, e.item)}</div>
+      <div class="ish-exp-info">
+        <div class="ish-exp-cat">${escapeHtml(trCat(e.cat.name))}</div>
+        <div class="ish-exp-name">${escapeHtml(trItem(e.item))}</div>
+      </div>
+    </div>`).join('');
+  const today = new Date();
+  const dateTxt = en
+    ? `Created ${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+    : `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日作成`;
+  const card = document.createElement('div');
+  card.className = 'ish-export-card';
+  card.style.background = SHARE_THEMES.orange.grad;
+  card.innerHTML = `
+    <div class="ish-exp-brand">${en ? 'Sky Item Collection Tracker' : 'Sky アイテム所持率管理'}</div>
+    <div class="ish-exp-hero">
+      <div class="ish-exp-hero-pct">${count}</div>
+      <div class="ish-exp-hero-label">${labelTxt}</div>
+      <div class="ish-exp-hero-nums">${escapeHtml(periodTxt)}</div>
+    </div>
+    ${rows
+      ? `<div class="ish-exp-body">${rows}</div>`
+      : `<div class="ish-exp-comment">${en ? 'No items recorded in this period yet' : 'この期間の記録はまだありません'}</div>`}
+    <div class="ish-exp-date">${dateTxt}</div>`;
+  document.body.appendChild(card);
+  return card;
+}
+
+function buildRecapTweetText(scope) {
+  const { count, year, month } = getRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  const periodTxt = scope === 'year' ? (en ? `in ${year}` : `${year}年は`) : (en ? `in ${RECAP_MONTH_EN[month]} ${year}` : `${year}年${month + 1}月は`);
+  return en
+    ? `I acquired ${count} new item(s) ${periodTxt}!\nHow many did you get?\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`
+    : `${periodTxt}新しく${count}件のアイテムを入手しました！\nあなたは何個入手した？\n\n${SITE_URL}\n${RECAP_SHARE_HASHTAG}`;
+}
+
+function shareRecap(scope) {
+  const { count } = getRecapStats(scope);
+  const en = CURRENT_LANG === 'en';
+  if (count === 0) {
+    showShareToast(en ? 'No items recorded in this period yet' : 'この期間の記録がまだありません');
+    return;
+  }
+  injectShareSharedStyles();
+  const filenameBase = scope === 'year' ? (en ? 'Yearly Recap' : '年間振り返り') : (en ? 'Monthly Recap' : '月間振り返り');
+  return exportShareImage(() => buildRecapCardEl(scope), filenameBase, {
+    shareText: buildRecapTweetText(scope),
+    successToast: en ? 'Shared!' : '共有しました！',
+  });
 }
 
 /* ================================================================
@@ -294,6 +381,9 @@ function injectStyles() {
 .alm-empty { font-size: 13px; color: var(--hub-text-2); padding: 28px 4px; text-align: center; line-height: 1.6; }
 
 .alm-list { display: flex; flex-direction: column; margin-top: 14px; }
+.alm-share-row { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.alm-share-btn { width: 100%; padding: 12px; border: 0; border-radius: var(--hub-r-sm); background: #000; color: #fff; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.alm-share-btn:active { opacity: 0.8; }
 .alm-row { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 0.5px solid var(--hub-sep); }
 .alm-row:first-child { border-top: 0; }
 

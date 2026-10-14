@@ -47,6 +47,11 @@ export const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid
 export const SITE_URL = toolShareUrl('item');
 export const SHARE_HASHTAG = '#Skyアイテム所持率';
 export const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
+export const COORD_SHARE_HASHTAG = '#Sky所持率管理コーデ';
+export const RANDOM_SHARE_HASHTAG = '#Sky所持率管理今日のコーデ';
+export const CLOSET_SHARE_HASHTAG = '#Sky所持率管理コラージュ';
+export const RECAP_SHARE_HASHTAG = '#Sky所持率管理振り返り';
+export const COST_SHARE_HASHTAG = '#Skyアイテム所持率';
 
 /* ================================================================
    背景テーマ（item/index.html の SHARE_THEMES を移植。'orange' だけ元は
