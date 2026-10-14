@@ -40,7 +40,7 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { getActiveProfileId } from '../../js/state.js';
+import { getActiveProfileId, ensureProfilesInit, pfDisplayName } from '../../js/state.js';
 import { SEASON_SPIRITS } from './data/season-spirits.js';
 import { REALM_SPIRITS, CAPE_LEVELS } from './data/realm-spirits.js';
 import { LIGHT_CHILDREN } from './data/light-children.js';
@@ -93,6 +93,7 @@ export function mount(container /* , sub */) {
 
 export function unmount() {
   document.getElementById('wgDashModalOverlay')?.remove();
+  document.getElementById('wgCompareModalOverlay')?.remove();
   eventDashboard.unmount();
   Share.closeCustomize();
   document.getElementById('wingsShareModalOverlay')?.remove();
@@ -175,6 +176,10 @@ function renderShell() {
         <span class="titles-count" id="wgTitlesCount">0 / 0</span>
       </div>
       <div class="titles-chips" id="wgTitlesChips"></div>
+    </div>
+
+    <div class="share-btn-row">
+      <button type="button" class="share-btn customize" id="wgCompareBtn">${t('プロフィールを比較', 'Compare Profiles')}</button>
     </div>
 
     <div class="share-btn-row">
@@ -270,6 +275,7 @@ function wireEvents() {
 
   q('#wgOpenDashBtn').addEventListener('click', openDashboardModal);
   q('#wgShareXBtn').addEventListener('click', () => Share.shareOnX());
+  q('#wgCompareBtn').addEventListener('click', openCompareModal);
   q('#wgShareCustomizeBtn').addEventListener('click', () => Share.openCustomize());
 
   q('#wgTabWings').addEventListener('click', () => switchMode('wings'));
@@ -380,6 +386,83 @@ function openDashboardModal() {
 function closeDashboardModal() {
   document.getElementById('wgDashModalOverlay')?.classList.remove('open');
   eventDashboard.unmount();
+}
+
+/* ================================================================
+   📊 プロフィール比較（元実装wings/index.htmlのpfCompareOpen/pfCompareRender）
+   2つのプロフィールの進捗を、切り替えずに並べて見比べる。S.getWingStats(profileId)
+   にIDを渡すと、アクティブプロフィールを変えずに任意のプロフィールの保存データだけを
+   読み取って集計できる。値が大きい側のセルは緑字で強調する。
+   （ハブのプロフィール窓は全ツール共通のため、比較はこのページ専用のボタンから開く）
+   ================================================================ */
+function openCompareModal() {
+  const list = ensureProfilesInit();
+  if (list.length < 2) {
+    showToast(t('プロフィールが1つしかないため比較できません。まず「追加」でもう1つ作成してください。',
+      'You need at least two profiles to compare. Create another one first with "Add".'));
+    return;
+  }
+  document.getElementById('wgCompareModalOverlay')?.remove();
+  const active = getActiveProfileId();
+  const optsHtml = list.map(p => `<option value="${escapeAttr(p.id)}">${escapeHtml(pfDisplayName(p))}</option>`).join('');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'wgCompareModalOverlay';
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeCompareModal(); });
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <button type="button" class="modal-close-btn" id="wgCompareCloseBtn" aria-label="${escapeAttr(t('閉じる', 'Close'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></button>
+      <div class="modal-title">${t('プロフィールを比較', 'Compare Profiles')}</div>
+      <div class="wg-compare-selects">
+        <select class="pf-input" id="wgCompareSelectA">${optsHtml}</select>
+        <select class="pf-input" id="wgCompareSelectB">${optsHtml}</select>
+      </div>
+      <div id="wgCompareBody"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const selA = overlay.querySelector('#wgCompareSelectA');
+  const selB = overlay.querySelector('#wgCompareSelectB');
+  selA.value = active;
+  const other = list.find(p => p.id !== active);
+  selB.value = other ? other.id : active;
+  selA.addEventListener('change', renderCompare);
+  selB.addEventListener('change', renderCompare);
+  overlay.querySelector('#wgCompareCloseBtn').addEventListener('click', closeCompareModal);
+  renderCompare();
+  requestAnimationFrame(() => overlay.classList.add('open'));
+}
+function closeCompareModal() {
+  document.getElementById('wgCompareModalOverlay')?.classList.remove('open');
+}
+function compareRow(label, a, b, totalA, totalB) {
+  const aLead = a > b, bLead = b > a;
+  const fmt = (v, total) => (total === undefined ? `${v}` : `${v} / ${total}`);
+  return `<tr>
+    <td>${label}</td>
+    <td class="${aLead ? 'wg-compare-lead' : ''}">${fmt(a, totalA)}</td>
+    <td class="${bLead ? 'wg-compare-lead' : ''}">${fmt(b, totalB)}</td>
+  </tr>`;
+}
+function renderCompare() {
+  const overlay = document.getElementById('wgCompareModalOverlay');
+  if (!overlay) return;
+  const idA = overlay.querySelector('#wgCompareSelectA').value;
+  const idB = overlay.querySelector('#wgCompareSelectB').value;
+  if (!idA || !idB) return;
+  const list = ensureProfilesInit();
+  const pA = list.find(p => p.id === idA), pB = list.find(p => p.id === idB);
+  const A = S.getWingStats(idA), B = S.getWingStats(idB);
+  overlay.querySelector('#wgCompareBody').innerHTML = `
+    <table class="wg-compare-table">
+      <thead><tr><th></th><th>${escapeHtml(pA ? pfDisplayName(pA) : '')}</th><th>${escapeHtml(pB ? pfDisplayName(pB) : '')}</th></tr></thead>
+      <tbody>
+        ${compareRow(t('季節精霊', 'Season Spirits'), A.seasonFeathers, B.seasonFeathers, A.seasonSpiritsTotal, B.seasonSpiritsTotal)}
+        ${compareRow(t('恒常精霊', 'Realm Spirits'), A.permFeathers, B.permFeathers, A.permTotal, B.permTotal)}
+        ${compareRow(t('光の子', 'Children of Light'), A.lightChildrenGot, B.lightChildrenGot, A.lightChildrenTotal, B.lightChildrenTotal)}
+        ${compareRow(t('光の翼 合計', 'Total Wings'), A.totalAll, B.totalAll)}
+        ${compareRow(t('ケープレベル', 'Cape Level'), A.capeLevel, B.capeLevel)}
+      </tbody>
+    </table>`;
 }
 
 /* ================================================================

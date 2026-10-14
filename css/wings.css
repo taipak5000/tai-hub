@@ -312,3 +312,13 @@
   font-family: inherit; color: var(--hub-text); resize: vertical; min-height: 60px; background: var(--hub-bg);
 }
 .wg-preview-img { width: 100%; border-radius: var(--hub-r-sm); margin: 10px 0; display: block; }
+
+/* ── プロフィール比較 ── */
+.wg-compare-selects { display: flex; gap: 8px; margin-bottom: 10px; }
+.wg-compare-selects select { flex: 1; min-width: 0; }
+.wg-compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+.wg-compare-table th, .wg-compare-table td { padding: 8px 6px; border-bottom: 1px solid var(--hub-sep); text-align: center; font-variant-numeric: tabular-nums; }
+.wg-compare-table th { color: var(--hub-text-2); font-weight: 700; font-size: 11.5px; }
+.wg-compare-table th:first-child, .wg-compare-table td:first-child { text-align: left; color: var(--hub-text-2); font-weight: 600; }
+.wg-compare-table td.wg-compare-lead { color: #34C759; font-weight: 800; }
+[data-theme="dark"] .wg-compare-table td.wg-compare-lead { color: #30D158; }
