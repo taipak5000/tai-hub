@@ -26,6 +26,7 @@ import * as randomCoord from './coord/random-coord.js';
 import * as myCoord from './coord/my-coord.js';
 import * as closetCollage from './coord/closet-collage.js';
 import * as coordShare from './coord/coord-share.js';
+import { appendItemFooter } from './item-footer.js';
 import * as achievementShare from './share/achievement-share.js';
 import * as favoritesShare from './share/favorites-share.js';
 
@@ -405,6 +406,7 @@ export function mount(container) {
   const token = ++mountToken;
 
   hostEl.innerHTML = renderShell();
+  appendItemFooter(hostEl, 'dashboard');
   renderCategoryGrid(token);
   setupFeatureTriggers();
   setupIntroCard();

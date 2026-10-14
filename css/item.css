@@ -104,3 +104,10 @@
 .item-view .num-unit { font-weight: 500; font-size: 0.72em; opacity: 0.7; margin-left: 1px; }
 
 .item-view .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-2); margin-bottom: 14px; cursor: pointer; }
+
+/* ── 各ページ共通フッター（免責・作成/ご意見・参考/画像引用元・設定/クレジット） ── */
+.item-view .item-footer { text-align: center; padding: 24px 16px; color: var(--text-2); font-size: 13px; border-top: 1px solid var(--sep); margin-top: 40px; line-height: 1.6; }
+.item-view .item-footer a { color: var(--blue); text-decoration: underline; }
+.item-view .item-footer .item-footer-strong { font-weight: bold; }
+.item-view .item-footer .item-footer-sub { color: var(--text-2); font-size: 12px; margin-top: 4px; display: inline-block; }
+

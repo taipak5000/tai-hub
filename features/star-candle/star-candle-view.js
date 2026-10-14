@@ -350,7 +350,9 @@ function renderShell() {
         </section>
 
         <footer>
-          <span>${tt('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.')}</span>
+          <span>${tt('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.')}</span><br>
+          <span>${tt('作成・ご意見:', 'Created by / feedback:')}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　<span>${tt('参考データ:', 'Reference data:')}</span> <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E7%A0%B4%E7%89%87%E3%81%AE%E5%99%B4%E5%87%BA" target="_blank" rel="noopener noreferrer">${tt('破片の噴出 (Sky Wiki 日本語)', 'Shard Eruptions (Sky Wiki, Japanese)')}</a><br>
+          <a href="#/tai-info">${tt('設定・クレジット・プライバシーポリシー', 'Settings / Credits / Privacy Policy')}</a>
         </footer>
       </div>
     </div>

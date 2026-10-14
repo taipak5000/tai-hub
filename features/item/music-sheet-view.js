@@ -41,6 +41,7 @@ import { nsKey, isWishItem, toggleWishItem, removeWishItem } from '../../js/stat
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { MUSIC_SHEETS, SEASON_ORDER, METHOD_LABEL_JA, METHOD_LABEL_EN, CAT_KEY } from './data/music-sheets-data.js';
 import { loadMusicSheetState, saveMusicSheetState } from './data/music-sheet-state.js';
+import { appendItemFooter } from './item-footer.js';
 
 const LINK_ID = 'item-music-sheet-styles-link';
 const VIEW_MODE_KEY = 'musicSheets_viewMode'; // item/music_sheet.htmlと同一キー（あえてnsKey化しない。元実装もプロフィール非依存）
@@ -59,6 +60,7 @@ export function mount(container) {
   viewMode = localStorage.getItem(VIEW_MODE_KEY) || 'grid';
 
   container.innerHTML = renderShell();
+  appendItemFooter(container, 'music_sheet');
 
   window.__msViewToggleOwned = handleToggleOwned;
   window.__msViewToggleFav = handleToggleFav;

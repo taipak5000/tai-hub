@@ -250,10 +250,25 @@ function renderShell() {
         <div class="spirit-grid" id="scSpiritGrid"></div>
         <div class="grouped-view" id="scGroupedView" style="display:none;"></div>
 
-        <footer class="sc-footer">${escapeHtml(tt(
-          'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
-          'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
-        ))}</footer>
+        <footer class="sc-footer">
+          <span>${escapeHtml(tt(
+            'このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。',
+            'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.',
+          ))}</span><br>
+          <span>${escapeHtml(tt('作成・ご意見:', 'Created by / feedback:'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
+          <a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(tt('リクエストフォーム', 'Request form'))}</a><br>
+          <span style="font-size:12px; margin-top:4px; display:inline-block;">
+            <span>${escapeHtml(tt('参考・データ/画像引用元:', 'References / data & image sources:'))}</span>
+            <a href="https://github.com/Silverfeelin/SkyGame-Data" target="_blank" rel="noopener noreferrer">${escapeHtml(tt('精霊ツリーデータ (SkyGame-Data)', 'Spirit Tree Data (SkyGame-Data)'))}</a>
+            ／
+            <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E7%B2%BE%E9%9C%8A%E3%81%9F%E3%81%A1" target="_blank" rel="noopener noreferrer">${escapeHtml(tt('精霊たち (Sky Wiki 日本語)', 'Spirits (Sky Wiki Japanese)'))}</a>
+            ／
+            <a href="https://sky-children-of-the-light.fandom.com/wiki/Spirits" target="_blank" rel="noopener noreferrer">${escapeHtml(tt('Spirits (Sky Wiki 英語)', 'Spirits (Sky Wiki English)'))}</a>
+          </span><br>
+          <span style="font-size:12px; margin-top:4px; display:inline-block;">
+            <a href="#/tai-info">${escapeHtml(tt('設定・クレジット・プライバシーポリシー', 'Settings & Credits / Privacy Policy'))}</a>
+          </span>
+        </footer>
       </div>
 
       <div class="sc-detail-overlay" id="scDetailOverlay">

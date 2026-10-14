@@ -26,6 +26,7 @@ import {
 } from '../../js/state.js';
 import { CURRENT_LANG, trEvent, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
+import { appendItemFooter } from './item-footer.js';
 
 /* 季節・日々の登場順（イベント名順ソート／絞り込みセレクトの並び順）。
    item/cape.html他、全カテゴリページで完全に同一の定数として定義されて
@@ -56,6 +57,10 @@ let gridCols = 'auto';
 // 後から解決してcontainerを上書きしてしまわないようにするためのトークン
 let mountToken = 0;
 
+// 「タイプ」絞り込み・タイプ順・タイプ表示は、元サイトでもこの3カテゴリだけ（他のカテゴリのitem.typeは内部分類）
+const TYPE_FILTER_CATS = ['portable_item', 'large_placeable', 'small_placeable'];
+function typeEnabled() { return !!categoryConfig && TYPE_FILTER_CATS.includes(categoryConfig.key); }
+
 export async function mount(container, catConfig) {
   const myToken = ++mountToken;
   injectStyles();
@@ -85,6 +90,7 @@ export async function mount(container, catConfig) {
   gridCols = getGridCols();
 
   container.innerHTML = renderShell(catConfig);
+  appendItemFooter(container, catConfig.key);
 
   window.__catViewToggleOwned = handleToggleOwned;
   window.__catViewToggleFav = handleToggleFav;
@@ -135,7 +141,7 @@ function renderShell(cfg) {
   const hasColorData = categoryItems.some(item => item.color);
   // 同様に「タイプ」絞り込み・タイプ順の並び替えも、item.typeを持つカテゴリ
   // （元実装では 大きい設置アイテム・持ち物アイテム・小さい設置アイテム）だけに出す
-  const hasTypeData = categoryItems.some(item => item.type);
+  const hasTypeData = typeEnabled() && categoryItems.some(item => item.type);
 
   return `
     <div class="item-view">
@@ -471,7 +477,7 @@ function filterAndRender() {
       en ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色${item.dye ? 'あり' : 'なし'}`,
       item.noReprint ? (en ? 'No Re-release' : '復刻なし') : '',
       item.color ? (en ? `Color: ${item.color}` : `色:${item.color}`) : '',
-      item.type || '',
+      typeEnabled() ? (item.type || '') : '',
     ].filter(Boolean).join(' ／ ');
 
     return `
@@ -513,7 +519,7 @@ function filterAndRender() {
               <span class="cv-badge ${item.dye ? 'cv-badge-dye-o' : ''}">${en ? 'Dye' : '染色'} ${item.dye ? '<svg class="inline-icon" width="14" height="14" style="vertical-align:-2px"><use href="#i-check"/></svg>' : '<svg class="inline-icon" width="14" height="14" style="vertical-align:-2px"><use href="#i-close"/></svg>'}</span>
               ${item.noReprint ? `<span class="cv-badge cv-badge-no-reprint">${en ? 'No Re-release' : '復刻なし'}</span>` : ''}
               ${item.color ? `<span class="cv-badge cv-badge-color">${item.color}</span>` : ''}
-              ${item.type ? `<span class="cv-badge cv-badge-color">${item.type}</span>` : ''}
+              ${typeEnabled() && item.type ? `<span class="cv-badge cv-badge-color">${item.type}</span>` : ''}
             </div>
           </div>
         </div>

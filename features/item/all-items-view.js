@@ -44,6 +44,7 @@ import { CATEGORY_REGISTRY } from './data/categories.js';
 import { isSeasonLikeEvent } from './data/season-data.js';
 import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
+import { appendItemFooter } from './item-footer.js';
 import { injectCategoryViewStyles, showCatViewToast, EVENT_ORDER } from './category-view.js';
 
 // 12種のウェアラブルカテゴリのみが対象（section:'special' の楽譜は別形状のデータのため対象外）
@@ -128,6 +129,7 @@ export async function mount(container) {
   viewMode = getViewMode() === 'list' ? 'list' : 'grid';
   gridCols = getGridCols();
   container.innerHTML = renderShell();
+  appendItemFooter(container, 'all');
   buildEventOptions();
   wireControls();
   renderAll();

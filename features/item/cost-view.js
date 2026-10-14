@@ -26,6 +26,7 @@ import { ITEM_COST_DATA } from './data/cost-data.js';
 import { MUSIC_SHEETS, CAT_KEY as MUSIC_SHEET_CAT_KEY } from './data/music-sheets-data.js';
 import { seasonPendantIconHtml } from './data/season-pendant-icons.js';
 import * as costShare from './cost-share.js';
+import { appendItemFooter } from './item-footer.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 
 const STYLE_ID = 'item-cost-view-styles';
@@ -1515,6 +1516,7 @@ export function mount(container) {
   const token = ++mountToken;
 
   hostEl.innerHTML = renderShell();
+  appendItemFooter(hostEl, 'cost');
   exposeHandlers();
 
   populateGiftCatSelect();

@@ -88,7 +88,8 @@ export const SITE_CATALOG = [
     'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1',
     'taiScoreTitles_v1', 'taiScoreLibrarySort_v1', 'taiScoreMetronomeEnabled_v1',
   ] },
-  { id: 'tai-card', label: '星紡ぎカード', labelEn: 'Star-Spinning Cards', namespaced: true, hidden: true, keys: [
+  // 🩹 旧サイト(tai-transfer)2026-09-26の修正を反映: 星紡ぎカードは公開済みなのでバックアップ対象に表示する
+  { id: 'tai-card', label: '星紡ぎカード', labelEn: 'Star-Spinning Cards', namespaced: true, keys: [
     'taiCardState_v1',
   ] },
   { id: 'currency', label: '所持通貨（共通）', labelEn: 'Owned Currency (Shared)', namespaced: true, keys: [

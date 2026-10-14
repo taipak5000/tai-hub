@@ -434,10 +434,15 @@ function wireEvents() {
   els.fillCurrentBtn.addEventListener('click', () => {
     if (currentCommitTimer) clearTimeout(currentCommitTimer);
     const before = Math.max(0, parseFloat(els.current.value) || 0);
-    const newVal = Math.max(0, S.readOwnedCandle());
+    // 共有の所持キャンドル数をベースに、「1日の集めペース」（目標ごとの個別ペースがあればそちら）の
+    // 分を上乗せして反映する。まだ反映されていない「今日の集め分」も一緒に見込んでおける
+    const globalDailyRate = Math.max(0, Math.min(25, parseInt(els.dailyRate.value, 10) || 0));
+    const dailyRate = currentEffectiveDailyRate(globalDailyRate);
+    const newVal = Math.max(0, S.readOwnedCandle()) + dailyRate;
     els.current.value = newVal;
     update();
     saveState();
+    syncCurrentToSharedCurrency(); // 他の確定操作ボタンと同じく、共有ストレージ(wishOwnCurrency.candle)へも即反映
     recordHistory('history.entryFillCurrent', Math.round((newVal - before) * 100) / 100);
     syncCommittedCurrent();
   });
@@ -963,6 +968,8 @@ function update() {
   els.dailyRate.style.setProperty('--fill', sliderPct + '%');
   els.dailyRateReadout.textContent = t(globalDailyRate === 1 ? 'pace.dailyRateReadoutOne' : 'pace.dailyRateReadout', { n: globalDailyRate }) + (globalDailyRate === 20 ? t('pace.ashRouteNote') : '');
   els.finishTodayBtn.innerHTML = t(dailyRate === 1 ? 'pace.finishTodayBtnOne' : 'pace.finishTodayBtn', { n: dailyRate });
+  // 「一日のペースから反映」ボタンにも、実際に加算される1日の集めペース分を表示する（押す前にどれだけ増えるか分かるように）
+  els.fillCurrentBtn.innerHTML = t(dailyRate === 1 ? 'goal.fillCurrentBtnPaceOne' : 'goal.fillCurrentBtnPace', { n: dailyRate });
   els.finishTodayBtn.disabled = dailyRate <= 0;
   updateGoalPaceOverrideVisibility();
 
@@ -988,7 +995,20 @@ function update() {
   }
 
   if (target <= 0) {
-    html = '<p class="state-message">' + t('result.enterTarget') + '</p>';
+    // 目標本数が未入力でも、1日の集めペースが設定されていれば「このペースなら何日後にどれくらい貯まるか」の
+    // 見込みだけは示す。ペース自体が0（ハート消費で相殺されている場合を含む）の時だけ従来の案内に留める
+    if (totalDaily > 0) {
+      const weekTotal = current + totalDaily * 7;
+      const monthTotal = current + totalDaily * 30;
+      html =
+        '<div class="hero-stat">' + t(S.isOnePlural(totalDaily) ? 'result.paceOnlyHeroTemplateOne' : 'result.paceOnlyHeroTemplate', { n: S.fmt(totalDaily) }) + '</div>' +
+        '<p class="stat-line">' + t('result.paceOnlyWeekTemplate', { n: S.fmt(weekTotal) }) + '</p>' +
+        '<p class="stat-line">' + t('result.paceOnlyMonthTemplate', { n: S.fmt(monthTotal) }) + '</p>' +
+        '<p class="breakdown">' + dailyLine + '</p>' +
+        '<p class="note">' + t('result.paceOnlyNote') + '</p>';
+    } else {
+      html = '<p class="state-message">' + t('result.enterTarget') + '</p>';
+    }
   } else if (remaining <= 0) {
     html =
       '<p class="state-message achieved">' + t('result.achieved') + '</p>' +

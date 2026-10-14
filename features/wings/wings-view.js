@@ -263,6 +263,27 @@ function renderShell() {
       </div>
     </div>
    </div>
+   <footer style="text-align:center; padding:24px 16px; color:var(--hub-text-2); font-size:13px; border-top:1px solid var(--hub-sep); margin-top:40px; line-height:1.6;">
+     <span>${t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.')}</span><br>
+     <span>${t('作成・ご意見:', 'Created by / feedback:')}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--hub-accent); font-weight:bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="color:var(--hub-accent); font-weight:bold;">${t('リクエストフォーム', 'Request form')}</a><br>
+     <span style="font-size:12px; margin-top:4px; display:inline-block;">
+       <span>${t('参考:', 'References:')}</span>
+       <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E6%97%85%E3%81%99%E3%82%8B%E7%B2%BE%E9%9C%8A" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('旅する精霊 (Sky Wiki 日本語)', 'Traveling Spirits (Sky Wiki Japanese)')}</a>
+       ／
+       <a href="https://sky-children-of-the-light.fandom.com/wiki/Traveling_Spirit" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('Traveling Spirits (Sky Wiki 英語)', 'Traveling Spirits (Sky Wiki English)')}</a>
+       ／
+       <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E9%80%9A%E5%B8%B8%E7%B2%BE%E9%9C%8A" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('通常精霊 (Sky Wiki 日本語)', 'Regular Spirits (Sky Wiki Japanese)')}</a>
+       ／
+       <a href="https://sky-children-of-the-light.fandom.com/wiki/Regular_Spirit" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('Regular Spirits (Sky Wiki 英語)', 'Regular Spirits (Sky Wiki English)')}</a>
+       ／
+       <a href="https://sky-children-of-the-light.fandom.com/ja/wiki/%E5%85%89%E3%81%AE%E5%AD%90" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('光の子 (Sky Wiki 日本語)', 'Children of Light (Sky Wiki Japanese)')}</a>
+       ／
+       <a href="https://sky-children-of-the-light.fandom.com/wiki/Children_of_Light" target="_blank" rel="noopener noreferrer" style="color: var(--hub-accent);">${t('Children of Light (Sky Wiki 英語)', 'Children of Light (Sky Wiki English)')}</a>
+     </span><br>
+     <span style="font-size:12px; margin-top:4px; display:inline-block;">
+       <a href="#/tai-info" style="color: var(--hub-accent);">${t('設定・クレジット・プライバシーポリシー', 'Settings & Credits / Privacy Policy')}</a>
+     </span>
+   </footer>
   </div>`;
 }
 
