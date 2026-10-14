@@ -85,9 +85,13 @@
      tai-nomacan/share等と同じ方式でこのファイル専用のローカルスプライト
      （cp-i-* プレフィックス）を追加注入している。
    ================================================================ */
-import { CURRENT_LANG } from '../../js/i18n.js';
+import { CURRENT_LANG, RAW_LANG } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
+import {
+  TRANSLATIONS_ZH_TW, TRANSLATIONS_KO, NAME_ZH_TW, NAME_KO, TYPE_LABELS_ZH_TW, TYPE_LABELS_KO,
+  FORECAST_TIER_LABELS_ZH_TW, FORECAST_TIER_LABELS_KO, FIRST_UNLOCK_SUFFIX_I18N, DATE_LOCALE_I18N,
+} from './data/i18n-zh-ko.js';
 import {
   createDefaultSpiritsData, TIER_TOTAL_OVERRIDES,
   CURRENT_SEASON_NAME, SEASON_START, SEASON_END,
@@ -349,8 +353,12 @@ const TRANSLATIONS = {
     footer_source_van_gogh_en: 'Dear Van Gogh (Sky Wiki English)',
   },
 };
+// この精霊同行ツールだけは4言語(ja/en/zh-TW/ko)に対応する（js/i18n.jsのRAW_LANGを読む。
+// 他のツールはja/enの2言語のまま）。繁體中文・한국어の文言は data/i18n-zh-ko.js
+const LANG = RAW_LANG;
+const ALL_TRANSLATIONS = { ...TRANSLATIONS, 'zh-TW': TRANSLATIONS_ZH_TW, ko: TRANSLATIONS_KO };
 function t(key, vars) {
-  const dict = TRANSLATIONS[CURRENT_LANG] || TRANSLATIONS.ja;
+  const dict = ALL_TRANSLATIONS[LANG] || TRANSLATIONS.ja;
   let str = dict[key] !== undefined ? dict[key] : (TRANSLATIONS.ja[key] !== undefined ? TRANSLATIONS.ja[key] : key);
   if (vars) Object.keys(vars).forEach(k => { str = str.split('{' + k + '}').join(vars[k]); });
   return str;
@@ -381,10 +389,13 @@ const TYPE_LABELS_EN = { walk: 'Emote', magic: 'Spell', seasonal: 'Seasonal Item
 // 「遥かなる真珠の季節」の公式の英語名は未確認のため、判明するまでは日本語名をそのまま表示する
 // （判明したら、ここを英語名に差し替える）。
 const SEASON_NAME_EN = CURRENT_SEASON_NAME;
-const FIRST_UNLOCK_SUFFIX = CURRENT_LANG === 'en' ? ' (Initial Unlock)' : ' (初回解放)';
+const FIRST_UNLOCK_SUFFIX = FIRST_UNLOCK_SUFFIX_I18N[LANG] || ' (初回解放)';
 function spiritNameOf(spirit) { return CURRENT_LANG === 'en' ? (SPIRIT_NAME_EN[spirit.name] || spirit.name) : spirit.name; }
-function translateItemName(str) { return CURRENT_LANG === 'en' ? (NAME_EN[str] || str) : str; }
-const TYPE_LABELS = CURRENT_LANG === 'en' ? TYPE_LABELS_EN : TYPE_LABELS_JA;
+const NAME_I18N = { en: NAME_EN, 'zh-TW': NAME_ZH_TW, ko: NAME_KO };
+function translateItemName(str) { const m = NAME_I18N[LANG]; return m ? (m[str] || str) : str; }
+const TYPE_LABELS = { en: TYPE_LABELS_EN, 'zh-TW': TYPE_LABELS_ZH_TW, ko: TYPE_LABELS_KO }[LANG] || TYPE_LABELS_JA;
+// 日付表示のロケール（Intl.DateTimeFormat用）
+const DATE_LOCALE = DATE_LOCALE_I18N[LANG] || 'ja-JP';
 const CIRCLED_NUMS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
 const TYPE_ICONS = { walk: 'cp-i-tree-emote', magic: 'cp-i-tree-magic', seasonal: 'cp-i-tree-bloom', dye: 'cp-i-tree-dye' };
 // 🖼️ 種別ごとのカスタム画像。魔法アイテムの渦巻きアイコンは全精霊共通の実機画像。
@@ -1247,7 +1258,7 @@ function buildSetup(Vue) {
        ================================================================ */
     const FORECAST_TIER_LABELS_JA = { tier4: '第4層', tier3: '第3層', tier2: '第2層', tier1: '第1層' };
     const FORECAST_TIER_LABELS_EN = { tier4: 'Tier 4', tier3: 'Tier 3', tier2: 'Tier 2', tier1: 'Tier 1' };
-    const FORECAST_TIER_LABELS = CURRENT_LANG === 'en' ? FORECAST_TIER_LABELS_EN : FORECAST_TIER_LABELS_JA;
+    const FORECAST_TIER_LABELS = { en: FORECAST_TIER_LABELS_EN, 'zh-TW': FORECAST_TIER_LABELS_ZH_TW, ko: FORECAST_TIER_LABELS_KO }[LANG] || FORECAST_TIER_LABELS_JA;
     const getForecastData = (spirit) => {
       let heartItem = null;
       const tierOrder = ['tier1', 'tier2', 'tier3', 'tier4'];
@@ -1476,7 +1487,7 @@ function buildSetup(Vue) {
           const estDate = new Date(now);
           estDate.setDate(estDate.getDate() + daysNeeded);
           row.inSeason = estDate <= SEASON_END;
-          const locale = CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP';
+          const locale = DATE_LOCALE;
           row.dateText = new Intl.DateTimeFormat(locale, { month: 'numeric', day: 'numeric' }).format(estDate);
         }
         return row;
@@ -1618,8 +1629,8 @@ function buildSetup(Vue) {
       const totalSeconds = Math.floor(diffMs / 1000);
       return { ended: false, phase: before ? 'before' : 'active', days: Math.floor(totalSeconds / 86400), hours: Math.floor((totalSeconds % 86400) / 3600), minutes: Math.floor((totalSeconds % 3600) / 60), seconds: totalSeconds % 60 };
     });
-    const seasonStartText = computed(() => new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_START));
-    const seasonEndText = computed(() => new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_END));
+    const seasonStartText = computed(() => new Intl.DateTimeFormat(DATE_LOCALE, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_START));
+    const seasonEndText = computed(() => new Intl.DateTimeFormat(DATE_LOCALE, { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(SEASON_END));
 
     /* ================================================================
        🎯 進捗ステータス文言・「あと何日で到達するか」の目安

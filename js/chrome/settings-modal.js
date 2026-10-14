@@ -8,7 +8,7 @@
    切り替わり、「‹ 表示設定」で設定一覧へ戻る。着せ替え画面の間だけシートは背景を
    暗くせず外側の操作も止めない（色を変えながら実際の画面で確かめられる。css/theme.css の .ts-live）。
    ================================================================ */
-import { CURRENT_LANG, setLang, escapeHtml } from '../i18n.js';
+import { CURRENT_LANG, RAW_LANG, setLang, escapeHtml } from '../i18n.js';
 import {
   getSkyThemeMode, toggleTheme, exportAllData, parseImportFile, importAllData, wipeAllData,
   getShortcutsEnabled, setShortcutsEnabled, getShowTitlesEnabled, setShowTitlesEnabled,
@@ -89,8 +89,10 @@ function renderMain() {
       <div class="settings-row">
         <span>${t('言語', 'Language')}</span>
         <div class="settings-lang-group">
-          <button type="button" class="settings-btn${CURRENT_LANG === 'ja' ? ' active' : ''}" id="settingsLangJaBtn">日本語</button>
-          <button type="button" class="settings-btn${CURRENT_LANG === 'en' ? ' active' : ''}" id="settingsLangEnBtn">English</button>
+          <button type="button" class="settings-btn${RAW_LANG === 'ja' ? ' active' : ''}" id="settingsLangJaBtn">日本語</button>
+          <button type="button" class="settings-btn${RAW_LANG === 'en' ? ' active' : ''}" id="settingsLangEnBtn">English</button>
+          <button type="button" class="settings-btn${RAW_LANG === 'zh-TW' ? ' active' : ''}" id="settingsLangZhBtn">繁體中文</button>
+          <button type="button" class="settings-btn${RAW_LANG === 'ko' ? ' active' : ''}" id="settingsLangKoBtn">한국어</button>
         </div>
       </div>
       <div class="settings-row">
@@ -123,6 +125,8 @@ function renderMain() {
   document.getElementById('settingsStartRoute').addEventListener('change', e => setStartRoute(e.target.value));
   document.getElementById('settingsLangJaBtn').addEventListener('click', () => setLang('ja'));
   document.getElementById('settingsLangEnBtn').addEventListener('click', () => setLang('en'));
+  document.getElementById('settingsLangZhBtn').addEventListener('click', () => setLang('zh-TW'));
+  document.getElementById('settingsLangKoBtn').addEventListener('click', () => setLang('ko'));
   document.getElementById('settingsShortcutsCheckbox').addEventListener('change', e => setShortcutsEnabled(e.target.checked));
   document.getElementById('settingsShowTitlesCheckbox').addEventListener('change', e => setShowTitlesEnabled(e.target.checked));
   document.getElementById('settingsExportBtn').addEventListener('click', () => {

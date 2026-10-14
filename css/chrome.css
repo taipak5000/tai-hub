@@ -223,7 +223,7 @@
 .settings-nav-row:active { background: var(--hub-sep); }
 .settings-nav-label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .settings-nav-value { display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; color: var(--hub-text-2); }
-.settings-lang-group { display: flex; gap: 8px; }
+.settings-lang-group { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .settings-danger-btn { width: 100%; padding: 10px; border: 0; border-radius: 10px; background: rgba(255, 69, 58, 0.12); color: #ff453a; font-weight: 700; cursor: pointer; margin-top: 8px; }
 
 /* ── ツール引き出し ── */

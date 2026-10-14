@@ -10,13 +10,23 @@
 
 export const SITE_LANG_KEY = 'sky_app_lang';
 
+// 保存できる言語。zh-TW/ko は精霊同行ツール(companion)だけが対応していて、他のツールは
+// 元サイト群と同じく日本語表示にフォールバックする（getLang()はja/enの2値のまま）
+export const SITE_LANGS = ['ja', 'en', 'zh-TW', 'ko'];
+
+// 保存されている言語（4値）。精霊同行ツールなど、zh-TW/koを扱うものだけがこちらを読む
+export function getRawLang() {
+  let v = null;
+  try { v = localStorage.getItem(SITE_LANG_KEY); } catch (e) { /* noop */ }
+  return SITE_LANGS.includes(v) ? v : 'ja';
+}
+
 export function getLang() {
-  const v = localStorage.getItem(SITE_LANG_KEY);
-  return v === 'en' ? 'en' : 'ja';
+  return getRawLang() === 'en' ? 'en' : 'ja';
 }
 
 export function setLang(lang) {
-  localStorage.setItem(SITE_LANG_KEY, lang === 'en' ? 'en' : 'ja');
+  localStorage.setItem(SITE_LANG_KEY, SITE_LANGS.includes(lang) ? lang : 'ja');
   location.reload();
 }
 
@@ -25,6 +35,7 @@ export function toggleLang() {
 }
 
 export const CURRENT_LANG = getLang();
+export const RAW_LANG = getRawLang(); // zh-TW/ko を含む4値（精霊同行ツール用）
 
 // 季節・日々・コラボイベント名の日本語→英語対応表（item/i18n.jsと同一）
 export const SEASON_NAME_EN = {
