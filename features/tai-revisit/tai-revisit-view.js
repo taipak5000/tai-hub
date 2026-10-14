@@ -555,6 +555,11 @@ function renderShell() {
             <span>${escapeHtml(t('introPart2'))}</span></p>
         </div>
 
+        <div class="tr-quick-jump">
+          <button type="button" class="tr-quick-btn" id="trJumpSearchBtn" title="${CURRENT_LANG === 'en' ? 'Search' : '検索'}" aria-label="${CURRENT_LANG === 'en' ? 'Jump to search' : '検索欄へ移動'}"><svg class="inline-icon" width="20" height="20"><use href="#i-search"/></svg></button>
+          <button type="button" class="tr-quick-btn" id="trJumpNeverBtn" title="${CURRENT_LANG === 'en' ? 'Unvisited' : '未再訪'}" aria-label="${CURRENT_LANG === 'en' ? 'Jump to never-revisited spirits' : '未再訪の精霊へ移動'}"><svg class="inline-icon" width="20" height="20"><use href="#i-sparkle"/></svg></button>
+        </div>
+
         <p class="sec-label">${escapeHtml(t('upcomingSectionLabel'))}</p>
         <div class="sec-sub">${escapeHtml(t('upcomingSectionSub'))}</div>
         <div class="spirit-list" id="trUpcomingList"></div>
@@ -657,6 +662,16 @@ function wireEvents() {
   els.areaFilter.addEventListener('change', render);
   els.sortMode.addEventListener('change', render);
   els.clearAllFiltersBtn.addEventListener('click', clearAllFilters);
+  // 画面右下の「検索」「未再訪」ジャンプ（旧サイトの下部ドックにあったクイックアクセス）
+  containerEl.querySelector('#trJumpSearchBtn').addEventListener('click', () => {
+    els.searchInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // 既に画面内なら余計なスクロールはしない
+    els.searchInput.focus();
+  });
+  containerEl.querySelector('#trJumpNeverBtn').addEventListener('click', () => {
+    const section = containerEl.querySelector('#trNeverRevisitedSection');
+    section.open = true;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   els.neverRevisitedSearchInput.addEventListener('input', renderNeverRevisited);
   els.neverRevisitedSeasonFilter.addEventListener('change', renderNeverRevisited);
   els.seasonOverviewList.addEventListener('click', (e) => {
