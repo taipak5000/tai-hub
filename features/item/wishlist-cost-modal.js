@@ -35,25 +35,15 @@
    のように呼び出す想定（search-modal.js と同じ import-as-namespace の作法）。
 
    ── 元実装からの意図的な簡略化・注記（何を・なぜ） ────────────────
-   1. 楽譜（music_sheet）のウィッシュリストはこの合計に合流させていない
-      （タスク指示により明示的に12カテゴリのみがスコープ。元実装は
-      music_sheet.htmlを自己fetchして合流させていたが、tai-hubでは
-      楽譜のコスト算出そのものが別データ形状でありcost-view.js側でも
-      対応済み未移植のため、対称に扱っている）。
+   1. 楽譜（music_sheet）のウィッシュリストも、元実装と同じくこの合計に合流させる
+      （価格はMUSIC_SHEETSのprice。キャンドル価格が無い楽譜は「価格不明」扱い）。
    2. アイテムの実在確認は ITEM_COST_DATA[catKey] を一次データとして行う
       （cost-view.jsのcomputeAllItems()と同じ前提）。そのため、万一
       wish_<catKey>にcost-data.js未収録のidが残っていた場合はその行を
       表示しない（元実装はカテゴリの全アイテム一覧を一次データにしていた
       ため「価格不明」として表示していたが、cost-data.js は12カテゴリの
       全アイテムを網羅する設計のため、実運用上この差は表面化しない想定）。
-   3. ヒント文言を「アイテム検索」ではなく「各カテゴリページ／アイテム別
-      コストページのカートボタン」に変更した。tai-hub側のsearch-modal.js
-      （横断アイテム検索モーダル）はウィッシュリスト追加ボタンを意図的に
-      実装していない（同ファイルの既知の簡略化事項として明記済み）ため、
-      実際に追加できる場所を案内するよう文言を実情に合わせた。
-   4. X/Twitterへの共有機能は対象外（このモーダル自体に元々存在しない
-      ため省略ではなく非対応。共有系機能はcost-view.jsの簡略化事項と
-      同じ理由でtai-hub全体として今回スコープ外）。
+   3. X/Twitterへの共有機能は無い（元実装のこのモーダルにも存在しない）。
    上記以外（所持中は自動的に合計から除外、通貨種別ごとの合計・不足分
    （あと◯本／足りています）の算出ロジック、価格不明件数の集計）は
    元実装のロジックをそのまま移植している。
@@ -63,9 +53,11 @@ import { CURRENT_LANG, trCat, trItem, trSource, escapeHtml } from '../../js/i18n
 import { getCategoryState, getWishIds, removeWishItem, nsKey } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { ITEM_COST_DATA } from './data/cost-data.js';
+import { MUSIC_SHEETS, CAT_KEY as MUSIC_SHEET_CAT_KEY } from './data/music-sheets-data.js';
 
-// 12種のウェアラブルカテゴリのみ（section:'special'の楽譜は対象外）
+// 12種のウェアラブルカテゴリ（楽譜は別形状のデータなので、getWishRows()で別枠として合流させる）
 const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid');
+const MUSIC_CATEGORY = CATEGORY_REGISTRY.find(c => c.key === MUSIC_SHEET_CAT_KEY);
 
 const STYLE_ID = 'wishlist-cost-modal-styles';
 const OVERLAY_ID = 'wishCostModalOverlay';
@@ -238,6 +230,23 @@ function getWishRows() {
       });
     });
   });
+
+  // 🎼 楽譜（Music Sheets）：他のカテゴリと同じ行の形に変換して合流させる
+  if (MUSIC_CATEGORY) {
+    const musicOwned = getCategoryState(MUSIC_SHEET_CAT_KEY).owned;
+    getWishIds(MUSIC_SHEET_CAT_KEY).forEach(id => {
+      const s = MUSIC_SHEETS.find(m => m.id === id);
+      if (!s) return;
+      rows.push({
+        cat: MUSIC_CATEGORY, id,
+        name: s.name, nameEn: s.nameEn,
+        source: s.season,
+        cost: typeof s.price === 'number' ? { type: 'candle', value: s.price } : { type: 'unknown' },
+        img: s.img,
+        owned: !!musicOwned[id],
+      });
+    });
+  }
   return rows;
 }
 
