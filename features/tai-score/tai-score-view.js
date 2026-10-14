@@ -242,7 +242,7 @@ function renderShell() {
       <span>${escapeHtml(t('footerCreditLabel'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
       <a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(t('footerRequestForm'))}</a><br>
       <span style="font-size:12px; margin-top:4px; display:inline-block;">
-        <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer">${escapeHtml(t('footerInfoLink'))}</a>
+        <a href="#/tai-info">${escapeHtml(t('footerInfoLink'))}</a>
       </span>
     </footer>
 

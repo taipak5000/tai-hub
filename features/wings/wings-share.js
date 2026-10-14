@@ -22,13 +22,14 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
+import { toolShareUrl } from '../../js/site-config.js';
 import {
   getWingStats, SHARE_THEMES, loadShareCustomize, saveShareCustomize,
 } from './wings-state.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
-const SITE_URL = 'https://taipak5000.github.io/wings/';
+const SITE_URL = toolShareUrl('wings');
 const SHARE_HASHTAG = '#Sky羽トラッカー';
 const OVERLAY_ID = 'wingsShareModalOverlay';
 const PREVIEW_OVERLAY_ID = 'wingsSharePreviewOverlay';

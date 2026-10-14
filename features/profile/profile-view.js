@@ -218,7 +218,7 @@ function renderShell() {
 
       <p class="footnote" style="margin-top:6px;">${escapeHtml(t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This site is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</p>
         <p class="footnote">${escapeHtml('// ' + footnoteText)}</p>
-        <p class="footnote" style="margin-top:6px;"><a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" class="pv-footnote-link">${escapeHtml(t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy'))}</a></p>
+        <p class="footnote" style="margin-top:6px;"><a href="#/tai-info" class="pv-footnote-link">${escapeHtml(t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy'))}</a></p>
     </div>
     <div class="pv-toast" id="pvToast" role="status" aria-live="polite"></div>
     </div>

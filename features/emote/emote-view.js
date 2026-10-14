@@ -305,7 +305,7 @@ function buildShell() {
             <a href="https://sky-children-of-the-light.fandom.com/wiki/Expressions" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:underline;">${t('Expressions (Sky Wiki 英語)', 'Expressions (Sky Wiki English)')}</a>
           </span><br>
           <span style="color:var(--text-2); font-size:12px; margin-top:4px; display:inline-block;">
-            <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer" style="color:var(--blue); text-decoration:underline;">${t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy')}</a>
+            <a href="#/tai-info" style="color:var(--blue); text-decoration:underline;">${t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy')}</a>
           </span>
         </footer>
       </div>

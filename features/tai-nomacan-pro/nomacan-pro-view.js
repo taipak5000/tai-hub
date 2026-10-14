@@ -443,7 +443,7 @@ function renderShell() {
           <a href="https://sky-children-of-the-light.fandom.com/wiki/Additional_Light_Sources" target="_blank" rel="noopener noreferrer">Additional Light Sources (Sky Wiki)</a>
         </span><br>
         <span class="nmp-footer-sub">
-          <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer">${escHtml(t('footer.infoLink'))}</a>
+          <a href="#/tai-info">${escHtml(t('footer.infoLink'))}</a>
         </span>
       </footer>
     </div>

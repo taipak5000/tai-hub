@@ -600,7 +600,7 @@ const TEMPLATE = `
     {{ t('footer.disclaimer') }}<br>
     {{ t('footer.createdBy') }} <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" class="sv-footer-credit-link">@Skyzztai</a><br>
     <span class="sv-footer-sub">
-      <a href="https://taipak5000.github.io/tai-info/" target="_blank" rel="noopener noreferrer">{{ t('footer.settingsLink') }}</a>
+      <a href="#/tai-info">{{ t('footer.settingsLink') }}</a>
     </span>
   </footer>
 </div>

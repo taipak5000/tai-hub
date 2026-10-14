@@ -35,6 +35,7 @@
    ================================================================ */
 import { nsKey, getActiveProfileId } from '../../js/state.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
+import { toolShareUrl } from '../../js/site-config.js';
 import { t } from './data/i18n-tai-card.js';
 import * as S from './tai-card-state.js';
 
@@ -370,7 +371,7 @@ function renderShell() {
       <footer>
         <p>${escapeHtml(t('footerDisclaimer'))}</p>
         <p style="margin-top:10px;"><span>${escapeHtml(t('footerCreditLabel'))}</span><a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer" style="font-weight:bold;">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer" style="font-weight:bold;">${escapeHtml(t('footerRequestForm'))}</a></p>
-        <p style="margin-top:10px;"><a href="https://taipak5000.github.io/tai-info/">${escapeHtml(t('footerInfoLink'))}</a></p>
+        <p style="margin-top:10px;"><a href="#/tai-info">${escapeHtml(t('footerInfoLink'))}</a></p>
       </footer>
     </div>
     <div class="tc-toast" id="tcToast"></div>`;
@@ -1396,7 +1397,7 @@ function showQuotaToast(msgKey) { showToast(t(msgKey)); }
 /* ================================================================
    画像を保存 / Xへ投稿（html2canvas。CDNから遅延読み込み）
    ================================================================ */
-const SITE_URL = 'https://taipak5000.github.io/tai-card/';
+const SITE_URL = toolShareUrl('tai-card');
 function buildShareText() { return t('shareTweetTemplate', { url: SITE_URL }); }
 
 function showToast(msg) {

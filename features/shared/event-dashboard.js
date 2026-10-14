@@ -743,6 +743,9 @@ function ensureRemindersInited() {
   }
 }
 
+/** js/app.jsが起動時に呼ぶ。ダッシュボードを開かなくても、オプトイン済み・許可済みなら通知のチェックを始める */
+export function startRemindersIfEnabled() { ensureRemindersInited(); }
+
 /* ================================================================
    🖼️ スタイル・ローカルアイコンスプライトの注入（初回のみ）
    共有 js/icon-sprite.js（#pf-icon-sprite）に無いアイコンだけ、

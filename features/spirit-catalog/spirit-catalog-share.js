@@ -32,12 +32,13 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
+import { toolShareUrl } from '../../js/site-config.js';
 import { t } from './data/i18n-catalog.js';
 import {
   getSpiritStats, SHARE_THEMES, loadShareCustomize, saveShareCustomize,
 } from './spirit-catalog-state.js';
 
-const SITE_URL = 'https://taipak5000.github.io/tai-catalog/';
+const SITE_URL = toolShareUrl('spirit-catalog');
 const SHARE_HASHTAG_JA = '#Sky精霊ツリー管理';
 const SHARE_HASHTAG_EN = '#SkySpiritTree';
 // ツイート本文の他の部分と同じくCURRENT_LANGに応じてハッシュタグも切り替える

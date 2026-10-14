@@ -42,7 +42,16 @@
       } catch (e) { /* キャッシュが無い・壊れている場合は標準の配色のまま */ }
     })();
   </script>
-  <title>tai-hub（試作）</title>
+  <title>tai-hub - Sky ファンツールまとめ</title>
+  <meta name="description" content="Sky 星を紡ぐ子どもたち向けのファンツールを1つにまとめたアプリ。所持率管理・計算機・精霊ツリー・楽譜など。">
+  <!-- 📲 ホーム画面に追加・オフライン対応（manifest.json・service-worker.js。js/app.jsが登録する） -->
+  <meta name="theme-color" content="#FF9500">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/app-icon-192.png">
+  <link rel="apple-touch-icon" href="icons/app-icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="tai-hub">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/chrome.css">
   <link rel="stylesheet" href="css/item.css">

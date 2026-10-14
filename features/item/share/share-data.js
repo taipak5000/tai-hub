@@ -38,12 +38,13 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../../js/i18n.js';
+import { toolShareUrl } from '../../../js/site-config.js';
 import { getCategoryState } from '../../../js/state.js';
 import { CATEGORY_REGISTRY } from '../data/categories.js';
 
 export const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid');
 
-export const SITE_URL = 'https://taipak5000.github.io/tai-item/';
+export const SITE_URL = toolShareUrl('item');
 export const SHARE_HASHTAG = '#Skyアイテム所持率';
 export const FAV_SHARE_HASHTAG = '#Sky所持率管理お気に入り';
 

@@ -43,12 +43,13 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
+import { toolShareUrl } from '../../js/site-config.js';
 import { EMOTES } from './data/emotes.js';
 import { getStats, formatPct, loadOwned } from './emote-state.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
-const SITE_URL = 'https://taipak5000.github.io/tai-emote/';
+const SITE_URL = toolShareUrl('emote');
 const SHARE_HASHTAG = '#Skyエモート所持率';
 const SHARE_CUSTOMIZE_KEY = 'emoteShareCustomize_v1';
 const OVERLAY_ID = 'emoteShareCustomizeOverlay';

@@ -1,0 +1,14 @@
+{
+  "name": "tai-hub（Sky ファンツールまとめ）",
+  "short_name": "tai-hub",
+  "description": "Sky 星を紡ぐ子どもたち向けのファンツールを1つにまとめたアプリ（所持率管理・計算機・精霊ツリー・楽譜など）",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#FF9500",
+  "icons": [
+    { "src": "icons/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

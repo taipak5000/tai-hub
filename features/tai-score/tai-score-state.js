@@ -19,6 +19,7 @@
    ================================================================ */
 import { nsKey } from '../../js/state.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
+import { toolShareUrl } from '../../js/site-config.js';
 import { t } from './data/i18n-score.js';
 import { PITCHES, NOTE_ABC_CODES, instrumentCodeFromLabel, DEFAULT_KEY_BINDINGS } from './data/constants.js';
 
@@ -279,7 +280,7 @@ export function songToTextSheet(song) {
   const header = [
     `# 曲名: ${song.name || '無題'}`,
     `# BPM: ${song.bpm}　調: ${song.pitch}　楽器: ${instLabel}`,
-    `# tai-score (https://taipak5000.github.io/tai-score/) のテキスト譜面`,
+    `# tai-score (${toolShareUrl('tai-score')}) のテキスト譜面`,
     '',
   ].join('\n');
   return header + lines.join('\n');
