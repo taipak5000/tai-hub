@@ -14,15 +14,18 @@
    楽譜（music_sheet）はカテゴリ形状が異なり今回のダッシュボード同様に
    スコープ外のため、このコスト集計にも合流させない。
 
-   このファイル末尾のコメントに、元実装から意図的に省略・簡略化した
-   機能（X/Twitter画像シェア一式、プレゼント履歴・キャンドル課金ログの
-   高度な編集UI）を明記している。
+   画像共有（Xへ投稿）4種は cost-share.js、季節見出しのペンダント画像は
+   data/season-pendant-icons.js に分けてある。楽譜（music_sheet）は他の12カテゴリと
+   同じ形のアイテムに変換して、このコスト集計に合流させている（元実装と同じ）。
    ================================================================ */
 
 import { CURRENT_LANG, trEvent, trSource, trCat, trItem, escapeHtml } from '../../js/i18n.js';
-import { getCategoryState, isWishItem, toggleWishItem, nsKey } from '../../js/state.js';
+import { getCategoryState, isWishItem, toggleWishItem, nsKey, getItemAcquireLog } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { ITEM_COST_DATA } from './data/cost-data.js';
+import { MUSIC_SHEETS, CAT_KEY as MUSIC_SHEET_CAT_KEY } from './data/music-sheets-data.js';
+import { seasonPendantIconHtml } from './data/season-pendant-icons.js';
+import * as costShare from './cost-share.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 
 const STYLE_ID = 'item-cost-view-styles';
@@ -30,6 +33,7 @@ const STYLE_ID = 'item-cost-view-styles';
 // 12種のウェアラブルカテゴリのみ（section:'special' の music_sheet は対象外）
 const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid');
 const CAT_LABEL_MAP = Object.fromEntries(GRID_CATEGORIES.map(c => [c.key, c.name]));
+CAT_LABEL_MAP[MUSIC_SHEET_CAT_KEY] = '楽譜';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
@@ -198,6 +202,21 @@ function computeAllItems() {
     const imgMap = itemImagesByCat[catKey] || {};
     (ITEM_COST_DATA[catKey] || []).forEach(item => {
       all.push({ ...item, owned: !!owned[item.id], catKey, img: imgMap[item.id] });
+    });
+  });
+
+  // 🎼 楽譜（Music Sheets）：他の12カテゴリと全く同じ形（cost/owned/catKey）に変換して合流させる。
+  // price（キャンドル価格）がnull＝Wiki未記載の楽譜はcost.type='unknown'扱い（他カテゴリの
+  // 価格不明アイテムと同じ扱いで、集計からは自然に除外される）
+  const musicOwned = getCategoryState(MUSIC_SHEET_CAT_KEY).owned;
+  MUSIC_SHEETS.forEach(s => {
+    all.push({
+      id: s.id, name: s.name, nameEn: s.nameEn, source: s.season,
+      cost: typeof s.price === 'number'
+        ? { type: 'candle', value: s.price, note: s.note, noteEn: s.noteEn }
+        : { type: 'unknown', note: s.note, noteEn: s.noteEn },
+      dye: false, catKey: MUSIC_SHEET_CAT_KEY,
+      owned: !!musicOwned[s.id], img: s.img,
     });
   });
 
@@ -392,7 +411,7 @@ function renderItems() {
   SEASON_ORDER.forEach(season => {
     if (!seasonGroups[season]) return;
     const gid = `costGrp-${groupIndex++}`;
-    html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name"><svg class="inline-icon" width="15" height="15"><use href="#i-sparkle"/></svg> ${escapeHtml(trEvent(season))}</span><span class="cost-season-group-count">${seasonGroups[season].length}${itemUnit}</span></div>`;
+    html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name">${seasonPendantIconHtml(season, 16, 'i-sparkle')} ${escapeHtml(trEvent(season))}</span><span class="cost-season-group-count">${seasonGroups[season].length}${itemUnit}</span></div>`;
     html += seasonGroups[season].map(renderItemCard).join('');
     seasonOptions += `<option value="${gid}">${escapeHtml(trEvent(season))}（${seasonGroups[season].length}）</option>`;
   });
@@ -438,6 +457,8 @@ function jumpToGroup(gid) {
   const jumpSelect = hostEl.querySelector('#costJumpSelect');
   if (jumpSelect) jumpSelect.value = '';
 }
+
+let lastOwnedCount = 0, lastTotalItemCount = 0; // 共有画像（コスト集計カード）用
 
 function renderSummary(items) {
   let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, ownedCount = 0;
@@ -497,6 +518,8 @@ function renderSummary(items) {
   const candleDisplayMode = loadCandleDisplayMode();
   if (candleDisplayMode === 'combined') moneySum += candlePurchaseMoneySum;
 
+  lastOwnedCount = ownedCount;
+  lastTotalItemCount = items.length;
   const en = CURRENT_LANG === 'en';
   setText('#costSumCandle', `${candleSum.toLocaleString()}${en ? '' : '本'}`);
   setText('#costSumStarCandle', `${starCandleSum.toLocaleString()}${en ? '' : '本'}`);
@@ -618,9 +641,8 @@ function toggleGiftCard() { toggleCollapse('#costGiftBody', '#costGiftToggleIcon
 function toggleCandleCard() { toggleCollapse('#costCandleBody', '#costCandleToggleIcon'); }
 
 /* ================================================================
-   🎁 課金アイテムプレゼント履歴（簡略版：カテゴリ→アイテムの2段セレクト。
-   元実装の「全カテゴリ横断アイコン付き検索ピッカー」「追加後の相手名/日付
-   インライン編集」は省略——詳細はファイル末尾のコメントを参照）
+   🎁 課金アイテムプレゼント履歴（全カテゴリ横断のアイコン付きライブ検索ピッカー、
+   追加後の相手名・日付のインライン編集つき）
    ================================================================ */
 function setGiftDisplayMode(mode) {
   localStorage.setItem(giftDisplayModeKey(), mode === 'separate' ? 'separate' : 'combined');
@@ -636,6 +658,31 @@ function renderGiftDisplayModeToggle() {
   if (buttons[1]) { buttons[1].classList.toggle('active', mode === 'separate'); buttons[1].classList.toggle('free', mode === 'separate'); }
 }
 
+const ICON_IMAGE = '<svg class="inline-icon" width="16" height="16"><use href="#i-image"/></svg>';
+let giftSelected = null; // 選択中のアイテム { catKey, itemId }
+
+function giftCatLabel(catKey) {
+  return catKey === GIFT_PASS_CAT_KEY ? t('ギフトパス', 'Gift Pass') : trCat(CAT_LABEL_MAP[catKey] || catKey);
+}
+function giftItemImg(catKey, itemId) {
+  return (itemImagesByCat[catKey] || {})[itemId] || '';
+}
+// アイテム画像のサムネイル（画像が無い/読めない場合はアイコンにフォールバック）
+function giftThumbHtml(catKey, itemId, extraClass) {
+  const img = giftItemImg(catKey, itemId);
+  const fallback = catKey === GIFT_PASS_CAT_KEY ? ICON_GIFT : ICON_IMAGE;
+  return `<div class="cost-item-thumb ${extraClass || ''} ${img ? '' : 'img-fallback'}">`
+    + (img ? `<img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : '')
+    + `<span class="cost-item-thumb-fallback">${fallback}</span></div>`;
+}
+
+// 全カテゴリ横断でのアイテム名検索用：{ catKey, item } の平坦なリスト（ギフトパスを含む）
+function getAllGiftPickableEntries() {
+  const entries = [{ catKey: GIFT_PASS_CAT_KEY, item: GIFT_PASS_ITEM }];
+  GRID_CATEGORIES.forEach(cat => getGiftPickableItems(cat.key).forEach(it => entries.push({ catKey: cat.key, item: it })));
+  return entries;
+}
+
 function populateGiftCatSelect() {
   const sel = hostEl.querySelector('#costGiftCat');
   if (!sel) return;
@@ -644,41 +691,77 @@ function populateGiftCatSelect() {
     GRID_CATEGORIES.map(c => `<option value="${c.key}">${escapeHtml(trCat(c.name))}</option>`).join('');
 }
 
+// カテゴリ変更時：選択状態をリセットし、一覧を作り直す（入力中の検索語はそのまま残し、選んだカテゴリでさらに絞り込める）
 function onGiftCatChange() {
+  giftSelected = null;
+  renderGiftItemPicker();
+  updateGiftItemPreview();
+}
+
+// アイコン付きのアイテム一覧。カテゴリを選んでいればそのカテゴリ内、選んでいなければ全カテゴリ横断で名前検索できる
+function renderGiftItemPicker() {
+  const picker = hostEl && hostEl.querySelector('#costGiftPicker');
+  if (!picker) return;
+  const catKey = hostEl.querySelector('#costGiftCat').value;
+  const q = (hostEl.querySelector('#costGiftFilter').value || '').trim().toLowerCase();
+  const match = it => !q || it.name.toLowerCase().includes(q) || (it.nameEn && it.nameEn.toLowerCase().includes(q));
+
+  let entries;
+  if (catKey) {
+    entries = getGiftPickableItems(catKey).filter(match).map(it => ({ catKey, item: it }));
+  } else if (!q) {
+    picker.innerHTML = `<div class="cost-gift-picker-empty">${t('カテゴリを選ぶか、アイテム名を入力すると全カテゴリから検索できます。', 'Select a category above, or type an item name to search across all categories.')}</div>`;
+    return;
+  } else {
+    entries = getAllGiftPickableEntries().filter(({ item }) => match(item));
+  }
+  if (entries.length === 0) {
+    picker.innerHTML = `<div class="cost-gift-picker-empty">${t('該当するアイテムがありません', 'No matching items')}</div>`;
+    return;
+  }
+  picker.innerHTML = entries.map(({ catKey: ck, item: it }) => {
+    const selected = giftSelected && giftSelected.catKey === ck && giftSelected.itemId === it.id;
+    const catTag = catKey ? '' : `<span class="cost-gift-picker-cat">${escapeHtml(giftCatLabel(ck))}</span>`;
+    return `
+      <div class="cost-gift-picker-row ${selected ? 'selected' : ''}" role="button" tabindex="0"
+        onclick="window.__costViewSelectGift('${ck}','${it.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.__costViewSelectGift('${ck}','${it.id}')}">
+        ${giftThumbHtml(ck, it.id)}
+        <span class="cost-gift-picker-name">${escapeHtml(trItem(it))}</span>
+        ${catTag}
+        <span class="cost-gift-picker-cost">¥${it.cost.value.toLocaleString()}</span>
+      </div>`;
+  }).join('');
+}
+
+function selectGiftItem(catKey, itemId) {
+  giftSelected = { catKey, itemId };
   const catSel = hostEl.querySelector('#costGiftCat');
-  const itemSel = hostEl.querySelector('#costGiftItem');
-  if (!catSel || !itemSel) return;
-  const catKey = catSel.value;
-  if (!catKey) {
-    itemSel.innerHTML = `<option value="">${t('先にカテゴリを選択', 'Select a category first')}</option>`;
-    itemSel.disabled = true;
-    return;
-  }
-  const items = getGiftPickableItems(catKey);
-  itemSel.disabled = false;
-  if (items.length === 0) {
-    itemSel.innerHTML = `<option value="">${t('該当する実額アイテムがありません', 'No real-money items in this category')}</option>`;
-    return;
-  }
-  itemSel.innerHTML = `<option value="">${t('アイテムを選択', 'Select an item')}</option>` +
-    items.map(it => `<option value="${it.id}">${escapeHtml(trItem(it))}（¥${it.cost.value.toLocaleString()}）</option>`).join('');
+  if (catSel) catSel.value = catKey; // 横断検索で選んだ場合もカテゴリ選択と見た目を同期させる
+  renderGiftItemPicker();
+  updateGiftItemPreview();
+}
+
+// 選択中アイテムの画像とアイテム名をプレビュー表示する
+function updateGiftItemPreview() {
+  const preview = hostEl && hostEl.querySelector('#costGiftPreview');
+  if (!preview) return;
+  const it = giftSelected ? getGiftPickableItem(giftSelected.catKey, giftSelected.itemId) : null;
+  if (!it) { preview.style.display = 'none'; return; }
+  preview.innerHTML = `${giftThumbHtml(giftSelected.catKey, giftSelected.itemId)}<span class="cost-gift-preview-label">${escapeHtml(trItem(it))}</span>`;
+  preview.style.display = 'flex';
 }
 
 function addGiftRecord() {
-  const catSel = hostEl.querySelector('#costGiftCat');
-  const itemSel = hostEl.querySelector('#costGiftItem');
   const recipientEl = hostEl.querySelector('#costGiftRecipient');
   const dateEl = hostEl.querySelector('#costGiftDate');
-  const catKey = catSel ? catSel.value : '';
-  const itemId = itemSel ? itemSel.value : '';
-  if (!catKey || !itemId) {
+  if (!giftSelected) {
     showToast(t('カテゴリとアイテムを選択してください', 'Please select a category and item'));
     return;
   }
   const list = loadGiftHistory();
   list.push({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    catKey, itemId,
+    catKey: giftSelected.catKey, itemId: giftSelected.itemId,
     recipient: (recipientEl && recipientEl.value || '').trim(),
     date: (dateEl && dateEl.value) || '',
     include: true,
@@ -686,10 +769,13 @@ function addGiftRecord() {
   });
   saveGiftHistory(list);
 
+  giftSelected = null;
   if (recipientEl) recipientEl.value = '';
   if (dateEl) dateEl.value = '';
-  if (catSel) catSel.value = '';
-  onGiftCatChange(); // カテゴリ選択もリセットし、アイテムセレクトを「先にカテゴリを選択」状態に戻す
+  hostEl.querySelector('#costGiftCat').value = '';
+  hostEl.querySelector('#costGiftFilter').value = '';
+  renderGiftItemPicker();
+  updateGiftItemPreview();
   showToast(t('追加しました', 'Added'));
   renderGiftHistoryList();
   renderItems();
@@ -708,6 +794,17 @@ function toggleGiftInclude(id, checked) {
   renderItems();
 }
 
+// 相手・日付を後から編集する（再描画するとフォーカスが外れるため、保存だけしてリストは描き直さない）
+function updateGiftField(id, field, value) {
+  const list = loadGiftHistory();
+  const rec = list.find(g => g.id === id);
+  if (!rec) return;
+  rec[field] = value;
+  saveGiftHistory(list);
+  showToast(t('更新しました', 'Updated'));
+  renderItems();
+}
+
 function renderGiftHistoryList() {
   const el = hostEl.querySelector('#costGiftList');
   if (!el) return;
@@ -720,13 +817,18 @@ function renderGiftHistoryList() {
     const it = getGiftPickableItem(g.catKey, g.itemId);
     const itemName = it ? trItem(it) : g.itemId;
     const costTxt = (it && it.cost && it.cost.type === 'money') ? `¥${it.cost.value.toLocaleString()}` : t('データなし', 'No data');
-    const catLabel = g.catKey === GIFT_PASS_CAT_KEY ? t('ギフトパス', 'Gift Pass') : trCat(CAT_LABEL_MAP[g.catKey] || g.catKey);
-    const sub = [catLabel, g.recipient, g.date].filter(Boolean).join(' ・ ');
     return `
       <div class="cost-gift-record">
+        ${giftThumbHtml(g.catKey, g.itemId, 'cost-gift-record-thumb')}
         <div class="cost-gift-record-info">
           <b>${escapeHtml(itemName)}</b>（${costTxt}）
-          <div class="cost-gift-record-sub">${escapeHtml(sub)}</div>
+          <div class="cost-gift-record-sub">${escapeHtml(giftCatLabel(g.catKey))}</div>
+          <div class="cost-gift-edit-row">
+            <input type="text" class="cost-gift-edit-input" placeholder="${t('相手のプレイヤーネーム（任意）', "Recipient's name (optional)")}" maxlength="60" value="${escapeHtml(g.recipient || '')}"
+              onchange="window.__costViewUpdateGiftField('${g.id}','recipient',this.value.trim())">
+            <input type="date" class="cost-gift-edit-input" value="${escapeHtml(g.date || '')}"
+              onchange="window.__costViewUpdateGiftField('${g.id}','date',this.value)">
+          </div>
         </div>
         <label class="cost-gift-include-toggle">
           <input type="checkbox" ${g.include ? 'checked' : ''} onchange="window.__costViewToggleGiftInclude('${g.id}', this.checked)">
@@ -738,8 +840,8 @@ function renderGiftHistoryList() {
 }
 
 /* ================================================================
-   🕯️ キャンドル課金（常時ショップのパック購入ログ、簡略版：追加後の
-   日付インライン編集は省略——詳細はファイル末尾のコメントを参照）
+   🕯️ キャンドル課金（常時ショップのパック購入ログ。追加後の購入日は
+   リスト上で編集できる）
    ================================================================ */
 function setCandleDisplayMode(mode) {
   localStorage.setItem(candleDisplayModeKey(), mode === 'separate' ? 'separate' : 'combined');
@@ -783,6 +885,16 @@ function addCandlePurchase(packKey) {
   renderItems();
 }
 
+function updateCandlePurchaseDate(id, value) {
+  const list = loadCandlePurchases();
+  const rec = list.find(p => p.id === id);
+  if (!rec) return;
+  rec.date = value;
+  saveCandlePurchases(list);
+  showToast(t('更新しました', 'Updated'));
+  renderItems(); // 日付は支出振り返りの集計にも使われる
+}
+
 function removeCandlePurchase(id) {
   saveCandlePurchases(loadCandlePurchases().filter(p => p.id !== id));
   renderCandlePurchaseList();
@@ -823,9 +935,12 @@ function renderCandlePurchaseList() {
     if (!pack) return '';
     return `
       <div class="cost-gift-record">
+        <div class="cost-item-thumb cost-gift-record-thumb img-fallback"><span class="cost-item-thumb-fallback"><svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg></span></div>
         <div class="cost-gift-record-info">
           <b>¥${pack.price.toLocaleString()}</b>（<svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg>${pack.candles}${t('本', '')}）
-          <div class="cost-gift-record-sub">${escapeHtml(p.date || '')}</div>
+          <div class="cost-gift-edit-row">
+            <input type="date" class="cost-gift-edit-input" value="${escapeHtml(p.date || '')}" onchange="window.__costViewUpdateCandleDate('${p.id}', this.value)">
+          </div>
         </div>
         <label class="cost-gift-include-toggle">
           <input type="checkbox" ${p.include !== false ? 'checked' : ''} onchange="window.__costViewToggleCandleInclude('${p.id}', this.checked)">
@@ -834,6 +949,123 @@ function renderCandlePurchaseList() {
         <button type="button" class="cost-gift-remove-btn" onclick="window.__costViewRemoveCandlePurchase('${p.id}')" aria-label="${t('削除', 'Remove')}"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></button>
       </div>`;
   }).join('');
+}
+
+/* ================================================================
+   📤 画像共有（Xへ投稿）。集計・一覧データはここで用意し、カード生成と
+   Web Share/プレビューは cost-share.js に任せる
+   ================================================================ */
+const RECAP_ICON = costShare.COST_ICONS;
+
+function shareCost() {
+  const txt = sel => (hostEl.querySelector(sel) || {}).textContent || '';
+  const giftRow = hostEl.querySelector('#costSummaryGiftRow');
+  const giftVisible = giftRow && giftRow.style.display !== 'none';
+  return costShare.shareCostSummary({
+    owned: lastOwnedCount, total: lastTotalItemCount,
+    candle: txt('#costSumCandle'), starCandle: txt('#costSumStarCandle'), heart: txt('#costSumHeart'), money: txt('#costSumMoney'),
+  }, giftVisible ? txt('#costSummaryGiftMoney') : null);
+}
+
+function shareReceivedGifts() {
+  const items = computeAllItems()
+    .filter(item => item.owned && item.cost.type === 'money' && item.moneyAcquireMode === 'gift')
+    .map(item => ({ img: item.img, catLabel: trCat(CAT_LABEL_MAP[item.catKey] || item.catKey), name: trItem(item), yen: item.cost.value || 0 }));
+  return costShare.shareReceivedGifts(items);
+}
+
+function shareGiftHistory() {
+  const rows = loadGiftHistory().slice().reverse().map(g => {
+    const it = getGiftPickableItem(g.catKey, g.itemId);
+    return {
+      img: giftItemImg(g.catKey, g.itemId),
+      sub: [g.recipient, g.date].filter(Boolean).join(' ・ '),
+      name: it ? trItem(it) : g.itemId,
+      yen: (it && it.cost && it.cost.type === 'money') ? it.cost.value : null,
+    };
+  });
+  return costShare.shareGiftHistory(rows);
+}
+
+// 指定期間（'month'=今月 / 'year'=今年）に実額支出として計上される明細（集計ロジックはrenderSummary()の実額と同じ考え方で、
+// 日付の無いもの＝獲得日が記録されていないアイテムは対象外）
+function getCostRecapEntries(scope) {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const inScopeIso = iso => {
+    if (!iso) return false;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return false;
+    return scope === 'year' ? d.getFullYear() === y : (d.getFullYear() === y && d.getMonth() === m);
+  };
+  // "YYYY-MM-DD"（日付入力欄由来）はUTC解釈だとタイムゾーンで日付がずれるため、年月日を直接見てローカル日付として判定する
+  const inScopeDateStr = str => {
+    if (!str) return false;
+    const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+    if (dm) return scope === 'year' ? Number(dm[1]) === y : (Number(dm[1]) === y && (Number(dm[2]) - 1) === m);
+    return inScopeIso(str);
+  };
+  const atMs = (str) => {
+    const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str || '');
+    return dm ? new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3])).getTime() : new Date(str).getTime();
+  };
+
+  const entries = [];
+  const acquireLog = getItemAcquireLog();
+  const countedSetIds = new Set();
+  computeAllItems().forEach(item => {
+    if (!item.owned) return;
+    if (item.seasonPendantOwned && item.acquireMode === 'inSeason') return; // 季節中入手扱いのため対象外
+    if (item.isTicketItem && item.acquireMode !== 'revisit') return; // チケットで入手扱い（0）のため対象外
+    const rec = acquireLog[item.id];
+    if (!rec || rec.catKey !== item.catKey || !inScopeIso(rec.at)) return; // 記録が無い/期間外は対象外
+
+    const cost = item.isTicketItem ? (item.revisitCost || {}) : item.cost;
+    const base = { name: trItem(item), catLabel: trCat(CAT_LABEL_MAP[item.catKey] || item.catKey), img: item.img, at: new Date(rec.at).getTime() };
+    if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
+      entries.push({ ...base, fallback: RECAP_ICON.candle, yen: item.candleMoneyYen });
+      return;
+    }
+    if (cost.type === 'money' && typeof cost.value === 'number') {
+      if (item.moneyAcquireMode === 'gift') return; // ギフトでもらった分は自分の支出から除外
+      if (cost.setId) {
+        if (countedSetIds.has(cost.setId)) return;
+        countedSetIds.add(cost.setId);
+      }
+      entries.push({ ...base, fallback: RECAP_ICON.coin, yen: cost.value * (item.quantity || 1) });
+    }
+  });
+
+  // 課金アイテムプレゼント履歴：実額に含める設定のものだけ（「合計に含める」設定の場合のみ）
+  if (loadGiftDisplayMode() === 'combined') {
+    loadGiftHistory().filter(g => g.include).forEach(g => {
+      const at = g.date || g.createdAt;
+      if (!inScopeDateStr(at)) return;
+      const it = getGiftPickableItem(g.catKey, g.itemId);
+      if (it && it.cost && it.cost.type === 'money' && typeof it.cost.value === 'number') {
+        entries.push({ name: trItem(it), catLabel: giftCatLabel(g.catKey), img: giftItemImg(g.catKey, g.itemId), fallback: RECAP_ICON.gift, yen: it.cost.value, at: atMs(at) });
+      }
+    });
+  }
+  // キャンドル課金の購入ログ：実額に含める設定のものだけ（「合計に含める」設定の場合のみ）
+  if (loadCandleDisplayMode() === 'combined') {
+    loadCandlePurchases().filter(p => p.include !== false).forEach(p => {
+      const at = p.date || p.createdAt;
+      if (!inScopeDateStr(at)) return;
+      const pack = candlePackByKey(p.packKey);
+      if (!pack) return;
+      entries.push({
+        name: t(`キャンドルパック（${pack.candles}本）`, `Candle Pack (${pack.candles})`),
+        catLabel: t('キャンドル課金', 'Candle Purchase'), img: '', fallback: RECAP_ICON.candle, yen: pack.price, at: atMs(at),
+      });
+    });
+  }
+  entries.sort((a, b) => b.at - a.at);
+  return entries;
+}
+
+function shareRecap(scope) {
+  return costShare.shareCostRecap(scope, getCostRecapEntries(scope));
 }
 
 /* ================================================================
@@ -881,11 +1113,11 @@ function renderShell() {
           ${en
             ? `Costs are compiled from the <a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki (English)</a>'s "Source" and "Cost" tables for each item.<br>
           There are four currencies: <b>Candles</b> (the basic currency for most items), <b>Season Candles</b> (a special currency used for Nesting Workshop furniture and some permanent items), <b>Hearts</b>, and <b>Real Money (JPY)</b>. Real-money amounts are converted to Japanese App Store price tiers (the wiki lists USD, so tier prices are converted to their real JPY equivalents). Some real-money items are priced as a bundle with another item (noted where applicable) &mdash; owning multiple items in the same bundle only adds that bundle's price once to the total.<br>
-          Covers all 12 categories (Shoes, Necklace, Large Placeable Items, Outfit, Hairstyle, Face Accessory, Head Accessory, Hair Accessory, Props, Mask, Small Placeable Items, Cape). Music Sheets are tracked separately and are not merged into the totals below.<br>
+          Covers all 12 categories (Shoes, Necklace, Large Placeable Items, Outfit, Hairstyle, Face Accessory, Head Accessory, Hair Accessory, Props, Mask, Small Placeable Items, Cape) plus Music Sheets. Items are grouped by season/day rather than by category.<br>
           <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> The costs listed here are approximate estimates only.</b> Actual amounts may differ due to how wiki data, bundle pricing, and currency rounding are interpreted. No accuracy is guaranteed &mdash; please use this as a reference only.`
             : `<a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki（英語版）</a>の「入手方法(Source)」「コスト(Cost)」の一覧表を基に、各アイテムの実際の入手コストをまとめています。<br>
           通貨は<b>キャンドル</b>（通常アイテムの基本通貨）・<b>星のキャンドル</b>（巣づくり工房の家具や一部の恒常アイテムで使う特別な通貨）・<b>ハート</b>・<b>実額（円）</b>の4種類があります。実額は日本のAppストア価格帯を基にした円換算です（Wikiは米ドル表記のため、Tierごとの実際の円価格に置き換えています）。実額のアイテムは、他のアイテムとのセット価格になっている場合があります（その場合は注記しています）。セット内の複数アイテムを所持済みにしても、合計額にはセット価格が1回分のみ加算されます。<br>
-          全12カテゴリ（シューズ・ネックレス・大きい設置アイテム・アウトフィット・ヘアスタイル・フェイスアクセサリー・ヘッドアクセサリー・ヘアアクセサリー・持ち物アイテム・マスク・小さい設置アイテム・ケープ）に対応しています。楽譜は別枠で管理しており、以下の合計には含まれません。<br>
+          全12カテゴリ（シューズ・ネックレス・大きい設置アイテム・アウトフィット・ヘアスタイル・フェイスアクセサリー・ヘッドアクセサリー・ヘアアクセサリー・持ち物アイテム・マスク・小さい設置アイテム・ケープ）に加え、楽譜にも対応しています。カテゴリ分けはせず、季節・日々ごとにまとめて表示しています。<br>
           <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> ここに記載しているコストはあくまで目安・概算です。</b>Wikiの情報やセット価格の解釈、円換算の丸めなどにより、実際の金額と差が生じる場合があります。正確な金額の保証はできませんので、参考程度にご利用ください。`}
         </div>
 
@@ -922,6 +1154,23 @@ function renderShell() {
           </div>
         </div>
 
+        <div class="cost-share-row">
+          <button type="button" class="cost-share-btn" onclick="window.__costViewShareCost()">
+            <svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('Xで共有', 'Share on X')}</span>
+          </button>
+          <button type="button" class="cost-share-btn" onclick="window.__costViewShareReceivedGifts()">
+            ${ICON_GIFT}<span>${t('もらったギフトを共有', 'Share Gifts I Received')}</span>
+          </button>
+        </div>
+        <div class="cost-share-row" style="margin-top:8px;">
+          <button type="button" class="cost-share-btn" onclick="window.__costViewShareRecap('month')">
+            <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今月の支出を振り返りシェア', "Share This Month's Spending")}</span>
+          </button>
+          <button type="button" class="cost-share-btn" onclick="window.__costViewShareRecap('year')">
+            <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今年の支出を振り返りシェア', "Share This Year's Spending")}</span>
+          </button>
+        </div>
+
         <div class="cost-gift-card">
           <div class="cost-summary-title-row" onclick="window.__costViewToggleGiftCard()">
             <span>${ICON_GIFT} ${t('課金アイテムプレゼント履歴', 'Gift Purchase History')}</span>
@@ -938,7 +1187,10 @@ function renderShell() {
             </div>
             <div class="cost-gift-form">
               <select id="costGiftCat" onchange="window.__costViewOnGiftCatChange()"></select>
-              <select id="costGiftItem" disabled></select>
+              <input type="text" id="costGiftFilter" class="cost-gift-filter" autocomplete="off"
+                placeholder="${t('アイテム名で検索（全カテゴリ横断）', 'Search by item name (across all categories)')}" oninput="window.__costViewRenderGiftPicker()">
+              <div class="cost-gift-picker" id="costGiftPicker"></div>
+              <div class="cost-gift-preview" id="costGiftPreview" style="display:none;"></div>
               <div class="cost-gift-form-row">
                 <input type="text" id="costGiftRecipient" placeholder="${t('相手のプレイヤーネーム（任意）', "Recipient's player name (optional)")}" maxlength="60">
                 <input type="date" id="costGiftDate">
@@ -946,6 +1198,11 @@ function renderShell() {
               <button type="button" class="cost-gift-add-btn" onclick="window.__costViewAddGiftRecord()">${t('追加する', 'Add')}</button>
             </div>
             <div class="cost-gift-list" id="costGiftList"></div>
+            <div class="cost-share-row" style="margin-top:14px;">
+              <button type="button" class="cost-share-btn" onclick="window.__costViewShareGiftHistory()">
+                <svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('プレゼント履歴を共有', 'Share Gift History')}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -976,6 +1233,7 @@ function renderShell() {
             <select id="costCategoryFilter" class="cost-jump-select" onchange="window.__costViewRenderItems()">
               <option value="all">${t('すべて表示', 'Show all')}</option>
               ${GRID_CATEGORIES.map(c => `<option value="${c.key}">${escapeHtml(trCat(c.name))}</option>`).join('')}
+              <option value="${MUSIC_SHEET_CAT_KEY}">${t('楽譜', 'Music Sheets')}</option>
             </select>
           </div>
           <div class="cost-jump-bar-row">
@@ -1028,6 +1286,14 @@ const HANDLERS = {
   __costViewSetCandleDisplayMode: mode => setCandleDisplayMode(mode),
   __costViewOnGiftCatChange: () => onGiftCatChange(),
   __costViewAddGiftRecord: () => addGiftRecord(),
+  __costViewRenderGiftPicker: () => renderGiftItemPicker(),
+  __costViewSelectGift: (catKey, itemId) => selectGiftItem(catKey, itemId),
+  __costViewUpdateGiftField: (id, field, value) => updateGiftField(id, field, value),
+  __costViewUpdateCandleDate: (id, value) => updateCandlePurchaseDate(id, value),
+  __costViewShareCost: () => shareCost(),
+  __costViewShareReceivedGifts: () => shareReceivedGifts(),
+  __costViewShareGiftHistory: () => shareGiftHistory(),
+  __costViewShareRecap: scope => shareRecap(scope),
   __costViewRemoveGiftRecord: id => removeGiftRecord(id),
   __costViewToggleGiftInclude: (id, checked) => toggleGiftInclude(id, checked),
   __costViewAddCandlePurchase: packKey => addCandlePurchase(packKey),
@@ -1184,6 +1450,31 @@ function injectStyles() {
 .item-view .cost-gift-form input { font-size: 16px; }
 .item-view .cost-gift-form select:disabled { opacity: 0.5; }
 .item-view .cost-gift-form-row { display: flex; gap: 8px; }
+.item-view .cost-gift-picker { max-height: 220px; overflow-y: auto; background: var(--bg); border-radius: var(--r-sm); display: flex; flex-direction: column; gap: 2px; padding: 4px; }
+.item-view .cost-gift-picker-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+.item-view .cost-gift-picker-row:hover { background: rgba(0,0,0,0.04); }
+.item-view .cost-gift-picker-row:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.item-view .cost-gift-picker-row.selected { background: var(--orange-bg); }
+.item-view .cost-gift-picker-row .cost-item-thumb { width: 32px; height: 32px; }
+.item-view .cost-gift-picker-name { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-view .cost-gift-picker-cat { font-size: 10px; color: var(--text-2); background: var(--card); border-radius: 999px; padding: 2px 7px; flex-shrink: 0; white-space: nowrap; }
+.item-view .cost-gift-picker-cost { font-size: 12px; color: var(--text-2); flex-shrink: 0; }
+.item-view .cost-gift-picker-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 12px 0; }
+.item-view .cost-gift-preview { display: none; align-items: center; gap: 10px; }
+.item-view .cost-gift-preview .cost-item-thumb { width: 36px; height: 36px; }
+.item-view .cost-gift-preview-label { font-size: 12.5px; color: var(--text-2); }
+.item-view .cost-gift-record-thumb { width: 36px; height: 36px; flex-shrink: 0; }
+.item-view .cost-gift-edit-row { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+.item-view .cost-gift-edit-input { background: var(--card); color: var(--text); border: 1px solid var(--sep); border-radius: 7px; padding: 5px 8px; font-size: 16px; font-family: inherit; flex: 1; min-width: 110px; }
+.item-view .cost-share-row { display: flex; gap: 10px; margin-top: 12px; }
+.item-view .cost-share-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #000; color: #fff; border: 0;
+  border-radius: var(--r-sm); padding: 11px 14px; font-size: 13.5px; font-weight: 700; font-family: inherit; cursor: pointer;
+}
+.item-view .cost-share-btn .inline-icon, .item-view .cost-share-btn svg { stroke: #fff; }
+.item-view .cost-share-btn:active { opacity: 0.8; }
+[data-theme="dark"] .item-view .cost-share-btn { background: #fff; color: #000; }
+[data-theme="dark"] .item-view .cost-share-btn .inline-icon, [data-theme="dark"] .item-view .cost-share-btn svg { stroke: #000; }
 .item-view .cost-gift-form-row > * { flex: 1; min-width: 0; }
 .item-view .cost-gift-add-btn { background: var(--orange); color: #fff; border-radius: var(--r-sm); padding: 10px; font-size: 13.5px; font-weight: 700; text-align: center; cursor: pointer; border: none; font-family: inherit; }
 .item-view .cost-gift-add-btn:active { opacity: 0.85; }
@@ -1227,7 +1518,7 @@ export function mount(container) {
   exposeHandlers();
 
   populateGiftCatSelect();
-  onGiftCatChange();
+  onGiftCatChange(); // ピッカーとプレビューを初期状態に
   renderGiftDisplayModeToggle();
   renderGiftHistoryList();
 
@@ -1239,6 +1530,9 @@ export function mount(container) {
   loadAllItemImages().then(() => {
     if (token !== mountToken || !hostEl) return; // 別ルートへ遷移済みなら描画しない
     renderItems();
+    renderGiftItemPicker();
+    updateGiftItemPreview();
+    renderGiftHistoryList();
   });
 }
 
@@ -1250,41 +1544,11 @@ export function unmount() {
 }
 
 /* ================================================================
-   既知の簡略化・省略事項（元 item/item_cost.html との差分）
+   元 item/item_cost.html との既知の差分
 
-   1. X/Twitterへの画像シェア機能一式を全て省略した（コスト集計の画像化・
-      もらったギフト一覧の画像化・プレゼント履歴の画像化・月間/年間の
-      支出振り返り画像化、いずれもhtml2canvas(CDN)+Web Share API+
-      画像プレビューモーダルに依存する独立した大きな機能のため）。
-      共有ボタン行（Xで共有／もらったギフトを共有／今月・今年の支出を
-      振り返りシェア）は非表示。集計ロジック自体（renderSummary等）は
-      完全に移植済みなので、数値の正確性には影響しない。
-
-   2. 楽譜（Music Sheets）のコスト集計への合流を行っていない（タスク
-      指示により明示的にスコープ外。元実装はmusic_sheet.htmlを自己fetch
-      して合流させていた）。
-
-   3. 課金アイテムプレゼント履歴：全カテゴリ横断のアイコン付きライブ検索
-      ピッカー（画像サムネイル・名前部分一致検索）を、カテゴリ選択→
-      アイテム選択の2段階セレクトに簡略化した。また、追加後の相手名・
-      日付のインライン編集（updateGiftField相当）を省略し、削除のみ
-      対応（読み取り専用表示＋追加＋削除＋含める/含めないチェックボックス）。
-      合計計算ロジック（含める/含めない、合計に含める/別枠で表示の
-      切り替え）は完全に移植済み。
-
-   4. キャンドル課金ログ：追加後の購入日インライン編集（updateCandlePurchaseDate
-      相当）を省略し、追加時に記録した日付を読み取り専用で表示するのみに
-      した（削除・含める/含めないチェックボックス・パック購入自体は
-      完全対応）。
-
-   5. 季節グループ見出しのアイコンを、季節ごとのペンダント画像
-      （SEASON_PENDANT_ICON、item/profiles.jsに30件分定義）から共通の
-      装飾アイコン（i-sparkle/i-sun）に簡略化した。表示上の違いのみで、
-      集計ロジックには影響しない。
-
-   （通知カード(notice-card)の説明文は元実装の文面をverbatim移植済み。
-    ⚠アイコン・星のキャンドルの説明・実額の円換算根拠・12カテゴリの
-    全列挙・目安表記の中間節を含む。ただし「楽譜は別枠で管理」の一文は
-    上の2.の通りtai-hubでは実際に合流させていないため、意図的に元実装の
-    文面と差し替えている）
+   ・「所持数」「楽譜の合流」「X画像共有」「ギフト検索ピッカー」「履歴の日付/相手の
+     インライン編集」「季節見出しのペンダント画像」はすべて移植済み。
+   ・通知カード(notice-card)の説明文は元実装の文面をそのまま移植している。
+   ・画像URLは元実装のように各カテゴリページをfetchして正規表現で抜き出す代わりに、
+     data/items/<cat>.js を直接importして補っている（ハブのアーキテクチャ上の改善）。
    ================================================================ */
