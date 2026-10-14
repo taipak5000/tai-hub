@@ -10,6 +10,10 @@
    エリア管理（%スライダー・検索・詳細設定でのチェックツリー）・
    マイルート（別ファイルnomacan-pro-routes.jsへ委譲）。
 
+   「今日の精錬状況」「キャンドル管理」の2枚のカードは nomacan-pro-top.js、
+   黒シャード/デイリーリセットの通知は nomacan-pro-notify.js に分けてある
+   （入力欄を描き直さず値だけ更新する作り。1文字ごとにフォーカスが外れる不具合の対策）。
+
    【意図的な簡略化・アダプテーション】
    - プロフィール切替・環境設定（テーマ/言語/ショートカット）・
      「他のツール」ドロワーはtai-hub共有chrome（js/chrome/*.js）が
@@ -29,6 +33,7 @@ import { t } from './data/i18n-nomacan-pro.js';
 import { displayAreaName as displayAreaNameRaw } from './data/area-names-en.js';
 import * as S from './nomacan-pro-state.js';
 import { initRoutes, renderRoutes, teardownRoutes } from './nomacan-pro-routes.js';
+import * as Top from './nomacan-pro-top.js';
 
 const STYLE_LINK_ID = 'nomacan-pro-view-styles';
 const ICON_SPRITE_ID = 'nomacan-pro-icon-sprite';
@@ -116,19 +121,14 @@ export function mount(container) {
   window.__nmpSpotNameInput = (mIdx, sIdx, spIdx, val) => { areas[mIdx].subAreas[sIdx].spots[spIdx].name = val; persist(true); };
   window.__nmpSubTimeInput = (mIdx, sIdx, val) => { areas[mIdx].subAreas[sIdx].time = Math.max(0, Number(val) || 0); persist(true); recomputeAndRenderTop(); };
 
-  window.__nmpCurrentCandlesInput = (val) => { onCurrentCandlesInput(val); };
-  window.__nmpPlannedUsageInput = (val) => { plannedUsage = Math.max(0, Number(val) || 0); persist(); recomputeAndRenderTop(); };
-  window.__nmpHeartsInput = (val) => { heartsToSend = Math.max(0, Number(val) || 0); persist(); recomputeAndRenderTop(); };
   window.__nmpTargetInput = (val) => { targetCandlesForOptimization = Math.max(0, Number(val) || 0); persist(); };
-  window.__nmpTargetDateInput = (val) => { targetDate = val; persist(); recomputeAndRenderTop(); };
-  window.__nmpCarryInput = (val) => { carryOverPercent = Math.max(0, Math.min(100, Number(val) || 0)); persist(); recomputeAndRenderTop(); };
-  window.__nmpMemoInput = (val) => { candleMemo = val; persist(); };
   window.__nmpOptimizeClick = () => { doOptimize(); };
-  window.__nmpResetDataClick = () => { requestResetData(); };
+  window.__nmpMoveMainArea = (mIdx, dir) => { moveMainArea(mIdx, dir); };
+  window.__nmpMoveSubArea = (mIdx, sIdx, dir) => { moveSubArea(mIdx, sIdx, dir); };
+  window.__nmpMainDirectInput = (mIdx, field, val) => { areas[mIdx][field] = Math.max(0, Number(val) || 0); persist(true); recomputeAndRenderTop(); };
+  window.__nmpMainSelectedToggle = (mIdx, checked) => { areas[mIdx].isSelected = checked; persist(true); renderAreaList(); recomputeAndRenderTop(); };
+  window.__nmpSubLightInput = (mIdx, sIdx, val) => { areas[mIdx].subAreas[sIdx].light = Math.max(0, Number(val) || 0); persist(true); recomputeAndRenderTop(); };
   window.__nmpConfirmResetData = () => { confirmResetData(); };
-  window.__nmpDailyShardSelect = (val) => { dailyShard = val; persist(); recomputeAndRenderTop(); };
-  window.__nmpShardSyncClick = () => { dailyShard = todayShardKey(); persist(); recomputeAndRenderTop(); };
-  window.__nmpDailyBonusSelect = (val) => { dailyBonusArea = Math.max(0, Number(val) || 0); persist(); recomputeAndRenderTop(); };
   window.__nmpVisibleSectionToggle = (key, checked) => { visibleSections[key] = checked; persist(); applyVisibleSections(); };
 
   initRoutes(container, {
@@ -156,10 +156,31 @@ export function mount(container) {
 
   renderAreaList();
   renderRoutes();
-  recomputeAndRenderTop();
+  Top.mountTop(document.getElementById('nmpRefineBody'), document.getElementById('nmpCandleBody'), topContext);
 }
 
+// 「今日の精錬状況」「キャンドル管理」カード(nomacan-pro-top.js)とのやり取り
+const topContext = {
+  get: () => ({ areas, carryOverPercent, carryOverGap, dailyBonusArea, dailyShard, currentCandles, plannedUsage, heartsToSend, targetDate, candleMemo }),
+  set: (patch) => {
+    if ('carryOverPercent' in patch) carryOverPercent = patch.carryOverPercent;
+    if ('carryOverGap' in patch) carryOverGap = patch.carryOverGap;
+    if ('dailyBonusArea' in patch) dailyBonusArea = patch.dailyBonusArea;
+    if ('dailyShard' in patch) dailyShard = patch.dailyShard;
+    if ('plannedUsage' in patch) plannedUsage = patch.plannedUsage;
+    if ('heartsToSend' in patch) heartsToSend = patch.heartsToSend;
+    if ('targetDate' in patch) targetDate = patch.targetDate;
+    if ('candleMemo' in patch) candleMemo = patch.candleMemo;
+    if ('currentCandles' in patch) { currentCandles = patch.currentCandles; S.writeOwnedCandle(currentCandles); }
+    persist();
+  },
+  onAreasChanged: () => { persist(true); renderAreaList(); },
+  showToast: (msg, type) => showToast(msg, type),
+  requestResetData: () => requestResetData(),
+};
+
 export function unmount() {
+  Top.unmountTop();
   if (onCurrencyStorageListener) { window.removeEventListener('storage', onCurrencyStorageListener); onCurrencyStorageListener = null; }
   if (onVisibilityCommit) { document.removeEventListener('visibilitychange', onVisibilityCommit); onVisibilityCommit = null; }
   teardownRoutes();
@@ -200,13 +221,6 @@ function applyVisibleSections() {
     if (el) el.style.display = visibleSections[key] ? '' : 'none';
   });
 }
-function onCurrentCandlesInput(val) {
-  currentCandles = Math.max(0, Number(val) || 0);
-  persist();
-  S.writeOwnedCandle(currentCandles);
-  recomputeAndRenderTop();
-}
-
 /* ================================================================
    🌲 エリアツリー操作
    ================================================================ */
@@ -262,6 +276,23 @@ function toggleDetail() {
   try { localStorage.setItem(S.AREA_DETAIL_OPEN_KEY, showDetailedAreaSettings ? '1' : '0'); } catch (e) { /* noop */ }
   renderAreaList();
 }
+function moveMainArea(index, dir) {
+  const target = index + dir;
+  if (target < 0 || target >= areas.length) return;
+  const item = areas.splice(index, 1)[0];
+  areas.splice(target, 0, item);
+  persist(true);
+  renderAreaList();
+}
+function moveSubArea(mIdx, sIdx, dir) {
+  const subs = areas[mIdx].subAreas;
+  const target = sIdx + dir;
+  if (target < 0 || target >= subs.length) return;
+  const item = subs.splice(sIdx, 1)[0];
+  subs.splice(target, 0, item);
+  persist(true);
+  renderAreaList();
+}
 function addMainArea() {
   areas.push({ id: S.uuid(), name: t('area.newMainArea'), isExpanded: true, light: 0, time: 0, isSelected: false, subAreas: [] });
   persist(true);
@@ -311,6 +342,7 @@ function requestResetData() {
 function confirmResetData() {
   currentCandles = 0; plannedUsage = 0; heartsToSend = 0; carryOverPercent = 0; carryOverGap = 94;
   dailyBonusArea = 0; candleMemo = '';
+  Top.syncDailyShardWithPrediction(true);
   areas.forEach((area) => {
     const aMode = S.getAreaMode(area);
     if (aMode === 'main') { area.isSelected = false; } else {
@@ -327,32 +359,8 @@ function confirmResetData() {
   showToast(t('confirmModal.resetDataDone'), 'success');
 }
 function doOptimize() {
-  S.optimize(areas, targetCandlesForOptimization > 0 ? computeTargetLightFromCandles() : 0);
+  Top.runOptimize(targetCandlesForOptimization);
   persist(true);
-  renderAreaList();
-  recomputeAndRenderTop();
-}
-function computeTargetLightFromCandles() {
-  const idx = Math.max(0, Math.min(S.THRESHOLDS.length - 1, targetCandlesForOptimization - 1));
-  return S.THRESHOLDS[idx] || 0;
-}
-function todayShardKey() {
-  const p = S.shardPredictionForDate(new Date());
-  return `${p.realm}:${p.color}`;
-}
-
-// 🌋 黒シャード予測の表示件数（移植元と同じく直近3回分）
-const SHARD_PREDICTION_COUNT = 3;
-// 移植元のSHARD_JP_WEEKDAYと同じく、表示言語に関わらず常に日本語の曜日一字を使う
-// （元実装のgetBlackShardOccurrencesInJstのラベル組み立てロジックをそのまま踏襲）
-const SHARD_JP_WEEKDAY = ['日', '月', '火', '水', '木', '金', '土'];
-function formatShardOccurrence(occ) {
-  let dayLabel;
-  if (occ.dayDiff === 0) dayLabel = t('date.today');
-  else if (occ.dayDiff === 1) dayLabel = t('date.tomorrow');
-  else dayLabel = `${occ.month}/${occ.day}(${SHARD_JP_WEEKDAY[occ.weekday]})`;
-  const timeLabel = `${occ.hour}:${String(occ.minute).padStart(2, '0')}`;
-  return `${dayLabel} ${timeLabel}`;
 }
 
 /* ================================================================
@@ -413,8 +421,12 @@ function renderShell() {
       </details>
       <div class="nmp-grid">
         <div class="nmp-col">
+          <section class="nmp-card" id="nmpSectionRefine">
+            <div class="nmp-card-header">${escHtml(t('refine.sectionHeader'))}</div>
+            <div id="nmpRefineBody"></div>
+          </section>
           <section class="nmp-card" id="nmpSectionCandleManage" style="${visibleSections.candleManage ? '' : 'display:none;'}">
-            <div class="nmp-card-header">${escHtml(t('candle.sectionHeader') || (CURRENT_LANG === 'en' ? 'Candle Management' : 'キャンドル管理'))}</div>
+            <div class="nmp-card-header nmp-card-header-split"><span>${escHtml(t('candle.sectionHeader') || (CURRENT_LANG === 'en' ? 'Candle Management' : 'キャンドル管理'))}</span><span class="nmp-dim nmp-normal">${escHtml(t('candle.dcNote'))}</span></div>
             <div id="nmpCandleBody"></div>
           </section>
           <section class="nmp-card" id="nmpSectionOptimization" style="${visibleSections.optimization ? '' : 'display:none;'}">
@@ -452,93 +464,12 @@ function renderShell() {
 }
 
 /* ================================================================
-   🖼️ 描画: キャンドル管理カード（繰越・見込み・黒シャード予測）
+   🖼️ 上段2カード（今日の精錬状況・キャンドル管理）の更新。
+   描画の実体は nomacan-pro-top.js（入力欄は描き直さず、数値だけ差し替える）
    ================================================================ */
 function recomputeAndRenderTop() {
-  const el = document.getElementById('nmpCandleBody');
-  if (!el) return;
-  let selectedLight = 0; let selectedTime = 0;
-  areas.forEach((a) => { const st = S.getMainAreaStats(a); selectedLight += st.light; });
-  areas.forEach((a) => { selectedTime += areaSelectedTime(a); });
-  const totalLight = selectedLight + Math.round((carryOverGap * carryOverPercent) / 100) + dailyBonusArea;
-  const calculated = S.calcCandlesFromLight(totalLight);
-  const nextThresholdGap = calculated < S.THRESHOLDS.length ? (S.THRESHOLDS[calculated] - totalLight) : 0;
-  const totalEff = selectedTime > 0 ? (selectedLight / selectedTime) : 0;
-  const blackShard = S.predictUpcomingBlackShard(SHARD_PREDICTION_COUNT);
-
-  el.innerHTML = `
-    <div class="nmp-row"><div>${escHtml(t('refine.dailyBonusLabel'))}</div>
-      <select onchange="__nmpDailyBonusSelect(this.value)">
-        <option value="0" ${dailyBonusArea === 0 ? 'selected' : ''}>${escHtml(t('refine.dailyBonusNone'))}</option>
-        <option value="50" ${dailyBonusArea === 50 ? 'selected' : ''}>${escHtml(t('refine.dailyBonus1'))}</option>
-        <option value="100" ${dailyBonusArea === 100 ? 'selected' : ''}>${escHtml(t('refine.dailyBonus2'))}</option>
-        <option value="150" ${dailyBonusArea === 150 ? 'selected' : ''}>${escHtml(t('refine.dailyBonus3'))}</option>
-        <option value="200" ${dailyBonusArea === 200 ? 'selected' : ''}>${escHtml(t('refine.dailyBonus4'))}</option>
-      </select>
-    </div>
-    ${blackShard ? `
-    <div class="nmp-shard-box">
-      <div class="nmp-shard-title"><svg class="inline-icon" width="14" height="14"><use href="#nmp-i-bolt"/></svg> ${escHtml(t('refine.shardPredictionLabel', { realm: displayAreaName(blackShard.realm) }))}</div>
-      <div class="nmp-shard-times">${blackShard.occurrences.map((occ) => `<span class="nmp-shard-time-chip">${escHtml(formatShardOccurrence(occ))}</span>`).join('')}</div>
-      <div class="nmp-hint" style="padding-bottom:0;">${escHtml(t('refine.receiveOnceNote'))}</div>
-      <button type="button" class="nmp-btn nmp-btn-outline nmp-btn-sm" style="margin-top:8px;" onclick="__nmpShardSyncClick()">${escHtml(t('refine.syncPrediction'))}</button>
-    </div>` : ''}
-    <div class="nmp-stat-row"><span>${escHtml(t('refine.expectedCandles'))}</span><span><b>${calculated}</b> ${escHtml(t('refine.candlesUnit'))}</span></div>
-    <div class="nmp-stat-row"><span>${escHtml(t('refine.totalLight'))}</span><span><b>${totalLight}</b></span></div>
-    <div class="nmp-stat-row"><span>${escHtml(t('refine.totalEfficiency'))}</span><span><b>${totalEff.toFixed(2)}</b>/s</span></div>
-    <div class="nmp-stat-row"><span>${escHtml(t('refine.totalTime'))}</span><span><b>${fmtMinSecTop(selectedTime)}</b></span></div>
-    <div class="nmp-stat-row"><span>${escHtml(t('refine.nextThreshold'))}</span><span><b>${nextThresholdGap}</b></span></div>
-    <button type="button" class="nmp-btn nmp-btn-blue" style="width:100%;">${escHtml(t('refine.dailyResetBtn'))}</button>
-
-    <div class="nmp-card-subheader">${escHtml(t('candle.sectionHeader'))}</div>
-    <div class="nmp-row"><div>${escHtml(t('candle.currentCandles'))}</div><input type="number" value="${currentCandles}" oninput="__nmpCurrentCandlesInput(this.value)"></div>
-    <div class="nmp-hint">${escHtml(t('candle.currentCandlesSyncNote'))}</div>
-    <div class="nmp-row"><div>${escHtml(t('candle.plannedUsage'))}</div><input type="number" value="${plannedUsage}" oninput="__nmpPlannedUsageInput(this.value)"></div>
-    <div class="nmp-row"><div>${escHtml(t('candle.dailyHearts'))}</div><input type="number" value="${heartsToSend}" oninput="__nmpHeartsInput(this.value)"></div>
-    <div class="nmp-row"><div>${escHtml(t('candle.eventEndDate'))}</div><input type="date" value="${escHtml(targetDate)}" oninput="__nmpTargetDateInput(this.value)"></div>
-    <div class="nmp-row"><div>${escHtml(t('candle.remainingDays'))}</div><span>${remainingEarningDays()} ${escHtml(t('candle.remainingDaysUnit'))}</span></div>
-    <div class="nmp-row"><div>${escHtml(t('candle.projectedRemaining'))}</div><span><b>${projectedRemaining(calculated, remainingEarningDays())}</b> ${escHtml(t('refine.candlesUnit'))}</span></div>
-    <div class="nmp-row"><div>${escHtml(t('candle.carryOver'))}</div><input type="number" min="0" max="100" value="${carryOverPercent}" oninput="__nmpCarryInput(this.value)"></div>
-    <div class="nmp-hint">${escHtml(t('candle.slideHint'))}</div>
-    <div class="nmp-row" style="flex-direction:column; align-items:flex-start;">
-      <div class="nmp-hint">${escHtml(t('candle.memoLabel'))}</div>
-      <textarea class="nmp-memo" oninput="__nmpMemoInput(this.value)">${escHtml(candleMemo)}</textarea>
-    </div>
-    <button type="button" class="nmp-btn nmp-btn-outline-red" style="width:100%; margin-top:10px;" onclick="__nmpResetDataClick()">${escHtml(t('settings.resetInputBtn') || (CURRENT_LANG === 'en' ? 'Reset Entered Values' : '入力数値をリセット'))}</button>
-  `;
-}
-function areaSelectedTime(area) { return S.getMainAreaStats(area).light > 0 ? computeAreaTime(area) : 0; }
-function computeAreaTime(mainArea) {
-  // getMainAreaStatsは効率(eff)しか返さないため、timeはここで同じロジックを再計算する
-  let time = 0;
-  const aMode = S.getAreaMode(mainArea);
-  if (aMode === 'main') { if (mainArea.isSelected) time = mainArea.time || 0; } else if (Array.isArray(mainArea.subAreas)) {
-    mainArea.subAreas.forEach((sub) => {
-      const sMode = S.getSubMode(sub);
-      if (sMode === 'sub') { if (sub.isSelected) time += sub.time || 0; } else if (Array.isArray(sub.spots)) {
-        if (sub.spots.some((s) => s && s.isSelected)) time += sub.time || 0;
-      }
-    });
-  }
-  return time;
-}
-function fmtMinSecTop(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60);
-  const s = Math.floor(totalSeconds % 60);
-  return CURRENT_LANG === 'en' ? `${m}m ${s}s` : `${m}分${s}秒`;
-}
-function remainingEarningDays() {
-  if (!targetDate) return 0;
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const target = new Date(targetDate); target.setHours(0, 0, 0, 0);
-  if (isNaN(target.getTime())) return 0;
-  return Math.max(0, Math.ceil((target - today) / 86400000));
-}
-// 🩹 意図的な簡略化: 元実装は日別の内訳(候補日ごとに繰越ゲージの遷移を再計算)を
-// 持つ複雑な見積りだったが、ここでは「所持数＋今日の精錬予定－使用予定数」の
-// 簡易見積りにしている（中核機能ではないため）。
-function projectedRemaining(calculated, days) {
-  return Math.max(0, currentCandles + calculated - plannedUsage);
+  Top.syncInputs();
+  Top.update();
 }
 
 /* ================================================================
@@ -627,9 +558,37 @@ function renderMainAreaRow(area, mIdx) {
     </div>`;
 }
 
+// 詳細設定でのメインエリア自体の編集（名前・並べ替え・サブエリアが無い/時間未入力のときの直接入力）
+function renderMainAreaDetail(area, mIdx) {
+  const subs = area.subAreas || [];
+  const noSubs = subs.length === 0;
+  const allSubTimeZero = !noSubs && subs.every((s) => !s || !(s.time > 0));
+  return `
+    <div class="nmp-main-detail">
+      <div class="nmp-main-detail-row">
+        <input type="text" class="nmp-inline-name-input" value="${escHtml(displayAreaName(area.name))}" oninput="__nmpAreaNameInput(${mIdx}, this.value)">
+        <button type="button" class="nmp-btn nmp-btn-outline nmp-btn-xs" ${mIdx === 0 ? 'disabled' : ''} onclick="__nmpMoveMainArea(${mIdx}, -1)">${escHtml(t('area.moveUp'))}</button>
+        <button type="button" class="nmp-btn nmp-btn-outline nmp-btn-xs" ${mIdx === areas.length - 1 ? 'disabled' : ''} onclick="__nmpMoveMainArea(${mIdx}, 1)">${escHtml(t('area.moveDown'))}</button>
+      </div>
+      ${noSubs ? `
+      <div class="nmp-main-detail-row">
+        <label class="nmp-check-sm"><input type="checkbox" ${area.isSelected ? 'checked' : ''} onchange="__nmpMainSelectedToggle(${mIdx}, this.checked)"> ${escHtml(t('area.selectedLabel'))}</label>
+        <span class="nmp-dim">🔥</span><input type="number" class="nmp-inline-light-input" min="0" value="${area.light || 0}" oninput="__nmpMainDirectInput(${mIdx}, 'light', this.value)">
+        <span class="nmp-dim">⏱️</span><input type="number" class="nmp-inline-time-input" min="0" value="${area.time || 0}" oninput="__nmpMainDirectInput(${mIdx}, 'time', this.value)"><span class="nmp-dim">${escHtml(t('area.secLabel'))}</span>
+        ${(area.time || 0) > 0 ? `<b class="nmp-eff">${((area.light || 0) / area.time).toFixed(1)}/s</b>` : ''}
+      </div>` : ''}
+      ${allSubTimeZero ? `
+      <div class="nmp-main-detail-row">
+        <span class="nmp-dim">⏱️ ${escHtml(t('area.durationLabel'))}</span><input type="number" class="nmp-inline-time-input" min="0" value="${area.time || 0}" oninput="__nmpMainDirectInput(${mIdx}, 'time', this.value)"><span class="nmp-dim">${escHtml(t('area.secLabel'))}</span>
+        <span class="nmp-dim" style="color:var(--npb-blue);">${escHtml(t('area.subAreaTimeFallbackNote'))}</span>
+      </div>` : ''}
+    </div>`;
+}
+
 function renderSubAreaList(area, mIdx) {
   const subs = (area.subAreas || []).map((s, i) => ({ s, i })).filter(({ s }) => !areaSearchQuery.trim() || subAreaMatchesSearch(s));
   return `<div class="nmp-sub-area-list">
+    ${showDetailedAreaSettings ? renderMainAreaDetail(area, mIdx) : ''}
     ${subs.map(({ s, i }) => renderSubAreaRow(area, mIdx, s, i)).join('')}
     ${showDetailedAreaSettings ? `<button type="button" class="nmp-btn nmp-btn-outline nmp-btn-sm" style="width:100%;" onclick="__nmpAddSubArea(${mIdx})">${escHtml(t('area.addSubArea'))}</button>` : ''}
     ${showDetailedAreaSettings ? `<button type="button" class="nmp-icon-btn nmp-icon-btn-danger" style="margin-top:6px;" onclick="__nmpRequestDeleteArea(${mIdx})">${escHtml(t('area.deleteArea'))}</button>` : ''}
@@ -650,9 +609,13 @@ function renderSubAreaRow(area, mIdx, sub, sIdx) {
     <div class="nmp-sub-area-head">
       ${sMode === 'sub' ? `<input type="checkbox" ${sub.isSelected ? 'checked' : ''} onchange="__nmpSubSelectToggle(${mIdx}, ${sIdx})">` : `<button type="button" class="nmp-icon-btn" onclick="__nmpSubToggleExpand(${mIdx}, ${sIdx})"><svg class="inline-icon" width="11" height="11" style="${sub.isExpanded ? 'transform:rotate(90deg)' : ''}"><use href="#i-chevron-right"/></svg></button>`}
       <input type="text" class="nmp-inline-name-input" value="${escHtml(displayAreaName(sub.name))}" oninput="__nmpSubNameInput(${mIdx}, ${sIdx}, this.value)">
-      <span class="nmp-dim">🔥${subStats.light}</span>
+      ${sMode === 'sub'
+        ? `<span class="nmp-dim">🔥</span><input type="number" class="nmp-inline-light-input" min="0" value="${sub.light || 0}" oninput="__nmpSubLightInput(${mIdx}, ${sIdx}, this.value)">`
+        : `<span class="nmp-dim">🔥${subStats.light}</span>`}
       <input type="number" class="nmp-inline-time-input" value="${sub.time}" title="${escHtml(t('area.durationLabel'))}" oninput="__nmpSubTimeInput(${mIdx}, ${sIdx}, this.value)">
       <span class="nmp-dim">${escHtml(t('area.secLabel'))}</span>
+      <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${sIdx === 0 ? 'disabled' : ''} onclick="__nmpMoveSubArea(${mIdx}, ${sIdx}, -1)" title="${escHtml(t('area.moveUp'))}">↑</button>
+      <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${sIdx === (area.subAreas.length - 1) ? 'disabled' : ''} onclick="__nmpMoveSubArea(${mIdx}, ${sIdx}, 1)" title="${escHtml(t('area.moveDown'))}">↓</button>
       <button type="button" class="nmp-icon-btn nmp-icon-btn-danger nmp-icon-btn-xs" onclick="__nmpRequestDeleteSub(${mIdx}, ${sIdx})"><svg class="inline-icon" width="10" height="10"><use href="#i-close"/></svg></button>
     </div>
     ${sMode === 'spot' && sub.isExpanded ? renderSpotList(sub, mIdx, sIdx) : ''}

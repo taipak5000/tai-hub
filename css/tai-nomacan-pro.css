@@ -188,3 +188,38 @@
 .nmp-footer { text-align: center; padding: 24px 16px; margin-top: 24px; font-size: 12px; line-height: 1.8; color: var(--npb-text-2); border-top: 1px solid var(--npb-border); }
 .nmp-footer a { color: var(--npb-blue); text-decoration: underline; }
 .nmp-footer-sub { display: inline-block; margin-top: 4px; }
+
+/* ── 今日の精錬状況・キャンドル管理（nomacan-pro-top.js） ── */
+.nmp-card-header-split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.nmp-normal { font-weight: 400; }
+.nmp-box { background: var(--npb-stat-bg); border: 1px solid var(--npb-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.nmp-box-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.nmp-box-label { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.nmp-box-label-lg { font-size: 15px; font-weight: 700; }
+.nmp-box-sep { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--npb-border); }
+.nmp-check-lg { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px; font-weight: 600; }
+.nmp-check-lg input[type="checkbox"] { width: 24px; height: 24px; }
+.nmp-check-sm { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.nmp-link-btn { border: 0; background: none; color: var(--npb-blue); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; font-family: inherit; }
+.nmp-alert-error { background: rgba(255,59,48,0.1); color: var(--npb-red); border-radius: 8px; padding: 8px 10px; font-size: 12px; margin-bottom: 8px; }
+.nmp-breakdown-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--npb-border); border-radius: 6px; margin-top: 8px; }
+.nmp-breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; font-size: 12.5px; border-bottom: 1px solid var(--npb-border); font-variant-numeric: tabular-nums; }
+.nmp-breakdown-row:last-child { border-bottom: none; }
+.nmp-breakdown-row.neg { background: rgba(255,59,48,0.08); }
+.nmp-breakdown-row.neg b { color: var(--npb-red); }
+#nmpBreakdown { background: var(--npb-input-bg); border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; margin-top: 8px; }
+
+/* 繰越ゲージ（キャンドル型・縦スライド） */
+.nmp-carry { display: flex; flex-direction: column; align-items: center; padding: 6px 0 10px; border-bottom: 1px solid var(--npb-border); margin-bottom: 8px; }
+.nmp-carry-gauge { display: flex; align-items: flex-end; gap: 16px; margin-top: 10px; touch-action: none; user-select: none; outline: none; cursor: grab; }
+.nmp-carry-gauge:focus-visible { outline: 2px solid var(--npb-blue); outline-offset: 6px; border-radius: 12px; }
+.nmp-carry-track-wrap { position: relative; width: 36px; height: 148px; pointer-events: none; }
+.nmp-carry-track { position: absolute; left: 50%; top: 0; bottom: 0; width: 10px; margin-left: -5px; background: var(--npb-input-bg); border: 1px solid var(--npb-border); border-radius: 5px; overflow: hidden; }
+.nmp-carry-fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--npb-blue); }
+.nmp-carry-knob { position: absolute; left: 50%; width: 20px; height: 20px; margin-left: -10px; background: #fff; border: 3px solid var(--npb-blue); border-radius: 50%; transition: box-shadow 0.15s; }
+.nmp-carry-candle { pointer-events: none; background: #4d4a44; border-radius: 18px; padding: 14px; width: 150px; box-sizing: border-box; }
+
+/* エリア詳細（メインエリア自体の編集） */
+.nmp-main-detail { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--npb-border); }
+.nmp-main-detail-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.nmp-eff { color: var(--npb-orange); font-size: 12px; }

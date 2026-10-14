@@ -129,7 +129,7 @@ export function getMainAreaStats(mainArea) {
       });
     }
   }
-  return { light, eff: time > 0 ? (light / time) : 0.0 };
+  return { light, time, eff: time > 0 ? (light / time) : 0.0 };
 }
 // 選択状態に関係なく、メインエリア配下の火種を無条件合計する（%スライダーの分母）
 export function getMainAreaTotalLight(mainArea) {
@@ -243,37 +243,16 @@ export function isSpotActiveToday(spot) {
 }
 
 /* ================================================================
-   ⚡ 効率自動最適化: 効率(火種/秒)の高い順に、目標火種量に達するまで選ぶ
+   ⚡ 効率自動最適化: 効率(火種/秒)の高い順に、必要火種量(targetLightNeeded)に達するまで選ぶ。
+   元実装(tai-nomacan.pro)のoptimize()と同じく、スポット単位で候補にして
+   （サブエリアのtimeで効率を計算）、目標を超えない範囲で必要なスポットだけ選ぶ。
+   targetLightNeededは「目標本数のしきい値 − 繰越火種 − 当日ボーナス火種」で、
+   呼び出し側(nomacan-pro-top.js)が求めて渡す。
    ================================================================ */
-export function optimize(areas, targetLight) {
-  const flat = [];
+export function clearAllSelections(areas) {
   areas.forEach((area) => {
     if (!area) return;
-    const aMode = getAreaMode(area);
-    if (aMode === 'main') {
-      const eff = (area.time > 0) ? (area.light || 0) / area.time : 0;
-      flat.push({ kind: 'main', ref: area, light: area.light || 0, time: area.time || 0, eff });
-    } else if (Array.isArray(area.subAreas)) {
-      area.subAreas.forEach((sub) => {
-        if (!sub) return;
-        const sMode = getSubMode(sub);
-        if (sMode === 'sub') {
-          const eff = (sub.time > 0) ? (sub.light || 0) / sub.time : 0;
-          flat.push({ kind: 'sub', ref: sub, light: sub.light || 0, time: sub.time || 0, eff });
-        } else if (Array.isArray(sub.spots)) {
-          const activeSpots = sub.spots.filter((s) => s && isSpotActiveToday(s));
-          const subLight = activeSpots.reduce((a, s) => a + (s.light || 0), 0);
-          const eff = (sub.time > 0) ? subLight / sub.time : 0;
-          flat.push({ kind: 'spotGroup', subRef: sub, spots: activeSpots, light: subLight, time: sub.time || 0, eff });
-        }
-      });
-    }
-  });
-  flat.sort((a, b) => b.eff - a.eff);
-  // リセット
-  areas.forEach((area) => {
-    const aMode = getAreaMode(area);
-    if (aMode === 'main') { area.isSelected = false; } else if (Array.isArray(area.subAreas)) {
+    if (getAreaMode(area) === 'main') { area.isSelected = false; } else if (Array.isArray(area.subAreas)) {
       area.subAreas.forEach((sub) => {
         if (!sub) return;
         if (getSubMode(sub) === 'sub') sub.isSelected = false;
@@ -281,13 +260,61 @@ export function optimize(areas, targetLight) {
       });
     }
   });
-  let acc = 0;
-  for (const item of flat) {
-    if (acc >= targetLight) break;
-    if (item.kind === 'main') { item.ref.isSelected = true; acc += item.light; } else if (item.kind === 'sub') { item.ref.isSelected = true; acc += item.light; } else if (item.kind === 'spotGroup') {
-      item.spots.forEach((s) => { s.isSelected = true; });
-      enforceSpotGroupExclusivity(item.subRef.spots);
-      acc += item.light;
+}
+
+export function optimize(areas, targetLightNeeded) {
+  if (!Array.isArray(areas)) return;
+  clearAllSelections(areas);
+
+  const refs = [];
+  areas.forEach((area, mIdx) => {
+    if (!area) return;
+    if (getAreaMode(area) === 'main') {
+      const lt = area.light || 0; const tm = area.time || 0;
+      refs.push({ type: 'main', mIdx, eff: tm > 0 ? lt / tm : 0, light: lt });
+    } else if (Array.isArray(area.subAreas)) {
+      area.subAreas.forEach((sub, sIdx) => {
+        if (!sub) return;
+        if (getSubMode(sub) === 'sub') {
+          const lt = sub.light || 0; const tm = sub.time || 0;
+          refs.push({ type: 'sub', mIdx, sIdx, eff: tm > 0 ? lt / tm : 0, light: lt });
+        } else if (Array.isArray(sub.spots)) {
+          sub.spots.forEach((spot, spIdx) => {
+            // 📅 曜日限定スポットは本日該当しないものを候補から除外する
+            if (spot && isSpotActiveToday(spot)) {
+              const subTime = sub.time || 0;
+              refs.push({ type: 'spot', mIdx, sIdx, spIdx, eff: subTime > 0 ? spot.light / subTime : 0, light: spot.light });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  refs.sort((a, b) => b.eff - a.eff);
+  let accumulated = 0;
+  // 同一subArea内で同じgroup値は1件まで（手動選択と同じ排他制約）
+  const selectedGroupsBySub = new Map();
+  for (const ref of refs) {
+    if (accumulated >= targetLightNeeded) break;
+    if (ref.type === 'main' && areas[ref.mIdx]) {
+      areas[ref.mIdx].isSelected = true;
+      accumulated += ref.light;
+    } else if (ref.type === 'sub' && areas[ref.mIdx] && areas[ref.mIdx].subAreas[ref.sIdx]) {
+      areas[ref.mIdx].subAreas[ref.sIdx].isSelected = true;
+      accumulated += ref.light;
+    } else if (ref.type === 'spot' && areas[ref.mIdx] && areas[ref.mIdx].subAreas[ref.sIdx] && areas[ref.mIdx].subAreas[ref.sIdx].spots[ref.spIdx]) {
+      const spot = areas[ref.mIdx].subAreas[ref.sIdx].spots[ref.spIdx];
+      const g = spot.group && spot.group.trim();
+      if (g) {
+        const key = ref.mIdx + '|' + ref.sIdx;
+        let groupSet = selectedGroupsBySub.get(key);
+        if (!groupSet) { groupSet = new Set(); selectedGroupsBySub.set(key, groupSet); }
+        if (groupSet.has(g)) continue; // 同一group内で既に1件選択済みのため除外
+        groupSet.add(g);
+      }
+      spot.isSelected = true;
+      accumulated += ref.light;
     }
   }
 }
@@ -364,7 +391,7 @@ export function shardPredictionForDate(d) {
   return predictShardForPacificDate(year, month, day, weekday);
 }
 // 今日(PT)から最大31日先まで探索し、最初に見つかる「発生する黒シャード」の日を返す
-function findTodayOrNextBlackShard() {
+export function findTodayOrNextBlackShard() {
   let cursor = pacificDateParts(new Date());
   for (let i = 0; i <= 31; i++) {
     const pred = predictShardForPacificDate(cursor.year, cursor.month, cursor.day, cursor.weekday);
@@ -374,7 +401,7 @@ function findTodayOrNextBlackShard() {
   return null;
 }
 // PTの暦日+時刻(壁時計)に対応するUTCミリ秒を求める（DSTを自動考慮／外部ライブラリ不要）
-function pacificWallClockToUtcMs(year, month, day, hour, minute) {
+export function pacificWallClockToUtcMs(year, month, day, hour, minute) {
   let guessMs = Date.UTC(year, month - 1, day, hour + 8, minute, 0); // 初期推定 PST(-8)
   for (let i = 0; i < 4; i++) {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -400,7 +427,7 @@ function jstNowParts() {
 const SHARD_BLACK_REPEAT_HOURS = 8; // 黒シャードは初回発生から同日中8時間おきに再発生（受取は初回のみ）
 // 指定したPT日付+基準時刻から、8時間おきに繰り返す発生時刻をcount回分、JSTの暦日/時刻に
 // 変換して返す（表示用ラベルの組み立てはview側に委ねる。dayDiff: 今日=0, 明日=1, ...）
-function blackShardOccurrencesInJst(hit, count) {
+export function blackShardOccurrencesInJst(hit, count) {
   const [h, min] = hit.time.split(':').map(Number);
   const baseUtcMs = pacificWallClockToUtcMs(hit.year, hit.month, hit.day, h, min);
   const nowJst = jstNowParts();
@@ -415,6 +442,41 @@ function blackShardOccurrencesInJst(hit, count) {
   }
   return results;
 }
+// 今日(PT)の次の発生日（year/month/dayより後）の黒シャードを探す（最大31日先まで）。
+// ある発生日の3回をすべて消化した後に、通知リマインダーが次の発生日へ進むために使う
+export function findNextBlackShardAfter(year, month, day) {
+  let cursor = addDaysToPacificDate(year, month, day, 1);
+  for (let i = 0; i <= 31; i++) {
+    const pred = predictShardForPacificDate(cursor.year, cursor.month, cursor.day, cursor.weekday);
+    if (pred.occurs && pred.color === 'black') return pred;
+    cursor = addDaysToPacificDate(cursor.year, cursor.month, cursor.day, 1);
+  }
+  return null;
+}
+// 今日のPT暦日キー（「予測に合わせる」の1日1回自動判定に使う。元実装のdateKeyと同じ形式）
+export function pacificDateKey(d) {
+  const p = pacificDateParts(d || new Date());
+  return `${p.year}-${p.month}-${p.day}`;
+}
+// 今日(PT)に黒シャードが発生するか
+export function isBlackShardToday() {
+  const p = shardPredictionForDate(new Date());
+  return !!(p && p.occurs && p.color === 'black');
+}
+// 次のデイリーリセット（＝翌PT日の0:00）のUTCミリ秒。夏時間(PDT/PST)はpacificWallClockToUtcMsが吸収する
+export function nextDailyResetUtcMs(now) {
+  const p = pacificDateParts(now || new Date());
+  const n = addDaysToPacificDate(p.year, p.month, p.day, 1);
+  return pacificWallClockToUtcMs(n.year, n.month, n.day, 0, 0);
+}
+// 「本日の大キャンドル群」は個数(0〜4)で保存する（元実装と同じ。×50が火種）。
+// 以前のハブ版は火種そのもの(0/50/100/150/200)で保存していたため、読み込み時に個数へ直す
+export function normalizeDailyBonus(v) {
+  let n = Number(v) || 0;
+  if (n >= 50) n = Math.round(n / 50);
+  return Math.max(0, Math.min(4, n));
+}
+
 // 直近(count)回分の黒シャード発生予測。見つかったレルムとJST発生時刻の配列を返す
 // （31日以内に見つからなければnull＝実運用ではまず起こらない）
 export function predictUpcomingBlackShard(count) {
@@ -526,7 +588,7 @@ export function loadState() {
     plannedUsage: Number(decoded.plannedUsage) || 0,
     heartsToSend: Number(decoded.heartsToSend) || 0,
     targetCandlesForOptimization: Number(decoded.targetCandlesForOptimization) || 20,
-    dailyBonusArea: Number(decoded.dailyBonusArea) || 0,
+    dailyBonusArea: normalizeDailyBonus(decoded.dailyBonusArea),
     dailyShard: decoded.dailyShard || 'none',
     // 旧保存データ（この設定が無かった頃）・一部キーだけ欠けた保存データのどちらでも
     // 全カード表示のデフォルトへフォールバックする（移植元のref({...})とwatchのマージと同じ考え方）

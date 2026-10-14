@@ -36,6 +36,16 @@ try {
   }
 } catch (e) { /* localStorageが使えない環境では何もしない */ }
 
+// 🔔 ノマキャン計算機プロの通知（黒シャード発生前／デイリーリセット前）: オン＋許可済みの時だけ、
+// 起動時に予約を始める（ハブは1つのタブで全ツールを行き来するため、ツールを開いていなくても届くように）。
+try {
+  const shardOn = localStorage.getItem('sky_shard_notify_enabled') === '1';
+  const resetOn = localStorage.getItem('sky_dailyreset_notify_enabled') === '1';
+  if ((shardOn || resetOn) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    import('../features/tai-nomacan-pro/nomacan-pro-notify.js').then(m => m.startIfEnabled()).catch(() => {});
+  }
+} catch (e) { /* localStorageが使えない環境では何もしない */ }
+
 // 📲 Service Worker（オフライン対応・起動の高速化。service-worker.js、stale-while-revalidate方式）。
 // 開発中に「更新したのに古い画面が出る」混乱を避けるため、localhost系では ?sw=1 を付けた時だけ登録する。
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
