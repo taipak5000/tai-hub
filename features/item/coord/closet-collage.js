@@ -28,19 +28,12 @@
    `import * as closetCollage from './coord/closet-collage.js'; closetCollage.open()`
    のように呼び出す想定（dashboard-view.jsへの配線は後続パスで行う）。
 
-   ── 元実装からの意図的な簡略化 ────────────────────────────────
-   1. 写真セルは、元実装のドラッグ＆ズーム式クロップモーダルではなく、
-      coord-data.jsのreadImageFileAsDataUrl({square:true})による
-      「選択直後に自動で中央正方形クロップ→縮小するだけ」の簡略版に
-      している（my-coord.jsの写真添付と同じ簡略化方針）。
-   2. 画像書き出し後の導線を、元実装の「Web Share API（対応環境のみ）→
-      非対応ならプレビュー画面で長押し/右クリック保存 or ダウンロード
-      ボタン、Xの投稿画面を開くボタンも表示」という3段構えから、
-      「生成→プレビュー表示＋ダウンロードボタン」のみに簡略化した
-      （Xへの投稿導線・Web Share APIによるネイティブ共有シートは省略）。
-      html2canvas(CDN)によるDOM→Canvas化→PNG書き出しという中核ロジック
-      自体は元実装と同じ（cdnjsから同一バージョンを動的読み込みする
-      ensureHtml2Canvas()も含めverbatimに近い移植）。
+   ── 写真・画像共有 ─────────────────────────────────────────
+   写真セルは元実装と同じドラッグ＆ズーム式の位置調整（coord-share.jsの
+   openPhotoCrop、マス目は正方形固定なので1:1）。画像の書き出しは
+   share/share-data.js の exportShareImage() を使い、元実装の
+   shareClosetOnTwitter と同じく「スマホはWeb Share API→非対応ならプレビュー
+   （長押し保存・ダウンロード）＋Xの投稿画面を開くボタン」の流れになる。
    ================================================================ */
 
 import { CURRENT_LANG, trCat, trItem, escapeHtml } from '../../../js/i18n.js';
@@ -50,18 +43,18 @@ import {
   itemIconHtml, catIconHtml,
   getClosetCollages, saveClosetCollages,
   CLOSET_MIN_GRID, CLOSET_MAX_GRID, CLOSET_BG_PRESETS, closetBgPreset,
-  readImageFileAsDataUrl, injectCoordSharedStyles, showCoordToast,
+  injectCoordSharedStyles, showCoordToast,
 } from './coord-data.js';
+import { openPhotoCrop, ensureCoordShareStyles } from './coord-share.js';
+import { SITE_URL, CLOSET_SHARE_HASHTAG, exportShareImage, injectShareSharedStyles } from '../share/share-data.js';
 
 const STYLE_ID = 'item-closet-collage-styles';
 const OVERLAY_ID = 'closetModalOverlay';
 const CELL_OVERLAY_ID = 'closetCellPickerOverlay';
-const PREVIEW_OVERLAY_ID = 'closetExportPreviewOverlay';
 
 let overlayEl = null;
 let closetEditing = null;      // 編集中のコラージュ { id, name, rows, cols, cells, bg, caption }
 let closetPickingIndex = null; // マス目ピッカーで選択対象になっているマスのindex
-let previewObjectUrl = null;   // 書き出しプレビュー中のBlob URL（閉じたらrevokeする）
 
 /* ================================================================
    一覧表示
@@ -103,7 +96,7 @@ function renderList() {
           <div class="cd-card-title">${escapeHtml(set.name)}</div>
           <div class="cd-card-actions">
             <button type="button" class="cd-icon-btn" data-act="edit" title="${en ? 'Edit' : '編集'}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button>
-            <button type="button" class="cd-icon-btn" data-act="export" title="${en ? 'Save as Image' : '画像として保存'}"><svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg></button>
+            <button type="button" class="cd-icon-btn" data-act="export" title="${en ? 'Share Image on X' : 'Xで画像を共有'}"><svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg></button>
             <button type="button" class="cd-icon-btn danger" data-act="delete" title="${en ? 'Delete' : '削除'}"><svg class="inline-icon" width="15" height="15"><use href="#i-trash"/></svg></button>
           </div>
         </div>
@@ -128,7 +121,7 @@ async function handleListClick(e) {
   } else if (act === 'edit') {
     editCollage(id);
   } else if (act === 'export') {
-    await exportClosetImage(id);
+    exportClosetImage(id);
   }
 }
 
@@ -336,8 +329,9 @@ async function handleCellPhotoChange(e) {
   if (!file) return;
   const index = closetPickingIndex;
   const en = CURRENT_LANG === 'en';
+  const dataUrl = await openPhotoCrop(file, { ratio: 1, outSize: 500 }); // マス目は正方形固定のため1:1。キャンセルならnull
+  if (!dataUrl) return;
   try {
-    const dataUrl = await readImageFileAsDataUrl(file, { maxDim: 500, square: true }); // マス目は正方形固定のため1:1で中央クロップ
     closetEditing.cells[index] = { type: 'photo', dataUrl };
     closeCellPicker();
     renderBoard();
@@ -348,26 +342,8 @@ async function handleCellPhotoChange(e) {
 }
 
 /* ================================================================
-   画像書き出し（html2canvasでオフスクリーンDOMカードをPNG化）
+   画像書き出し・Xへの共有（share-data.jsのexportShareImageへ委譲）
    ================================================================ */
-let html2canvasLoading = null;
-function ensureHtml2Canvas() {
-  if (window.html2canvas) return Promise.resolve();
-  if (html2canvasLoading) return html2canvasLoading;
-  html2canvasLoading = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = () => resolve();
-    s.onerror = () => { html2canvasLoading = null; reject(new Error('html2canvas load failed')); };
-    document.head.appendChild(s);
-  });
-  return html2canvasLoading;
-}
-
-function sanitizeFilename(str) {
-  return String(str).replace(/[\\/:*?"<>|]/g, '_').trim() || 'closet-collage';
-}
-
 function buildExportCardEl(set) {
   const preset = closetBgPreset(set.bg);
   const cellsHtml = set.cells.map(cell => {
@@ -395,63 +371,23 @@ function buildExportCardEl(set) {
     <div class="cle-board" style="grid-template-columns:repeat(${set.cols}, 1fr);">${cellsHtml}</div>
     ${set.caption ? `<div class="cle-caption">${escapeHtml(set.caption)}</div>` : ''}
     <div class="cle-date">${dateTxt}</div>
-    <div class="cle-attribution">© Sky: Children of the Light Icons by contributors of the Sky: Children of the Light wiki</div>
   `;
   document.body.appendChild(card);
   return card;
 }
 
-async function exportClosetImage(id) {
+function exportClosetImage(id) {
   const set = getClosetCollages().find(s => s.id === id);
   if (!set) return;
   const en = CURRENT_LANG === 'en';
-  showCoordToast(en ? 'Generating image…' : '画像を生成中…');
-  let card = null;
-  try {
-    await ensureHtml2Canvas();
-    card = buildExportCardEl(set);
-    const canvas = await window.html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true });
-    const filename = sanitizeFilename(set.name) + '.png';
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) throw new Error('toBlob returned null');
-    openExportPreview(blob, filename);
-  } catch (err) {
-    console.error('[closet-collage] failed to export image', err);
-    showCoordToast(en ? 'Failed to generate the image' : '画像の生成に失敗しました');
-  } finally {
-    if (card) card.remove();
-  }
-}
-
-function openExportPreview(blob, filename) {
-  const en = CURRENT_LANG === 'en';
-  if (previewObjectUrl) { URL.revokeObjectURL(previewObjectUrl); previewObjectUrl = null; }
-  previewObjectUrl = URL.createObjectURL(blob);
-
-  let previewEl = document.getElementById(PREVIEW_OVERLAY_ID);
-  if (!previewEl) {
-    previewEl = document.createElement('div');
-    previewEl.className = 'modal-overlay';
-    previewEl.id = PREVIEW_OVERLAY_ID;
-    previewEl.addEventListener('click', e => { if (e.target === previewEl) closeExportPreview(); });
-    document.body.appendChild(previewEl);
-  }
-  previewEl.innerHTML = `
-    <div class="modal-card">
-      <button type="button" class="modal-close-btn" id="clPreviewCloseX" aria-label="${en ? 'Close' : '閉じる'}"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></button>
-      <div class="modal-title">${en ? 'Image Ready' : '画像ができました'}</div>
-      <div class="cl-preview-img-wrap"><img src="${previewObjectUrl}" alt=""></div>
-      <div class="cd-action-row">
-        <a class="cd-action-btn primary full" href="${previewObjectUrl}" download="${escapeHtml(filename)}">${en ? 'Download' : 'ダウンロード'}</a>
-      </div>
-    </div>`;
-  previewEl.querySelector('#clPreviewCloseX').addEventListener('click', closeExportPreview);
-  requestAnimationFrame(() => previewEl.classList.add('open'));
-}
-
-function closeExportPreview() {
-  document.getElementById(PREVIEW_OVERLAY_ID)?.classList.remove('open');
-  if (previewObjectUrl) { URL.revokeObjectURL(previewObjectUrl); previewObjectUrl = null; }
+  injectShareSharedStyles();
+  const shareText = en
+    ? `My "${set.name}" closet collage!\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`
+    : `「${set.name}」のクローゼットコラージュ！\n\n${SITE_URL}\n${CLOSET_SHARE_HASHTAG}`;
+  return exportShareImage(() => buildExportCardEl(set), set.name, {
+    shareText,
+    successToast: en ? 'Shared!' : '共有しました！',
+  });
 }
 
 /* ================================================================
@@ -539,6 +475,7 @@ function wireControls() {
 
 export async function open() {
   injectCoordSharedStyles();
+  ensureCoordShareStyles();
   injectStyles();
   document.getElementById(OVERLAY_ID)?.remove();
 
@@ -568,7 +505,6 @@ export async function open() {
 export function close() {
   document.getElementById(OVERLAY_ID)?.classList.remove('open');
   closeCellPicker();
-  closeExportPreview();
 }
 
 /* ================================================================
@@ -611,9 +547,6 @@ function injectStyles() {
 .cl-cell-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cl-cell-item img { width: 78%; height: 78%; object-fit: contain; display: block; }
 
-.cl-preview-img-wrap { border-radius: var(--hub-r-sm); overflow: hidden; background: var(--hub-bg); }
-.cl-preview-img-wrap img { width: 100%; display: block; }
-
 /* ── 画像書き出し用カード（画面外に配置してhtml2canvasで書き出す） ── */
 .cle-export-card {
   position: fixed; left: -9999px; top: 0; width: 640px; padding: 32px 28px 26px;
@@ -632,12 +565,12 @@ function injectStyles() {
 .cle-cell-item img { width: 76%; height: 76%; object-fit: contain; display: block; }
 .cle-caption { font-size: 20px; font-weight: 400; color: #1C1C1E; text-align: center; margin-top: 18px; line-height: 1.6; position: relative; }
 .cle-date { font-size: 10.5px; color: rgba(28,28,30,0.45); text-align: right; margin-top: 14px; position: relative; }
-.cle-attribution { font-size: 8.5px; color: rgba(28,28,30,0.4); text-align: right; margin-top: 4px; position: relative; }
+.cle-export-card .ish-exp-attribution { color: rgba(28,28,30,0.4); position: relative; }
 .cle-export-card.cle-dark .cle-brand { color: rgba(255,255,255,0.65); }
 .cle-export-card.cle-dark .cle-title { color: #fff; }
 .cle-export-card.cle-dark .cle-caption { color: #fff; }
 .cle-export-card.cle-dark .cle-date { color: rgba(255,255,255,0.55); }
-.cle-export-card.cle-dark .cle-attribution { color: rgba(255,255,255,0.45); }
+.cle-export-card.cle-dark .ish-exp-attribution { color: rgba(255,255,255,0.45); }
 .cle-export-card.cle-dark .cle-cell { background: rgba(255,255,255,0.14); }
 .cle-export-card.cle-dark .cle-cell-empty { background: rgba(255,255,255,0.06); }
 `;

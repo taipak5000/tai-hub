@@ -179,7 +179,7 @@ function ensureHtml2Canvas() {
    多く、共有シートで「保存」を選ぶとエラー無しに成功扱いになって
    フォールバック（Xの投稿画面）が二度と出せなくなるため、ファイル共有は
    スマホ端末に限定する） */
-function isMobileDevice() {
+export function isMobileDevice() {
   if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
     return navigator.userAgentData.mobile;
   }

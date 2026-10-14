@@ -43,8 +43,12 @@ const itemEntry = {
     const myToken = ++itemToken;
     let targetKey;
     let cat = null;
+    let sharedCoordSub = null; // コーデの共有リンク（#/item/coord=<code>）: ダッシュボードの上にプレビューを出す
     if (!sub) {
       targetKey = 'dashboard';
+    } else if (sub.startsWith('coord=')) {
+      targetKey = 'dashboard';
+      sharedCoordSub = sub;
     } else if (sub === 'cost') {
       targetKey = 'cost';
     } else if (sub === 'all') {
@@ -74,13 +78,18 @@ const itemEntry = {
     const mod = itemMods[targetKey];
     if (targetKey === 'category') mod.mount(container, cat);
     else mod.mount(container);
+    if (sharedCoordSub) {
+      import('../features/item/coord/coord-share.js').then(m => {
+        if (myToken === itemToken) m.openSharedCoordFromRoute(sharedCoordSub);
+      });
+    }
   },
   unmount() {
     itemToken++; // 進行中のmount()（動的import待ち等）を無効化
     Object.values(itemMods).forEach(mod => mod && mod.unmount && mod.unmount());
   },
   title(sub) {
-    if (!sub) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
+    if (!sub || sub.startsWith('coord=')) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
     if (sub === 'cost') return CURRENT_LANG === 'en' ? 'Cost Calculator - tai-hub' : 'コスト集計 - tai-hub';
     if (sub === 'all') return CURRENT_LANG === 'en' ? 'All Items - tai-hub' : '全アイテム一覧 - tai-hub';
     const cat = CATEGORY_REGISTRY.find(c => c.key === sub);

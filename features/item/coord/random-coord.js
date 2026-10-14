@@ -25,18 +25,11 @@
    のように呼び出す想定（dashboard-view.jsへの配線は後続パスで行う——
    このファイル自体はdashboard-view.jsを一切editしていない）。
 
-   ── 元実装からの意図的な簡略化 ────────────────────────────────
-   1. 画像化してのXシェア（shareRandomOnTwitter）／リンクでの共有
-      （shareRandomCoordLink・共有URLを開いたときの「共有されたコーデ」
-      プレビューモーダル）は実装していない。いずれもhtml2canvas(CDN)＋
-      Web Share API、またはURLクエリへのコーデエンコード/デコードに
-      依存する独立した大きな機能で、cost-view.js（既存ファイル）が
-      同じ理由でX/Twitterシェア一式を省略しているのと同じ判断。
-      「ランダムに提案する」「保存する」というコア体験には影響しない。
-   2. 上記に伴い、シェア画像用の写真添付（randomCoordPhotoDataUrl）・
-      共有画像スタイル切替（ポラロイド風／アイコングリッド）・
-      共有用IDテキストも実装していない（すべてシェア機能専用の付随UIで、
-      保存されるデータには一切影響しない）。
+   ── 画像共有・リンク共有 ───────────────────────────────────
+   Xへの画像共有（shareRandomOnTwitter）・リンク共有（shareRandomCoordLink）・
+   共有画像用の写真（セッション中のみ保持）・画像スタイル（ポラロイド風／
+   アイコングリッド）・自分のIDは coord-share.js に集約してあり、
+   ここからはそれを呼ぶだけ。写真はドラッグ＆ズームで範囲を選ぶ。
    ================================================================ */
 
 import { CURRENT_LANG, trCat, trItem, escapeHtml } from '../../../js/i18n.js';
@@ -46,6 +39,10 @@ import {
   loadLastRandomCoord, saveLastRandomCoord, addSavedCoord,
   itemIconHtml, catIconHtml, injectCoordSharedStyles, showCoordToast,
 } from './coord-data.js';
+import {
+  coordShareControlsHtml, wireCoordShareControls, openPhotoCropForCoord, shareCoordImage, shareCoordLink,
+  buildRandomShareText, ensureCoordShareStyles,
+} from './coord-share.js';
 
 const STYLE_ID = 'item-random-coord-styles';
 const OVERLAY_ID = 'randomCoordModalOverlay';
@@ -54,6 +51,7 @@ let overlayEl = null;
 let currentRandom = {};
 let favOnlyMode = false;
 let currentRandomFavOnly = false;
+let randomPhotoDataUrl = null; // ランダムコーデは保存されない一時的なコーデのため、共有画像用の写真もセッション中のみ保持する
 
 /* ── お気に入りがあればそこから、なければ全所持アイテムから返す ── */
 function getPickPool(catKey) {
@@ -177,6 +175,15 @@ function confirmSaveRandom() {
   showCoordToast(en ? `Saved "${name}"!` : `「${name}」を保存しました！`);
 }
 
+function renderPhotoStatus() {
+  const status = overlayEl?.querySelector('#rcPhotoStatus');
+  const clearBtn = overlayEl?.querySelector('#rcPhotoClearBtn');
+  if (!status || !clearBtn) return;
+  const en = CURRENT_LANG === 'en';
+  status.textContent = randomPhotoDataUrl ? (en ? 'Photo attached' : '写真を添付済み') : (en ? 'Not selected' : '未選択');
+  clearBtn.style.display = randomPhotoDataUrl ? '' : 'none';
+}
+
 function updateFavOnlyBtn() {
   const btn = overlayEl?.querySelector('#rcFavOnlyBtn');
   if (!btn) return;
@@ -217,6 +224,23 @@ function renderModalHtml() {
       <div class="cd-action-row">
         <button type="button" class="cd-action-btn primary full" id="rcToggleSaveBtn">${en ? 'Save This Coord' : '保存する'}</button>
       </div>
+
+      <div class="cs-hint" style="margin-top:16px;">${en ? 'Share image' : '共有する画像'}</div>
+      ${coordShareControlsHtml()}
+      <div class="cs-photo-row">
+        <label class="cs-photo-pick">
+          <svg class="inline-icon" width="16" height="16"><use href="#i-image"/></svg><span>${en ? 'Choose Photo' : '写真を選ぶ'}</span>
+          <input type="file" accept="image/*" id="rcPhotoInput" style="display:none;">
+        </label>
+        <span class="cs-photo-status" id="rcPhotoStatus">${en ? 'Not selected' : '未選択'}</span>
+        <button type="button" class="cs-photo-clear" id="rcPhotoClearBtn" style="display:none;">${en ? 'Remove' : '削除'}</button>
+      </div>
+      <div class="cd-action-row">
+        <button type="button" class="cd-action-btn x-share full" id="rcShareXBtn">${en ? 'Share Image on X' : 'Xで画像を共有'}</button>
+      </div>
+      <div class="cd-action-row">
+        <button type="button" class="cd-action-btn secondary full" id="rcShareLinkBtn">${en ? 'Share as Link (this combo, what do you think?)' : 'リンクで共有（この組み合わせどう？）'}</button>
+      </div>
     </div>`;
 }
 
@@ -228,6 +252,21 @@ function wireControls() {
   q('#rcToggleSaveBtn').addEventListener('click', toggleSaveRow);
   q('#rcConfirmSaveBtn').addEventListener('click', confirmSaveRandom);
   q('#rcSaveName').addEventListener('keydown', e => { if (e.key === 'Enter') confirmSaveRandom(); });
+  wireCoordShareControls(overlayEl);
+  q('#rcPhotoInput').addEventListener('change', async e => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const dataUrl = await openPhotoCropForCoord(file);
+    if (dataUrl) { randomPhotoDataUrl = dataUrl; renderPhotoStatus(); }
+  });
+  q('#rcPhotoClearBtn').addEventListener('click', () => { randomPhotoDataUrl = null; renderPhotoStatus(); });
+  q('#rcShareXBtn').addEventListener('click', () => {
+    shareCoordImage(CURRENT_LANG === 'en' ? 'Random Coord' : 'ランダムコーデ', currentRandom, 'random-coord', buildRandomShareText(), randomPhotoDataUrl);
+  });
+  q('#rcShareLinkBtn').addEventListener('click', () => {
+    shareCoordLink(currentRandom, CURRENT_LANG === 'en' ? 'Random Coord' : 'ランダムコーデ');
+  });
   q('#rcResult').addEventListener('click', e => {
     const btn = e.target.closest('[data-act="toggle-fav"]');
     if (!btn) return;
@@ -238,6 +277,7 @@ function wireControls() {
 
 export async function open() {
   injectCoordSharedStyles();
+  ensureCoordShareStyles();
   injectStyles();
   document.getElementById(OVERLAY_ID)?.remove();
 
@@ -251,6 +291,7 @@ export async function open() {
   wireControls();
   favOnlyMode = false;
   updateFavOnlyBtn();
+  renderPhotoStatus();
   requestAnimationFrame(() => overlayEl.classList.add('open'));
 
   try {

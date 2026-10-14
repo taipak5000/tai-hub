@@ -31,6 +31,8 @@ export function navigate(toolKey, sub) {
 }
 
 function parseHashRoute() {
+  // 旧サイトのコーデ共有リンク（item/#coord=<code>）は、ハブでは #/item/coord=<code> に読み替える
+  if (/^#coord=/.test(location.hash)) history.replaceState(null, '', '#/item/' + location.hash.slice(1));
   const raw = location.hash.replace(/^#\/?/, '');
   const [toolKey, sub] = raw.split('/');
   return { toolKey: toolKey || '', sub: sub || '' };

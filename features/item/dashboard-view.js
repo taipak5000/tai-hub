@@ -25,6 +25,7 @@ import * as acquireLogModal from './acquire-log-modal.js';
 import * as randomCoord from './coord/random-coord.js';
 import * as myCoord from './coord/my-coord.js';
 import * as closetCollage from './coord/closet-collage.js';
+import * as coordShare from './coord/coord-share.js';
 import * as achievementShare from './share/achievement-share.js';
 import * as favoritesShare from './share/favorites-share.js';
 
@@ -395,6 +396,7 @@ function teardownFeatureTriggers() {
   // 「開いていなければ何もしない」実装のため、常時呼んでも安全）
   [searchModal, wishlistCostModal, acquireLogModal, randomCoord, myCoord, closetCollage, achievementShare, favoritesShare]
     .forEach(mod => { try { mod.close(); } catch (e) { /* no-op */ } });
+  try { coordShare.closeSharedCoord(); } catch (e) { /* no-op */ }
 }
 
 export function mount(container) {

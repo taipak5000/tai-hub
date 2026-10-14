@@ -23,22 +23,12 @@
    `import * as myCoord from './coord/my-coord.js'; myCoord.open()`
    のように呼び出す想定（dashboard-view.jsへの配線は後続パスで行う）。
 
-   ── 元実装からの意図的な簡略化 ────────────────────────────────
-   1. 写真添付は、元実装のドラッグ＆ズーム式クロップモーダル
-      （openPhotoCropModal、位置・拡大率を自分で調整できるUI）ではなく、
-      coord-data.jsのreadImageFileAsDataUrl()による「選択直後に自動で
-      縮小するだけ」の簡略版にしている（features/share/share-view.jsの
-      写真サムネイル添付と同じ簡略化方針）。添付・変更・削除という
-      コア機能自体は完全に対応している。
-   2. 写真変更用の専用プレビューモーダル（coordPhotoModal）は作らず、
-      一覧カード上のボタンから直接ファイル選択→保存まで完結させている
-      （見た目のステップ数を削っただけで、保存されるデータ・挙動
-      （添付・差し替え・削除）は同一）。
-   3. 画像化してのXシェア（shareMyCoordOnTwitter）・リンクでの共有
-      （shareMyCoordLink）は実装していない。cost-view.jsが同種の機能を
-      同じ理由で省略しているのと同じ判断（html2canvas(CDN)＋Web Share
-      APIに依存する独立した大きな機能のため）。保存・一覧・削除という
-      コアの管理機能には影響しない。
+   ── 写真・共有 ─────────────────────────────────────────────
+   写真は元実装と同じ、ドラッグ＆ズームで範囲を選ぶ方式（coord-share.jsの
+   openPhotoCropForCoord）。Xへの画像共有・リンク共有・画像スタイル・
+   自分のIDも coord-share.js に集約してあり、各カードのボタンから呼ぶ。
+   元実装の写真専用モーダル（coordPhotoModal）は、一覧カード上の
+   ボタンから直接ファイル選択→位置調整→保存まで完結させている。
    ================================================================ */
 
 import { CURRENT_LANG, trCat, trItem, escapeHtml } from '../../../js/i18n.js';
@@ -47,8 +37,12 @@ import {
   loadAllItemsOnce, getAllItemsCache, getOwnedItemsForCat,
   itemIconHtml, catIconHtml,
   getSavedCoords, addSavedCoord, deleteSavedCoord, setSavedCoordPhoto,
-  readImageFileAsDataUrl, injectCoordSharedStyles, showCoordToast,
+  injectCoordSharedStyles, showCoordToast,
 } from './coord-data.js';
+import {
+  coordShareControlsHtml, wireCoordShareControls, openPhotoCropForCoord, shareCoordImage, shareCoordLink,
+  buildMyCoordShareText, ensureCoordShareStyles,
+} from './coord-share.js';
 
 const STYLE_ID = 'item-my-coord-styles';
 const OVERLAY_ID = 'myCoordModalOverlay';
@@ -95,6 +89,8 @@ function renderList() {
         <div class="cd-card-header">
           <div class="cd-card-title">${escapeHtml(set.name)}</div>
           <div class="cd-card-actions">
+            <button type="button" class="cd-icon-btn" data-act="share-x" title="${en ? 'Share Image on X' : 'Xで画像を共有'}"><svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg></button>
+            <button type="button" class="cd-icon-btn" data-act="share-link" title="${en ? 'Share as Link' : 'リンクで共有'}"><svg class="inline-icon" width="15" height="15"><use href="#i-link"/></svg></button>
             ${set.photoDataUrl ? `<img class="cd-photo-thumb" src="${set.photoDataUrl}" alt="" data-act="pick-photo" title="${en ? 'Change Photo' : '写真を変更'}">` : ''}
             <button type="button" class="cd-icon-btn" data-act="pick-photo" title="${en ? 'Attach a Photo' : '写真を添付'}">
               <svg class="inline-icon" width="16" height="16" viewBox="0 0 24 24"><path d="M4.5 4.5h15v15h-15Z"/><path d="M4.5 15.5l4.2-4.5a1 1 0 0 1 1.5 0l2.3 2.5 2.5-3a1 1 0 0 1 1.5 0l3 4.5"/><path d="M9 9.5a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z"/></svg>
@@ -121,6 +117,12 @@ function handleListClick(e) {
     if (!confirm(en ? 'Delete this coord?' : 'このコーデを削除しますか？')) return;
     deleteSavedCoord(id);
     renderList();
+  } else if (act === 'share-x') {
+    const set = getSavedCoords().find(s => s.id === id);
+    if (set) shareCoordImage(set.name, set.items, set.name, buildMyCoordShareText(set.name), set.photoDataUrl);
+  } else if (act === 'share-link') {
+    const set = getSavedCoords().find(s => s.id === id);
+    if (set) shareCoordLink(set.items, set.name);
   } else if (act === 'pick-photo') {
     photoTargetId = id;
     overlayEl.querySelector('#mcPhotoFileInput')?.click();
@@ -134,10 +136,12 @@ async function handlePhotoFileChange(e) {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file || photoTargetId === null) return;
+  const targetId = photoTargetId;
   const en = CURRENT_LANG === 'en';
+  const dataUrl = await openPhotoCropForCoord(file); // ドラッグ＆ズームで範囲を選ぶ（キャンセルならnull）
+  if (!dataUrl) return;
   try {
-    const dataUrl = await readImageFileAsDataUrl(file, { maxDim: 900, square: false });
-    setSavedCoordPhoto(photoTargetId, dataUrl);
+    setSavedCoordPhoto(targetId, dataUrl);
     renderList();
   } catch (err) {
     console.error('[my-coord] failed to attach photo', err);
@@ -261,6 +265,8 @@ function renderModalHtml() {
           <svg class="inline-icon" width="14" height="14" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="M12 5v14M5 12h14"/></svg>
           ${en ? 'Create New Coord' : '新しいコーデを作成'}
         </button>
+        <div class="cs-hint" style="margin-top:18px;">${en ? 'Image style when sharing (applies to Random Coord too)' : '共有する画像のスタイル（ランダムコーデにも共通で適用されます）'}</div>
+        ${coordShareControlsHtml()}
       </div>
 
       <div id="mcCreateView" style="display:none;">
@@ -294,10 +300,12 @@ function wireControls() {
   q('#mcList').addEventListener('click', handleListClick);
   q('#mcCatSelects').addEventListener('click', handleCatSelectsClick);
   q('#mcPhotoFileInput').addEventListener('change', handlePhotoFileChange);
+  wireCoordShareControls(overlayEl);
 }
 
 export async function open() {
   injectCoordSharedStyles();
+  ensureCoordShareStyles();
   injectStyles();
   document.getElementById(OVERLAY_ID)?.remove();
 
