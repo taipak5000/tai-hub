@@ -259,6 +259,13 @@
 .tc-card-frame{ padding:22px; max-width:900px; margin:0 auto; }
 .tc-card{
   --tc-card-text: #25352E; --tc-card-text-2: #727C71; --tc-card-text-3: #A2AA9E;
+  /* 🩹 カード本体はテーマ選択でのみ配色が変わる設計。サイトのダークモードで--tc-teal等が
+     淡い色に置き換わると、明るいカード面の上で名前・チップ・称号バッジ等が読めなくなるため
+     （旧サイト2026-09-26の修正と同じ）、カード内だけで使う固定値をここに持つ */
+  --tc-card-surface: #FBFAF6; --tc-card-surface-2: #F4F1E9; --tc-card-surface-3: #ECE8DD; --tc-card-border: #E4DFD1;
+  --tc-card-gold: #C99A4A; --tc-card-gold-ink: #A87A32; --tc-card-gold-bg: rgba(201,154,74,0.12);
+  --tc-card-teal: #4F7C6E; --tc-card-teal-ink: #365B4F; --tc-card-teal-bg: rgba(79,124,110,0.10);
+  color: var(--tc-card-text);
   position:relative; overflow:visible; border-radius:24px; padding:22px 24px 18px;
   background: var(--tc-card-grad, linear-gradient(165deg, #FCFBF7 0%, #F5F1E6 100%));
   border:1px solid rgba(255,255,255,0.7);
@@ -272,19 +279,19 @@
 .tc-card-head{ grid-area:head; min-width:0; z-index:1; }
 .tc-card-grid{ grid-area:cols; z-index:1; }
 .tc-card-foot{ grid-area:foot; z-index:1; }
-.tc-card-kicker{ font-family:"IBM Plex Mono", monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--tc-ca, var(--tc-gold-ink)); margin-bottom:6px; }
+.tc-card-kicker{ font-family:"IBM Plex Mono", monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--tc-ca, var(--tc-card-gold-ink)); margin-bottom:6px; }
 .tc-card-emblem{
   position:absolute; top:26px; right:26px; width:38px; height:38px; border-radius:50%;
-  border:1.5px solid var(--tc-ca, var(--tc-gold)); display:flex; align-items:center; justify-content:center;
-  font-size:15px; color:var(--tc-ca, var(--tc-gold-ink)); background:rgba(255,255,255,0.55);
+  border:1.5px solid var(--tc-ca, var(--tc-card-gold)); display:flex; align-items:center; justify-content:center;
+  font-size:15px; color:var(--tc-ca, var(--tc-card-gold-ink)); background:rgba(255,255,255,0.55);
 }
 .tc-card-top{ display:flex; align-items:center; gap:12px; margin-bottom:8px; padding-right:44px; }
-.tc-card-avatar{ width:56px; height:56px; border-radius:50%; background:#fff; border:2px solid #fff; box-shadow:0 0 0 1px var(--tc-border), 0 3px 10px rgba(60,50,80,0.10); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; overflow:hidden; }
+.tc-card-avatar{ width:56px; height:56px; border-radius:50%; background:#fff; border:2px solid #fff; box-shadow:0 0 0 1px var(--tc-card-border), 0 3px 10px rgba(60,50,80,0.10); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; overflow:hidden; }
 .tc-card-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
 .tc-card-name-row{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
-.tc-card-name{ font-family:"Fraunces","Zen Old Mincho",serif; font-size:19px; font-weight:600; color:var(--tc-teal-ink); line-height:1.25; }
+.tc-card-name{ font-family:"Fraunces","Zen Old Mincho",serif; font-size:19px; font-weight:600; color:var(--tc-card-teal-ink); line-height:1.25; }
 .tc-card-sns-inline{ display:inline-flex; gap:6px; flex-wrap:wrap; }
-.tc-card-sns-chip{ font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:500; color:var(--tc-teal-ink); background:var(--tc-teal-bg); border:1px solid rgba(79,124,110,0.25); border-radius:100px; padding:2px 10px; }
+.tc-card-sns-chip{ font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:500; color:var(--tc-card-teal-ink); background:var(--tc-card-teal-bg); border:1px solid rgba(79,124,110,0.25); border-radius:100px; padding:2px 10px; }
 .tc-card-oneliner{ font-size:12px; color:var(--tc-text-2); margin-top:3px; line-height:1.5; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 
 .tc-card-grid{ display:grid; grid-template-columns:repeat(3, 1fr); column-gap:20px; align-items:start; margin-top:2px; }
@@ -296,25 +303,25 @@
 .tc-card-sec-title::before{ content:""; width:14px; height:1px; background:var(--tc-card-text-3); flex-shrink:0; opacity:0.6; }
 .tc-card-sec-heading{ font-family:"Fraunces","Zen Old Mincho",serif; font-size:13px; font-weight:600; color:var(--tc-card-text); margin:0 0 6px; }
 
-.tc-card-pill-badge{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:500; color:var(--tc-teal-ink); font-family:"Zen Kaku Gothic New",sans-serif; background:rgba(255,255,255,0.6); border:1px solid var(--tc-border); padding:6px 14px; border-radius:100px; }
-.tc-card-pill-badge::before{ content:"◇"; color:var(--tc-ca, var(--tc-gold)); }
+.tc-card-pill-badge{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:500; color:var(--tc-card-teal-ink); font-family:"Zen Kaku Gothic New",sans-serif; background:rgba(255,255,255,0.6); border:1px solid var(--tc-card-border); padding:6px 14px; border-radius:100px; }
+.tc-card-pill-badge::before{ content:"◇"; color:var(--tc-ca, var(--tc-card-gold)); }
 .tc-card-journey-strip{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:-2px 0 4px; }
-.tc-jr-pill{ display:inline-flex; align-items:baseline; gap:6px; font-size:11.5px; color:var(--tc-card-text-2); background:rgba(255,255,255,0.55); border:1px solid var(--tc-border); border-radius:100px; padding:5px 13px; }
+.tc-jr-pill{ display:inline-flex; align-items:baseline; gap:6px; font-size:11.5px; color:var(--tc-card-text-2); background:rgba(255,255,255,0.55); border:1px solid var(--tc-card-border); border-radius:100px; padding:5px 13px; }
 .tc-jr-fav-label{ font-size:10px; color:var(--tc-card-text-3); }
 .tc-jr-fav-value{ font-family:"Fraunces","Zen Old Mincho",serif; font-weight:600; color:var(--tc-card-text); font-size:12.5px; }
 
 .tc-soft-rows{ display:flex; flex-direction:column; gap:9px; }
-.tc-soft-row{ display:flex; align-items:center; gap:13px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-border); border-radius:16px; padding:12px 15px; }
-.tc-soft-row-icon{ width:32px; height:32px; border-radius:50%; background:var(--tc-teal-bg); color:var(--tc-teal-ink); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.tc-soft-row{ display:flex; align-items:center; gap:13px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-card-border); border-radius:16px; padding:12px 15px; }
+.tc-soft-row-icon{ width:32px; height:32px; border-radius:50%; background:var(--tc-card-teal-bg); color:var(--tc-card-teal-ink); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
 .tc-soft-row-body{ flex:1; min-width:0; }
 .tc-soft-row-label{ font-family:"IBM Plex Mono", monospace; font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--tc-card-text-3); margin-bottom:3px; }
 .tc-soft-row-value{ font-family:"Fraunces","Zen Old Mincho",serif; font-size:15.5px; font-weight:500; color:var(--tc-card-text); }
 .tc-soft-row-value.na{ color:var(--tc-card-text-3); font-weight:400; font-family:"Zen Kaku Gothic New",sans-serif; font-size:13px; }
-.tc-soft-row .tc-progress-bar{ height:4px; border-radius:100px; background:var(--tc-surface-3); margin-top:7px; overflow:hidden; }
-.tc-soft-row .tc-progress-bar-fill{ height:100%; background:var(--tc-teal); border-radius:100px; }
+.tc-soft-row .tc-progress-bar{ height:4px; border-radius:100px; background:var(--tc-card-surface-3); margin-top:7px; overflow:hidden; }
+.tc-soft-row .tc-progress-bar-fill{ height:100%; background:var(--tc-card-teal); border-radius:100px; }
 
 .tc-card-detail-mosaic{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-.tc-detail-chip{ display:flex; align-items:flex-start; gap:6px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-border); border-radius:12px; padding:7px 9px; min-width:0; }
+.tc-detail-chip{ display:flex; align-items:flex-start; gap:6px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-card-border); border-radius:12px; padding:7px 9px; min-width:0; }
 .tc-detail-chip .tc-dc-icon{ font-size:12px; flex-shrink:0; line-height:1.3; }
 .tc-detail-chip .tc-dc-body{ min-width:0; display:flex; flex-direction:column; gap:2px; }
 .tc-detail-chip .tc-dc-label{ font-family:"IBM Plex Mono", monospace; font-size:10px; letter-spacing:0.05em; text-transform:uppercase; color:var(--tc-card-text-3); }
@@ -325,9 +332,9 @@
 .tc-card-titles-strip{ display:flex; flex-wrap:wrap; gap:8px; }
 .tc-card-title-badge{
   display:inline-flex; align-items:center; gap:6px; padding:7px 14px 7px 10px; border-radius:100px;
-  background:linear-gradient(135deg, var(--tc-gold-bg) 0%, rgba(255,255,255,0.55) 100%);
+  background:linear-gradient(135deg, var(--tc-card-gold-bg) 0%, rgba(255,255,255,0.55) 100%);
   border:1px solid rgba(201,154,74,0.38); box-shadow:0 2px 7px rgba(168,122,50,0.14);
-  font-family:"Fraunces","Zen Old Mincho",serif; font-weight:600; font-size:12.5px; color:var(--tc-gold-ink);
+  font-family:"Fraunces","Zen Old Mincho",serif; font-weight:600; font-size:12.5px; color:var(--tc-card-gold-ink);
 }
 .tc-card-title-badge .tc-ctb-icon{ font-size:15px; }
 .tc-title-picker-empty{ font-size:12px; color:var(--tc-text-3); margin:0 0 8px; }
@@ -349,20 +356,20 @@
 .tc-trend-block-label{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--tc-card-text-3); margin-bottom:5px; }
 .tc-trend-svg-wrap{ position:relative; }
 .tc-trend-svg{ width:100%; height:48px; display:block; }
-.tc-trend-area{ fill:var(--tc-teal); fill-opacity:0.16; }
-.tc-trend-line{ fill:none; stroke:var(--tc-teal); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-.tc-trend-dot{ position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:var(--tc-gold); pointer-events:none; }
+.tc-trend-area{ fill:var(--tc-card-teal); fill-opacity:0.16; }
+.tc-trend-line{ fill:none; stroke:var(--tc-card-teal); stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.tc-trend-dot{ position:absolute; width:7px; height:7px; margin:-3.5px 0 0 -3.5px; border-radius:50%; background:var(--tc-card-gold); pointer-events:none; }
 .tc-trend-empty{ font-size:12px; color:var(--tc-card-text-3); }
 
 .tc-card-fc{
   display:flex; align-items:center; gap:8px; flex-wrap:wrap;
   font-family:"Fraunces","Zen Old Mincho",serif; font-size:13px; font-weight:500; color:var(--tc-card-text);
-  background:rgba(255,255,255,0.65); border:1px solid var(--tc-border); border-radius:16px; padding:9px 12px;
+  background:rgba(255,255,255,0.65); border:1px solid var(--tc-card-border); border-radius:16px; padding:9px 12px;
 }
-.tc-fc-contact-tag{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; font-weight:600; color:var(--tc-teal-ink); background:var(--tc-teal-bg); border:1px solid rgba(79,124,110,0.3); padding:2px 9px; border-radius:100px; }
+.tc-fc-contact-tag{ font-family:"IBM Plex Mono", monospace; font-size:10.5px; font-weight:600; color:var(--tc-card-teal-ink); background:var(--tc-card-teal-bg); border:1px solid rgba(79,124,110,0.3); padding:2px 9px; border-radius:100px; }
 
-.tc-card-clock-module{ display:flex; flex-direction:row; align-items:center; gap:12px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-border); border-radius:16px; padding:12px 14px; }
-.tc-card-clock-dial{ position:relative; width:84px; height:84px; border-radius:50%; flex-shrink:0; align-self:center; border:2px solid #fff; box-shadow:0 0 0 1px var(--tc-border), 0 4px 14px rgba(60,50,80,0.14); }
+.tc-card-clock-module{ display:flex; flex-direction:row; align-items:center; gap:12px; background:rgba(255,255,255,0.65); border:1px solid var(--tc-card-border); border-radius:16px; padding:12px 14px; }
+.tc-card-clock-dial{ position:relative; width:84px; height:84px; border-radius:50%; flex-shrink:0; align-self:center; border:2px solid #fff; box-shadow:0 0 0 1px var(--tc-card-border), 0 4px 14px rgba(60,50,80,0.14); }
 .tc-card-clock-arc-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .tc-card-clock-q{ position:absolute; font-size:9px; width:12px; text-align:center; pointer-events:none; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1)); }
 .tc-card-clock-q.q0{ top:-1px; left:50%; margin-left:-5.5px; }
@@ -370,29 +377,29 @@
 .tc-card-clock-q.q12{ bottom:-1px; left:50%; margin-left:-5.5px; }
 .tc-card-clock-q.q18{ top:50%; left:-3px; margin-top:-5.5px; }
 .tc-card-clock-ticks{ position:absolute; inset:0; }
-.tc-card-clock-tick{ position:absolute; width:1px; height:3px; background:var(--tc-border); border-radius:1px; }
-.tc-card-clock-tick.major{ width:1.3px; height:5px; background:var(--tc-gold-ink); border-radius:1px; }
+.tc-card-clock-tick{ position:absolute; width:1px; height:3px; background:var(--tc-card-border); border-radius:1px; }
+.tc-card-clock-tick.major{ width:1.3px; height:5px; background:var(--tc-card-gold-ink); border-radius:1px; }
 .tc-card-clock-caps{ position:absolute; inset:0; }
-.tc-card-clock-cap{ position:absolute; width:5px; height:5px; margin:-2.5px; border-radius:50%; background:var(--tc-ca, var(--tc-gold)); box-shadow:0 0 0 1.5px #fff, 0 1px 3px rgba(0,0,0,0.25); }
-.tc-card-clock-hole{ position:absolute; inset:13px; border-radius:50%; background:radial-gradient(circle at 35% 28%, #fff 0%, var(--tc-surface) 70%); box-shadow:0 0 0 1px var(--tc-border); display:flex; align-items:center; justify-content:center; }
+.tc-card-clock-cap{ position:absolute; width:5px; height:5px; margin:-2.5px; border-radius:50%; background:var(--tc-ca, var(--tc-card-gold)); box-shadow:0 0 0 1.5px #fff, 0 1px 3px rgba(0,0,0,0.25); }
+.tc-card-clock-hole{ position:absolute; inset:13px; border-radius:50%; background:radial-gradient(circle at 35% 28%, #fff 0%, var(--tc-card-surface) 70%); box-shadow:0 0 0 1px var(--tc-card-border); display:flex; align-items:center; justify-content:center; }
 .tc-card-clock-center-icon{ font-size:16px; }
 .tc-card-clock-list{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .tc-card-clock-range{ font-family:"Fraunces","Zen Old Mincho",serif; font-size:13px; font-weight:500; color:var(--tc-card-text); display:flex; align-items:center; gap:6px; }
-.tc-card-clock-range::before{ content:"◇"; font-size:9px; color:var(--tc-ca, var(--tc-gold)); }
+.tc-card-clock-range::before{ content:"◇"; font-size:9px; color:var(--tc-ca, var(--tc-card-gold)); }
 .tc-card-clock-range.na{ font-family:"Zen Kaku Gothic New",sans-serif; font-size:11.5px; font-weight:400; color:var(--tc-card-text-3); }
 .tc-card-clock-range.na::before{ color:var(--tc-card-text-3); }
 .tc-card-clock-range .tc-pt-num{ font-size:14px; font-weight:700; }
 .tc-card-clock-range .tc-pt-unit{ font-size:10.5px; font-weight:500; color:var(--tc-card-text-2); margin-right:1px; }
 .tc-card-clock-vibe{
   display:inline-flex; align-items:center; gap:5px; margin-top:4px; align-self:flex-start;
-  font-family:"Zen Kaku Gothic New",sans-serif; font-size:12.5px; font-weight:700; color:var(--tc-ca, var(--tc-gold-ink));
-  background:rgba(var(--tc-ca-rgb, 201,154,74), 0.14); border:1px solid var(--tc-border); border-radius:100px; padding:4px 11px 4px 8px;
+  font-family:"Zen Kaku Gothic New",sans-serif; font-size:12.5px; font-weight:700; color:var(--tc-ca, var(--tc-card-gold-ink));
+  background:rgba(var(--tc-ca-rgb, 201,154,74), 0.14); border:1px solid var(--tc-card-border); border-radius:100px; padding:4px 11px 4px 8px;
 }
 .tc-card-clock-vibe span{ font-size:14px; }
 
 #tcCardCustomNoteWrap{ display:flex; flex-direction:column; }
-.tc-card-custom-note-box{ display:flex; flex-direction:column; gap:8px; flex:1; box-sizing:border-box; background:rgba(255,255,255,0.65); border:1px solid var(--tc-border); border-radius:16px; padding:10px 12px; }
-.tc-card-custom-note-img{ width:100%; max-height:90px; object-fit:cover; border-radius:10px; border:1px solid var(--tc-border); }
+.tc-card-custom-note-box{ display:flex; flex-direction:column; gap:8px; flex:1; box-sizing:border-box; background:rgba(255,255,255,0.65); border:1px solid var(--tc-card-border); border-radius:16px; padding:10px 12px; }
+.tc-card-custom-note-img{ width:100%; max-height:90px; object-fit:cover; border-radius:10px; border:1px solid var(--tc-card-border); }
 .tc-card-custom-note-text{ font-family:"Zen Kaku Gothic New",sans-serif; font-size:12px; line-height:1.5; color:var(--tc-card-text-2); white-space:pre-wrap; overflow-wrap:anywhere; }
 
 .tc-cape-widget{
@@ -416,15 +423,15 @@
 .tc-cape-spark.l{ left:-6px; top:50%; margin-top:-1.5px; }
 .tc-cape-spark.r{ right:-6px; top:50%; margin-top:-1.5px; }
 .tc-cape-widget .tc-progress-bar{ flex:1 1 100%; height:5px; border-radius:100px; overflow:hidden; background:rgba(247,239,221,0.2); margin-top:1px; }
-.tc-cape-widget .tc-progress-bar-fill{ height:100%; border-radius:100px; background:linear-gradient(90deg, var(--tc-gold-ink) 0%, #EFC98A 100%); box-shadow:0 0 5px rgba(239,201,138,0.5); }
+.tc-cape-widget .tc-progress-bar-fill{ height:100%; border-radius:100px; background:linear-gradient(90deg, var(--tc-card-gold-ink) 0%, #EFC98A 100%); box-shadow:0 0 5px rgba(239,201,138,0.5); }
 
-.tc-card-foot{ padding-top:10px; border-top:1px solid var(--tc-border); display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--tc-card-text-3); }
+.tc-card-foot{ padding-top:10px; border-top:1px solid var(--tc-card-border); display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--tc-card-text-3); }
 .tc-card-foot .tc-tag{ font-family:"IBM Plex Mono", monospace; }
 
 .tc-panel-head-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 .tc-share-btn{
   appearance:none; cursor:pointer; border:none; border-radius:100px; padding:9px 18px;
-  background:linear-gradient(135deg, var(--tc-gold) 0%, var(--tc-gold-ink) 100%); color:#fff;
+  background:linear-gradient(135deg, var(--tc-card-gold) 0%, var(--tc-card-gold-ink) 100%); color:#fff;
   font-family:"Zen Kaku Gothic New",sans-serif; font-size:12.5px; font-weight:700; white-space:nowrap;
   display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(168,122,50,0.32);
   transition:transform .15s var(--tc-ease-snap), box-shadow .15s;
