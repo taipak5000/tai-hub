@@ -1,13 +1,26 @@
-# tai-hub（試作）
+# tai-hub
 
-Sky: Children of the Light ファンツール群を1つのアプリへ統合する構想
-（[SkyGame-Planner](https://github.com/Silverfeelin/SkyGame-Planner/) 参考）の、
-**本格的なSPA統合を実際に試すための試作リポジトリ**です。
+Sky: Children of the Light ファンツール群（アイテム・エモート・羽・精霊ツリー・再訪精霊・
+楽譜・ノマキャン・星のキャンドル・創作物管理…）を1つのPWAアプリにまとめたものです
+（[SkyGame-Planner](https://github.com/Silverfeelin/SkyGame-Planner/) 参考）。
 
-⚠️ **これは試作です。既存の各ツール（`item`/`emote`/`share`/`tai-nomacan`/
-`star-candle`等）が引き続き正式版・本番環境です。** 動作確認のため仮の
-GitHubリポジトリ（`taipak5000/tsts`）にpushしていますが、GitHub Pages等
-への公開は行っていません。既存リポジトリには一切手を加えていません。
+📌 **現状: 独立サイトからの移行準備中。** 各ツールの独立サイト（`item`/`emote`/`share`等）が
+引き続き現行の本番で、ハブはそれと同じlocalStorageキー・データ形状で動く（同じオリジンなので
+データはそのまま共有される）。独立サイトを閉じる手順（旧URL→ハブの転送スタブ・古いService Worker
+の停止・iOSホーム画面アプリのデータ移行）は `_ecosystem-tools/retire-stubs/README.md` に準備してあり、
+**まだデプロイしていない**。リポジトリ名は `tai-hub` に改名予定（公開URLは
+`https://taipak5000.github.io/tai-hub/`）。
+
+## 公開に向けた準備（2026-10-14）
+
+- **PWA**: `manifest.json`・アイコン・`service-worker.js`（stale-while-revalidate。localhostでは
+  `?sw=1` を付けた時だけ登録）。外部サイトへの依存（サイト一覧など）は静的データに置き換え済み。
+- **共有URLの切替**: `js/site-config.js` の `USE_HUB_SHARE_URLS`。移行日までは共有文のURLが旧サイトのまま、
+  `true` にすると全ツールの共有文・画像がハブのURLになる。
+- **コーデの共有リンク**: `#/item/coord=<code>`（旧サイトの `#coord=<code>` も自動で読み替える）。
+- **全モーダル共通**: ボトムシートのドラッグ/フリックで閉じる操作とフォーカストラップ（`js/sheet-engine.js`）。
+- **他タブへの追従**: プロフィール切替・改名・テーマ変更は `storage` イベントで全タブに反映。
+- **通知**: イベント・星のキャンドルのリマインダー、ノマキャン計算機プロの黒シャード/デイリーリセット（起動時に予約）。
 
 ## 今回やったこと
 

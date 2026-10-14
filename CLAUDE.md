@@ -2,8 +2,8 @@
 
 `tai-hub/`は、既存の各スタンドアロンサイト(`item`/`emote`/`share`/`tai-nomacan`/
 `star-candle`/`wings`/`companion`/`spirit-catalog`/`tai-revisit`/`tai-score`/
-`tai-card`/`tai-transfer`/`tai-info`/`profile`)を1つのSPAへ統合する試作
-リポジトリ。ビルドツールなしのネイティブES Modules。各ツールは
+`tai-card`/`tai-transfer`/`tai-info`/`profile`)を1つのSPA(PWA)へ統合したリポジトリ
+（独立サイトからの移行準備中。README.md参照）。ビルドツールなしのネイティブES Modules。各ツールは
 `features/<tool>/`配下に移植され、`js/router-registry.js`のROUTESテーブルで
 `js/router.js`のハッシュルーターに登録される。
 
@@ -342,3 +342,15 @@ getComputedStyle(el).background // 意図した色 or "none" になっている�
 border/background)を機械的に再走査し、かつ本家サイトと横に並べて
 `max-width`/コンテナ幅・背景色・枠線を数値で突き合わせることまでを
 「移植完了」の条件とする。
+
+## 🩹 移植した画面は「ボタンを実際に押して」確かめる（ハンドラの無いボタン・入力のたびにフォーカスが外れる）
+
+ノマキャン計算機プロ(2026-10-14)で、「マウントできてデータも同じ」なのに実際には使えない状態が
+見つかった: ①「デイリーリセット」ボタンに`onclick`が無かった、②入力欄を含むカードを`innerHTML`ごと
+描き直していたため1文字打つたびにフォーカスが外れた、③黒シャード+200が合計に反映されず予想残数が
+日数を無視していた。マウント確認・データ突き合わせ・コンソールエラー無し、では見つからない。
+新しくツールを移植・修正したら、①本家のテンプレートにある操作（ボタン・チェック・入力）を一つずつ
+ハブ側で操作して結果の数値を本家と突き合わせる、②数値入力は実際に複数桁を打ってフォーカスが
+残ることを確認する（入力欄は描き直さず、数値表示だけ差し替える。`features/tai-nomacan-pro/nomacan-pro-top.js`参照）、
+までを完了条件とする。
+
