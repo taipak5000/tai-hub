@@ -2,7 +2,7 @@
    起動処理：テーマ初期化・アイコンスプライト注入・chromeマウント・
    router.start()。
    ================================================================ */
-import { applyThemeToDOM, resolveSkyTheme, getSkyThemeMode, pfDisplayName, ensureProfilesInit, getActiveProfileId, applyProfileTint } from './state.js';
+import { applyThemeToDOM, resolveSkyTheme, getSkyThemeMode, pfDisplayName, ensureProfilesInit, getActiveProfileId, applyProfileTint, ACTIVE_PROFILE_KEY, SKY_THEME_KEY } from './state.js';
 import { injectIconSprite } from './icon-sprite.js';
 import { initRouter, startRouter } from './router.js';
 import { initShortcuts } from './shortcuts.js';
@@ -26,6 +26,20 @@ applyProfileTint(activeProfile && activeProfile.color); // 🎨 起動時、選�
 
 initRouter(document.getElementById('app-root'));
 startRouter();
+
+// 🔁 別タブ・別サイトでの変更に追従する（storageイベントは変更した当のタブでは発火しない）。
+//  ・選択中のプロフィールが切り替えられた → このタブの表示・保存先が古くならないよう再読み込み
+//  ・プロフィール名/アカウントカラーの編集 → ドックの名前とティントを更新
+//  ・テーマ（ライト/ダーク/システム）の変更 → 即座に反映
+window.addEventListener('storage', (e) => {
+  if (e.key === ACTIVE_PROFILE_KEY) { location.reload(); return; }
+  if (e.key === 'skyProfiles_v1') {
+    const p = ensureProfilesInit().find(x => x.id === getActiveProfileId());
+    siteDock.refreshProfileLabel(pfDisplayName(p));
+    applyProfileTint(p && p.color);
+  }
+  if (e.key === SKY_THEME_KEY) applyThemeToDOM(resolveSkyTheme(getSkyThemeMode() === 'system' ? null : getSkyThemeMode()) === 'dark');
+});
 
 // 🔔 通知リマインダー: 以前オプトインして通知が許可済みの時だけ、起動時にバックグラウンドの
 // チェックを始める（ダッシュボードを一度も開かなくても通知が届くように。許可の新規リクエストは
