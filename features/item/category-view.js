@@ -98,6 +98,7 @@ export async function mount(container, catConfig) {
   applyGridCols();
   buildEventFilter();
   buildColorFilter();
+  buildTypeFilter();
   filterAndRender();
   // 総合メニュー(ダッシュボード)側の集計ロジックに反映させるため、
   // 表示のたびにデータを保存し直す（元のDOMContentLoaded内の挙動と同じ）
@@ -132,6 +133,9 @@ function renderShell(cfg) {
   // ページには存在しない。ここでは静的にハードコードせず、そのカテゴリのアイテムに
   // 実際にcolorフィールドがあるかどうかで自動判定する（データが増減しても追従する）。
   const hasColorData = categoryItems.some(item => item.color);
+  // 同様に「タイプ」絞り込み・タイプ順の並び替えも、item.typeを持つカテゴリ
+  // （元実装では 大きい設置アイテム・持ち物アイテム・小さい設置アイテム）だけに出す
+  const hasTypeData = categoryItems.some(item => item.type);
 
   return `
     <div class="item-view">
@@ -184,15 +188,17 @@ function renderShell(cfg) {
               <option value="noReprint">${en ? 'No re-release' : '復刻なし'}</option>
             </select>
           </div>
-          ${hasColorData ? `
           <div class="cv-control-row">
             <span class="cv-control-label">${en ? 'Other' : 'その他'}</span>
             <select class="cv-select-box" id="filterEvent" onchange="window.__catViewFilterAndRender()">
               <option value="all">${en ? 'All events/sources' : 'すべてのイベント・登場元'}</option>
             </select>
-            <select class="cv-select-box" id="filterColor" onchange="window.__catViewFilterAndRender()">
+            ${hasColorData ? `<select class="cv-select-box" id="filterColor" onchange="window.__catViewFilterAndRender()">
               <option value="all">${en ? 'All colors' : 'すべての色'}</option>
-            </select>
+            </select>` : ''}
+            ${hasTypeData ? `<select class="cv-select-box" id="filterType" onchange="window.__catViewFilterAndRender()">
+              <option value="all">${en ? 'All types' : 'すべてのタイプ'}</option>
+            </select>` : ''}
           </div>
           <div class="cv-control-row">
             <span class="cv-control-label">${en ? 'Sort' : '並び替え'}</span>
@@ -200,20 +206,10 @@ function renderShell(cfg) {
               <option value="default">${en ? 'Sort: Default' : '並び替え: 標準'}</option>
               <option value="nameAsc">${en ? 'Item Name (A-Z)' : 'アイテム名（昇順）'}</option>
               <option value="event">${en ? 'By Event Name' : 'イベント名順'}</option>
-              <option value="color">${en ? 'By Color' : '色順'}</option>
+              ${hasColorData ? `<option value="color">${en ? 'By Color' : '色順'}</option>` : ''}
+              ${hasTypeData ? `<option value="type">${en ? 'By Type' : 'タイプ順'}</option>` : ''}
             </select>
-          </div>` : `
-          <div class="cv-control-row">
-            <span class="cv-control-label">${en ? 'Other' : 'その他'}</span>
-            <select class="cv-select-box" id="filterEvent" onchange="window.__catViewFilterAndRender()">
-              <option value="all">${en ? 'All events/sources' : 'すべてのイベント・登場元'}</option>
-            </select>
-            <select class="cv-select-box" id="sortOrder" onchange="window.__catViewFilterAndRender()">
-              <option value="default">${en ? 'Sort: Default' : '並び替え: 標準'}</option>
-              <option value="nameAsc">${en ? 'Item Name (A-Z)' : 'アイテム名（昇順）'}</option>
-              <option value="event">${en ? 'By Event Name' : 'イベント名順'}</option>
-            </select>
-          </div>`}
+          </div>
           <div class="cv-control-row cv-control-reset-row">
             <button type="button" class="cv-control-reset-btn" onclick="window.__catViewResetFilters()">
               <svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg> <span>${en ? 'Clear All Filters' : 'フィルターを全てクリア'}</span>
@@ -295,6 +291,19 @@ function buildColorFilter() {
     const opt = document.createElement('option');
     opt.value = color;
     opt.textContent = color;
+    select.appendChild(opt);
+  });
+}
+
+// #filterTypeも同様に、item.typeを持つカテゴリだけに存在する
+function buildTypeFilter() {
+  const select = containerEl.querySelector('#filterType');
+  if (!select) return;
+  const types = [...new Set(categoryItems.map(item => item.type).filter(Boolean))];
+  types.forEach(type => {
+    const opt = document.createElement('option');
+    opt.value = type;
+    opt.textContent = type;
     select.appendChild(opt);
   });
 }
@@ -398,6 +407,7 @@ function filterAndRender() {
   const fEvent = containerEl.querySelector('#filterEvent').value;
   // #filterColorはcolorデータを持つカテゴリ（現状はcapeのみ）だけに存在する
   const fColor = containerEl.querySelector('#filterColor')?.value ?? 'all';
+  const fType = containerEl.querySelector('#filterType')?.value ?? 'all';
   const sOrder = containerEl.querySelector('#sortOrder').value;
   const fName = containerEl.querySelector('#searchName').value.trim().toLowerCase();
 
@@ -416,6 +426,7 @@ function filterAndRender() {
     if (fReprint === 'noReprint' && !item.noReprint) return false;
     if (fEvent !== 'all' && item.event !== fEvent) return false;
     if (fColor !== 'all' && item.color !== fColor) return false;
+    if (fType !== 'all' && item.type !== fType) return false;
 
     return true;
   });
@@ -427,6 +438,8 @@ function filterAndRender() {
     filtered.sort((a, b) => trEvent(a.event).localeCompare(trEvent(b.event), en ? 'en' : 'ja'));
   } else if (sOrder === 'color') {
     filtered.sort((a, b) => (a.color || '').localeCompare(b.color || '', 'ja'));
+  } else if (sOrder === 'type') {
+    filtered.sort((a, b) => (a.type || '').localeCompare(b.type || '', 'ja'));
   }
 
   // 3. 出力 (Render)
@@ -458,6 +471,7 @@ function filterAndRender() {
       en ? `Dye ${item.dye ? 'Yes' : 'No'}` : `染色${item.dye ? 'あり' : 'なし'}`,
       item.noReprint ? (en ? 'No Re-release' : '復刻なし') : '',
       item.color ? (en ? `Color: ${item.color}` : `色:${item.color}`) : '',
+      item.type || '',
     ].filter(Boolean).join(' ／ ');
 
     return `
@@ -499,6 +513,7 @@ function filterAndRender() {
               <span class="cv-badge ${item.dye ? 'cv-badge-dye-o' : ''}">${en ? 'Dye' : '染色'} ${item.dye ? '<svg class="inline-icon" width="14" height="14" style="vertical-align:-2px"><use href="#i-check"/></svg>' : '<svg class="inline-icon" width="14" height="14" style="vertical-align:-2px"><use href="#i-close"/></svg>'}</span>
               ${item.noReprint ? `<span class="cv-badge cv-badge-no-reprint">${en ? 'No Re-release' : '復刻なし'}</span>` : ''}
               ${item.color ? `<span class="cv-badge cv-badge-color">${item.color}</span>` : ''}
+              ${item.type ? `<span class="cv-badge cv-badge-color">${item.type}</span>` : ''}
             </div>
           </div>
         </div>
