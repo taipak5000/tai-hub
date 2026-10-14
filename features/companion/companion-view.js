@@ -49,9 +49,12 @@
    【状態・ストレージ】localStorage キー名・JSON形状は元実装と完全一致
    （nsKey()でプロフィール名前空間化）:
      - sky_companion_v4_data: {
-         activeIndex, spirits, sharedNotes, sharedCalcFormula, hasSeasonPass,
+         activeIndex, spirits, hasSeasonPass,
          ownedCandles, estimatedDailyCandles, optimizerPlan:{ids}, walkLog
        }
+       （元実装にあった sharedNotes / sharedCalcFormula =「全精霊共通のメモ・計算」と、
+       シーズン進捗のシェアカードは、利用者がいないため2026-10-14に機能ごと廃止した。
+       保存済みの値は読み込まず、次回の保存で消える）
        spirits は4要素の配列（各 { id, name, walkDays, currentPreset,
        treeData:{tier1..4:[{id,type?,name,points,candles,checked,excluded,
        customLabel?,customImage?,firstUnlock?,noPoints?,firstBonus?,
@@ -135,12 +138,6 @@ const TRANSLATIONS = {
     mobile_add_one_title: '集めきれなかった分などを1本ずつ調整できます',
 
     goal_hearts: 'シーズンハート獲得: {n} / 4 個', goal_complete_msg: 'おめでとうございます！全精霊のシーズンハートを獲得しました！',
-    share_card_btn: '進捗をシェア', share_card_title: 'シーズン進捗のシェアカード',
-    share_card_hint: '今シーズンの進捗を画像として保存・共有できます。',
-    share_card_download_btn: '画像を保存', share_card_share_btn: '共有',
-    share_card_share_success: '共有しました', share_card_share_failed: '共有に失敗しました',
-    share_card_brand: '✨ Sky 精霊同行', share_card_hearts_label: '獲得シーズンハート',
-    share_card_candles_label: '🕯️ 必要本数への到達率', share_card_footer: 'シーズン終了 {date} まで',
 
     calc_adpass_label: 'アドパス', calc_pass_yes: 'あり（1日6本）', calc_pass_no: 'なし（1日5本）',
     calc_unit: '本', calc_owned_label: '所持本数', calc_day_unit: '日',
@@ -199,12 +196,7 @@ const TRANSLATIONS = {
     opt_note: '※ 各層の解放に必要な累計ポイントは考慮していません。交換には該当する層の解放が必要です。',
     copy_plan_btn: 'プランをコピー', copy_success: 'コピーしました', copy_failed: 'コピーに失敗しました',
 
-    shared_title: '全精霊共通のメモ・計算', shared_close: '閉じる', shared_open: '開く',
-    shared_formula_label: '計算式', shared_formula_note: '（＋ － × ÷ と半角記号・カッコが使えます）',
-    shared_formula_placeholder: '例: 100+30+20　や　(15+7)×4÷2', shared_formula_unit: '本',
-    shared_formula_error: '式エラー', shared_formula_empty: '＝ —',
-    shared_notes_label: 'シーズン全体のメモ・目標',
-    shared_notes_placeholder: '例: アドパス購入済み。毎日連れ歩き忘れずに！残り必要キャンドルなど自由記入...',
+    shared_close: '閉じる', shared_open: '開く',
 
     walk_title_pre: '', walk_title_post: 'との連れ歩き（同行）日数', walk_unit: '/ 77 日',
 
@@ -267,12 +259,6 @@ const TRANSLATIONS = {
     mobile_add_one_title: "Adjust one at a time, e.g. if you couldn't collect the full amount",
 
     goal_hearts: 'Season Hearts Earned: {n} / 4', goal_complete_msg: "Congratulations! You've earned every spirit's Season Heart!",
-    share_card_btn: 'Share progress', share_card_title: 'Season Progress Share Card',
-    share_card_hint: "Save or share this season's progress as an image.",
-    share_card_download_btn: 'Save image', share_card_share_btn: 'Share',
-    share_card_share_success: 'Shared!', share_card_share_failed: 'Failed to share',
-    share_card_brand: '✨ Sky Spirit Companion', share_card_hearts_label: 'Season hearts earned',
-    share_card_candles_label: '🕯️ Progress toward needed candles', share_card_footer: 'Season ends {date}',
 
     calc_adpass_label: 'Season Pass', calc_pass_yes: 'Yes (6/day)', calc_pass_no: 'No (5/day)',
     calc_unit: '', calc_owned_label: 'Candles currently owned', calc_day_unit: 'd',
@@ -332,12 +318,7 @@ const TRANSLATIONS = {
     opt_note: '* Tier unlock points are not taken into account. Exchanging requires the corresponding tier to be unlocked.',
     copy_plan_btn: 'Copy Plan', copy_success: 'Copied', copy_failed: 'Copy failed',
 
-    shared_title: 'Shared notes & calculator (all spirits)', shared_close: 'Close', shared_open: 'Open',
-    shared_formula_label: 'Formula', shared_formula_note: '(+ − × ÷ and half-width parentheses are supported)',
-    shared_formula_placeholder: 'e.g. 100+30+20 or (15+7)×4÷2', shared_formula_unit: '',
-    shared_formula_error: 'Formula error', shared_formula_empty: '= —',
-    shared_notes_label: 'Notes & goals for the season',
-    shared_notes_placeholder: "e.g. Season Pass purchased. Don't forget to walk daily! Feel free to jot down remaining candles needed, etc...",
+    shared_close: 'Close', shared_open: 'Open',
 
     walk_title_pre: 'Days walked with', walk_title_post: '', walk_unit: '/ 77 days',
 
@@ -635,21 +616,6 @@ const TEMPLATE = `
     </div>
   </div>
 
-  <!-- ═══ 📤 シーズン進捗のシェアカード ═══ -->
-  <div class="modal-overlay" ref="shareOverlayEl" @click.self="pfShareCloseModal">
-    <div class="modal-card">
-      <button type="button" class="modal-close-btn" @click="pfShareCloseModal"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></button>
-      <h3>{{ t('share_card_title') }}</h3>
-      <p class="pf-hint" style="margin-top:0;">{{ t('share_card_hint') }}</p>
-      <div style="display:flex; justify-content:center; margin-top:10px;">
-        <canvas id="shareCardCanvas" width="640" height="800" style="width:100%; max-width:280px; height:auto; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.25);"></canvas>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
-        <a :href="shareCardDataUrl" :download="shareCardFilename" class="pf-add-btn" style="flex:1; min-width:120px; text-align:center; text-decoration:none; box-sizing:border-box; padding:10px;">{{ t('share_card_download_btn') }}</a>
-        <button v-if="shareCardCanShare" type="button" class="pf-icon-btn" style="flex:1; min-width:100px; padding:10px;" @click="pfShareCardShare">{{ t('share_card_share_btn') }}</button>
-      </div>
-    </div>
-  </div>
 
   <div class="forecast-card">
     <div class="forecast-head" style="cursor:pointer;" @click="showForecast = !showForecast">
@@ -731,7 +697,6 @@ const TEMPLATE = `
         </div>
         <div style="font-size: 22px; font-weight: bold; margin: 0; position: relative;">{{ t('goal_hearts', {n: totalHearts}) }}</div>
         <div v-if="totalHearts === 4" class="goal-complete-message"><svg class="inline-icon ok" width="14" height="14"><use href="#i-check"/></svg> {{ t('goal_complete_msg') }}</div>
-        <button type="button" class="goal-share-btn" :aria-label="t('share_card_btn')" @click="pfShareOpenModal">{{ t('share_card_btn') }}</button>
       </div>
 
       <div class="section-card" style="border: 1px solid var(--accent-orange); background: rgba(255, 149, 0, 0.02);">
@@ -966,32 +931,7 @@ const TEMPLATE = `
         </div>
       </div>
 
-      <div class="section-card" style="padding-bottom: 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" @click="showSharedTools = !showSharedTools">
-          <span style="font-weight: bold; font-size: 14px; color: var(--text-color);">{{ t('shared_title') }}</span>
-          <span style="font-size: 11px; color: var(--text-gray); font-weight: bold; white-space: nowrap;">{{ showSharedTools ? t('shared_close') : t('shared_open') }}</span>
-        </div>
-        <div v-if="showSharedTools" style="margin-top: 14px;">
-          <div style="margin-bottom: 14px;">
-            <label style="font-size: 11px; color: var(--text-gray); font-weight: bold; display: block; margin-bottom: 6px;">{{ t('shared_formula_label') }} <span style="font-weight: normal;">{{ t('shared_formula_note') }}</span></label>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <input type="text" v-model="sharedCalcFormula" class="calc-input" style="border-color: rgba(175,82,222,0.35);" :placeholder="t('shared_formula_placeholder')">
-              <div style="min-width: 80px; text-align: right; flex-shrink: 0;">
-                <template v-if="sharedCalcTotal !== null">
-                  <span style="font-size: 18px; font-weight: bold; color: var(--accent-purple);">{{ sharedCalcTotal }}</span>
-                  <span style="font-size: 11px; color: var(--text-gray); margin-left: 2px;">{{ t('shared_formula_unit') }}</span>
-                </template>
-                <template v-else-if="sharedCalcFormula.trim()"><span style="font-size: 12px; color: var(--danger-text); font-weight: bold;"><svg class="inline-icon warn" width="11" height="11"><use href="#i-warning"/></svg> {{ t('shared_formula_error') }}</span></template>
-                <template v-else><span style="font-size: 14px; color: var(--text-gray);">{{ t('shared_formula_empty') }}</span></template>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label style="font-size: 11px; color: var(--text-gray); font-weight: bold; display: block; margin-bottom: 4px;">{{ t('shared_notes_label') }}</label>
-            <textarea v-model="sharedNotes" class="memo-textarea" style="height: 108px;" :placeholder="t('shared_notes_placeholder')"></textarea>
-          </div>
-        </div>
-      </div>
+
     </div>
 
     <div class="right-column">
@@ -1193,14 +1133,11 @@ function buildSetup(Vue) {
     const ownedCandles = ref(0);
     const candlesPerDay = computed(() => hasSeasonPass.value ? 6 : 5);
     const estimatedDailyCandles = ref(candlesPerDay.value);
-    const sharedNotes = ref('');
-    const sharedCalcFormula = ref('');
     const showForecast = ref(false);
     const showHeartPlanDetail = ref(false);
     const showMultiSpiritLog = ref(false);
     const showMultiSpiritPlan = ref(false);
     const showOptimizer = ref(false);
-    const showSharedTools = ref(false);
     const optSelectedId = ref('');
     const optimizerIds = ref([]);
     const optCopyStatus = ref('');
@@ -1229,9 +1166,6 @@ function buildSetup(Vue) {
        refを使わずclassListを直接操作すれば、Escでの外部クローズ後も
        毎回確実に'open'を付け外しできる。 ── */
     const dashOverlayEl = ref(null);
-    const shareOverlayEl = ref(null);
-    const shareCardDataUrl = ref('');
-    const shareCardCanShare = ref(false);
     const edbBodyEl = ref(null);
     const toastMessage = ref('');
     const toastVisible = ref(false);
@@ -1557,21 +1491,6 @@ function buildSetup(Vue) {
     });
 
     /* ================================================================
-       🧮 共通計算欄
-       ================================================================ */
-    const sharedCalcTotal = computed(() => {
-      const raw = sharedCalcFormula.value;
-      if (!raw.trim()) return null;
-      try {
-        const expr = raw.replace(/＋/g, '+').replace(/－/g, '-').replace(/×/g, '*').replace(/÷/g, '/').replace(/[^0-9+\-*/.()\s]/g, '');
-        if (!expr.trim()) return null;
-        const result = Function('"use strict"; return (' + expr + ')')();
-        if (typeof result === 'number' && isFinite(result)) return Math.round(result * 100) / 100;
-        return null;
-      } catch { return null; }
-    });
-
-    /* ================================================================
        🌐 アイテムの表示名・アイコン・レベル文字列
        ================================================================ */
     const getIcon = (item) => {
@@ -1882,91 +1801,6 @@ function buildSetup(Vue) {
     };
 
     /* ================================================================
-       📤 シーズン進捗のシェアカード（canvas 2D、外部ライブラリ不使用）
-       ================================================================ */
-    const shareCardFilename = computed(() => `sky-companion-season-progress_${pfLocalDateStr()}.png`);
-    const shareCardRenderToCanvas = (canvas) => {
-      const w = canvas.width, h = canvas.height;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, w, h);
-      const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, '#2c2350'); grad.addColorStop(1, '#5b1f4a');
-      ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
-      const fontStack = '"Hiragino Sans","Segoe UI","Apple Color Emoji","Segoe UI Emoji",sans-serif';
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255,255,255,0.92)';
-      ctx.font = `700 24px ${fontStack}`;
-      ctx.fillText(t('share_card_brand'), w / 2, 62);
-      ctx.font = `400 18px ${fontStack}`;
-      ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.fillText(seasonNameDisplay.value, w / 2, 92);
-      ctx.font = `800 68px ${fontStack}`;
-      ctx.fillStyle = '#ffcc00';
-      ctx.fillText(`🧡 ${totalHearts.value} / 4`, w / 2, 180);
-      ctx.font = `600 15px ${fontStack}`;
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.fillText(t('share_card_hearts_label'), w / 2, 208);
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(56, 236); ctx.lineTo(w - 56, 236); ctx.stroke();
-      let y = 274;
-      ctx.font = `600 17px ${fontStack}`;
-      spirits.value.forEach(sp => {
-        const done = sp.treeData.tier4[2].checked;
-        ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.fillText(`${done ? '✅' : '▫️'} ${spiritName(sp)}`, 56, y);
-        ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.fillText(`${getSpiritPoints(sp)} / ${getSpiritTier4Total(sp)}p`, w - 56, y);
-        y += 42;
-      });
-      y += 8;
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.beginPath(); ctx.moveTo(56, y); ctx.lineTo(w - 56, y); ctx.stroke();
-      y += 46;
-      ctx.textAlign = 'center'; ctx.font = `600 15px ${fontStack}`; ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(t('share_card_candles_label'), w / 2, y);
-      y += 38;
-      ctx.font = `800 32px ${fontStack}`; ctx.fillStyle = '#ffcc00';
-      ctx.fillText(`${candleBudgetPct.value}%`, w / 2, y);
-      y += 26;
-      ctx.font = `400 13px ${fontStack}`; ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.fillText(`${fmtNum(ownedCandles.value || 0)} / ${fmtNum(totalRemainingCandles.value)} ${t('calc_unit')}`, w / 2, y);
-      ctx.font = `400 13px ${fontStack}`; ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.fillText(t('share_card_footer', { date: seasonEndText.value }), w / 2, h - 42);
-      ctx.fillText('taipak5000.github.io/companion', w / 2, h - 20);
-    };
-    const shareCardGenerate = () => {
-      const canvas = document.getElementById('shareCardCanvas');
-      if (!canvas) return;
-      shareCardRenderToCanvas(canvas);
-      shareCardDataUrl.value = canvas.toDataURL('image/png');
-    };
-    const pfShareOpenModal = () => {
-      if (shareOverlayEl.value) shareOverlayEl.value.classList.add('open');
-      nextTick(() => {
-        shareCardGenerate();
-        shareCardCanShare.value = typeof navigator.share === 'function' && typeof navigator.canShare === 'function';
-      });
-    };
-    const pfShareCloseModal = () => { if (shareOverlayEl.value) shareOverlayEl.value.classList.remove('open'); };
-    const pfShareCardShare = async () => {
-      const canvas = document.getElementById('shareCardCanvas');
-      if (!canvas) return;
-      try {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        if (!blob) throw new Error('toBlob failed');
-        const file = new File([blob], shareCardFilename.value, { type: 'image/png' });
-        if (!navigator.canShare({ files: [file] })) throw new Error('cannot share files');
-        await navigator.share({ files: [file] });
-        showToast(t('share_card_share_success'));
-      } catch (e) {
-        if (e && e.name === 'AbortError') return;
-        console.error('pfShareCardShare', e);
-        showToast(t('share_card_share_failed'));
-      }
-    };
-
-    /* ================================================================
        🗓️ ダッシュボードモーダル（features/shared/event-dashboard.js をmount）
        ================================================================ */
     const openDashboardModal = () => {
@@ -1985,8 +1819,6 @@ function buildSetup(Vue) {
       const data = {
         activeIndex: activeIndex.value,
         spirits: spirits.value,
-        sharedNotes: sharedNotes.value,
-        sharedCalcFormula: sharedCalcFormula.value,
         hasSeasonPass: hasSeasonPass.value,
         ownedCandles: ownedCandles.value,
         estimatedDailyCandles: estimatedDailyCandles.value,
@@ -1998,8 +1830,6 @@ function buildSetup(Vue) {
     const applyLoadedData = (parsed) => {
       if (!parsed) return;
       if (Number.isInteger(parsed.activeIndex) && parsed.activeIndex >= 0 && parsed.activeIndex < spirits.value.length) activeIndex.value = parsed.activeIndex;
-      if (parsed.sharedNotes !== undefined) sharedNotes.value = parsed.sharedNotes;
-      if (parsed.sharedCalcFormula !== undefined) sharedCalcFormula.value = parsed.sharedCalcFormula;
       if (parsed.hasSeasonPass !== undefined) hasSeasonPass.value = parsed.hasSeasonPass;
       if (parsed.ownedCandles !== undefined) ownedCandles.value = parsed.ownedCandles;
       if (parsed.optimizerPlan) optimizerIds.value = Array.isArray(parsed.optimizerPlan.ids) ? parsed.optimizerPlan.ids : [];
@@ -2048,19 +1878,18 @@ function buildSetup(Vue) {
       clearTimeout(toastHideTimer);
       eventDashboard.unmount();
     });
-    watch([activeIndex, spirits, sharedNotes, sharedCalcFormula, hasSeasonPass, ownedCandles, estimatedDailyCandles, walkLog], () => { save(); }, { deep: true });
+    watch([activeIndex, spirits, hasSeasonPass, ownedCandles, estimatedDailyCandles, walkLog], () => { save(); }, { deep: true });
 
     return {
       t, fmtNum, pad2, spiritName, translateItemName, seasonNameDisplay,
       activeIndex, spirits, activeSpirit, activePoints, totalHearts, activeTier2Total, activeTier3Total, activeTier4Total, getSpiritTier4Total, getSpiritPoints, toggleTreeItem, toggleExcluded,
-      sharedCalcFormula, sharedCalcTotal, sharedNotes,
       activeStatusText, activeRemainingDays,
       incrementWalkDays, decrementWalkDays, applyPreset, resetAllConfirming, requestResetAll, cancelResetAll,
       getIcon, getItemImageUrl, TYPE_IMAGES, getLevel, cleanName, getItemLabel, getItemLabelForSpirit, isPhantomItem, getTier2Slots,
       showOptimizer, optSelectedId, estimatedDailyCandles, optimizerCandidates, optimizerRows, optimizerSummary, optAdd, optMove, optRemove,
       optCopyStatus, optCopyPlan, heartCopyStatus, heartCopyPlan,
       hasSeasonPass, ownedCandles, candlesPerDay,
-      showForecast, showHeartPlanDetail, showMultiSpiritLog, showMultiSpiritPlan, showSharedTools,
+      showForecast, showHeartPlanDetail, showMultiSpiritLog, showMultiSpiritPlan,
       activeCandleItems, activeTotalCandles, activeRemainingCandles, activeDistributedCandles, activeExcludedCandles,
       totalRemainingCandles, candleBudgetPct,
       multiSpiritPlan,
@@ -2071,8 +1900,6 @@ function buildSetup(Vue) {
       showWalkCalendar, walkCalendarLabel, walkCalendarDowLabels, walkCalendarDays, walkCalendarPrevMonth, walkCalendarNextMonth,
       showOneYearAgoBanner, oneYearAgoSpiritName, dismissOneYearAgoBanner,
       spiritForecasts, grandTotalCandles, getForecastIconId, forecastEtaText,
-      shareOverlayEl, shareCardDataUrl, shareCardCanShare, shareCardFilename,
-      pfShareOpenModal, pfShareCloseModal, pfShareCardShare,
       dashOverlayEl, openDashboardModal, closeDashboardModal, edbBodyEl,
       toastMessage, toastVisible,
     };
