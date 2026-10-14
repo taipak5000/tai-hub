@@ -82,9 +82,13 @@
 /* ── モーダル / ボトムシート ── */
 .pf-modal-overlay, .modal-overlay {
   display: none; position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
+  /* --sheet-progress は js/sheet-engine.js がドラッグ/フリック中に書く（0=閉じ切り〜1=開き切り）。未設定時は1 */
+  background: rgba(0, 0, 0, calc(0.45 * var(--sheet-progress, 1)));
   align-items: flex-end; justify-content: center; padding: 0;
+  transition: background-color 0.32s cubic-bezier(0.25, 1, 0.5, 1);
 }
+/* 閉じる動き（下へスライドさせてから隠す）の間だけ、.openが外れても表示を保つ */
+.pf-modal-overlay.is-closing, .modal-overlay.is-closing { display: flex; pointer-events: none; }
 .pf-modal-overlay.open, .modal-overlay.open { display: flex; animation: iosFade 0.32s cubic-bezier(0.25, 1, 0.5, 1); }
 .pf-modal-card, .modal-card {
   background: var(--hub-card); color: var(--hub-text);
@@ -93,8 +97,17 @@
   padding: 20px 20px calc(76px + env(safe-area-inset-bottom));
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25);
   position: relative; overflow-y: auto; overscroll-behavior: contain;
+  touch-action: pan-y; will-change: transform;
   animation: none;
+  /* タップでの閉じる動きはこのトランジションに任せる。ドラッグ中・フリック後の物理アニメーション中
+     (.is-dragging/.js-anim)だけJSの毎フレーム書き換えと衝突しないよう打ち消す */
+  transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
 }
+.pf-modal-card.is-dragging, .modal-card.is-dragging,
+.pf-modal-card.js-anim, .modal-card.js-anim,
+.pf-modal-overlay.open .pf-modal-card.is-dragging, .modal-overlay.open .modal-card.is-dragging,
+.pf-modal-overlay.open .pf-modal-card.js-anim, .modal-overlay.open .modal-card.js-anim { transition: none; animation: none; }
+.pf-modal-card.is-dragging, .modal-card.is-dragging { cursor: grabbing; user-select: none; }
 @media (min-width: 850px) { .pf-modal-card, .modal-card { max-width: 960px; } }
 /* ⚙️ 表示設定モーダルだけは姉妹サイト(item/companion/share/wings等)と同様、
    意図的に狭いまま据え置く（トグル数個の短いリストは720-960px幅より狭い方が

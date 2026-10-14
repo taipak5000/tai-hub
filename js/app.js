@@ -8,6 +8,7 @@ import { initRouter, startRouter } from './router.js';
 import { initShortcuts } from './shortcuts.js';
 import * as siteDock from './chrome/site-dock.js';
 import { initTheme } from './theme.js';
+import { initSheetEngine } from './sheet-engine.js';
 
 // 🩹 applyThemeToDOM(isDark)は真偽値を受け取る（'light'/'dark'の文字列をそのまま
 // 渡すと、'light'も空でない文字列なので常にtruthy判定され、常にダークになって
@@ -17,6 +18,7 @@ applyThemeToDOM(resolveSkyTheme(getSkyThemeMode() === 'system' ? null : getSkyTh
 injectIconSprite();
 initTheme(); // 🎨 着せ替え（保存済みなら配色・壁紙・きらめきを反映。ライト/ダーク切替にも追従）
 initShortcuts();
+initSheetEngine(); // ボトムシートのドラッグ/フリックで閉じる＋モーダルのフォーカストラップ
 
 const dockMount = document.getElementById('dock-root');
 siteDock.render(dockMount);
