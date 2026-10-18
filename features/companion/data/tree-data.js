@@ -5,7 +5,7 @@
    CURRENT_SEASON_NAME/SEASON_START/SEASON_END）と同じ内容。
 
    ⚠️ 今は「次シーズンの精霊ツリー」の準備中の仮データ。次の季節の精霊ツリーが判明するまでの間、
-   4体とも名前を「1〜4」にし、ツリーの形・獲得ポイント・必要キャンドルを前シーズン
+   4体の名前は判明した精霊名にし、ツリーの形・獲得ポイント・必要キャンドルを前シーズン
    「親愛なるファン・ゴッホへ」の「素朴な思い出」と同じにしている。判明したら、この1ファイルの
    中身（コスト表・個別上書き）を次のツリーの内容に置き換えること（companion/index.html側の
    更新と同じ作業）。前シーズンの精霊別アイコン画像・個別上書きは削除した（Git履歴から復元できる）。
@@ -54,7 +54,8 @@ function createInitialTree(prefix, costs) {
 const PLACEHOLDER_TREE_COSTS = { em1: 0, mag1: 4, it1: 18, mag2: 8, em2: 22, mag3: 8, it2: 26, extra: 0, heart: 3 };
 
 // 🧬 精霊4体ぶんの初期データ（デフォルト状態）を毎回まっさらに生成するファクトリ関数。
-// 今は次シーズンの仮データ: 4体とも同じ形（前シーズンの「素朴な思い出」と同じ）で、名前は「1〜4」。
+// 今は次シーズンの仮データ: 4体とも同じ形（前シーズンの「素朴な思い出」と同じ）で、名前だけ判明した精霊名。
+// 精霊名は保存データには含まれず（復元時は常にここの名前が使われる）、idは1〜4のまま。
 // アイテムIDは従来どおり s1〜s4 のまま（保存済みの記録のチェック状態を消さないため。
 // 前シーズンの進捗が残る場合は、各精霊の「リセット」で戻せる）。
 function createPlaceholderTree(prefix) {
@@ -68,9 +69,10 @@ function createPlaceholderTree(prefix) {
   return tree;
 }
 
+const SPIRIT_NAMES = ['腕っぷし自慢の船乗り', '見せびらかしの商人', '老いた漁師', '転げまわる幼子'];
 export function createDefaultSpiritsData() {
   return [1, 2, 3, 4].map((n) => ({
-    id: n, name: String(n), walkDays: 0, currentPreset: 'custom', treeData: createPlaceholderTree('s' + n),
+    id: n, name: SPIRIT_NAMES[n - 1], walkDays: 0, currentPreset: 'custom', treeData: createPlaceholderTree('s' + n),
   }));
 }
 // 🔓 各層の「完了時の累計ポイント」上書き。通常は100/180/280。ツリーの構成が違う精霊がいる場合だけ、
