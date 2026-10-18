@@ -368,7 +368,7 @@ function t(key, vars) {
    🌐 精霊名・アイテム名・季節名の英語訳（元のSPIRIT_NAME_EN/NAME_EN/
    TYPE_LABELS_EN/SEASON_NAME_EN/FIRST_UNLOCK_SUFFIX_I18Nをja/en版だけ移植）
    ================================================================ */
-// 精霊名の英語訳。次シーズンの精霊（ツリーは仮データ）の英語名は未収録（日本語名のまま表示）。
+// 精霊名の英語訳。遥かなる真珠の季節の精霊の英語名は未収録（日本語名のまま表示）。
 // 精霊名が決まったら「日本語名: 英語名」の形で追加する（未収録の名前はそのまま表示される）。
 const SPIRIT_NAME_EN = {};
 const NAME_EN = {
@@ -379,6 +379,9 @@ const NAME_EN = {
   '赤染料': 'Red Dye',
   '黄色染料': 'Yellow Dye',
   '黒染料': 'Black Dye',
+  '青染料': 'Blue Dye',
+  '水色染料': 'Cyan Dye',
+  'アドパス魔法': 'Season Pass Spell',
   'アドパスエモートLv2': 'Season Pass Emote Lv2',
   'アドパスエモートLv4': 'Season Pass Emote Lv4',
   'アドパスアイテム': 'Season Pass Item',

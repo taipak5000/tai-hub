@@ -4,11 +4,9 @@
    （createInitialTree/createDefaultSpiritsData/TIER_TOTAL_OVERRIDES/
    CURRENT_SEASON_NAME/SEASON_START/SEASON_END）と同じ内容。
 
-   ⚠️ 今は「次シーズンの精霊ツリー」の準備中の仮データ。次の季節の精霊ツリーが判明するまでの間、
-   4体の名前は判明した精霊名にし、ツリーの形・獲得ポイント・必要キャンドルを前シーズン
-   「親愛なるファン・ゴッホへ」の「素朴な思い出」と同じにしている。判明したら、この1ファイルの
-   中身（コスト表・個別上書き）を次のツリーの内容に置き換えること（companion/index.html側の
-   更新と同じ作業）。前シーズンの精霊別アイコン画像・個別上書きは削除した（Git履歴から復元できる）。
+   🌊 遥かなる真珠の季節（2026/10/16〜2027/1/1）の精霊ツリーを反映済み（Sky Wiki各精霊ページの精霊メニューより）。
+   次の季節のツリーが判明したら、この1ファイルの中身（コスト表・精霊ごとの個別上書き・名前）を差し替えること
+   （companion/index.html側の更新と同じ作業）。前シーズンのデータはGit履歴から復元できる。
    ================================================================ */
 
 // 🕯️ costs は精霊ごとのキャンドルコスト表。
@@ -16,8 +14,8 @@
 // em1/mag1=第1層, it1/mag2=第2層, em2/mag3=第3層, it2/extra4=第4層季節アイテム, heart=シーズンハートとの交換（要アドパス）
 // ⚠️ 第1層のみ、他の層と違って「アドパス①」の枠が実在しない（3つ目に見える右のアイコンは
 // 連れ歩きを開始するためのボタンであり、キャンドルを払って交換する枠ではないため）。
-// ⚠️ 第3層にはアドパスの枠が実在しない。代わりに第4層にアドパス④がある（ハートの後ろに追加し、
-// heartのtier4[2]という位置参照を崩さないようにしている）。
+// ⚠️ 第3層のアドパス枠(bonus3)は初期ツリーには含めず、createDefaultSpiritsDataで末尾に追加する。
+// 第4層のアドパス枠(bonus4/bonus4b)はハートの後ろに置き、heartのtier4[2]という位置参照を崩さないようにしている。
 // 🎭 エモートはLv1〜Lv4まであるが、Lv2とLv4はキャンドル交換ではなくアドパス限定で入手
 // （アドパスアイテムとは別枠の「アドパスエモートLv2/Lv4」として存在）。
 // キャンドルを払って交換できるのはLv1(第1層,無料)とLv3(第3層,em2)のみ。
@@ -47,37 +45,104 @@ function createInitialTree(prefix, costs) {
   };
 }
 
-// 🌱 次シーズンの精霊ツリー（準備中の仮データ）のキャンドルコスト。
-// 前シーズンの「素朴な思い出」と同じ（合計89: 第2層の魔法②が染料🕯️8・第3層にアドパス枠あり・
-// 第4層の魔法④は枠なし）。キー名（mag1/it1など）はツリー内の「位置」を表す識別子で、
-// 実際の種別(type)は個別上書きで変わる場合がある（例: 第2層のmag2は染料）。
-const PLACEHOLDER_TREE_COSTS = { em1: 0, mag1: 4, it1: 18, mag2: 8, em2: 22, mag3: 8, it2: 26, extra: 0, heart: 3 };
+// 🌊 遥かなる真珠の季節の精霊ツリー（旧サイト companion/index.html と同じ内容）。
+// 📊 キャンドルコスト（Sky Wiki「遥かなる真珠の季節」各精霊ページの「精霊メニュー」より）。
+// ツリー合計: 腕っぷし自慢の船乗り=75 / 見せびらかしの商人=100 / 老いた漁師=100 / 転げまわる幼子=96
+// （いずれもシーズンハートとの交換 🕯️3・要アドパスを含む）。
+// ※ キー名（mag1/it1など）はツリー内の「位置」を表す識別子であり、実際の種別(type)は下の
+//   精霊ごとの個別上書きで変わる（例: 第3層のmag3は染料や季節アイテム）。コスト0の枠は実在しない枠（非表示）。
+const SPIRIT_TREE_COSTS = {
+  s1: { em1: 0, mag1: 4, it1: 18, mag2: 0, em2: 8, mag3: 10, it2: 32, extra: 0, heart: 3 }, // 合計75（第2層は季節アイテムのみ・第3層は青染料8+魔法10でエモートLv3なし）
+  s2: { em1: 0, mag1: 4, it1: 18, mag2: 7, em2: 28, mag3: 8, it2: 32, extra: 0, heart: 3 }, // 合計100（第3層の魔法③は水色染料8）
+  s3: { em1: 0, mag1: 4, it1: 18, mag2: 7, em2: 28, mag3: 8, it2: 32, extra: 0, heart: 3 }, // 合計100（第2層の季節アイテムは楽譜#47・第3層の魔法③は白染料8）
+  s4: { em1: 0, mag1: 4, it1: 18, mag2: 7, em2: 28, mag3: 24, it2: 12, extra: 0, heart: 3 }, // 合計96（第3層の魔法③は季節アイテム(アウトフィット)24・第4層は青染料12）
+};
+
+// 🎨 実機アイコン画像（Sky Wikiの各精霊ページの精霊メニューの画像）。特定精霊の特定アイテム専用のため
+// item.customImage で個別に割り当てる（getItemImageUrlで最優先される）。
+// ※ 見せびらかしの商人のアドパス「ネックレス」は、Wiki側でも仮にエモートのアイコンが使われている。
+const pearlImg = (path) => 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/' + path + '/revision/latest/scale-to-width-down/51';
+const PEARL_ART = {
+  spell: pearlImg('2/28/Special-event-spell-icon.png'),
+  dye_blue: pearlImg('0/0b/Blue-dye-container-icon.png'),
+  dye_cyan: pearlImg('f/f5/Cyan-dye-container-icon.png'),
+  dye_white: pearlImg('6/64/White-dye-container-icon.png'),
+  s1: { emote: pearlImg('e/eb/Wrestling-Sailor-Emote-icon.png'), cape: pearlImg('e/ef/Wrestling-Sailor-Cape-icon.png'), hair: pearlImg('d/dc/Wrestling-Sailor-Hair-icon.png'), outfit: pearlImg('6/6d/Wrestling-Sailor-Outfit-icon.png') },
+  s2: { emote: pearlImg('e/e5/Showy-Merchant-Emote-icon.png'), hair: pearlImg('c/c2/Showy-Merchant-Hair-icon.png'), outfit: pearlImg('0/0a/Showy-Merchant-Outfit-icon.png') },
+  s3: { emote: pearlImg('c/c1/Old-Angler-Emote-icon.png'), sheet: pearlImg('4/4e/MusicSheet.png'), outfit: pearlImg('b/b6/Old-Angler-Outfit-icon.png'), mask: pearlImg('4/47/Old-Angler-Mask-icon.png'), hairAcc: pearlImg('7/73/Old-Angler-Hair-Accessory-icon.png') },
+  s4: { emote: pearlImg('b/bc/Cuddly-Rolling-Child-Emote-icon.png'), mask: pearlImg('0/00/Cuddly-Rolling-Child-Mask-icon.png'), outfit: pearlImg('5/59/Cuddly-Rolling-Child-Outfit-icon.png'), hair: pearlImg('5/55/Cuddly-Rolling-Child-Hair-icon.png'), cape: pearlImg('a/a6/Cuddly-Rolling-Child-Cape-icon.png') },
+};
 
 // 🧬 精霊4体ぶんの初期データ（デフォルト状態）を毎回まっさらに生成するファクトリ関数。
-// 今は次シーズンの仮データ: 4体とも同じ形（前シーズンの「素朴な思い出」と同じ）で、名前だけ判明した精霊名。
-// 精霊名は保存データには含まれず（復元時は常にここの名前が使われる）、idは1〜4のまま。
-// アイテムIDは従来どおり s1〜s4 のまま（保存済みの記録のチェック状態を消さないため。
-// 前シーズンの進捗が残る場合は、各精霊の「リセット」で戻せる）。
-function createPlaceholderTree(prefix) {
-  const tree = createInitialTree(prefix, PLACEHOLDER_TREE_COSTS);
-  // 第2層の魔法② → 染料（🕯️8）。第4層の魔法④は枠自体が存在しないため非表示（コスト0）
-  tree.tier2[1].type = 'dye';
-  tree.tier3[1].customLabel = '魔法③'; // ↑の採番ズレ補正
-  tree.tier4[1].customLabel = '魔法④'; // ↑の採番ズレ補正（コスト0のため実際は非表示）
-  // 第3層に存在するアドパス専用枠（コスト0・ポイント外）
-  tree.tier3.push({ id: prefix + '_bonus3', name: 'アドパスアイテム', points: 0, candles: 0, noPoints: true, firstBonus: true, requiresSeasonPass: true, checked: false, excluded: false });
-  return tree;
-}
-
-const SPIRIT_NAMES = ['腕っぷし自慢の船乗り', '見せびらかしの商人', '老いた漁師', '転げまわる幼子'];
+// アイテムIDは s1〜s4 のまま（保存済みの記録のチェック状態を消さないため）。精霊名は保存データに含まれず、
+// 復元時は常にここの名前が使われる。前シーズンの進捗が残る場合は、各精霊の「リセット」で戻せる。
 export function createDefaultSpiritsData() {
-  return [1, 2, 3, 4].map((n) => ({
-    id: n, name: SPIRIT_NAMES[n - 1], walkDays: 0, currentPreset: 'custom', treeData: createPlaceholderTree('s' + n),
-  }));
+  const SPIRIT_NAMES = ['腕っぷし自慢の船乗り', '見せびらかしの商人', '老いた漁師', '転げまわる幼子'];
+  const data = [1, 2, 3, 4].map((n) => {
+    const prefix = 's' + n;
+    const treeData = createInitialTree(prefix, SPIRIT_TREE_COSTS[prefix]);
+    // 4体とも、第3層の右端にアドパス専用枠がある（コスト0・ポイント外）
+    treeData.tier3.push({ id: prefix + '_bonus3', name: 'アドパスアイテム', points: 0, candles: 0, noPoints: true, firstBonus: true, requiresSeasonPass: true, checked: false, excluded: false });
+    return { id: n, name: SPIRIT_NAMES[n - 1], walkDays: 0, currentPreset: 'custom', treeData };
+  });
+  const art = (item, url) => { item.customImage = url; };
+
+  // 🎨 実際に公開されたツリーに合わせた個別上書き。
+  // 層ごとの獲得ポイント合計(第1層40/第2層60/第3層80/第4層100)は変えず、その層の実在する枠に配分する
+  // （枠が1つだけの層はその1枠に層の合計ポイントを持たせ、存在しない枠はコスト0・ポイント0にして非表示にする）。
+  // 種別(type)を変えると自動採番（①②③…）がズレるので、染料だけ customLabel で名前を固定している。
+
+  // ── 腕っぷし自慢の船乗り: 第2層は季節アイテム(ケープ)のみ（右端はアドパスの魔法）。第3層はエモートLv3が無く、青染料8＋魔法10
+  {
+    const t = data[0].treeData, a = PEARL_ART.s1;
+    t.tier2[0].points = 60;        // 季節アイテム①（ケープ）: 第2層の合計ポイントを1枠に集約
+    t.tier2[1].points = 0;         // 魔法②の枠は存在しない（コスト0=非表示）
+    t.tier2[2].name = 'アドパス魔法';
+    t.tier3[0].type = 'dye'; t.tier3[0].name = '青染料'; t.tier3[0].customLabel = '青染料'; // エモートLv3ではなく青染料（🕯️8）
+    t.tier4.splice(3, 1);          // 第4層上段のアドパス枠(bonus4)は無い
+    t.tier4[3].name = 'アドパス魔法'; // 第4層右端(bonus4b)はエモートではなくアドパスの魔法
+    art(t.tier1[0], a.emote); art(t.tier1[1], PEARL_ART.spell);
+    art(t.tier2[0], a.cape); art(t.tier2[2], PEARL_ART.spell);
+    art(t.tier3[0], PEARL_ART.dye_blue); art(t.tier3[1], PEARL_ART.spell); art(t.tier3[2], a.outfit);
+    art(t.tier4[0], a.hair); art(t.tier4[3], PEARL_ART.spell);
+  }
+
+  // ── 見せびらかしの商人: 標準の形。第3層の魔法③は水色染料（🕯️8）、右端のアドパスはネックレス。第4層上段のアドパス枠は無い
+  {
+    const t = data[1].treeData, a = PEARL_ART.s2;
+    t.tier3[1].type = 'dye'; t.tier3[1].name = '水色染料'; t.tier3[1].customLabel = '水色染料';
+    t.tier4.splice(3, 1);          // 第4層上段のアドパス枠(bonus4)は無い
+    art(t.tier1[0], a.emote); art(t.tier1[1], PEARL_ART.spell);
+    art(t.tier2[0], a.hair); art(t.tier2[1], PEARL_ART.spell); art(t.tier2[2], a.emote);
+    art(t.tier3[0], a.emote); art(t.tier3[1], PEARL_ART.dye_cyan); art(t.tier3[2], a.emote); // 右端=アドパスのネックレス（Wiki側の仮アイコン）
+    art(t.tier4[0], a.outfit); art(t.tier4[3], a.emote);
+  }
+
+  // ── 老いた漁師: 標準の形。第2層の季節アイテムは楽譜(#47)、第3層の魔法③は白染料（🕯️8）。第4層上段にアドパスのヘアアクセサリー
+  {
+    const t = data[2].treeData, a = PEARL_ART.s3;
+    t.tier3[1].type = 'dye'; t.tier3[1].name = '白染料'; t.tier3[1].customLabel = '白染料';
+    art(t.tier1[0], a.emote); art(t.tier1[1], PEARL_ART.spell);
+    art(t.tier2[0], a.sheet); art(t.tier2[1], PEARL_ART.spell); art(t.tier2[2], a.emote);
+    art(t.tier3[0], a.emote); art(t.tier3[1], PEARL_ART.dye_white); art(t.tier3[2], a.mask); // 右端=アドパスのマスク
+    art(t.tier4[0], a.outfit); art(t.tier4[3], a.hairAcc); art(t.tier4[4], a.emote);
+  }
+
+  // ── 転げまわる幼子: 第3層の魔法③は季節アイテム(アウトフィット)（🕯️24）、第4層は青染料（🕯️12）。第4層上段にアドパスのケープ
+  {
+    const t = data[3].treeData, a = PEARL_ART.s4;
+    t.tier3[1].type = 'seasonal'; t.tier3[1].name = '季節アイテム'; // アウトフィット
+    t.tier4[0].type = 'dye'; t.tier4[0].name = '青染料'; t.tier4[0].customLabel = '青染料';
+    art(t.tier1[0], a.emote); art(t.tier1[1], PEARL_ART.spell);
+    art(t.tier2[0], a.mask); art(t.tier2[1], PEARL_ART.spell); art(t.tier2[2], a.emote);
+    art(t.tier3[0], a.emote); art(t.tier3[1], a.outfit); art(t.tier3[2], a.hair); // 右端=アドパスのヘアスタイル
+    art(t.tier4[0], PEARL_ART.dye_blue); art(t.tier4[3], a.cape); art(t.tier4[4], a.emote);
+  }
+  return data;
 }
 // 🔓 各層の「完了時の累計ポイント」上書き。通常は100/180/280。ツリーの構成が違う精霊がいる場合だけ、
 // 精霊idをキーに上書きする（例: { 4: { t2: 100, t3: 181, t4: 281 } }）。
-// 今は4体とも同じ形の仮データなので上書きは無い。
+// 遥かなる真珠の季節は4体とも各層の合計ポイントが同じ（100/180/280）なので上書きは無い。
 export const TIER_TOTAL_OVERRIDES = {};
 // 🌸 現在（次）のシーズン情報（ヘッダーのバナー表示用。開始日時まで必要なため、
 // features/item/data/season-data.js の CURRENT_SEASON とは別にこの1ファイルへ
