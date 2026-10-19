@@ -16,6 +16,12 @@ import { CATEGORY_REGISTRY } from './data/categories.js';
 import { isSeasonLikeEvent } from './data/season-data.js';
 
 const STYLE_ID = 'item-condition-rates-styles';
+// 開閉状態は端末ごとの表示設定（旧サイトと同じキー。折りたたみ=1）
+const COLLAPSED_KEY = 'itemCondRatesCollapsed_v1';
+const CHEVRON_PATH = '<g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g>';
+function readCollapsed() {
+  try { return localStorage.getItem(COLLAPSED_KEY) === '1'; } catch (e) { return false; }
+}
 const GRID_CAT_KEYS = CATEGORY_REGISTRY.filter(c => c.section === 'grid').map(c => c.key);
 
 function isDayLikeEvent(e) {
@@ -56,6 +62,15 @@ function injectStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+.item-view .cond-toggle {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  background: none; border: 0; cursor: pointer; font-family: inherit; text-align: left;
+  font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.02em;
+  padding: 0; margin: 20px 0 8px;
+}
+.item-view .cond-chev { transition: transform 0.2s; transform: rotate(90deg); }
+.item-view .cond-toggle[aria-expanded="false"] .cond-chev { transform: rotate(0deg); }
+.item-view .cond-section.collapsed .cond-card { display: none; }
 .item-view .cond-card {
   background: var(--card); border-radius: var(--r); padding: 10px 16px 6px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04);
@@ -97,9 +112,23 @@ export async function mount(container) {
   if (!container) return;
   injectStyles();
   const en = CURRENT_LANG === 'en';
+  const collapsed = readCollapsed();
   container.innerHTML = `
-    <p class="sec-label">${en ? 'Completion Rate by Condition' : '条件別の達成率'}</p>
-    <div class="cond-card"><div class="cond-loading">${en ? 'Loading…' : '読み込み中…'}</div></div>`;
+    <div class="cond-section${collapsed ? ' collapsed' : ''}">
+      <button type="button" class="cond-toggle" aria-expanded="${!collapsed}">
+        <span>${en ? 'Completion Rate by Condition' : '条件別の達成率'}</span>
+        <svg class="inline-icon cond-chev" width="14" height="14" viewBox="0 0 24 24">${CHEVRON_PATH}</svg>
+      </button>
+      <div class="cond-card"><div class="cond-loading">${en ? 'Loading…' : '読み込み中…'}</div></div>
+    </div>`;
+  const section = container.querySelector('.cond-section');
+  const toggle = container.querySelector('.cond-toggle');
+  toggle.addEventListener('click', () => {
+    const nowCollapsed = !section.classList.contains('collapsed');
+    section.classList.toggle('collapsed', nowCollapsed);
+    toggle.setAttribute('aria-expanded', String(!nowCollapsed));
+    try { localStorage.setItem(COLLAPSED_KEY, nowCollapsed ? '1' : '0'); } catch (e) { /* noop */ }
+  });
 
   const perCat = await Promise.all(GRID_CAT_KEYS.map(async catKey => {
     const items = await loadItems(catKey);
