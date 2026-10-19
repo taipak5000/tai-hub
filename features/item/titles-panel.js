@@ -37,7 +37,7 @@
    ================================================================ */
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { getCategoryState, loadTitleStore, saveTitleStore, nsKey } from '../../js/state.js';
+import { getCategoryState, loadTitleStore, saveTitleStore, nsKey, isCountableItem } from '../../js/state.js';
 import * as conditionRates from './condition-rates.js';
 
 const STYLE_ID = 'item-titles-panel-styles';
@@ -121,24 +121,27 @@ function currentMoneySpentStat() {
    分かるtai-hubでは「未訪問だから除外」という状態自体が実質存在しない
    ため、12カテゴリを常にすべて集計対象にする（下部の簡略化コメント参照）。
    ================================================================ */
-const itemCountCache = new Map(); // catKey -> Promise<number>
-function loadCategoryItemCount(catKey) {
-  if (!itemCountCache.has(catKey)) {
-    itemCountCache.set(catKey, import(`./data/items/${catKey}.js`)
-      .then(mod => (Array.isArray(mod.ITEMS) ? mod.ITEMS.length : 0))
+// 集計対象（That Sky Shop を除く＝旧サイトの isCountableItem）のアイテムだけを保持する。
+const countableItemsCache = new Map(); // catKey -> Promise<item[]>
+function loadCategoryCountableItems(catKey) {
+  if (!countableItemsCache.has(catKey)) {
+    countableItemsCache.set(catKey, import(`./data/items/${catKey}.js`)
+      .then(mod => (Array.isArray(mod.ITEMS) ? mod.ITEMS.filter(isCountableItem) : []))
       .catch(e => {
         console.error(`[item titles] failed to load item data: ${catKey}`, e);
-        return 0;
+        return [];
       }));
   }
-  return itemCountCache.get(catKey);
+  return countableItemsCache.get(catKey);
 }
 
 // 12カテゴリぶんの {owned, total} と、その合計を返す
 async function computeCategoryTotals() {
   const entries = await Promise.all(TITLE_CAT_KEYS.map(async catKey => {
-    const total = await loadCategoryItemCount(catKey);
-    const owned = Object.values(getCategoryState(catKey).owned).filter(Boolean).length;
+    const items = await loadCategoryCountableItems(catKey);
+    const ownedMap = getCategoryState(catKey).owned;
+    const total = items.length;
+    const owned = items.filter(it => ownedMap[it.id]).length;
     return [catKey, { owned, total }];
   }));
   const perCat = Object.fromEntries(entries);

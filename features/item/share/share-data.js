@@ -39,7 +39,7 @@
 
 import { CURRENT_LANG, escapeHtml } from '../../../js/i18n.js';
 import { toolShareUrl } from '../../../js/site-config.js';
-import { getCategoryState } from '../../../js/state.js';
+import { getCategoryState, isCountableItem } from '../../../js/state.js';
 import { CATEGORY_REGISTRY } from '../data/categories.js';
 
 export const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid');
@@ -110,18 +110,21 @@ export function getShareStats() {
   if (!allItemsCache) return { own: 0, tot: 0, p: null };
   const stateCache = {};
   let own = 0;
+  let tot = 0;
   allItemsCache.forEach(it => {
+    if (!isCountableItem(it)) return; // That Sky Shop は総数にも所持数にも含めない
+    tot++;
     const st = stateCache[it.catKey] || (stateCache[it.catKey] = getCategoryState(it.catKey));
     if (st.owned[it.id]) own++;
   });
-  return { own, tot: allItemsCache.length, p: pct(own, allItemsCache.length) };
+  return { own, tot, p: pct(own, tot) };
 }
 
 /* ── カテゴリ別所持率 ── */
 export function getCatShareStats(catKey) {
   if (!allItemsCache) return { owned: 0, total: 0, p: null };
   const { owned: ownedMap } = getCategoryState(catKey);
-  const items = allItemsCache.filter(it => it.catKey === catKey);
+  const items = allItemsCache.filter(it => it.catKey === catKey && isCountableItem(it));
   const owned = items.filter(it => ownedMap[it.id]).length;
   return { owned, total: items.length, p: pct(owned, items.length) };
 }

@@ -7,8 +7,7 @@
 
    ・元データ: 各カテゴリの data/items/<catKey>.js の ITEMS（dynamic import・キャッシュ）
    ・所持状態: js/state.js の getCategoryState(catKey).owned
-   ・That Sky Shop は集計対象外（旧サイトの条件別達成率と同じ。ハブの全体ゲージ・カテゴリ件数は
-     現状それらを数えているため、数字が少しだけ食い違うことがある）
+   ・That Sky Shop は集計対象外（旧サイトの条件別達成率と同じ。全体ゲージ・カテゴリ件数も同じ規則）
    ・cost==='free' は、キャンドル/ハート交換・アドベンチャーパス入手など「課金なしで入手できる」もの
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';

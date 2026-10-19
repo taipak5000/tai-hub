@@ -18,7 +18,7 @@
    ================================================================ */
 
 import {
-  getCategoryState, saveCategoryState,
+  getCategoryState, saveCategoryState, isCountableItem,
   getViewMode, setViewMode as storeSetViewMode,
   getGridCols, setGridCols as storeSetGridCols,
   isWishItem, toggleWishItem,
@@ -255,6 +255,13 @@ function renderShell(cfg) {
 /* ================================================================
    ヘッダーのスコア表示更新
    ================================================================ */
+// categoryItems 全体から、That Sky Shop を除いた {owned, total} を数えてヘッダーを更新する
+// （旧サイトと同じ規則。カテゴリ内の一覧表示には That Sky Shop も出す）
+function refreshHeaderScore() {
+  const countable = categoryItems.filter(isCountableItem);
+  updateHeaderScore(countable.filter(item => userStates.owned[item.id]).length, countable.length);
+}
+
 function updateHeaderScore(owned, total) {
   const en = CURRENT_LANG === 'en';
   const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
@@ -335,10 +342,7 @@ function handleToggleOwned(id) {
       if (wishBtn) wishBtn.classList.remove('is-wish');
     }
   }
-  updateHeaderScore(
-    categoryItems.filter(item => userStates.owned[item.id]).length,
-    categoryItems.length
-  );
+  refreshHeaderScore();
 }
 
 function handleToggleFav(id, btn) {
@@ -452,10 +456,7 @@ function filterAndRender() {
   const listEl = containerEl.querySelector('#itemList');
   if (filtered.length === 0) {
     listEl.innerHTML = `<div class="cv-empty-message">${en ? 'No matching items found.' : '該当するアイテムが見つかりません。'}</div>`;
-    updateHeaderScore(
-      categoryItems.filter(item => userStates.owned[item.id]).length,
-      categoryItems.length
-    );
+    refreshHeaderScore();
     return;
   }
 
@@ -551,10 +552,7 @@ function filterAndRender() {
 
   listEl.innerHTML = html;
 
-  updateHeaderScore(
-    categoryItems.filter(item => userStates.owned[item.id]).length,
-    categoryItems.length
-  );
+  refreshHeaderScore();
 }
 
 // 所持状態の変更のたびに称号の新規解禁が無いか確認し、あればトースト通知する

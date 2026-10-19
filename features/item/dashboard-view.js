@@ -16,7 +16,7 @@
    カテゴリグリッドの所持数集計にのみ使う。
    ================================================================ */
 import { CURRENT_LANG, trCat, escapeHtml } from '../../js/i18n.js';
-import { getCategoryState } from '../../js/state.js';
+import { getCategoryState, isCountableItem } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import * as titlesPanel from './titles-panel.js';
 import * as searchModal from './search-modal.js';
@@ -302,15 +302,17 @@ function renderShell() {
 
 async function renderCategoryGrid(token) {
   const results = await Promise.all(GRID_CATEGORIES.map(async cat => {
-    let total = 0;
+    // That Sky Shop は総数にも所持数にも含めない（旧サイトと同じ規則）
+    let countable = [];
     try {
       const mod = await loadCategoryItems(cat.key);
-      total = Array.isArray(mod.ITEMS) ? mod.ITEMS.length : 0;
+      countable = Array.isArray(mod.ITEMS) ? mod.ITEMS.filter(isCountableItem) : [];
     } catch (e) {
       console.error(`[item dashboard] failed to load item data: ${cat.key}`, e);
     }
     const { owned } = getCategoryState(cat.key);
-    const ownedCount = Object.values(owned).filter(Boolean).length;
+    const total = countable.length;
+    const ownedCount = countable.filter(it => owned[it.id]).length;
     return { cat, ownedCount, total };
   }));
 

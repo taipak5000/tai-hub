@@ -212,9 +212,17 @@ export function getCategoryState(catKey) {
   return { owned: {}, fav: {} };
 }
 
+// That Sky Shop（実物グッズの通販ショップ）で入手するアイテムは、コンプリート率の総数にも
+// 所持数にも含めない（旧サイトitemのisCountableItemと同じ規則）。コーデ機能用の所持アイテム一覧
+// （ownedItems）や各カテゴリ画面のアイテム表示には含める。
+export function isCountableItem(item) {
+  return item.event !== 'That Sky Shop';
+}
+
 export function saveCategoryState(catKey, itemOwned, itemFav, itemsArray) {
-  const total = itemsArray.length;
-  const owned = itemsArray.filter(item => itemOwned[item.id]).length;
+  const countable = itemsArray.filter(isCountableItem);
+  const total = countable.length;
+  const owned = countable.filter(item => itemOwned[item.id]).length;
   const ownedItems = itemsArray
     .filter(item => itemOwned[item.id])
     .map(item => ({ id: item.id, name: item.name, nameEn: item.nameEn, img: item.img }));

@@ -33,7 +33,7 @@
    ================================================================ */
 
 import {
-  getCategoryState, saveCategoryState,
+  getCategoryState, saveCategoryState, isCountableItem,
   getViewMode, setViewMode as storeSetViewMode,
   getGridCols, setGridCols as storeSetGridCols,
   isWishItem, toggleWishItem,
@@ -526,9 +526,10 @@ function refreshCounts() {
   q('#avCountLabel').textContent = avItems.length > 0
     ? (en ? `${avItems.length} items (${filteredOwned} owned)` : `${avItems.length}件（所持 ${filteredOwned}件）`) : '';
 
-  // 全体の達成率（ダッシュボードと同じく、全カテゴリの全アイテムが分母）
-  const total = allItemsCache.length;
-  const ownedAll = allItemsCache.filter(it => !!st(it.catKey).owned[it.id]).length;
+  // 全体の達成率（ダッシュボードと同じく、全カテゴリが分母。That Sky Shop は集計から除く）
+  const countable = allItemsCache.filter(isCountableItem);
+  const total = countable.length;
+  const ownedAll = countable.filter(it => !!st(it.catKey).owned[it.id]).length;
   q('#avHdrCount').textContent = en ? `${ownedAll} / ${total} owned` : `${ownedAll} / ${total} 所持`;
   q('#avHdrPct').textContent = total > 0 ? `${Math.round(ownedAll / total * 100)}%` : '--%';
 
