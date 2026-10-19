@@ -38,6 +38,7 @@
 
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { getCategoryState, loadTitleStore, saveTitleStore, nsKey } from '../../js/state.js';
+import * as conditionRates from './condition-rates.js';
 
 const STYLE_ID = 'item-titles-panel-styles';
 
@@ -260,9 +261,14 @@ async function renderPanel(container) {
       <span>${en ? 'Register items on each category page and your completion rate will automatically appear here' : '各カテゴリページでアイテムを登録すると、ここに所持率が自動で反映されます'}</span>
     </div>` : ''}
 
+    <div id="titpCondRates"></div>
+
     <p class="sec-label">${en ? 'Titles' : '称号'}<span class="titp-titles-count">${en ? `${earnedCount} / ${TITLES.length} unlocked` : `${earnedCount} / ${TITLES.length} 個解除`}</span></p>
     <div class="titp-panel">${TITLES.map(t => chipHtml(t, store)).join('')}</div>
   `;
+
+  // 条件別の達成率（無課金・限定など）。ゲージと称号チップ列の間に差し込む
+  conditionRates.mount(container.querySelector('#titpCondRates'));
 
   // ゲージのアニメーション（初期状態→次フレームで目標値へ。item/index.htmlのrequestAnimationFrame方式と同じ）
   const fillEl = container.querySelector('.titp-g-fill');
