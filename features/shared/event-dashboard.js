@@ -977,9 +977,13 @@ function icsExportSectionHtml() {
 /* ================================================================
    🎛️ マウント/アンマウント
    ================================================================ */
-let containerEl = null;
+let containerEl = null;   // 各ツールのモーダルなどへの一時マウント（unmount()で破棄される）
 let tickTimer = null;
 let icsExportEnabled = false;
+// 常設サイドパネル（js/chrome/side-panels.js）へのマウント。各ツールが画面を離れる時に呼ぶ
+// unmount()では止まらず、unmountPersistent()でだけ破棄される（モーダルと同時に表示しても干渉しない）
+let persistentEl = null;
+let persistentTimer = null;
 
 function reminderSectionHtml() {
   return `
@@ -1006,11 +1010,15 @@ function reminderSectionHtml() {
 }
 
 function syncReminderUI() {
-  if (!containerEl) return;
-  const cb = containerEl.querySelector('#edbReminderCheckbox');
+  [containerEl, persistentEl].forEach(syncReminderUIIn);
+}
+
+function syncReminderUIIn(root) {
+  if (!root) return;
+  const cb = root.querySelector('#edbReminderCheckbox');
   if (!cb) return;
-  const sel = containerEl.querySelector('#edbReminderMinutes');
-  const status = containerEl.querySelector('#edbReminderStatus');
+  const sel = root.querySelector('#edbReminderMinutes');
+  const status = root.querySelector('#edbReminderStatus');
   const enabled = reminderEnabled();
   cb.checked = enabled;
   if (sel) sel.value = String(reminderMinutes());
@@ -1046,33 +1054,55 @@ function rerenderBody(body, html) {
  * 同じ/別のcontainerに対して繰り返し呼んでもよい（内部の1秒タイマーは
  * 毎回停止してから作り直すため、多重起動しない）。
  */
+// rootの中身を描画してイベントを結び付ける（一時マウントと常設パネルで共通。
+// IDはすべてroot内でのquerySelectorで引くので、2か所に同時に出ても干渉しない）
+function renderInto(root, withIcs) {
+  root.innerHTML = `<div id="edbBody">${buildHtml(getData())}</div>${withIcs ? icsExportSectionHtml() : ''}${reminderSectionHtml()}`;
+
+  const cb = root.querySelector('#edbReminderCheckbox');
+  const sel = root.querySelector('#edbReminderMinutes');
+  cb.addEventListener('change', e => reminderToggle(e.target.checked, syncReminderUI));
+  sel.addEventListener('change', e => reminderSaveMinutes(e.target.value));
+  syncReminderUIIn(root);
+
+  const icsBtn = root.querySelector('#edbIcsExportBtn');
+  if (icsBtn) icsBtn.addEventListener('click', () => exportIcs(root.querySelector('#edbIcsStatus')));
+}
+
+function tickInto(root) {
+  if (!root) return;
+  const body = root.querySelector('#edbBody');
+  if (!body) return;
+  rerenderBody(body, buildHtml(getData()));
+}
+
 export function mount(container, opts) {
   injectStyles();
   injectLocalIconSprite();
+  const withIcs = !!(opts && opts.icsExport);
+
+  if (opts && opts.persistent) {
+    if (persistentTimer) { clearInterval(persistentTimer); persistentTimer = null; }
+    persistentEl = container;
+    renderInto(container, withIcs);
+    persistentTimer = setInterval(() => tickInto(persistentEl), 1000);
+    ensureRemindersInited();
+    return;
+  }
+
   if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
-
-  icsExportEnabled = !!(opts && opts.icsExport);
+  icsExportEnabled = withIcs;
   containerEl = container;
-  const data = getData();
-  containerEl.innerHTML = `<div id="edbBody">${buildHtml(data)}</div>${icsExportEnabled ? icsExportSectionHtml() : ''}${reminderSectionHtml()}`;
-
-  const cb = containerEl.querySelector('#edbReminderCheckbox');
-  const sel = containerEl.querySelector('#edbReminderMinutes');
-  cb.addEventListener('change', e => reminderToggle(e.target.checked, syncReminderUI));
-  sel.addEventListener('change', e => reminderSaveMinutes(e.target.value));
-  syncReminderUI();
-
-  const icsBtn = containerEl.querySelector('#edbIcsExportBtn');
-  if (icsBtn) icsBtn.addEventListener('click', () => exportIcs(containerEl.querySelector('#edbIcsStatus')));
-
-  tickTimer = setInterval(() => {
-    if (!containerEl) return;
-    const body = containerEl.querySelector('#edbBody');
-    if (!body) return;
-    rerenderBody(body, buildHtml(getData()));
-  }, 1000);
+  renderInto(containerEl, icsExportEnabled);
+  tickTimer = setInterval(() => tickInto(containerEl), 1000);
 
   ensureRemindersInited();
+}
+
+/** 常設サイドパネル用のマウント（mount(container, { persistent: true })）を止める */
+export function unmountPersistent() {
+  if (persistentTimer) { clearInterval(persistentTimer); persistentTimer = null; }
+  persistentEl = null;
 }
 
 /**

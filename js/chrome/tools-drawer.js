@@ -27,7 +27,7 @@ function ensureDom() {
       <div class="pf-drawer-label"><svg class="inline-icon" width="20" height="20"><use href="#i-menu"/></svg> ${t('関連ツール', 'Related Tools')}</div>
       <button type="button" class="modal-close-btn" id="toolsDrawerCloseBtn" style="position:static;"><svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg></button>
     </div>
-    <div class="pf-drawer-nav" id="toolsDrawerNav"></div>`;
+    <div class="pf-drawer-nav js-tools-nav"></div>`;
   document.body.appendChild(drawer);
   document.getElementById('toolsDrawerCloseBtn').addEventListener('click', close);
   renderNav();
@@ -42,9 +42,12 @@ export function init() {
   refreshSiteLinks().then(changed => { if (changed) renderNav(); }).catch(() => renderNav());
 }
 
-function renderNav() {
-  const nav = document.getElementById('toolsDrawerNav');
-  if (!nav) return;
+// 一覧の描画先は .js-tools-nav すべて（引き出し＋ワイド画面の左サイドパネル）
+export function renderNav() {
+  document.querySelectorAll('.js-tools-nav').forEach(renderNavInto);
+}
+
+function renderNavInto(nav) {
   const links = getSiteLinks();
   if (!links) {
     nav.innerHTML = `<p style="font-size:12px;color:var(--hub-text-2);padding:4px 12px;">${t('ツール一覧を読み込めませんでした', 'Could not load the tool list')}</p>`;

@@ -12,8 +12,9 @@ import { CURRENT_LANG, RAW_LANG, setLang, escapeHtml } from '../i18n.js';
 import {
   getSkyThemeMode, toggleTheme, exportAllData, parseImportFile, importAllData, wipeAllData,
   getShortcutsEnabled, setShortcutsEnabled, getShowTitlesEnabled, setShowTitlesEnabled,
-  getStartRoute, setStartRoute,
+  getStartRoute, setStartRoute, getSidePanelsEnabled, setSidePanelsEnabled,
 } from '../state.js';
+import * as sidePanels from './side-panels.js';
 import { getActiveTheme, wipeWallpapers, PRESETS, sameLook } from '../theme.js';
 import { ROUTES } from '../router-registry.js';
 
@@ -101,6 +102,12 @@ function renderMain() {
           <input type="checkbox" id="settingsShortcutsCheckbox"${getShortcutsEnabled() ? ' checked' : ''}>
         </label>
       </div>
+      <div class="settings-row" style="gap:10px;">
+        <span>${t('ワイド画面でサイドパネルを表示', 'Show side panels on wide screens')}<span style="display:block;font-size:11.5px;color:var(--hub-text-2);font-weight:400;margin-top:2px;">${t('関連ツールを左端、ダッシュボードを右端に常時表示します（幅1280px以上）', 'Keeps Related Tools on the left and the Dashboard on the right (1280px+ wide)')}</span></span>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="settingsSidePanelsCheckbox"${getSidePanelsEnabled() ? ' checked' : ''}>
+        </label>
+      </div>
       <div class="settings-row">
         <span>${t('プロフィール切替で称号数を表示', 'Show title count when switching profiles')}</span>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -128,6 +135,7 @@ function renderMain() {
   document.getElementById('settingsLangZhBtn').addEventListener('click', () => setLang('zh-TW'));
   document.getElementById('settingsLangKoBtn').addEventListener('click', () => setLang('ko'));
   document.getElementById('settingsShortcutsCheckbox').addEventListener('change', e => setShortcutsEnabled(e.target.checked));
+  document.getElementById('settingsSidePanelsCheckbox').addEventListener('change', e => { setSidePanelsEnabled(e.target.checked); sidePanels.sync(); });
   document.getElementById('settingsShowTitlesCheckbox').addEventListener('change', e => setShowTitlesEnabled(e.target.checked));
   document.getElementById('settingsExportBtn').addEventListener('click', () => {
     const count = exportAllData();

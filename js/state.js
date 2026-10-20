@@ -410,6 +410,19 @@ export function setShortcutsEnabled(checked) {
 }
 
 /* ================================================================
+   🪟 ワイド画面（幅1280px以上）で「関連ツール」を左端・「ダッシュボード」を右端に
+   常時表示するかどうか。ハブ専用の端末単位設定（未設定＝オン）。index.htmlの先頭の
+   インラインスクリプトが同じキーを読んで、描画前にレイアウト用のクラスを付ける。
+   ================================================================ */
+export const SKY_HUB_SIDE_PANELS_KEY = 'sky_hub_side_panels';
+export function getSidePanelsEnabled() {
+  try { return localStorage.getItem(SKY_HUB_SIDE_PANELS_KEY) !== '0'; } catch (e) { return true; }
+}
+export function setSidePanelsEnabled(checked) {
+  try { localStorage.setItem(SKY_HUB_SIDE_PANELS_KEY, checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
+}
+
+/* ================================================================
    🏆 称号表示のオン/オフ設定。taipak5000.github.io 配下の全ツール共通キー
    （未設定＝オン扱い、SKY_SHORTCUTS_KEYと同じ規約）。プロフィール切替
    モーダル（js/chrome/pf-modal.js）の実績数バッジ表示に反映する。

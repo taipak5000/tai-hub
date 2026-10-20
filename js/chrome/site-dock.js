@@ -17,11 +17,11 @@ export function render(mountEl) {
         <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-folder"/></svg></span></span>
         <span class="site-dock-label" id="siteDockProfileLabel">${CURRENT_LANG === 'en' ? 'Profile' : 'プロフィール'}</span>
       </button>
-      <button type="button" id="dockDashboardBtn">
+      <button type="button" id="dockDashboardBtn" class="dock-moved">
         <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-calendar"/></svg></span></span>
         <span class="site-dock-label">${CURRENT_LANG === 'en' ? 'Dashboard' : 'ダッシュボード'}</span>
       </button>
-      <button type="button" id="dockToolsBtn">
+      <button type="button" id="dockToolsBtn" class="dock-moved">
         <span class="site-dock-icon"><span class="icon-chip" style="width:28px;height:28px;"><svg class="inline-icon" width="22" height="22"><use href="#i-menu"/></svg></span></span>
         <span class="site-dock-label">${CURRENT_LANG === 'en' ? 'Other Tools' : '他のツール'}</span>
       </button>

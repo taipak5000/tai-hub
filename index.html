@@ -42,6 +42,15 @@
       } catch (e) { /* キャッシュが無い・壊れている場合は標準の配色のまま */ }
     })();
   </script>
+  <script>
+    // 🪟 ワイド画面のサイドパネル（関連ツール＝左端／ダッシュボード＝右端。css/chrome.css）を使う設定なら、
+    // 描画前にレイアウト用のクラスを付ける。JSの起動後に付けると本文が左右にずれて画面がガクつくため。
+    // 実際に出るのは幅1280px以上の時だけ（CSS側のメディアクエリ）。設定はjs/state.jsのgetSidePanelsEnabled()と同じキー。
+    (function () {
+      try { if (localStorage.getItem('sky_hub_side_panels') !== '0') document.documentElement.classList.add('side-panels-on'); }
+      catch (e) { document.documentElement.classList.add('side-panels-on'); }
+    })();
+  </script>
   <title>tai-hub - Sky ファンツールまとめ</title>
   <meta name="description" content="Sky 星を紡ぐ子どもたち向けのファンツールを1つにまとめたアプリ。所持率管理・計算機・精霊ツリー・楽譜など。">
   <!-- 📲 ホーム画面に追加・オフライン対応（manifest.json・service-worker.js。js/app.jsが登録する） -->
@@ -77,10 +86,13 @@
   <link rel="modulepreload" href="js/router-registry.js">
   <link rel="modulepreload" href="js/shortcuts.js">
   <link rel="modulepreload" href="js/chrome/site-dock.js">
+  <link rel="modulepreload" href="js/chrome/side-panels.js">
   <link rel="modulepreload" href="js/i18n.js">
   <link rel="modulepreload" href="js/theme.js">
 </head>
 <body>
+  <aside id="side-left-root" class="side-panel side-left"></aside>
+  <aside id="side-right-root" class="side-panel side-right"></aside>
   <div id="dock-root"></div>
   <main id="app-root"><div class="rt-loading"><div class="rt-spinner"></div></div></main>
   <script type="module" src="js/app.js"></script>

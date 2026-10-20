@@ -249,6 +249,34 @@
   font-size: 9px; font-weight: 800; background: #ff9500; color: #fff; padding: 1px 5px; border-radius: 5px;
 }
 
+
+/* ── ワイド画面のサイドパネル（関連ツール＝左端／ダッシュボード＝右端） ──
+   幅1280px以上で、設定（表示設定 > ワイド画面でサイドパネルを表示）がオンの時だけ出る。
+   html.side-panels-on は index.html 先頭のインラインスクリプトが描画前に付ける
+   （JS起動後に付けると本文がずれて画面がガクつくため）。パネルの中身は js/chrome/side-panels.js が入れる。
+   ※ モーダル/ボトムシートの出し分けではないので、「画面幅でモーダルの形を変えない」方針とは無関係。
+   モーダル・引き出しはパネル(z-index:900)より上(1000〜)に出て、従来どおり全幅で開く。 */
+.side-panel { display: none; }
+@media (min-width: 1280px) {
+  html.side-panels-on { --side-left-w: 232px; --side-right-w: 340px; --side-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  html.side-panels-on #app-root { margin-left: var(--side-left-w); margin-right: var(--side-right-w); }
+  html.side-panels-on .side-panel {
+    display: block; position: fixed; top: 0; bottom: var(--side-bottom); z-index: 900;
+    overflow-y: auto; overscroll-behavior: contain; background: var(--hub-card); color: var(--hub-text);
+    padding: 16px 14px 20px;
+  }
+  html.side-panels-on .side-left { left: 0; width: var(--side-left-w); border-right: 0.5px solid var(--hub-sep); }
+  html.side-panels-on .side-right { right: 0; width: var(--side-right-w); border-left: 0.5px solid var(--hub-sep); }
+  /* 左右のパネルへ移ったボタンはドックから外し、残る（プロフィール・表示設定）を中央に寄せる */
+  html.side-panels-on .site-dock .dock-moved { display: none; }
+  html.side-panels-on .site-dock { justify-content: center; gap: 28px; }
+  /* 右パネルの手前に隠れないよう、右端に浮かぶボタンはパネルの内側へ寄せる */
+  html.side-panels-on .tai-revisit-view .tr-quick-jump { right: calc(var(--side-right-w) + 14px); }
+  html.side-panels-on .tai-score-view .floating-stop-btn { right: calc(var(--side-right-w) + 16px); }
+}
+.side-panel-title { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.side-panel .pf-drawer-nav { margin-top: 0; }
+
 /* ── プレースホルダービュー ── */
 .placeholder-view { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; color: var(--hub-text); }
 .placeholder-icon { color: var(--hub-text-3); margin-bottom: 16px; }

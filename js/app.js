@@ -7,6 +7,7 @@ import { injectIconSprite } from './icon-sprite.js';
 import { initRouter, startRouter } from './router.js';
 import { initShortcuts } from './shortcuts.js';
 import * as siteDock from './chrome/site-dock.js';
+import * as sidePanels from './chrome/side-panels.js';
 import { initTheme } from './theme.js';
 import { initSheetEngine } from './sheet-engine.js';
 
@@ -22,6 +23,7 @@ initSheetEngine(); // ボトムシートのドラッグ/フリックで閉じる
 
 const dockMount = document.getElementById('dock-root');
 siteDock.render(dockMount);
+sidePanels.init(); // ワイド画面: 関連ツール(左端)・ダッシュボード(右端)の常設パネル
 const activeProfile = ensureProfilesInit().find(p => p.id === getActiveProfileId());
 siteDock.refreshProfileLabel(pfDisplayName(activeProfile));
 applyProfileTint(activeProfile && activeProfile.color); // 🎨 起動時、選択中プロフィールのアカウントカラーを反映
