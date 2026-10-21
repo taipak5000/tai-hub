@@ -45,10 +45,16 @@
   <script>
     // 🪟 ワイド画面のサイドパネル（関連ツール＝左端／ダッシュボード＝右端。css/chrome.css）を使う設定なら、
     // 描画前にレイアウト用のクラスを付ける。JSの起動後に付けると本文が左右にずれて画面がガクつくため。
-    // 実際に出るのは幅1280px以上の時だけ（CSS側のメディアクエリ）。設定はjs/state.jsのgetSidePanelsEnabled()と同じキー。
+    // 実際に出るのは幅1280px以上の時だけ（CSS側のメディアクエリ）。設定はjs/state.jsのgetSidePanelEnabled()と同じキー
+    // （左=sky_side_tools／右=sky_side_dash。未設定＝オン。旧キーsky_hub_side_panelsが'0'ならそれを引き継ぐ）。
     (function () {
-      try { if (localStorage.getItem('sky_hub_side_panels') !== '0') document.documentElement.classList.add('side-panels-on'); }
-      catch (e) { document.documentElement.classList.add('side-panels-on'); }
+      var c = document.documentElement.classList;
+      try {
+        var legacy = localStorage.getItem('sky_hub_side_panels');
+        var t = localStorage.getItem('sky_side_tools'), d = localStorage.getItem('sky_side_dash');
+        if ((t === null ? legacy : t) !== '0') c.add('side-panels-on');
+        if ((d === null ? legacy : d) !== '0') c.add('side-dash-on');
+      } catch (e) { c.add('side-panels-on'); c.add('side-dash-on'); }
     })();
   </script>
   <title>tai-hub - Sky ファンツールまとめ</title>

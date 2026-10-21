@@ -411,15 +411,25 @@ export function setShortcutsEnabled(checked) {
 
 /* ================================================================
    🪟 ワイド画面（幅1280px以上）で「関連ツール」を左端・「ダッシュボード」を右端に
-   常時表示するかどうか。ハブ専用の端末単位設定（未設定＝オン）。index.htmlの先頭の
+   常時表示するかどうか（端末単位の設定。未設定＝オン）。index.htmlの先頭の
    インラインスクリプトが同じキーを読んで、描画前にレイアウト用のクラスを付ける。
    ================================================================ */
-export const SKY_HUB_SIDE_PANELS_KEY = 'sky_hub_side_panels';
-export function getSidePanelsEnabled() {
-  try { return localStorage.getItem(SKY_HUB_SIDE_PANELS_KEY) !== '0'; } catch (e) { return true; }
+// 左（関連ツール）と右（ダッシュボード）を別々に設定できる。キーは全単体ツールと共通（未設定＝オン）。
+// 旧キー sky_hub_side_panels（左右まとめて）が '0' なら、新キーが未設定の間はその値を引き継ぐ。
+export const SKY_SIDE_TOOLS_KEY = 'sky_side_tools';
+export const SKY_SIDE_DASH_KEY = 'sky_side_dash';
+const SKY_SIDE_LEGACY_KEY = 'sky_hub_side_panels';
+const SIDE_KEYS = { tools: SKY_SIDE_TOOLS_KEY, dash: SKY_SIDE_DASH_KEY };
+/** which: 'tools'（左）| 'dash'（右） */
+export function getSidePanelEnabled(which) {
+  try {
+    let v = localStorage.getItem(SIDE_KEYS[which]);
+    if (v === null) v = localStorage.getItem(SKY_SIDE_LEGACY_KEY);
+    return v !== '0';
+  } catch (e) { return true; }
 }
-export function setSidePanelsEnabled(checked) {
-  try { localStorage.setItem(SKY_HUB_SIDE_PANELS_KEY, checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
+export function setSidePanelEnabled(which, checked) {
+  try { localStorage.setItem(SIDE_KEYS[which], checked ? '1' : '0'); } catch (e) { /* private browsing等 */ }
 }
 
 /* ================================================================

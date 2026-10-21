@@ -12,7 +12,7 @@ import { CURRENT_LANG, RAW_LANG, setLang, escapeHtml } from '../i18n.js';
 import {
   getSkyThemeMode, toggleTheme, exportAllData, parseImportFile, importAllData, wipeAllData,
   getShortcutsEnabled, setShortcutsEnabled, getShowTitlesEnabled, setShowTitlesEnabled,
-  getStartRoute, setStartRoute, getSidePanelsEnabled, setSidePanelsEnabled,
+  getStartRoute, setStartRoute, getSidePanelEnabled, setSidePanelEnabled,
 } from '../state.js';
 import * as sidePanels from './side-panels.js';
 import { getActiveTheme, wipeWallpapers, PRESETS, sameLook } from '../theme.js';
@@ -102,11 +102,17 @@ function renderMain() {
           <input type="checkbox" id="settingsShortcutsCheckbox"${getShortcutsEnabled() ? ' checked' : ''}>
         </label>
       </div>
-      <div class="settings-row" style="gap:10px;">
-        <span>${t('ワイド画面でサイドパネルを表示', 'Show side panels on wide screens')}<span style="display:block;font-size:11.5px;color:var(--hub-text-2);font-weight:400;margin-top:2px;">${t('関連ツールを左端、ダッシュボードを右端に常時表示します（幅1280px以上）', 'Keeps Related Tools on the left and the Dashboard on the right (1280px+ wide)')}</span></span>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-          <input type="checkbox" id="settingsSidePanelsCheckbox"${getSidePanelsEnabled() ? ' checked' : ''}>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:2px;">
+        <span style="font-weight:600;">${t('ワイド画面のサイドパネル', 'Side panels on wide screens')}</span>
+        <label class="settings-row" style="border-bottom:0;padding:8px 0;cursor:pointer;">
+          <span>${t('関連ツールを左端に常時表示', 'Always show Related Tools on the left')}</span>
+          <input type="checkbox" id="settingsSideToolsCheckbox"${getSidePanelEnabled('tools') ? ' checked' : ''}>
         </label>
+        <label class="settings-row" style="border-bottom:0;padding:8px 0;cursor:pointer;">
+          <span>${t('ダッシュボードを右端に常時表示', 'Always show the Dashboard on the right')}</span>
+          <input type="checkbox" id="settingsSideDashCheckbox"${getSidePanelEnabled('dash') ? ' checked' : ''}>
+        </label>
+        <span style="font-size:11.5px;color:var(--hub-text-2);">${t('幅1280px以上の画面で有効です。オフにすると、これまでどおり画面下部のメニューから開きます。', 'Applies to screens 1280px or wider. When off, open them from the bottom menu as before.')}</span>
       </div>
       <div class="settings-row">
         <span>${t('プロフィール切替で称号数を表示', 'Show title count when switching profiles')}</span>
@@ -135,7 +141,8 @@ function renderMain() {
   document.getElementById('settingsLangZhBtn').addEventListener('click', () => setLang('zh-TW'));
   document.getElementById('settingsLangKoBtn').addEventListener('click', () => setLang('ko'));
   document.getElementById('settingsShortcutsCheckbox').addEventListener('change', e => setShortcutsEnabled(e.target.checked));
-  document.getElementById('settingsSidePanelsCheckbox').addEventListener('change', e => { setSidePanelsEnabled(e.target.checked); sidePanels.sync(); });
+  document.getElementById('settingsSideToolsCheckbox').addEventListener('change', e => { setSidePanelEnabled('tools', e.target.checked); sidePanels.sync(); });
+  document.getElementById('settingsSideDashCheckbox').addEventListener('change', e => { setSidePanelEnabled('dash', e.target.checked); sidePanels.sync(); });
   document.getElementById('settingsShowTitlesCheckbox').addEventListener('change', e => setShowTitlesEnabled(e.target.checked));
   document.getElementById('settingsExportBtn').addEventListener('click', () => {
     const count = exportAllData();
