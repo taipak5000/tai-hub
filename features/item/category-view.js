@@ -113,6 +113,7 @@ export async function mount(container, catConfig) {
 
 export function unmount() {
   mountToken++; // 進行中のmount()を無効化
+  renderToken++; // 分割描画の続きを打ち切る
   delete window.__catViewToggleOwned;
   delete window.__catViewToggleFav;
   delete window.__catViewToggleWish;
@@ -541,18 +542,41 @@ function filterAndRender() {
   const outfitItems = filtered.filter(item => item.type !== 'onesie');
   const onesieItems = filtered.filter(item => item.type === 'onesie');
 
-  let html = outfitItems.map(renderItem).join('');
+  const parts = outfitItems.map(renderItem);
 
   if (onesieItems.length > 0) {
     if (outfitItems.length > 0) {
-      html += `<div class="cv-onesie-divider"><span><svg class="inline-icon" width="15" height="15"><use href="#i-hanger"/></svg> ワンジー</span></div>`;
+      parts.push(`<div class="cv-onesie-divider"><span><svg class="inline-icon" width="15" height="15"><use href="#i-hanger"/></svg> ワンジー</span></div>`);
     }
-    html += onesieItems.map(renderItem).join('');
+    parts.push(...onesieItems.map(renderItem));
   }
 
-  listEl.innerHTML = html;
+  renderInChunks(listEl, parts);
 
   refreshHeaderScore();
+}
+
+/* 🩹 ケープ・ヘアスタイルは190件前後あり、全タイルを一度にinnerHTMLへ入れると
+   スマホでは解析・レイアウト・描画だけで画面の切り替わりが1秒以上止まっていた
+   （CPU 6倍スロットリングでケープ約1.5秒）。最初の1画面ぶんだけ先に描いて
+   すぐ表示し、残りは次のフレーム以降に少しずつ足す。絞り込みの変更や別ルートへの
+   遷移で描き直しが始まったら、古い描画の続きはrenderTokenで打ち切る。 */
+const FIRST_CHUNK = 36;
+const CHUNK = 48;
+let renderToken = 0;
+
+function renderInChunks(listEl, parts) {
+  const myToken = ++renderToken;
+  listEl.innerHTML = parts.slice(0, FIRST_CHUNK).join('');
+  let next = FIRST_CHUNK;
+  const step = () => {
+    if (myToken !== renderToken || !listEl.isConnected) return;
+    listEl.insertAdjacentHTML('beforeend', parts.slice(next, next + CHUNK).join(''));
+    next += CHUNK;
+    if (next < parts.length) setTimeout(step, 0);
+  };
+  // rAFの後にsetTimeoutを挟み、最初の1画面が実際に描画されてから続きを足す
+  if (next < parts.length) requestAnimationFrame(() => setTimeout(step, 0));
 }
 
 // 所持状態の変更のたびに称号の新規解禁が無いか確認し、あればトースト通知する
@@ -644,6 +668,10 @@ function injectStyles() {
 
 .item-view .cv-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 10px; align-items: start; }
 .item-view .cv-item-tile { display: flex; flex-direction: column; gap: 5px; }
+/* 🩹 画面外のタイルはレイアウト・描画を省く（190件前後のカテゴリで、分割描画のたびに
+   全タイルを組み直す負荷が大きかったため）。高さの見込みはautoで実際の値を覚えさせる。
+   overflow-clip-margin は、はみ出す枠の影が切れないようにするための余白 */
+.item-view .cv-item-tile { content-visibility: auto; contain-intrinsic-block-size: auto 120px; overflow-clip-margin: 6px; }
 
 .item-view .cv-item-tile-frame {
   position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: var(--card); border-radius: var(--r-sm);
@@ -703,6 +731,7 @@ function injectStyles() {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: background 0.2s;
 }
 .item-view .cv-item-card.is-owned { background: rgba(52,199,89,0.03); }
+.item-view .cv-item-card { content-visibility: auto; contain-intrinsic-block-size: auto 76px; }
 .item-view .cv-item-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; cursor: pointer; }
 
 .item-view .cv-item-thumb {

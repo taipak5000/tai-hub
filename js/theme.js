@@ -133,7 +133,11 @@ export const FX_KINDS = ['none', 'stars', 'petals', 'bubbles', 'fireflies', 'sno
 export const FORCES = [null, 'light', 'dark'];
 export const FONTS = {
   system: { stack: null, href: null },
-  gothic: { stack: "'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', -apple-system, BlinkMacSystemFont, sans-serif", href: null },
+  gothic: {
+    stack: "'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', -apple-system, BlinkMacSystemFont, sans-serif",
+    // item.cssの常時@importをやめたので、この書体を選んだ時だけ読み込む
+    href: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap',
+  },
   rounded: {
     stack: "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Noto Sans JP', sans-serif",
     href: 'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap',

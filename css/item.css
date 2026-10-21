@@ -4,7 +4,12 @@
    という今回のスコープ判断——ハブchrome用のtokens.cssとは完全分離）。
    このファイルのスコープは #app-root 配下の item ビューのみ。
    ================================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Yomogi&display=swap');
+/* 🩹 以前はここでGoogle FontsのNoto Sans JP（＋未使用のYomogi）を@importしていた。
+   item.cssはindex.htmlで常に読み込まれるため全画面に効き、日本語フォントは文字種ごとに
+   100前後のファイルへ分割配信されるので、カテゴリを開くたびにアイテム名の文字に応じた
+   フォントファイルを数十〜100件ダウンロードしていた（スマホ回線では画像やデータの
+   読み込みと帯域を奪い合い、表示が遅くなる主因だった）。端末の日本語フォントで表示する。
+   着せ替えの「ゴシック」を選んだ時だけ、theme.jsがNoto Sans JPを読み込む。 */
 
 .item-view {
   --bg: #F2F2F7;
@@ -30,7 +35,7 @@
      白丸のまま浮かないよう、テーマごとに別の値を持たせている）。
   */
   --tile-btn-bg: rgba(255, 255, 255, 0.6);
-  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100%;

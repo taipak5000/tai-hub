@@ -24,7 +24,7 @@
    tai-score-view.js の mount() が最初の描画時に <link rel="stylesheet">
    を動的に1回だけ挿入する（nomacan-view.jsのinjectStylesheet()と同じ方式）。
    ================================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+/* Noto Sans JPのWebフォントは読み込まない（端末の日本語フォントで表示。css/item.cssの説明を参照） */
 
 .tai-score-view {
   --bg:        #F2F2F7;

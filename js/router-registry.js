@@ -78,6 +78,15 @@ const itemEntry = {
     const mod = itemMods[targetKey];
     if (targetKey === 'category') mod.mount(container, cat);
     else mod.mount(container);
+    // ダッシュボードの次にはほぼ必ずカテゴリを開くので、手が空いた時にカテゴリ画面の
+    // モジュールを先読みしておく（タップしてからのダウンロード待ちを無くす。各カテゴリの
+    // アイテムデータは称号の集計のためダッシュボードがすでに読み込んでいる）
+    if (targetKey === 'dashboard' && !itemMods.category) {
+      const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1500));
+      idle(() => {
+        itemImporters.category().then(m => { itemMods.category = itemMods.category || m; }).catch(() => {});
+      });
+    }
     if (sharedCoordSub) {
       import('../features/item/coord/coord-share.js').then(m => {
         if (myToken === itemToken) m.openSharedCoordFromRoute(sharedCoordSub);
