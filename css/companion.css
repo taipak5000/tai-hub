@@ -1393,3 +1393,37 @@
         }
         .companion-view .dash-entry-btn:active { transform: scale(0.98); }
 
+/* 📅 連れ歩きの記録カード（メイン画面の草グラフ＋過去の記録の編集） */
+.companion-view .wr-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 14px 16px; margin: 0 0 14px; }
+.companion-view .wr-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.companion-view .wr-title { font-size: 13px; font-weight: 700; color: var(--text-color); }
+.companion-view .wr-today { font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--input-bg); color: var(--text-gray); }
+.companion-view .wr-today.done { background: rgba(52,199,89,0.14); color: var(--success-text, var(--accent-green)); }
+.companion-view .wr-strip { font-size: 12.5px; color: var(--text-gray); display: flex; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; }
+.companion-view .wr-strip .wr-streak { font-weight: 700; color: var(--accent-orange); }
+.companion-view .wr-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.companion-view .wr-actions-label { font-size: 11.5px; font-weight: 700; color: var(--text-gray); }
+.companion-view .wr-scroll { overflow-x: auto; padding-bottom: 4px; }
+.companion-view .wr-months { --hm-cell: 14px; display: grid; grid-auto-rows: 13px; column-gap: 3px; margin-bottom: 2px; width: max-content; }
+.companion-view .wr-month { font-size: 9.5px; color: var(--text-gray); white-space: nowrap; align-self: end; }
+.companion-view .wr-grid { --hm-cell: 14px; display: grid; gap: 3px; width: max-content; }
+.companion-view .wr-cell { width: var(--hm-cell); height: var(--hm-cell); border-radius: 3px; background: var(--border-color); border: 0; padding: 0; margin: 0; cursor: pointer; display: block; }
+.companion-view .wr-cell.is-recorded { background: var(--accent-green); }
+.companion-view .wr-cell.is-future { visibility: hidden; pointer-events: none; }
+.companion-view .wr-cell.is-today { box-shadow: inset 0 0 0 1.5px var(--accent-blue); }
+.companion-view .wr-cell.is-selected { outline: 2px solid var(--accent-orange); outline-offset: 1px; }
+.companion-view .wr-cell:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 1px; }
+.companion-view .wr-legend { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 11px; color: var(--text-gray); flex-wrap: wrap; }
+.companion-view .wr-legend-swatch { width: 10px; height: 10px; border-radius: 2px; background: var(--border-color); display: inline-block; }
+.companion-view .wr-legend-swatch.is-recorded { background: var(--accent-green); margin-left: 8px; }
+.companion-view .wr-tap-hint { font-size: 11px; color: var(--text-gray); margin: 6px 0 0; line-height: 1.5; }
+.companion-view .wr-edit { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--input-bg); }
+.companion-view .wr-edit-title { font-size: 13px; font-weight: 700; color: var(--text-color); }
+.companion-view .wr-edit-status { font-size: 11.5px; color: var(--text-gray); margin: 2px 0 8px; }
+.companion-view .wr-edit-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.companion-view .wr-pick { border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.companion-view .wr-pick.is-active { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+.companion-view .wr-edit-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.companion-view .wr-del { border: 1px solid var(--danger-text, #ff3b30); background: transparent; color: var(--danger-text, #ff3b30); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.companion-view .wr-close { border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-gray); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-family: inherit; cursor: pointer; }
+.companion-view .wr-edit-hint { font-size: 11px; color: var(--text-gray); margin: 8px 0 0; line-height: 1.5; }
