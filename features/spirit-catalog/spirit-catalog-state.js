@@ -264,7 +264,76 @@ export function getExternalOwnCache() {
   externalOwnCache = { itemOwnedByCat, emoteOwned, wingUnlockedGuids };
   return externalOwnCache;
 }
-export function invalidateExternalOwnCache() { externalOwnCache = null; pendantOwnedSeasonsCache = null; }
+// このツール自身がitem/emote/wingsへ書き込んだ直後に呼ぶ（toggleNode()・一括解放・ツリーの
+// リセット）。キャッシュを捨てるだけでなく、後述の「連携の写し」も書き込み後の状態に揃えて
+// おく。揃えておかないと、同じアイテムに紐づく別ノードの所持がこのツール自身の操作で外れた
+// ときに、それを「他のツールで所持が外された」と誤認してしまう。
+export function invalidateExternalOwnCache() {
+  externalOwnCache = null;
+  pendantOwnedSeasonsCache = null;
+  saveExternalSyncSnapshot();
+}
+
+// 🔄 ノードがitem/emote/wings側でも所持済みになっているか（連携先の所持データのみで判定）。
+function isNodeExternallyOwned(node, ext) {
+  if (node.itemCatKey && node.itemCostId && ext.itemOwnedByCat[node.itemCatKey] && ext.itemOwnedByCat[node.itemCatKey][node.itemCostId]) return true;
+  if (node.emoteId && node.emoteLevel && (ext.emoteOwned[node.emoteId] || []).includes(node.emoteLevel)) return true;
+  if (node.itemType === 'WingBuff' && ext.wingUnlockedGuids.has(node.guid)) return true;
+  return false;
+}
+
+/* 🔄 他ツールで「所持を外した」ことを精霊ツリー側にも反映するための写し。
+   精霊ツリーで解放したノードは自身の解放記録（own）にも残るため、item/emote/wings側で
+   所持を外しても、ownが残っている限り解放済みのまま表示されていた。そこで「ownで解放済み、
+   かつ連携先でも所持済み」のノードを写しとして保存しておき、次の同期時に連携先から所持が
+   消えていればownからも外す。写しに入るのは連携先と実際に一致していたノードだけなので、
+   連携先への書き込みが無かった古い解放記録などが巻き込まれて消えることは無い。
+   キーは単体サイト版（tai-catalog）と同じなので、どちらで開いても同じ写しを使う。 */
+const EXT_SYNC_SNAPSHOT_KEY_RAW = 'spiritCatalogExtSyncSnapshot_v1';
+function saveExternalSyncSnapshot() {
+  const own = getUnlockedMap();
+  const ext = getExternalOwnCache();
+  const guids = [];
+  SPIRIT_TREE_DATA.forEach((s) => s.nodes.forEach((n) => {
+    if (own[n.guid] && isNodeExternallyOwned(n, ext)) guids.push(n.guid);
+  }));
+  try { localStorage.setItem(nsKey(EXT_SYNC_SNAPSHOT_KEY_RAW), JSON.stringify(guids)); }
+  catch (_) { /* ストレージ不可時は次回の同期で作り直す */ }
+}
+
+/* 🔄 item/emote/wingsの最新の所持データを読み直す。精霊ツリーを表示するたび（mount）・
+   同期の更新ボタン・別タブでの変更時に呼ぶ。キャッシュはモジュール単位で残るため、
+   これを呼ばないと他のツールへ移動して所持を変えても、戻ってきたときに古い状態のままになる。
+   戻り値は、連携先で所持が外されたためownからも外したノード数。外したノードのキャンドル/
+   ハートは払い戻さない（item側で所持を外しても通貨は変わらないため、ここで払い戻すと
+   通貨だけが増えてしまう）。 */
+export function reloadExternalSync() {
+  externalOwnCache = null;
+  pendantOwnedSeasonsCache = null;
+  unlockedMapCache = null; // 精霊ツリーを別タブでも開いている場合に備えて読み直す
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem(nsKey(EXT_SYNC_SNAPSHOT_KEY_RAW))); } catch (_) { /* noop */ }
+  let removed = 0;
+  if (Array.isArray(prev) && prev.length) {
+    const prevSet = new Set(prev);
+    const own = getUnlockedMap();
+    const ext = getExternalOwnCache();
+    SPIRIT_TREE_DATA.forEach((s) => s.nodes.forEach((n) => {
+      if (!prevSet.has(n.guid) || !own[n.guid] || isNodeExternallyOwned(n, ext)) return;
+      delete own[n.guid];
+      removed++;
+    }));
+    if (removed) saveUnlockedMap(own);
+  }
+  saveExternalSyncSnapshot();
+  return removed;
+}
+
+// 別タブでの変更を検知するために監視するキー（nsKey()前の生キー）。
+export const EXT_SYNC_WATCH_KEYS_RAW = [
+  ...ITEM_CATS_FOR_TREE.map((catKey) => 'gameItems_' + catKey),
+  'emoteOwned_v1', 'wingTracker_v1', 'permWingTracker_v1', 'wishOwnCurrency', UNLOCK_KEY_RAW,
+];
 
 /* ================================================================
    🕊️ 季節のペンダント所持による「季節中に入手済み（0扱い）」除外

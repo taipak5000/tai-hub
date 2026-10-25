@@ -36,6 +36,7 @@
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { t, tt } from './data/i18n-catalog.js';
 import * as S from './spirit-catalog-state.js';
+import { nsKey } from '../../js/state.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
 import * as scShare from './spirit-catalog-share.js';
 
@@ -87,10 +88,13 @@ export function mount(container, sub) {
   containerEl.querySelector('.spirit-catalog-view')?.classList.toggle('sc-cost-on', S.getCostDisplayEnabled());
   if (els.costToggle) els.costToggle.checked = S.getCostDisplayEnabled();
 
+  S.reloadExternalSync(); // 🔄 他のツールへ移動していた間のitem/emote/wings側の変更（所持を外した分も含む）を取り込む
   S.migrateRegularCapeTier2Link(); // 🩹 恒常精霊ティア2ケープのitem紐づけ修正に伴う、既存の解放済みデータの移行（1回のみ）
   renderGrid();
   renderRevisitBadge();
   startRevisitBadgeTimer();
+  window.addEventListener('storage', handleExternalStorage);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   // 🖼️ ノードの実機画像データ（item機能の12カテゴリ）はアイドル時に遅延読み込みし、
   // 完了したら開いている詳細モーダルだけ再描画してアイコンを差し替える（初期表示を
@@ -106,6 +110,9 @@ export function mount(container, sub) {
 export function unmount() {
   if (revisitBadgeTimer) { clearInterval(revisitBadgeTimer); revisitBadgeTimer = null; }
   clearTimeout(renderGridDebounceTimer);
+  clearTimeout(externalSyncTimer);
+  window.removeEventListener('storage', handleExternalStorage);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   clearTimeout(scToastTimer);
   scToastQueue = [];
   scToastBusy = false;
@@ -405,11 +412,25 @@ function renderGridDebounced() {
   clearTimeout(renderGridDebounceTimer);
   renderGridDebounceTimer = setTimeout(renderGrid, 200);
 }
-function refreshExternalSync() {
-  S.invalidateExternalOwnCache();
+function refreshExternalSync(silent) {
+  if (!containerEl) return;
+  S.reloadExternalSync();
   renderGrid();
   if (currentDetailGuid) renderDetail(currentDetailGuid);
-  showToast(t('toast.syncRefreshed'));
+  if (silent !== true) showToast(t('toast.syncRefreshed'));
+}
+// 別タブ（単体サイト版や別のハブ）での変更は、storageイベントとタブへの復帰時に自動で取り込む。
+// storageイベントはバックグラウンドのタブ（特にiOS）で届かないことがあるため、復帰時にも読み直す。
+let externalSyncTimer = null;
+function refreshExternalSyncSoon() {
+  clearTimeout(externalSyncTimer);
+  externalSyncTimer = setTimeout(() => refreshExternalSync(true), 300);
+}
+function handleExternalStorage(e) {
+  if (e.key && S.EXT_SYNC_WATCH_KEYS_RAW.some((k) => e.key === nsKey(k))) refreshExternalSyncSoon();
+}
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') refreshExternalSyncSoon();
 }
 
 /* ================================================================
