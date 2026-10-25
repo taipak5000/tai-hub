@@ -210,9 +210,12 @@ function formatShardTime(d) {
   return `${mm}/${dd} ${hh}:${mi}`;
 }
 
-// 日替わり大キャンドル：太平洋時間0時に、草原→雨林→峡谷→荒野→書庫の順で毎日切り替わる固定ローテーション
-const GRAND_CANDLE_ANCHOR_DATE = new Date(2026, 7, 13);
-const GRAND_CANDLE_ANCHOR_REALM_IDX = 3;
+// 日替わり大キャンドル：太平洋時間0時に、草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる固定ローテーション
+// 大キャンドルの地域の並び（草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる）。起点は「2026/10/25(太平洋時間)が峡谷」。
+// ※ 闇の破片のレルム順(SHARD_REALMS)とは別の並びなので、共用しないこと。クエスト・シーズンキャンドルは大キャンドルの前日として計算する。
+const GRAND_CANDLE_ORDER = ['prairie', 'forest', 'valley', 'vault', 'wasteland'];
+const GRAND_CANDLE_ANCHOR_DATE = new Date(2026, 9, 25); // 月は0始まりなので9=10月
+const GRAND_CANDLE_ANCHOR_REALM_IDX = 2; // 峡谷（GRAND_CANDLE_ORDERの添字）
 function grandCandleRealm(dayOffset = 0) {
   const pacNow = pacificNow();
   const today = new Date(pacNow);
@@ -222,7 +225,7 @@ function grandCandleRealm(dayOffset = 0) {
   anchor.setHours(0, 0, 0, 0);
   const daysSince = Math.round((today - anchor) / 86400000);
   const idx = (((GRAND_CANDLE_ANCHOR_REALM_IDX + daysSince) % 5) + 5) % 5;
-  return SHARD_REALMS[idx];
+  return GRAND_CANDLE_ORDER[idx];
 }
 
 // ウニ焼き・パン焼き・亀闇：2時間おき（太平洋時間の偶数時）に発生する協力プレイイベント。
