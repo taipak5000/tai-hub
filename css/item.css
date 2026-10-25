@@ -4,6 +4,17 @@
    という今回のスコープ判断——ハブchrome用のtokens.cssとは完全分離）。
    このファイルのスコープは #app-root 配下の item ビューのみ。
    ================================================================ */
+
+/* 🩹 元サイトの .inline-icon（アイコンの色と線の太さ）。ハブ共通の既定（currentColor・1.8）のままだと
+   アイコンが黒っぽく細くなっていた。:where()で詳細度を元の .inline-icon と同じに保つ */
+:where(.item-view) .inline-icon { stroke: var(--blue); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--blue); }
+
+
+/* 🩹 独立サイトはページ先頭の全称リセット（margin・paddingを0に）を前提にレイアウトされている。
+   ハブは複数ツールが同居するので全称リセットは持たず、このツールの中だけに同じものを掛ける。
+   :where()で詳細度を0にしてあるため、元の全称セレクタと同じく個々のルールが必ず勝つ */
+:where(.item-view *, .item-view *::before, .item-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
+
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Yomogi&display=swap');
 
 .item-view {
@@ -60,14 +71,30 @@
 .item-view .card { background: var(--card); border-radius: var(--r); padding: 14px; }
 .item-view a { color: inherit; text-decoration: none; }
 
+/* 元サイトの .feature-btn（アイコンが上・ラベル・説明の縦並び、影付きカード）と青いアイコンチップ */
 .item-view .feature-btn {
-  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-  background: var(--card); border: 0; border-radius: var(--r); padding: 14px;
-  margin-bottom: 10px; cursor: pointer; color: var(--text); font-family: inherit;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px; width: 100%; text-align: left;
+  background: var(--card); border: 0; border-radius: var(--r); padding: 16px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 10px; cursor: pointer; color: var(--text); font-family: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.item-view .feature-icon { flex-shrink: 0; background: var(--orange-bg); color: var(--orange-d); border-radius: 10px; }
-.item-view .feature-label { display: block; font-weight: 700; font-size: 14px; }
-.item-view .feature-desc { display: block; font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.item-view .feature-btn:active { transform: scale(0.965); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.item-view .feature-icon {
+  flex-shrink: 0; background: var(--blue-bg); color: var(--blue); border-radius: 26%;
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 60%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.10);
+}
+.item-view .feature-icon .inline-icon { stroke-width: 2.2; vertical-align: 0; display: block; }
+.item-view .feature-label { display: block; font-weight: 700; font-size: 14px; color: var(--text); }
+.item-view .feature-desc { display: block; font-size: 11px; color: var(--text-2); line-height: 1.45; margin-top: 5px; }
+.item-view .feature-btn.twitter { background: #000; }
+.item-view .feature-btn.twitter .feature-label { color: #fff; }
+.item-view .feature-btn.twitter .feature-desc { color: rgba(255,255,255,0.68); }
+/* コーデ機能は元サイトと同じ2列 */
+.item-view .dash-feature-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
+.item-view .dash-feature-row .feature-btn { margin-bottom: 0; }
+/* 元サイトでカテゴリの「›」と「はじめての方へ」の矢印だけは文字色（灰）で描いている */
+.item-view .cat-chevron .inline-icon, .item-view .welcome-toggle-icon .inline-icon { stroke: currentColor; color: currentColor; stroke-width: 2.2; }
 
 /* 🩹 元実装（item/index.html）の.cat-grid/.cat-cardをそのまま移植し直した
    ものに置き換え。以前のtai-hub独自の.cat-tile（auto-fill・小さい正方形
@@ -103,6 +130,9 @@
 .item-view .cat-chevron { color: var(--text-3); display: flex; }
 .item-view .num-unit { font-weight: 500; font-size: 0.72em; opacity: 0.7; margin-left: 1px; }
 
+/* 元サイト（ios-hig.css）の .large-title と同じ大見出し */
+.item-view .item-large-title { font-size: clamp(1.625rem, 7.6vw, 2.125rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0.75rem 0 12px; color: var(--text); }
+.item-view .back-link + .item-large-title { margin-top: 0; }
 .item-view .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-2); margin-bottom: 14px; cursor: pointer; }
 
 /* ── 各ページ共通フッター（免責・作成/ご意見・参考/画像引用元・設定/クレジット） ── */

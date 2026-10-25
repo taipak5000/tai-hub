@@ -172,6 +172,7 @@ function buildShell() {
   return `
     <div class="emote-view">
       <div class="em-wrap">
+        <header class="tool-nav-head"><h1><svg class="inline-icon" width="19" height="19"><use href="#i-masks"/></svg> ${CURRENT_LANG === 'en' ? 'Emote Collection Tracker' : 'エモート所持率管理'}</h1></header>
         <div id="emOneYearAgoBannerSlot"></div>
 
         <div class="em-header-card">
@@ -724,6 +725,7 @@ function injectStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+:where(.emote-view *, .emote-view *::before, .emote-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
 .emote-view {
   --bg: #F2F2F7; --card: #FFFFFF; --sep: rgba(60,60,67,0.12);
   --orange: #FF9500; --orange-d: #FF6200; --orange-bg: rgba(255,149,0,0.10);

@@ -1109,6 +1109,7 @@ function renderShell() {
     <div class="item-view">
       <div class="cost-wrap">
         <a href="#/item" class="back-link">${en ? '&larr; Back to Category List' : '&larr; カテゴリ一覧へ戻る'}</a>
+        <h1 class="item-large-title">${en ? 'Item Costs' : 'アイテム別コスト'}</h1>
 
         <div class="cost-notice-card">
           ${en

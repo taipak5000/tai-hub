@@ -20,6 +20,19 @@
    を動的に1回だけ挿入する（index.htmlを編集せずに済ませるため）。
    ================================================================ */
 
+/* 🩹 元サイトの .inline-icon（アイコンの色と線の太さ）。ハブ共通の既定（currentColor・1.8）のままだと
+   アイコンが黒っぽく細くなっていた。:where()で詳細度を元の .inline-icon と同じに保つ */
+:where(.tai-info-view) .inline-icon { stroke: var(--indigo-d); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--indigo-d); }
+:where(.tai-info-view) .inline-icon.warn { stroke: var(--red); color: var(--red); }
+:where(.tai-info-view) .inline-icon.ok { stroke: var(--green); color: var(--green); }
+
+
+/* 🩹 独立サイトはページ先頭の全称リセット（margin・paddingを0に）を前提にレイアウトされている。
+   ハブは複数ツールが同居するので全称リセットは持たず、このツールの中だけに同じものを掛ける。
+   :where()で詳細度を0にしてあるため、元の全称セレクタと同じく個々のルールが必ず勝つ */
+:where(.tai-info-view *, .tai-info-view *::before, .tai-info-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
+
+
 .tai-info-view {
   --bg:        #F2F2F7;
   --card:      #FFFFFF;
@@ -55,11 +68,6 @@
 .tai-info-view .ti-layout { max-width: 720px; margin: 0 auto; padding: 16px 16px 24px; }
 @media (min-width: 850px) { .tai-info-view .ti-layout { max-width: 960px; } }
 
-.tai-info-view .ti-page-head {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 17px; font-weight: 600; letter-spacing: -0.3px;
-  padding: 4px 4px 14px;
-}
 
 /* ── ページ内タブ ── */
 .tai-info-view .page-tabs {

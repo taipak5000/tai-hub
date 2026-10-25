@@ -162,6 +162,7 @@ function renderShell() {
   return `
     <div class="profile-view">
     <div class="pv-wrap">
+      <header class="tool-nav-head"><h1><svg class="inline-icon" width="19" height="19"><use href="#i-person"/></svg> ${t('プロフィール', 'Profile')}</h1></header>
       <div class="pv-dash-trigger-row">
         <button type="button" class="pv-dash-trigger-btn" id="pvOpenDashBtn">
           <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg>

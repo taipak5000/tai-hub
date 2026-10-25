@@ -174,8 +174,8 @@ function renderShell() {
   return `
     <div class="spirit-catalog-view">
       <div class="sc-wrap">
-        <header class="sc-head">
-          <h1>${icon('sc-i-tree', 18)} ${escapeHtml(tt('精霊ツリー管理', 'Spirit Tree Catalog'))}</h1>
+        <header class="tool-nav-head">
+          <h1>${icon('sc-i-tree', 16)} ${escapeHtml(tt('精霊ツリー管理', 'Spirit Tree Catalog'))}</h1>
         </header>
 
         <div class="revisit-badge" id="scRevisitBadge"></div>

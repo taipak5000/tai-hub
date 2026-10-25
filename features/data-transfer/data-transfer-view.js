@@ -146,8 +146,8 @@ function renderShell() {
   return `
     <div class="data-transfer-view">
       <div class="dt-wrap">
-        <header class="page-head">
-          <h1><svg class="inline-icon" width="19" height="19"><use href="#i-sync"/></svg> ${escapeHtml(tt('データ引継ぎ', 'Data Transfer'))}</h1>
+        <header class="tool-nav-head">
+          <h1><svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${escapeHtml(tt('データ引継ぎ', 'Data Transfer'))}</h1>
         </header>
 
         <p class="sec-label" id="dtExportSection">${escapeHtml(t('page.sectionExport'))}</p>

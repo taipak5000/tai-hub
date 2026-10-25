@@ -125,15 +125,15 @@ function refineHtml(v) {
   const hit = S.predictUpcomingBlackShard(SHARD_PREDICTION_COUNT);
   return `
     <div class="nmp-box">
-      <div class="nmp-box-row">
-        <span class="nmp-box-label">${esc(t('refine.dailyBonusLabel'))}</span>
-        <select id="nmpDailyBonus">
+      <div class="nmp-box-row" style="flex-wrap:nowrap;">
+        <span class="nmp-box-label" style="font-weight:500;">${esc(t('refine.dailyBonusLabel'))}</span>
+        <select id="nmpDailyBonus" style="width:130px; padding:4px 6px; font-size:12px;">
           ${[0, 1, 2, 3, 4].map((n) => `<option value="${n}" ${v.dailyBonusArea === n ? 'selected' : ''}>${esc(t(n === 0 ? 'refine.dailyBonusNone' : `refine.dailyBonus${n}`))}</option>`).join('')}
         </select>
       </div>
     </div>
 
-    <div class="nmp-box">
+    <div class="nmp-box" style="padding:14px;">
       <div class="nmp-box-row">
         <span class="nmp-box-label nmp-box-label-lg">${esc(t('refine.shardLabel'))}</span>
         <label class="nmp-check-lg">
@@ -156,12 +156,12 @@ function refineHtml(v) {
       </div>` : ''}
     </div>
 
-    <div class="nmp-stat-row nmp-stat-row-big"><span>${esc(t('refine.expectedCandles'))}</span><span><b id="nmpExpCandles">0</b> <span class="nmp-dim">${esc(t('refine.candlesUnit'))}</span></span></div>
-    <div class="nmp-stat-row"><span>${esc(t('refine.totalLight'))}</span><b id="nmpTotalLight">0</b></div>
-    <div class="nmp-stat-row"><span>${esc(t('refine.totalEfficiency'))}</span><span><b id="nmpTotalEff">0.00</b><span class="nmp-dim">/s</span></span></div>
-    <div class="nmp-stat-row"><span>${esc(t('refine.totalTime'))}</span><b id="nmpTotalTime"></b></div>
-    <div class="nmp-stat-row" id="nmpNextRow"><span>${esc(t('refine.nextThreshold'))}</span><b id="nmpNextReq">0</b></div>
-    <button type="button" class="nmp-btn nmp-btn-blue" id="nmpDailyResetBtn" style="width:100%; margin-top:8px;">${esc(t('refine.dailyResetBtn'))}</button>
+    <div class="nmp-row"><div>${esc(t('refine.expectedCandles'))}</div><div class="nmp-bold" style="color:var(--npb-orange);"><span id="nmpExpCandles">0</span> <span class="nmp-unit">${esc(t('refine.candlesUnit'))}</span></div></div>
+    <div class="nmp-row"><div>${esc(t('refine.totalLight'))}</div><div id="nmpTotalLight">0</div></div>
+    <div class="nmp-row"><div>${esc(t('refine.totalEfficiency'))}</div><div class="nmp-bold" style="color:var(--npb-blue);"><span id="nmpTotalEff">0.00</span> <span style="font-size:12px; font-weight:normal; color:var(--npb-text-2);">/s</span></div></div>
+    <div class="nmp-row"><div>${esc(t('refine.totalTime'))}</div><div class="nmp-bold" style="color:var(--npb-blue);" id="nmpTotalTime"></div></div>
+    <div class="nmp-row" id="nmpNextRow"><div>${esc(t('refine.nextThreshold'))}</div><div style="color:var(--npb-text-2);" id="nmpNextReq">0</div></div>
+    <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" id="nmpDailyResetBtn">${esc(t('refine.dailyResetBtn'))}</button>
 
     <div class="nmp-box-sep" style="margin-top:12px;">
       <label class="nmp-check-sm"><input type="checkbox" id="nmpDailyNotify" ${N.isDailyResetNotifyEnabled() ? 'checked' : ''}> ${esc(t('refine.dailyResetNotifyLabel'))}</label>
@@ -175,7 +175,7 @@ function refineHtml(v) {
 function candleHtml(v) {
   return `
     <div class="nmp-carry">
-      <div class="nmp-box-row" style="width:100%;"><span>${esc(t('candle.carryOver'))}</span><span id="nmpCarryPct">0%</span></div>
+      <div style="display:flex; justify-content:space-between; width:100%;"><div>${esc(t('candle.carryOver'))}</div><div id="nmpCarryPct">0%</div></div>
       <div class="nmp-carry-gauge" id="nmpCarryGauge" role="slider" tabindex="0" aria-label="${esc(t('candle.carryGaugeAria'))}" aria-valuemin="0" aria-valuemax="99">
         <div class="nmp-carry-track-wrap">
           <div class="nmp-carry-track"><div class="nmp-carry-fill" id="nmpCarryFill"></div></div>
@@ -196,18 +196,18 @@ function candleHtml(v) {
           </svg>
         </div>
       </div>
-      <div class="nmp-hint">${esc(t('candle.slideHint'))}</div>
+      <div style="font-size:11px; color:var(--npb-text-2); margin-top:6px;">${esc(t('candle.slideHint'))}</div>
     </div>
 
-    <div class="nmp-box" style="margin-top:6px;">
-      <div class="nmp-box-row">
-        <span class="nmp-box-label"><svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg> ${esc(t('candle.currentCandles'))}</span>
+    <div class="nmp-candle-owned-box">
+      <div class="nmp-box-row" style="gap:10px; font-size:16px;">
+        <span class="nmp-box-label" style="font-weight:700; gap:8px;"><span class="nmp-icon-chip"><svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg></span> ${esc(t('candle.currentCandles'))}</span>
         <span style="display:flex; align-items:baseline; gap:8px;">
           <input type="number" id="nmpCurrentCandles" min="0" value="${esc(v.currentCandles)}">
           <span class="nmp-dim" id="nmpCurrentFmt"></span>
         </span>
       </div>
-      <div class="nmp-hint" style="margin-top:6px;"><svg class="inline-icon" width="12" height="12"><use href="#i-sync"/></svg> ${esc(t('candle.currentCandlesSyncNote'))}</div>
+      <div class="nmp-hint" style="display:flex; align-items:flex-start; gap:5px; margin-top:8px; padding:0;"><svg class="inline-icon" width="12" height="12" style="flex-shrink:0; margin-top:2px;"><use href="#i-sync"/></svg><span>${esc(t('candle.currentCandlesSyncNote'))}</span></div>
     </div>
 
     <div class="nmp-row"><div>${esc(t('candle.plannedUsage'))}</div><input type="number" id="nmpPlanned" value="${esc(v.plannedUsage)}"></div>
@@ -219,19 +219,19 @@ function candleHtml(v) {
       </div>
     </div>
     <div class="nmp-row"><div>${esc(t('candle.eventEndDate'))}</div><input type="date" id="nmpTargetDate" value="${esc(v.targetDate)}" style="width:140px; text-align:left;"></div>
-    <div class="nmp-row"><div>${esc(t('candle.remainingDays'))}</div><div><b id="nmpEventDays">0</b> <span class="nmp-dim">${esc(t('candle.remainingDaysUnit'))}</span></div></div>
-    <div class="nmp-row"><div>${esc(t('candle.projectedRemaining'))}</div><div><b id="nmpProjected">0</b> <span class="nmp-dim">${esc(t('refine.candlesUnit'))}</span></div></div>
+    <div class="nmp-row"><div>${esc(t('candle.remainingDays'))}</div><div style="font-weight:bold;"><span id="nmpEventDays">0</span> <span style="font-weight:normal; font-size:0.8em; color:var(--npb-text-2);">${esc(t('candle.remainingDaysUnit'))}</span></div></div>
+    <div class="nmp-row"><div>${esc(t('candle.projectedRemaining'))}</div><div class="nmp-bold"><span id="nmpProjected">0</span> <span class="nmp-unit">${esc(t('refine.candlesUnit'))}</span></div></div>
 
     <div id="nmpBreakdownWrap" style="margin:-2px 0 10px;">
       <button type="button" class="nmp-link-btn" id="nmpBreakdownToggle"></button>
       <div id="nmpBreakdown" style="display:none;"></div>
     </div>
 
-    <div class="nmp-row" style="flex-direction:column; align-items:flex-start;">
-      <div class="nmp-hint">${esc(t('candle.memoLabel'))}</div>
+    <div class="nmp-row" style="flex-direction:column; align-items:flex-start; border-bottom:none; padding-bottom:0; margin-top:10px;">
+      <div style="font-size:12px; color:var(--npb-text-2); margin-bottom:6px;">${esc(t('candle.memoLabel'))}</div>
       <textarea class="nmp-memo" id="nmpMemo" placeholder="${esc(t('candle.memoPlaceholder'))}">${esc(v.candleMemo)}</textarea>
     </div>
-    <button type="button" class="nmp-btn nmp-btn-outline-red" id="nmpResetDataBtn" style="width:100%; margin-top:10px;">${esc(t('settings.resetInputBtn'))}</button>`;
+    <button type="button" class="nmp-btn-outline-red nmp-btn-block" id="nmpResetDataBtn" style="margin-top:12px;">${esc(t('settings.resetInputBtn'))}</button>`;
 }
 
 /* ================================================================

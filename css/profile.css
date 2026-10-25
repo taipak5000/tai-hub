@@ -44,10 +44,35 @@
 
   font-family: 'M PLUS 1 Code', 'Consolas', 'Hiragino Sans', monospace;
   color: var(--pv-text);
-  background: var(--pv-bg);
+  --pv-grid-line: rgba(2, 132, 199, 0.06);
+  /* 元サイトの背景（ぼかした光だまり＋34pxの方眼＋縦グラデーション） */
+  background-color: var(--pv-bg);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 18% 10%, rgba(56,189,248,0.16), transparent 60%),
+    radial-gradient(ellipse 55% 35% at 85% 8%, rgba(125,211,252,0.13), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 78% 92%, rgba(45,212,191,0.12), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 12% 88%, rgba(56,189,248,0.1), transparent 60%),
+    linear-gradient(var(--pv-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pv-grid-line) 1px, transparent 1px),
+    linear-gradient(180deg, #EEF5FC 0%, #F7FBFF 50%, #EEF5FC 100%);
+  background-size: auto, auto, auto, auto, 34px 34px, 34px 34px, 100% 100%;
   min-height: 100%;
-  padding: 20px 0 24px;
+  padding: 0 0 24px;
 }
+[data-theme="dark"] .profile-view {
+  --pv-grid-line: rgba(56, 189, 248, 0.07);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 18% 10%, rgba(56,189,248,0.16), transparent 60%),
+    radial-gradient(ellipse 55% 35% at 85% 8%, rgba(125,211,252,0.13), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 78% 92%, rgba(45,212,191,0.12), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 12% 88%, rgba(56,189,248,0.1), transparent 60%),
+    linear-gradient(var(--pv-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pv-grid-line) 1px, transparent 1px),
+    linear-gradient(180deg, #0B1220 0%, #0E1B30 50%, #0B1220 100%);
+}
+.profile-view .tool-nav-head { --sep: var(--pv-border); }
+/* 元サイトの .inline-icon（アイコンは空色・線2.2） */
+:where(.profile-view) .inline-icon { stroke: var(--pv-sky); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--pv-sky); }
 
 [data-theme="dark"] .profile-view {
   --pv-bg: #0B1220;

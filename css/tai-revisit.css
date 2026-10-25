@@ -19,6 +19,19 @@
    移植ツールと同じ方針）。
    ================================================================ */
 
+/* 🩹 元サイトの .inline-icon（アイコンの色と線の太さ）。ハブ共通の既定（currentColor・1.8）のままだと
+   アイコンが黒っぽく細くなっていた。:where()で詳細度を元の .inline-icon と同じに保つ */
+:where(.tai-revisit-view) .inline-icon { stroke: var(--cyan-d); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--cyan-d); }
+:where(.tai-revisit-view) .inline-icon.warn { stroke: var(--red); color: var(--red); }
+:where(.tai-revisit-view) .inline-icon.ok { stroke: var(--green); color: var(--green); }
+
+
+/* 🩹 独立サイトはページ先頭の全称リセット（margin・paddingを0に）を前提にレイアウトされている。
+   ハブは複数ツールが同居するので全称リセットは持たず、このツールの中だけに同じものを掛ける。
+   :where()で詳細度を0にしてあるため、元の全称セレクタと同じく個々のルールが必ず勝つ */
+:where(.tai-revisit-view *, .tai-revisit-view *::before, .tai-revisit-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
+
+
 .tai-revisit-view {
   --bg:        #F2F2F7;
   --card:      #FFFFFF;
@@ -53,8 +66,6 @@
 .tai-revisit-view .tr-wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 850px) { .tai-revisit-view .tr-wrap { max-width: 960px; } }
 
-.tai-revisit-view .page-head { text-align: center; margin-bottom: 18px; }
-.tai-revisit-view .page-head h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
 
 .tai-revisit-view .sec-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-2); padding: 20px 4px 10px; display: flex; align-items: center; gap: 6px; }
 .tai-revisit-view .sec-sub { font-size: 12px; color: var(--text-2); padding: 0 4px 12px; line-height: 1.7; }

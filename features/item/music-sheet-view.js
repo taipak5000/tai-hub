@@ -99,6 +99,7 @@ function renderShell() {
     <div class="item-view">
       <div class="ms-wrap">
         <a href="#/item" class="back-link">${en ? '&larr; Back to Category List' : '&larr; カテゴリ一覧へ戻る'}</a>
+        <h1 class="item-large-title">${t('楽譜コンプリート管理', 'Music Sheet Completion')}</h1>
 
         <div class="ms-header-card">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:16px;">

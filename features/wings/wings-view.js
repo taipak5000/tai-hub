@@ -113,13 +113,12 @@ function injectStylesheet() {
 }
 
 // tai-hub共有の#pf-icon-sprite(js/icon-sprite.js)には無い、このツールだけで使う
-// アイコン2種（i-flashlight・i-chevron-down）だけを wg-i- プレフィックスで追加注入する
+// アイコン（i-flashlight）だけを wg-i- プレフィックスで追加注入する
 // （js/icon-sprite.js自体は他エージェントが並行編集中のため触らない。share-view.js/
 // nomacan-view.jsの「ローカルスプライト」パターンを踏襲）。
 const WG_SPRITE_HTML = `
 <svg id="${ICON_SPRITE_ID}" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs>
 <symbol id="wg-i-flashlight" viewBox="0 0 24 24"><path d="M9 4h6l1.5 2.5v3l-1.5 1.5v9a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-9L7.5 9.5v-3Z"/><path d="M9.5 4V2.5h5V4"/></symbol>
-<symbol id="wg-i-chevron-down" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 9l6 6-6 6"/></g></symbol>
 </defs></svg>`;
 function injectLocalIconSprite() {
   if (document.getElementById(ICON_SPRITE_ID)) return;
@@ -133,6 +132,7 @@ function renderShell() {
   return `
   <div class="wings-view">
    <div class="wg-wrap">
+    <header class="tool-nav-head"><h1><svg class="inline-icon" width="19" height="19"><use href="#i-wing"/></svg> ${t('羽トラッカー', 'Wing Tracker')}</h1></header>
     <div class="wg-dash-trigger-row">
       <button type="button" class="wg-dash-trigger-btn" id="wgOpenDashBtn">
         <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg>
@@ -818,7 +818,7 @@ function render() {
           <div class="season-head-actions">
             <span class="season-sub-badge ${complete ? 'complete' : ''}">${gotCount} / ${spirits.length} ${t('体', '')}</span>
             ${seasonEndingSoon ? `<span class="season-sub-badge warn" title="${escapeAttr(t('この季節はまもなく終了します。再訪でしか手に入らない光の翼を見逃さないようご注意ください。', 'This season is ending soon. Do not miss out on Winged Light only available through Revisit before it closes for good.'))}"><svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg> ${t(`終了まであと${seasonEndingSoon.daysLeft}日`, `Ends in ${seasonEndingSoon.daysLeft}d`)}</span>` : ''}
-            <button type="button" class="season-toggle-btn" data-season="${escapeAttr(season.ja)}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${escapeAttr(t(collapsed ? '展開する' : '折りたたむ', collapsed ? 'Expand' : 'Collapse'))}"><svg class="inline-icon" width="13" height="13"><use href="#wg-i-chevron-down"/></svg></button>
+            <button type="button" class="season-toggle-btn" data-season="${escapeAttr(season.ja)}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${escapeAttr(t(collapsed ? '展開する' : '折りたたむ', collapsed ? 'Expand' : 'Collapse'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg></button>
           </div>
         </div>
         ${collapsed ? '' : `

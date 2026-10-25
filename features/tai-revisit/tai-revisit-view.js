@@ -545,8 +545,8 @@ function renderShell() {
   return `
     <div class="tai-revisit-view">
       <div class="tr-wrap">
-        <header class="page-head">
-          <h1>${escapeHtml(CURRENT_LANG === 'en' ? 'Revisit Spirit Database' : '再訪精霊データベース')}</h1>
+        <header class="tool-nav-head">
+          <h1><svg class="inline-icon" width="16" height="16"><use href="#i-wing"/></svg> ${escapeHtml(CURRENT_LANG === 'en' ? 'Revisit Spirit Database' : '再訪精霊データベース')}</h1>
         </header>
 
         <div class="card">

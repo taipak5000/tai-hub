@@ -133,8 +133,6 @@ const LOCAL_SPRITE_HTML = `<svg id="${ICON_SPRITE_ID}" style="position:absolute;
 <symbol id="ts-i-clock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M12 8.2V12.3l3 1.8"/></g></symbol>
 <symbol id="ts-i-medal" viewBox="0 0 24 24"><path d="M8 3l3 8M16 3l-3 8"/><path d="M12 20a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11Z"/><path d="M10 14.5l2-1.2 2 1.2"/></symbol>
 <symbol id="ts-i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h5l-1 7 9-12h-5Z"/></symbol>
-<symbol id="ts-i-chevron-left" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-11.5 -12)"><path d="M15 5l-7 7 7 7"/></g></symbol>
-<symbol id="ts-i-chevron-right" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g></symbol>
 <symbol id="ts-i-undo" viewBox="0 0 24 24"><path d="M7 8H4V5"/><path d="M4 8c2-3 5.5-4 8.5-3a7 7 0 1 1-4.5 12.5"/></symbol>
 <symbol id="ts-i-redo" viewBox="0 0 24 24"><path d="M17 8h3V5"/><path d="M20 8c-2-3-5.5-4-8.5-3a7 7 0 1 0 4.5 12.5"/></symbol>
 <symbol id="ts-i-duplicate" viewBox="0 0 24 24"><path d="M8.5 8.5V5.5A1.5 1.5 0 0 1 10 4h8.5A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H15.5"/><path d="M4 9.5A1.5 1.5 0 0 1 5.5 8h8A1.5 1.5 0 0 1 15 9.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 18.5Z"/></symbol>
@@ -155,7 +153,7 @@ function renderShell() {
   <div class="tai-score-view">
     <div class="app-layout">
       <div>
-        <div class="page-head"><svg class="inline-icon" width="22" height="22"><use href="#i-music-note"/></svg> ${CURRENT_LANG === 'en' ? 'Sheet Music Maker' : '楽譜づくり'}</div>
+        <header class="tool-nav-head"><h1><svg class="inline-icon" width="19" height="19"><use href="#i-music-note"/></svg> ${CURRENT_LANG === 'en' ? 'Sheet Music Maker' : '楽譜づくり'}</h1></header>
 
         <div class="banner">
           <div class="banner-inner">
@@ -437,7 +435,7 @@ function renderComposeOverlay() {
 
     <div class="compose-input-row compose-input-area">
       <div class="compose-side-rail rail-left">
-        <button type="button" class="rail-btn" data-act="select-prev-frame" title="${escapeHtml(t('railPrevFrameTitle'))}" aria-label="${escapeHtml(t('railPrevFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-chevron-left"/></svg></button>
+        <button type="button" class="rail-btn" data-act="select-prev-frame" title="${escapeHtml(t('railPrevFrameTitle'))}" aria-label="${escapeHtml(t('railPrevFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-chevron-left"/></svg></button>
         <button type="button" class="rail-btn undo-edit-btn" data-act="undo-edit" disabled title="${escapeHtml(t('undoEditBtnTitle'))}" aria-label="${escapeHtml(t('undoEditBtnTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-undo"/></svg></button>
         <button type="button" class="rail-btn danger" data-act="delete-frame-range" title="${escapeHtml(t('railDeleteRangeTitle'))}" aria-label="${escapeHtml(t('railDeleteRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-trash"/></svg></button>
       </div>
@@ -470,7 +468,7 @@ function renderComposeOverlay() {
         </div>
       </div>
       <div class="compose-side-rail rail-right">
-        <button type="button" class="rail-btn" data-act="select-next-frame" title="${escapeHtml(t('railNextFrameTitle'))}" aria-label="${escapeHtml(t('railNextFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-chevron-right"/></svg></button>
+        <button type="button" class="rail-btn" data-act="select-next-frame" title="${escapeHtml(t('railNextFrameTitle'))}" aria-label="${escapeHtml(t('railNextFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-chevron-right"/></svg></button>
         <button type="button" class="rail-btn redo-edit-btn" data-act="redo-edit" disabled title="${escapeHtml(t('redoEditBtnTitle'))}" aria-label="${escapeHtml(t('redoEditBtnTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-redo"/></svg></button>
         <button type="button" class="rail-btn" data-act="copy-frame-range" title="${escapeHtml(t('railCopyRangeTitle'))}" aria-label="${escapeHtml(t('railCopyRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-duplicate"/></svg></button>
         <button type="button" class="rail-btn paste-frame-btn" data-act="paste-frame-range" disabled title="${escapeHtml(t('railPasteRangeTitle'))}" aria-label="${escapeHtml(t('railPasteRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-download"/></svg></button>

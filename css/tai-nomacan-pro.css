@@ -13,11 +13,11 @@
 .nomacan-pro-view {
   --npb-bg: #f2f2f7;
   --npb-card: #ffffff;
-  --npb-text: #1c1c1e;
-  --npb-text-2: #6e6e73;
-  --npb-border: rgba(60,60,67,0.16);
-  --npb-input-bg: #f2f2f7;
-  --npb-stat-bg: #f8f8fa;
+  --npb-text: #000000;
+  --npb-text-2: #8e8e93;
+  --npb-border: #e5e5ea;
+  --npb-input-bg: #fafafa;
+  --npb-stat-bg: #fdfdfd;
   --npb-blue: #007AFF;
   --npb-orange: #FF9500;
   --npb-green: #34C759;
@@ -26,26 +26,31 @@
 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--npb-text);
+  font-size: 16px;
   min-height: 100%;
   padding: 16px 0 40px;
   box-sizing: border-box;
 }
 [data-theme="dark"] .nomacan-pro-view {
   --npb-bg: #0c081a;
-  --npb-card: #1c1730;
-  --npb-text: #f2f2f7;
-  --npb-text-2: #a0a0a8;
-  --npb-border: rgba(255,255,255,0.14);
-  --npb-input-bg: #14102450;
-  --npb-stat-bg: #14102450;
+  --npb-card: #1b1535;
+  --npb-text: #ffffff;
+  --npb-text-2: #aaa4c4;
+  --npb-border: rgba(255, 255, 255, 0.15);
+  --npb-input-bg: rgba(0, 0, 0, 0.25);
+  --npb-stat-bg: rgba(255, 255, 255, 0.04);
 }
 .nomacan-pro-view * { box-sizing: border-box; }
-.nomacan-pro-view input, .nomacan-pro-view textarea, .nomacan-pro-view select {
-  font-family: inherit; color: var(--npb-text); background: var(--npb-input-bg);
-  border: 1px solid var(--npb-border); border-radius: 8px; padding: 7px 10px; font-size: 16px;
+/* 入力欄は元実装と同じ見た目（文字だけiOSのズーム防止で16px） */
+.nomacan-pro-view input[type="number"], .nomacan-pro-view input[type="text"], .nomacan-pro-view input[type="date"], .nomacan-pro-view textarea, .nomacan-pro-view select {
+  font-family: inherit; color: var(--npb-text); background-color: var(--npb-input-bg);
+  border: 1px solid var(--npb-border); border-radius: 6px; padding: 8px; font-size: 16px;
 }
-.nomacan-pro-view input[type="number"] { width: 100px; text-align: right; }
-.nomacan-pro-view input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--npb-blue); cursor: pointer; }
+.nomacan-pro-view input[type="number"], .nomacan-pro-view input[type="date"], .nomacan-pro-view select { width: 80px; text-align: right; }
+.nomacan-pro-view input[type="text"] { width: 100%; text-align: left; }
+.nomacan-pro-view input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
+.nomacan-pro-view input[type="range"] { width: 100%; margin-top: 8px; }
+.nomacan-pro-view .inline-icon { stroke: var(--npb-blue); color: var(--npb-blue); stroke-width: 2.2; vertical-align: -3px; }
 
 /* 🩹 移植元(tai-nomacan.pro/index.html)は body{padding:16px} + .container{max-width:720px;
    margin:0 auto}で左右の余白と横幅の上限を確保していたが、tai-hub移植時に
@@ -56,25 +61,29 @@
 .nomacan-pro-view .nmp-wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
 @media (min-width: 850px) { .nomacan-pro-view .nmp-wrap { max-width: 960px; } }
 
-.nmp-header h1 { font-size: 20px; font-weight: 800; margin: 4px 0 16px; letter-spacing: -0.02em; }
+.nmp-header h1 { font-size: 17px; font-weight: 600; margin: 0; padding: 14px 0 12px; margin-bottom: 8px; letter-spacing: -0.3px; }
 
 /* 👁️ 表示するカードの切替パネル（詳細/折りたたみはネイティブの<details>に任せる） */
-.nmp-visibility-card { padding: 10px 16px; margin-bottom: 16px; }
+.nmp-visibility-card { padding: 10px 16px; margin-bottom: 20px; }
 .nmp-visibility-summary { font-size: 13px; font-weight: 700; color: var(--npb-text-2); cursor: pointer; display: flex; align-items: center; gap: 6px; list-style: none; }
 .nmp-visibility-summary::-webkit-details-marker { display: none; }
 .nmp-visibility-options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--npb-border); }
 .nmp-visibility-opt { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
 
-.nmp-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-@media (min-width: 860px) { .nmp-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.nmp-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 850px) { .nmp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: start; } }
 .nmp-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-.nmp-card { background: var(--npb-card); border: 1px solid var(--npb-border); border-radius: 14px; padding: 16px; }
-.nmp-card-header { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--npb-blue); }
+/* 元実装の .section-card / .section-header */
+.nmp-card { background: var(--npb-card); border-radius: 16px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); }
+.nmp-card-header { font-size: 12px; color: var(--npb-text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 600; }
 .nmp-card-subheader { font-size: 13px; font-weight: 700; color: var(--npb-blue); margin: 16px 0 8px; padding-top: 12px; border-top: 1px dashed var(--npb-border); }
 
-.nmp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--npb-border); font-size: 14px; }
-.nmp-row:last-of-type { border-bottom: none; }
+/* 元実装の .row / .bold-text */
+.nmp-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--npb-border); }
+.nmp-row:last-child { border-bottom: none; }
+.nmp-bold { font-weight: bold; font-size: 18px; }
+.nmp-unit { font-size: 0.65em; font-weight: normal; color: var(--npb-text-2); }
 .nmp-hint { font-size: 11px; color: var(--npb-text-2); line-height: 1.5; padding: 2px 0 6px; }
 .nmp-stat-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--npb-text-2); }
 .nmp-stat-row b { color: var(--npb-text); font-variant-numeric: tabular-nums; }
@@ -85,9 +94,18 @@
 .nmp-shard-title { font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 .nmp-shard-body { font-size: 13px; margin: 4px 0 8px; font-variant-numeric: tabular-nums; }
 .nmp-shard-times { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
-.nmp-shard-time-chip { background: var(--npb-card); border: 1px solid var(--npb-border); border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nmp-shard-time-chip { background: var(--npb-bg); border: 1px solid var(--npb-border); border-radius: 8px; padding: 8px 12px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-.nmp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; background: var(--npb-blue); }
+.nmp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 700; cursor: pointer; color: #fff; background: var(--npb-blue); font-family: inherit; }
+.nmp-btn .inline-icon, .nmp-btn-outline-blue .inline-icon, .nmp-btn-outline-red .inline-icon { stroke: currentColor; color: currentColor; }
+/* 元実装の .btn（全幅・上に12pxの余白） */
+.nmp-btn-block { display: flex; width: 100%; padding: 10px; margin-top: 12px; }
+/* 元実装の .btn-outline-blue / .btn-outline-red / .btn-add */
+.nmp-btn-outline-blue { background: transparent; border: 1px solid var(--npb-blue); color: var(--npb-blue); padding: 6px 12px; font-size: 13px; margin: 0; border-radius: 6px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
+.nmp-btn-outline-blue.nmp-btn-block { display: flex; justify-content: flex-start; padding: 6px 12px; margin-top: 0; }
+.nmp-btn-outline-red { background: transparent; border: 1px solid var(--npb-red); color: var(--npb-red); padding: 6px 12px; font-size: 13px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: inherit; }
+.nmp-btn-outline-red.nmp-btn-block { justify-content: center; padding: 8px 12px; }
+.nmp-btn-add { background: transparent; border: none; color: var(--npb-blue); text-align: left; padding: 12px 4px; font-size: 15px; font-weight: bold; margin: 16px 0 4px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit; }
 .nmp-btn:active { opacity: 0.8; }
 .nmp-btn-blue { background: var(--npb-blue); }
 .nmp-btn-orange { background: var(--npb-orange); }
@@ -107,35 +125,50 @@
 
 .nmp-empty-state { text-align: center; color: var(--npb-text-2); padding: 20px 0; font-size: 13px; line-height: 1.6; }
 
-/* ── エリア管理 ── */
-.nmp-area-search-row { margin-bottom: 10px; }
-.nmp-area-search-row input { width: 100%; }
-.nmp-checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; cursor: pointer; }
-.nmp-preset-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
-.nmp-preset-btn { border: 1px solid var(--npb-border); background: var(--npb-stat-bg); color: var(--npb-text); border-radius: 8px; padding: 6px 4px; font-size: 12px; cursor: pointer; text-align: center; line-height: 1.5; }
-.nmp-preset-btn:active { background: var(--npb-border); }
-.nmp-preset-btn small { color: var(--npb-text-2); font-weight: 700; }
+/* ── エリア管理（元実装の .area-preset-row / .area-pct-row / .area-icon-badge / .area-accordion） ── */
+.nmp-preset-row { display: flex; gap: 6px; margin-bottom: 4px; }
+.nmp-preset-btn { flex: 1; min-width: 0; padding: 8px 2px; border-radius: 8px; border: 1px solid var(--npb-border); background: var(--npb-stat-bg); color: var(--npb-text); font-size: 11px; line-height: 1.5; text-align: center; cursor: pointer; font-family: inherit; }
+.nmp-preset-btn:active { background: var(--npb-blue); color: #fff; border-color: var(--npb-blue); }
+.nmp-preset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.nmp-preset-hint { font-size: 11px; color: var(--npb-text-2); margin: -4px 0 10px; }
 
-.nmp-area-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
-.nmp-main-area-row { border: 1px solid var(--npb-border); border-radius: 10px; padding: 10px; background: var(--npb-stat-bg); }
-.nmp-main-area-head { display: flex; align-items: center; gap: 8px; }
-.nmp-area-icon-badge { width: 26px; height: 26px; border-radius: 8px; background: var(--npb-card); display: inline-flex; align-items: center; justify-content: center; color: var(--npb-blue); flex-shrink: 0; }
-.nmp-main-area-name { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nmp-main-area-frac { font-size: 11.5px; color: var(--npb-text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nmp-area-pct-row { padding: 8px 0; border-bottom: 1px solid var(--npb-border); transition: opacity 0.15s; }
+.nmp-area-pct-row input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
+.nmp-area-pct-label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; cursor: pointer; min-width: 0; }
+.nmp-area-pct-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmp-area-pct-frac { font-size: 13px; color: var(--npb-text-2); display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.nmp-area-pct-frac .inline-icon { stroke: currentColor; color: currentColor; }
+.nmp-area-pct-frac b { color: var(--npb-text); margin-left: 2px; }
 
-.nmp-pct-slider { width: 100%; margin: 8px 0 2px; accent-color: var(--npb-blue); }
-.nmp-pct-readout { text-align: right; font-size: 11px; color: var(--npb-text-2); font-variant-numeric: tabular-nums; }
+.nmp-area-icon-badge { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.nmp-area-icon-badge svg { width: 14px; height: 14px; stroke-width: 2.4; }
+.nmp-area-icon-badge.c-blue   { background: rgba(0,122,255,0.14); }
+.nmp-area-icon-badge.c-orange { background: rgba(255,149,0,0.14); }
+.nmp-area-icon-badge.c-green  { background: rgba(52,199,89,0.14); }
+.nmp-area-icon-badge.c-purple { background: rgba(175,82,222,0.14); }
+.nmp-area-icon-badge.c-red    { background: rgba(255,59,48,0.14); }
+.nmp-area-icon-badge.c-blue svg   { stroke: var(--npb-blue); color: var(--npb-blue); }
+.nmp-area-icon-badge.c-orange svg { stroke: var(--npb-orange); color: var(--npb-orange); }
+.nmp-area-icon-badge.c-green svg  { stroke: var(--npb-green); color: var(--npb-green); }
+.nmp-area-icon-badge.c-purple svg { stroke: var(--npb-purple); color: var(--npb-purple); }
+.nmp-area-icon-badge.c-red svg    { stroke: var(--npb-red); color: var(--npb-red); }
 
-.nmp-sub-area-list { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--npb-border); display: flex; flex-direction: column; gap: 6px; }
+.nmp-today-filter { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--npb-text-2); cursor: pointer; }
+.nmp-today-filter input[type="checkbox"] { width: 15px; height: 15px; }
+.nmp-area-accordion { border-bottom: 1px solid var(--npb-border); padding: 14px 0; }
+.nmp-area-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nmp-area-accordion-name { font-weight: bold; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; }
+.nmp-expand-toggle-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--npb-stat-bg); border: 1px solid var(--npb-border); box-shadow: 0 2px 5px rgba(0,0,0,0.03); border-radius: 8px; cursor: pointer; color: var(--npb-text); }
+
+.nmp-sub-area-list { margin: 12px 0 0 12px; padding-left: 8px; border-left: 2px solid var(--npb-border); display: flex; flex-direction: column; gap: 6px; }
 .nmp-sub-area-row-simple { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; }
-.nmp-sub-area-row { background: var(--npb-card); border: 1px solid var(--npb-border); border-radius: 8px; padding: 8px; }
+.nmp-sub-area-row { background: rgba(0,0,0,0.01); border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; }
 .nmp-sub-area-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.nmp-inline-name-input { flex: 1; min-width: 90px; font-size: 16px; padding: 4px 6px; }
-.nmp-inline-time-input { width: 56px; font-size: 16px; padding: 4px 6px; }
-.nmp-inline-light-input { width: 56px; font-size: 16px; padding: 4px 6px; }
+.nomacan-pro-view .nmp-inline-name-input { flex: 1; min-width: 90px; width: auto; padding: 4px 6px; }
+.nomacan-pro-view .nmp-inline-time-input, .nomacan-pro-view .nmp-inline-light-input { width: 58px; padding: 3px 5px; }
 .nmp-group-badge { background: var(--npb-purple); color: #fff; border-radius: 5px; padding: 1px 6px; font-size: 10px; }
 
-.nmp-spot-list { margin-top: 6px; padding-left: 8px; border-left: 2px solid var(--npb-border); display: flex; flex-direction: column; gap: 4px; }
+.nmp-spot-list { margin: 10px 0 0 16px; padding-left: 8px; border-left: 2px dotted var(--npb-border); display: flex; flex-direction: column; gap: 4px; }
 .nmp-spot-row { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
 .nmp-spot-inactive { opacity: 0.4; }
 
@@ -154,8 +187,11 @@
 .nmp-confirm-inline-actions { display: flex; gap: 8px; }
 
 /* ── マイルート ── */
-.nmp-spell-import { border: 1px dashed var(--npb-border); border-radius: 10px; padding: 10px; margin: 10px 0; }
-.nmp-spell-import-label { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.nmp-spell-import { border: 1px dashed var(--npb-border); border-radius: 8px; padding: 10px; margin: 10px 0 14px; background: rgba(0,0,0,0.01); }
+.nmp-spell-import-label { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
+.nomacan-pro-view .nmp-spell-import-row input { padding: 6px; }
+.nmp-spell-import-btn { padding: 6px 12px; font-size: 12px; background: var(--npb-orange); color: #fff; border: none; border-radius: 6px; font-weight: bold; white-space: nowrap; cursor: pointer; font-family: inherit; }
+.nmp-spell-note { font-size: 11px; color: var(--npb-text-2); margin-top: 6px; line-height: 1.5; }
 .nmp-spell-import-row { display: flex; gap: 6px; }
 .nmp-spell-import-row input { flex: 1; min-width: 0; }
 
@@ -185,17 +221,23 @@
 .nmp-route-summary { margin-top: 10px; background: var(--npb-input-bg); border-radius: 8px; padding: 8px 10px; }
 .nmp-route-summary-row { display: flex; justify-content: space-between; font-size: 12px; }
 
-.nmp-footer { text-align: center; padding: 24px 16px; margin-top: 24px; font-size: 12px; line-height: 1.8; color: var(--npb-text-2); border-top: 1px solid var(--npb-border); }
-.nmp-footer a { color: var(--npb-blue); text-decoration: underline; }
+.nmp-footer { text-align: center; padding: 24px 16px; margin-top: 40px; font-size: 13px; line-height: 1.6; color: var(--npb-text-2); border-top: 1px solid var(--npb-border); }
+.nmp-footer a { color: var(--npb-blue); text-decoration: underline; font-weight: 500; }
 .nmp-footer-sub { display: inline-block; margin-top: 4px; }
 
 /* ── 今日の精錬状況・キャンドル管理（nomacan-pro-top.js） ── */
 .nmp-card-header-split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .nmp-normal { font-weight: 400; }
-.nmp-box { background: var(--npb-stat-bg); border: 1px solid var(--npb-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.nmp-box { background: var(--npb-stat-bg); border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
 .nmp-box-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .nmp-box-label { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-.nmp-box-label-lg { font-size: 15px; font-weight: 700; }
+.nmp-box-label-lg { font-size: 16px; font-weight: 600; }
+/* 元実装の .candle-owned-box（他ツールと同期する所持キャンドル数を強調する枠）と .icon-chip */
+.nmp-candle-owned-box { background: rgba(0,122,255,0.06); border: 1px solid rgba(0,122,255,0.25); border-radius: 10px; padding: 12px; width: 100%; margin: 10px 0 0; }
+[data-theme="dark"] .nmp-candle-owned-box { background: rgba(0,122,255,0.12); }
+.nomacan-pro-view .nmp-candle-owned-box input[type="number"] { font-size: 19px; font-weight: 700; width: 120px; color: var(--npb-blue); }
+.nmp-icon-chip { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 26px; height: 26px; background: rgba(0,122,255,0.12); background-image: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 60%); border-radius: 26%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.10); }
+.nmp-icon-chip svg { display: block; stroke: var(--npb-blue); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .nmp-box-sep { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--npb-border); }
 .nmp-check-lg { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px; font-weight: 600; }
 .nmp-check-lg input[type="checkbox"] { width: 24px; height: 24px; }
@@ -210,7 +252,7 @@
 #nmpBreakdown { background: var(--npb-input-bg); border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; margin-top: 8px; }
 
 /* 繰越ゲージ（キャンドル型・縦スライド） */
-.nmp-carry { display: flex; flex-direction: column; align-items: center; padding: 6px 0 10px; border-bottom: 1px solid var(--npb-border); margin-bottom: 8px; }
+.nmp-carry { display: flex; flex-direction: column; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--npb-border); }
 .nmp-carry-gauge { display: flex; align-items: flex-end; gap: 16px; margin-top: 10px; touch-action: none; user-select: none; outline: none; cursor: grab; }
 .nmp-carry-gauge:focus-visible { outline: 2px solid var(--npb-blue); outline-offset: 6px; border-radius: 12px; }
 .nmp-carry-track-wrap { position: relative; width: 36px; height: 148px; pointer-events: none; }

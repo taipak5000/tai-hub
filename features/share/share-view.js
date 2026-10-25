@@ -328,7 +328,6 @@ function injectStylesheet() {
 // star-candleの各ビューと同じ方式）。
 const SV_SPRITE_HTML = `
 <svg id="${ICON_SPRITE_ID}" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs>
-<symbol id="sv-i-chevron-right" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g></symbol>
 <symbol id="sv-i-map" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.074) translate(-12 -12.15)"><path d="M4 6l6-2 4 2 6-2v14l-6 2-4-2-6 2Z"/><path d="M10 4.3v14M14 6.3v14"/></g></symbol>
 <symbol id="sv-i-plus" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.25) translate(-12 -12)"><path d="M12 5v14M5 12h14"/></g></symbol>
 <symbol id="sv-i-image" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M4.5 4.5h15v15h-15Z"/><path d="M4.5 15.5l4.2-4.5a1 1 0 0 1 1.5 0l2.3 2.5 2.5-3a1 1 0 0 1 1.5 0l3 4.5"/><path d="M9 9.5a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z"/></g></symbol>
@@ -409,7 +408,7 @@ const TEMPLATE = `
          :aria-expanded="!calendarCollapsed" :aria-label="calendarCollapsed ? t('calendar.expand') : t('calendar.collapse')"
          @click="toggleCalendarCollapsed" @keydown.enter="toggleCalendarCollapsed" @keydown.space.prevent="toggleCalendarCollapsed">
       <span>{{ t('calendar.header') }}</span>
-      <span class="sv-cal-caret" :class="{ 'is-expanded': !calendarCollapsed }"><svg class="inline-icon" width="13" height="13"><use href="#sv-i-chevron-right"/></svg></span>
+      <span class="sv-cal-caret" :class="{ 'is-expanded': !calendarCollapsed }"><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-right"/></svg></span>
     </div>
     <template v-if="!calendarCollapsed">
       <div v-if="!hasAnyCalendarEvents" class="sv-cal-empty">{{ t('calendar.emptyAll') }}</div>

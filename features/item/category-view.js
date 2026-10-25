@@ -147,6 +147,7 @@ function renderShell(cfg) {
     <div class="item-view">
       <div class="cv-wrap">
         <a href="#/item" class="back-link">${en ? '&larr; Back to Category List' : '&larr; カテゴリ一覧へ戻る'}</a>
+        <h1 class="item-large-title">${escapeHtml(en ? `${catName} Checklist` : `${catName}チェック`)}</h1>
 
         <div class="cv-header-card">
           <div class="cv-header-info">

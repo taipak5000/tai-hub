@@ -18,6 +18,12 @@
    挿入する。
    ================================================================ */
 
+/* 🩹 独立サイトはページ先頭の全称リセット（margin・paddingを0に）を前提にレイアウトされている。
+   ハブは複数ツールが同居するので全称リセットは持たず、このツールの中だけに同じものを掛ける。
+   :where()で詳細度を0にしてあるため、元の全称セレクタと同じく個々のルールが必ず勝つ */
+:where(.spirit-catalog-view *, .spirit-catalog-view *::before, .spirit-catalog-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
+
+
 .spirit-catalog-view {
   --sc-bg:        #F2F2F7;
   --sc-card:      #FFFFFF;
@@ -67,8 +73,6 @@
 .spirit-catalog-view .sc-wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; }
 @media (min-width: 850px) { .spirit-catalog-view .sc-wrap { max-width: 960px; } }
 
-.spirit-catalog-view .sc-head { text-align: center; margin-bottom: 16px; }
-.spirit-catalog-view .sc-head h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
 /* ── 再訪連携バッジ ── */
 .spirit-catalog-view .revisit-badge:empty { display: none; }
@@ -309,7 +313,7 @@
    モーダルは document.body 直下に生成する（他の全モーダルと同じ）ため、
    ここから下は .spirit-catalog-view でスコープしない。features/wings/
    wings-share.js・css/wings.css の .wg-export-card 系と同じ設計・
-   移植方針で、衝突回避のため sc-export-card/sc-exp-*/sc-share-* の
+   移植方針で、衝突回避のため sc-export-card・sc-exp-*・sc-share-* の
    プレフィックスを使う（css/star-candle.cssも「star candle」の略として
    .sc-* を使っているが、そちらは全て .star-candle-view 配下でスコープ
    済みのため、ここで追加する非スコープのクラス名とは衝突しない）。

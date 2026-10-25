@@ -16,6 +16,12 @@
    <link> していない ── data-transfer-view.js の mount() が最初の描画時に
    <link rel="stylesheet"> を動的に1回だけ挿入する。
    ================================================================ */
+
+/* 🩹 独立サイトはページ先頭の全称リセット（margin・paddingを0に）を前提にレイアウトされている。
+   ハブは複数ツールが同居するので全称リセットは持たず、このツールの中だけに同じものを掛ける。
+   :where()で詳細度を0にしてあるため、元の全称セレクタと同じく個々のルールが必ず勝つ */
+:where(.data-transfer-view *, .data-transfer-view *::before, .data-transfer-view *::after) { margin: 0; padding: 0; box-sizing: border-box; }
+
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
 
 .data-transfer-view {
@@ -56,12 +62,6 @@
 .data-transfer-view .dt-wrap { max-width: 720px; margin: 0 auto; }
 @media (min-width: 850px) { .data-transfer-view .dt-wrap { max-width: 960px; } }
 
-.data-transfer-view .page-head { text-align: center; margin-bottom: 18px; }
-.data-transfer-view .page-head h1 {
-  margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.3px;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.data-transfer-view .page-head .subtitle { margin-top: 6px; font-size: 12.5px; color: var(--text-2); }
 
 .data-transfer-view .sec-label { font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.4px; padding: 22px 4px 10px; }
 .data-transfer-view .sec-label:first-of-type { padding-top: 0; }

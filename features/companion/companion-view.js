@@ -545,7 +545,6 @@ const CP_SPRITE_HTML = `
   <path d="M50 16 L59 41 L84 50 L59 59 L50 84 L41 59 L16 50 L41 41 Z" fill="currentColor"/>
 </symbol>
 <symbol id="cp-i-clock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.167) translate(-12 -12)"><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z"/><path d="M12 8.2V12.3l3 1.8"/></g></symbol>
-<symbol id="cp-i-chevron-down" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 9l6 6-6 6"/></g></symbol>
 <symbol id="cp-i-footprint" viewBox="0 0 24 24"><path d="M9 4c-2 0-3.2 2-3.2 4.5S7 13 9 13s3.2-2 3.2-4.5S11 4 9 4Z"/><path d="M15.3 10.2c-1.9 0-2.9 1.8-2.9 4s1 4.8 2.9 4.8 2.9-2.6 2.9-4.8-1-4-2.9-4Z"/></symbol>
 </defs></svg>`;
 function injectLocalIconSprite() {
@@ -1014,8 +1013,8 @@ const TEMPLATE = `
               </div>
               <span class="opt-cost"><svg class="inline-icon" width="11" height="11"><use href="#i-candle"/></svg>{{ row.candles }}<br><small>{{ t('opt_cum') }} {{ row.cumulative }}</small></span>
               <div class="opt-btns">
-                <button type="button" class="opt-mini-btn" @click="optMove(idx, -1)" :disabled="idx === 0"><svg class="inline-icon" width="11" height="11" style="transform:rotate(180deg)"><use href="#cp-i-chevron-down"/></svg></button>
-                <button type="button" class="opt-mini-btn" @click="optMove(idx, 1)" :disabled="idx === optimizerRows.length - 1"><svg class="inline-icon" width="11" height="11"><use href="#cp-i-chevron-down"/></svg></button>
+                <button type="button" class="opt-mini-btn" @click="optMove(idx, -1)" :disabled="idx === 0"><svg class="inline-icon" width="11" height="11" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
+                <button type="button" class="opt-mini-btn" @click="optMove(idx, 1)" :disabled="idx === optimizerRows.length - 1"><svg class="inline-icon" width="11" height="11"><use href="#i-chevron-down"/></svg></button>
                 <button type="button" class="opt-mini-btn danger" @click="optRemove(idx)"><svg class="inline-icon warn" width="11" height="11"><use href="#i-close"/></svg></button>
               </div>
             </div>

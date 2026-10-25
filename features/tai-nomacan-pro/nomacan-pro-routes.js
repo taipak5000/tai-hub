@@ -69,15 +69,17 @@ export function renderRoutes() {
   if (!el) return;
   const routes = getMyRoutes();
   el.innerHTML = `
-    <button type="button" class="nmp-btn nmp-btn-blue" style="width:100%;" onclick="__nmpLoadTemplate()">
-      <svg class="inline-icon" width="14" height="14"><use href="#i-star"/></svg> ${escT(t('route.loadTemplateBtn'))}
+    <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" style="margin-top:0; margin-bottom:4px;" onclick="__nmpSaveCurrentRoute()">${escT(t('route.saveCurrentBtn'))}</button>
+    <button type="button" class="nmp-btn-outline-blue nmp-btn-block" style="margin-bottom:4px; font-weight:bold;" onclick="__nmpLoadTemplate()">
+      <svg class="inline-icon" width="13" height="13"><use href="#i-star"/></svg> ${escT(t('route.loadTemplateBtn'))}
     </button>
     <div class="nmp-spell-import">
       <div class="nmp-spell-import-label">${escT(t('route.importLabel'))}</div>
       <div class="nmp-spell-import-row">
         <input type="text" id="nmpSpellImportInput" placeholder="${escT(t('route.importPlaceholder'))}" value="${escT(spellImportValue)}" oninput="__nmpSpellImportInput(this.value)">
-        <button type="button" class="nmp-btn nmp-btn-orange" onclick="__nmpSpellImportGo()">${escT(t('route.importBtn'))}</button>
+        <button type="button" class="nmp-spell-import-btn" onclick="__nmpSpellImportGo()">${escT(t('route.importBtn'))}</button>
       </div>
+      <div class="nmp-spell-note">${escT(t('route.spellNoBgImageNote'))}</div>
     </div>
     ${routes.length === 0 ? `<div class="nmp-empty-state">${t('route.emptyState')}</div>` : routes.map((r) => renderRouteCard(r)).join('')}
   `;
@@ -104,8 +106,8 @@ function renderRouteCard(route) {
     <div class="nmp-route-card-head">
       <input type="text" class="nmp-route-name-input" value="${escapeHtml(route.name)}" oninput="__nmpRouteNameInput('${route.id}', this.value)">
       <div class="nmp-route-card-actions">
-        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', -1)" title="↑"><svg class="inline-icon" width="12" height="12"><use href="#nmp-i-chevron-down" style="transform:rotate(180deg)"/></svg></button>
-        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', 1)" title="↓"><svg class="inline-icon" width="12" height="12"><use href="#nmp-i-chevron-down"/></svg></button>
+        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', -1)" title="↑"><svg class="inline-icon" width="12" height="12"><use href="#i-chevron-down" style="transform:rotate(180deg)"/></svg></button>
+        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', 1)" title="↓"><svg class="inline-icon" width="12" height="12"><use href="#i-chevron-down"/></svg></button>
         <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-sm" onclick="__nmpRouteApply('${route.id}')">${escT(t('route.apply'))}</button>
         <button type="button" class="nmp-btn nmp-btn-purple nmp-btn-sm" onclick="__nmpRouteShare('${route.id}')">${escT(t('route.share'))}</button>
         <button type="button" class="nmp-btn nmp-btn-outline nmp-btn-sm" onclick="__nmpRouteExportText('${route.id}')">${escT(t('route.exportTextBtn'))}</button>
@@ -139,8 +141,8 @@ function renderRouteCard(route) {
               <div class="nmp-reorder-actions">
                 ${(route.splitTimes || {})[spotId] != null ? `<span class="nmp-split-time">${fmtSeconds(route.splitTimes[spotId])}</span>` : ''}
                 ${isRunning ? `<button type="button" class="nmp-btn nmp-btn-green nmp-btn-xs" onclick="__nmpRouteLap('${route.id}', '${spotId}')">${escT(t('route.lapBtn'))}</button>` : ''}
-                <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${idx === 0 ? 'disabled' : ''} onclick="__nmpRouteSpotMove('${route.id}', ${idx}, -1)"><svg class="inline-icon" width="10" height="10" style="transform:rotate(180deg)"><use href="#nmp-i-chevron-down"/></svg></button>
-                <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${idx === route.selectedSpotIds.length - 1 ? 'disabled' : ''} onclick="__nmpRouteSpotMove('${route.id}', ${idx}, 1)"><svg class="inline-icon" width="10" height="10"><use href="#nmp-i-chevron-down"/></svg></button>
+                <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${idx === 0 ? 'disabled' : ''} onclick="__nmpRouteSpotMove('${route.id}', ${idx}, -1)"><svg class="inline-icon" width="10" height="10" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
+                <button type="button" class="nmp-icon-btn nmp-icon-btn-xs" ${idx === route.selectedSpotIds.length - 1 ? 'disabled' : ''} onclick="__nmpRouteSpotMove('${route.id}', ${idx}, 1)"><svg class="inline-icon" width="10" height="10"><use href="#i-chevron-down"/></svg></button>
                 <button type="button" class="nmp-icon-btn nmp-icon-btn-xs nmp-icon-btn-danger" onclick="__nmpRouteSpotRemove('${route.id}', ${idx})"><svg class="inline-icon" width="10" height="10"><use href="#i-close"/></svg></button>
               </div>
             </div>`).join('')}

@@ -432,7 +432,7 @@ function renderShell() {
           <section class="nmp-card" id="nmpSectionOptimization" style="${visibleSections.optimization ? '' : 'display:none;'}">
             <div class="nmp-card-header">${escHtml(t('optimize.sectionHeader'))}</div>
             <div class="nmp-row"><div>${escHtml(t('optimize.targetLabel'))}</div><input type="number" value="${targetCandlesForOptimization}" oninput="__nmpTargetInput(this.value)"></div>
-            <button type="button" class="nmp-btn nmp-btn-orange" style="width:100%;" onclick="__nmpOptimizeClick()">${escHtml(t('optimize.autoSelectBtn'))}</button>
+            <button type="button" class="nmp-btn nmp-btn-orange nmp-btn-block" onclick="__nmpOptimizeClick()">${escHtml(t('optimize.autoSelectBtn'))}</button>
           </section>
         </div>
         <div class="nmp-col">
@@ -475,11 +475,15 @@ function recomputeAndRenderTop() {
 /* ================================================================
    🖼️ 描画: エリア管理カード
    ================================================================ */
-const AREA_ICON_MAP = {
-  'ホーム': 'i-folder', '孤島': 'i-sun', '草原': 'i-leaf', '雨林': 'i-tree', '峡谷': 'i-crown',
-  '捨て地': 'i-moon', '書庫': 'i-star', 'コラボルーム': 'i-gift', 'ソーシャルライト': 'i-heart', 'ランダムの火種': 'i-sparkle',
+// 元実装のAREA_VISUAL_MAPと同じ（アイコン＋丸バッジの色）。i-leaf・i-giftは共有スプライトに無いのでnmp-i-*で持つ
+const AREA_VISUAL_MAP = {
+  'ホーム': { icon: 'i-folder', color: 'blue' }, '孤島': { icon: 'i-sun', color: 'orange' },
+  '草原': { icon: 'nmp-i-leaf', color: 'green' }, '雨林': { icon: 'i-tree', color: 'blue' },
+  '峡谷': { icon: 'i-crown', color: 'purple' }, '捨て地': { icon: 'i-moon', color: 'orange' },
+  '書庫': { icon: 'i-star', color: 'purple' }, 'コラボルーム': { icon: 'nmp-i-gift', color: 'red' },
+  'ソーシャルライト': { icon: 'i-heart', color: 'green' }, 'ランダムの火種': { icon: 'i-sparkle', color: 'blue' },
 };
-function areaIcon(area) { return AREA_ICON_MAP[area.name] || 'i-pin'; }
+function areaVisual(area) { return AREA_VISUAL_MAP[area.name] || { icon: 'i-pin', color: 'blue' }; }
 
 function matchesSearch(name) {
   if (!areaSearchQuery.trim()) return true;
@@ -500,60 +504,81 @@ function renderAreaList() {
   const el = document.getElementById('nmpAreaBody');
   if (!el) return;
   const hasSearch = areaSearchQuery.trim().length > 0;
-  const visibleAreas = areas.map((a, i) => ({ a, i })).filter(({ a }) => !hasSearch || areaMatchesSearch(a));
+  const anyChecked = areas.some((a) => a.isSelected);
+  const detailAreas = areas.map((a, i) => ({ a, i })).filter(({ a }) => !hasSearch || areaMatchesSearch(a));
+  const preset = (pct, key) => `<button type="button" class="nmp-preset-btn" ${anyChecked ? '' : 'disabled'} onclick="__nmpPresetClick(${pct})">${escHtml(t(key))}<br><b>${pct}%</b></button>`;
 
   el.innerHTML = `
-    <div class="nmp-area-search-row">
-      <input type="text" placeholder="${escHtml(t('area.searchPlaceholder'))}" value="${escHtml(areaSearchQuery)}" oninput="__nmpSearchInput(this.value)">
-    </div>
-    <label class="nmp-checkbox-row"><input type="checkbox" ${showTodayOnlyFilter ? 'checked' : ''} onchange="__nmpTodayFilterToggle()"> ${escHtml(t('area.todayOnlyFilterLabel') || '今日対象のみ表示')}</label>
     <div class="nmp-preset-row">
-      <button type="button" class="nmp-preset-btn" onclick="__nmpPresetClick(15)">${escHtml(t('area.presetLittle'))}<br><small>15%</small></button>
-      <button type="button" class="nmp-preset-btn" onclick="__nmpPresetClick(60)">${escHtml(t('area.presetSome'))}<br><small>60%</small></button>
-      <button type="button" class="nmp-preset-btn" onclick="__nmpPresetClick(80)">${escHtml(t('area.presetMost'))}<br><small>80%</small></button>
-      <button type="button" class="nmp-preset-btn" onclick="__nmpPresetClick(100)">${escHtml(t('area.presetAll'))}<br><small>100%</small></button>
+      ${preset(15, 'area.presetLittle')}${preset(60, 'area.presetSome')}${preset(80, 'area.presetMost')}${preset(100, 'area.presetAll')}
     </div>
-    <div class="nmp-hint">${escHtml(t('area.presetHint'))}</div>
-    ${hasSearch && visibleAreas.length === 0 ? `<div class="nmp-empty-state">${t('area.searchNoResults', { q: areaSearchQuery })}</div>` : ''}
-    <div class="nmp-area-list">
-      ${visibleAreas.map(({ a, i }) => renderMainAreaRow(a, i)).join('')}
+    ${anyChecked ? '' : `<div class="nmp-preset-hint">${escHtml(t('area.presetHint'))}</div>`}
+    ${areas.map((a, i) => renderMainAreaRow(a, i)).join('')}
+    <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" style="margin-top:10px;" onclick="${myRoutesQuickCreateHandler()}"><svg class="inline-icon" width="14" height="14"><use href="#i-pin"/></svg> ${escHtml(t('area.createRouteBtn'))}</button>
+    <button type="button" class="nmp-btn-outline-blue nmp-btn-block" style="margin-top:6px;" onclick="__nmpDetailToggle()"><svg class="inline-icon" width="13" height="13"><use href="#nmp-i-list"/></svg> ${escHtml(showDetailedAreaSettings ? t('area.hideDetail') : t('area.showDetail'))}</button>
+    ${showDetailedAreaSettings ? `
+    <div style="margin:12px 0 10px;">
+      <input type="text" placeholder="${escHtml(t('area.searchPlaceholder'))}" value="${escHtml(areaSearchQuery)}" oninput="__nmpSearchInput(this.value)" style="font-size:16px;">
     </div>
-    <button type="button" class="nmp-btn nmp-btn-blue" style="width:100%; margin-top:10px;" onclick="${myRoutesQuickCreateHandler()}">${escHtml(t('area.createRouteBtn'))}</button>
-    <button type="button" class="nmp-btn nmp-btn-outline" style="width:100%; margin-top:8px;" onclick="__nmpDetailToggle()">${escHtml(showDetailedAreaSettings ? t('area.hideDetail') : t('area.showDetail'))}</button>
-    <button type="button" class="nmp-btn nmp-btn-outline" style="width:100%; margin-top:8px;" onclick="__nmpAddMainArea()">${escHtml(t('area.addMainArea'))}</button>
+    <div style="margin-bottom:14px;">
+      <label class="nmp-today-filter"><input type="checkbox" ${showTodayOnlyFilter ? 'checked' : ''} onchange="__nmpTodayFilterToggle()"> ${escHtml(t('area.todayOnlyFilterLabel') || '今日対象のみ表示')}</label>
+    </div>
+    ${hasSearch && detailAreas.length === 0 ? `<div class="nmp-empty-state">${t('area.searchNoResults', { q: escHtml(areaSearchQuery) })}</div>` : ''}
+    ${detailAreas.map(({ a, i }) => renderMainAreaAccordion(a, i)).join('')}` : ''}
+    <button type="button" class="nmp-btn-add" onclick="__nmpAddMainArea()">${escHtml(t('area.addMainArea'))}</button>
   `;
 }
 function myRoutesQuickCreateHandler() {
-  window.__nmpCreateRouteFromSelection = () => {
+  const createRoute = () => {
     const ids = S.buildSelectedSpotIds(areas);
-    if (ids.length === 0) { showToast(t('route.noSpotSelected'), 'error'); return; }
+    if (ids.length === 0) { showToast(t('route.noSpotSelected'), 'error'); return false; }
     myRoutes.push({ id: S.uuid(), name: `${t('route.defaultNamePrefix')} ${myRoutes.length + 1}`, memo: '', selectedSpotIds: ids, isExpanded: true, actualSeconds: 0, splitTimes: {}, runHistory: [], generatedSpell: '', generatedTextExport: '' });
     persist(true);
     renderRoutes();
+    return true;
+  };
+  // エリア管理カードの「この選択でルートを作る」: 作ってマイルートまでスクロール
+  window.__nmpCreateRouteFromSelection = () => {
+    if (!createRoute()) return;
     showToast(t('route.createdFromSelectionHint'), 'success');
     document.getElementById('nmpRoutesBody')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  // マイルートカードの「現在の選択をルートとして保存」: その場で保存したことだけ伝える
+  window.__nmpSaveCurrentRoute = () => {
+    if (createRoute()) showToast(t('route.savedHint'), 'success');
   };
   return '__nmpCreateRouteFromSelection()';
 }
 
+// エリア%スライダーの1行（元実装の .area-pct-row と同じ。チェックしていないエリアは薄く・スライダー無効）
 function renderMainAreaRow(area, mIdx) {
   const total = S.getMainAreaTotalLight(area);
   const stats = S.getMainAreaStats(area);
   const pct = total > 0 ? Math.round((stats.light / total) * 100) : 0;
-  const icon = areaIcon(area);
+  const vis = areaVisual(area);
   return `
-    <div class="nmp-main-area-row">
-      <div class="nmp-main-area-head">
-        <input type="checkbox" ${area.isSelected ? 'checked' : ''} onchange="__nmpAreaCheckToggle(${mIdx})" title="${escHtml(t('area.presetHint'))}">
-        <span class="nmp-area-icon-badge"><svg class="inline-icon" width="16" height="16"><use href="#${icon}"/></svg></span>
-        <span class="nmp-main-area-name" onclick="__nmpAreaToggleExpand(${mIdx})">${escHtml(displayAreaName(area.name))}</span>
-        <span class="nmp-main-area-frac">${stats.light} / ${total} 🔥 ${pct}%</span>
-        <button type="button" class="nmp-icon-btn" onclick="__nmpAreaToggleExpand(${mIdx})"><svg class="inline-icon" width="12" height="12" style="${area.isExpanded ? 'transform:rotate(90deg)' : ''}"><use href="#i-chevron-right"/></svg></button>
+    <div class="nmp-area-pct-row" style="opacity:${area.isSelected ? 1 : 0.55};">
+      <div class="nmp-row" style="border-bottom:none; padding-bottom:2px;">
+        <label class="nmp-area-pct-label">
+          <input type="checkbox" ${area.isSelected ? 'checked' : ''} onchange="__nmpAreaCheckToggle(${mIdx})" style="flex-shrink:0;">
+          <span class="nmp-area-icon-badge c-${vis.color}"><svg class="inline-icon"><use href="#${vis.icon}"/></svg></span>
+          <span class="nmp-area-pct-name">${escHtml(displayAreaName(area.name))}</span>
+        </label>
+        <span class="nmp-area-pct-frac">${stats.light} / ${total} <svg class="inline-icon" width="12" height="12"><use href="#i-flame"/></svg> <b id="nmpPctReadout${mIdx}">${pct}%</b></span>
       </div>
-      <input type="range" class="nmp-pct-slider" min="0" max="100" value="${pct}" aria-label="${escHtml(t('area.pctSliderAria', { name: displayAreaName(area.name) }))}"
-        oninput="__nmpAreaPctInput(${mIdx}, this.value); document.getElementById('nmpPctReadout${mIdx}').textContent = this.value + '%'"
-        onchange="__nmpAreaPctChange(${mIdx}, this.value)">
-      <div class="nmp-pct-readout" id="nmpPctReadout${mIdx}">${pct}%</div>
+      <input type="range" min="0" max="100" step="1" value="${pct}" ${area.isSelected ? '' : 'disabled'} aria-label="${escHtml(t('area.pctSliderAria', { name: displayAreaName(area.name) }))}"
+        oninput="__nmpAreaPctInput(${mIdx}, this.value)" onchange="__nmpAreaPctChange(${mIdx}, this.value)">
+    </div>`;
+}
+
+// 詳細設定のアコーディオン1件（元実装の .area-accordion。展開でサブエリア・スポットを編集）
+function renderMainAreaAccordion(area, mIdx) {
+  return `
+    <div class="nmp-area-accordion">
+      <div class="nmp-area-title-row">
+        <span class="nmp-area-accordion-name" onclick="__nmpAreaToggleExpand(${mIdx})">${escHtml(displayAreaName(area.name))}</span>
+        <button type="button" class="nmp-expand-toggle-btn" onclick="__nmpAreaToggleExpand(${mIdx})" aria-expanded="${area.isExpanded ? 'true' : 'false'}"><svg class="inline-icon" width="13" height="13" style="${area.isExpanded ? 'transform:rotate(90deg)' : ''}"><use href="#i-chevron-right"/></svg></button>
+      </div>
       ${area.isExpanded ? renderSubAreaList(area, mIdx) : ''}
     </div>`;
 }
@@ -656,7 +681,8 @@ function injectStylesheet() {
 // tai-hub共有スプライト(js/icon-sprite.js)には無い、このツール専用のアイコンだけ
 // 衝突しないプレフィックス(nmp-i-*)で追加する（中身は元のtai-nomacan.pro自身の定義そのまま）。
 const NOMACAN_PRO_SPRITE_HTML = `<svg id="${ICON_SPRITE_ID}" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs>
-<symbol id="nmp-i-chevron-down" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 9l6 6 6-6"/></g></symbol>
+<symbol id="nmp-i-leaf" viewBox="0 0 24 24"><path d="M11 20a10 10 0 0010-10 25.9 25.9 0 00-1.04-7.281 1 1 0 00-1.755-.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0011 20"/> <path d="M2 21a5 5 0 012.911-4.544C7.613 15.212 8.351 15.24 11 13"/></symbol>
+<symbol id="nmp-i-gift" viewBox="0 0 24 24"><path d="M12 7v14"/> <path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/> <path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/> <rect x="3" y="7" width="18" height="4" rx="1"/></symbol>
 <symbol id="nmp-i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h5l-1 7 9-12h-5Z"/></symbol>
 <symbol id="nmp-i-list" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="17.5" r="1.1" fill="currentColor" stroke="none"/></g></symbol>
 </defs></svg>`;

@@ -18,7 +18,7 @@ import { isSeasonLikeEvent } from './data/season-data.js';
 const STYLE_ID = 'item-condition-rates-styles';
 // 開閉状態は端末ごとの表示設定（旧サイトと同じキー。折りたたみ=1）
 const COLLAPSED_KEY = 'itemCondRatesCollapsed_v1';
-const CHEVRON_PATH = '<g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g>';
+const CHEVRON_PATH = '<use href="#i-chevron-right"/>';
 function readCollapsed() {
   try { return localStorage.getItem(COLLAPSED_KEY) === '1'; } catch (e) { return false; }
 }

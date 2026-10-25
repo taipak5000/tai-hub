@@ -166,7 +166,6 @@ const NOMACAN_SPRITE_HTML = `<svg id="${ICON_SPRITE_ID}" style="position:absolut
 <symbol id="nm-i-flame" viewBox="0 0 24 24"><path d="M12 21c4 0 6-3 6-6.5 0-2-1-3.5-2-5 0 2-1.5 3-2.5 2C14 9 13 6 10 4c1 3-1 5-2.5 7-1 1.3-1.5 2.5-1.5 3.5C6 18 8 21 12 21Z"/></symbol>
 <symbol id="nm-i-lock" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M6.5 11h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/></g></symbol>
 <symbol id="nm-i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h5l-1 7 9-12h-5Z"/></symbol>
-<symbol id="nm-i-chevron-down" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M6 9l6 6-6 6"/></g></symbol>
 <symbol id="nm-i-duplicate" viewBox="0 0 24 24"><path d="M8.5 8.5V5.5A1.5 1.5 0 0 1 10 4h8.5A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H15.5"/><path d="M4 9.5A1.5 1.5 0 0 1 5.5 8h8A1.5 1.5 0 0 1 15 9.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 4 18.5Z"/></symbol>
 </defs></svg>`;
 function injectLocalIconSprite() {
@@ -728,8 +727,8 @@ function goalRenderModalBody() {
           (g.id === activeId ? '<svg class="inline-icon ok" width="13" height="13"><use href="#i-check"/></svg> ' : '') + escapeHtml(S.goalDisplayName(g)) + '</span>' +
         '<span class="goal-row-summary' + (summary.achieved ? ' is-achieved' : '') + '">' + summaryHtml + '</span>' +
       '</span>' +
-      '<button type="button" class="pf-icon-btn pf-move-btn" data-act="move-up" data-id="' + g.id + '" title="' + escapeHtml(t('goalMulti.moveUpBtnTitle')) + '"' + (idx === 0 ? ' disabled' : '') + '><svg class="inline-icon" width="13" height="13" style="transform:rotate(180deg);"><use href="#nm-i-chevron-down"/></svg></button>' +
-      '<button type="button" class="pf-icon-btn pf-move-btn" data-act="move-down" data-id="' + g.id + '" title="' + escapeHtml(t('goalMulti.moveDownBtnTitle')) + '"' + (idx === data.goals.length - 1 ? ' disabled' : '') + '><svg class="inline-icon" width="13" height="13"><use href="#nm-i-chevron-down"/></svg></button>' +
+      '<button type="button" class="pf-icon-btn pf-move-btn" data-act="move-up" data-id="' + g.id + '" title="' + escapeHtml(t('goalMulti.moveUpBtnTitle')) + '"' + (idx === 0 ? ' disabled' : '') + '><svg class="inline-icon" width="13" height="13" style="transform:rotate(180deg);"><use href="#i-chevron-down"/></svg></button>' +
+      '<button type="button" class="pf-icon-btn pf-move-btn" data-act="move-down" data-id="' + g.id + '" title="' + escapeHtml(t('goalMulti.moveDownBtnTitle')) + '"' + (idx === data.goals.length - 1 ? ' disabled' : '') + '><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg></button>' +
       '<button type="button" class="pf-icon-btn" data-act="duplicate" data-id="' + g.id + '" title="' + escapeHtml(t('goalMulti.duplicateBtnTitle')) + '"><svg class="inline-icon" width="14" height="14"><use href="#nm-i-duplicate"/></svg></button>' +
       '<button type="button" class="pf-icon-btn" data-act="rename" data-id="' + g.id + '"><svg class="inline-icon" width="14" height="14"><use href="#i-edit"/></svg></button>' +
       (data.goals.length > 1 ? '<button type="button" class="pf-icon-btn" data-act="delete" data-id="' + g.id + '"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg></button>' : '') +

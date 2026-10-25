@@ -141,7 +141,7 @@ function catTileHtml(cat, owned, total) {
    複製している（item/profiles.jsのsymbol定義から抜粋、見た目は同一）。
    ================================================================ */
 const LIGHTBULB_PATH = '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-6 6c0 2.5 1.5 4 2.5 5.5.5.7.5 1 .5 1.5h6c0-.5 0-.8.5-1.5C16.5 13 18 11.5 18 9a6 6 0 0 0-6-6Z"/>';
-const CHEVRON_RIGHT_PATH = '<g transform="translate(12 12) scale(1.458) translate(-12 -12)"><path d="M9 6l6 6-6 6"/></g>';
+const CHEVRON_RIGHT_PATH = '<use href="#i-chevron-right"/>';
 
 // 生のキー名（nsKey化しない）。元サイトと同一オリジンのlocalStorageを
 // 共有し、item以外のツールを含むサイト全体で「初回のみ」を成立させる
@@ -181,11 +181,11 @@ function renderWelcomeCard() {
     </div>`;
 }
 
-function featureBtnHtml({ id, href, icon, label, desc }) {
+function featureBtnHtml({ id, href, icon, label, desc, variant }) {
   const tag = href ? 'a' : 'button';
   const attrs = href ? `href="${href}"` : `type="button" id="${id}"`;
   return `
-    <${tag} class="feature-btn" ${attrs}>
+    <${tag} class="feature-btn${variant ? ' ' + variant : ''}" ${attrs}>
       <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg class="inline-icon" width="25" height="25"><use href="#${icon}"/></svg></span>
       <span>
         <span class="feature-label">${label}</span>
@@ -199,6 +199,7 @@ function renderShell() {
   return `
     <div class="item-view">
     <div class="dash-wrap">
+      <h1 class="item-large-title">${en ? 'Item Collection Tracker' : 'アイテム所持率管理'}</h1>
       <div id="dashFirstVisitHintWrap">${renderFirstVisitHint()}</div>
       ${renderWelcomeCard()}
 
@@ -217,14 +218,6 @@ function renderShell() {
         ${GRID_CATEGORIES.map(cat => catTileHtml(cat, null, null)).join('')}
       </div>
 
-      <p class="sec-label">${en ? 'Music Sheet Completion' : '楽譜コンプリート管理'}</p>
-      ${featureBtnHtml({
-        href: `#/item/${MUSIC_SHEET_CAT ? MUSIC_SHEET_CAT.key : 'music_sheet'}`, icon: 'i-sheet-music',
-        label: en ? 'Music Sheet Completion Tracker' : '楽譜コンプリート率',
-        desc: en ? "Track which of the in-game Music Sheets you've collected, by acquisition method and candle cost"
-                 : 'ゲーム内の楽譜の入手状況とコンプリート率を管理できます',
-      })}
-
       <p class="sec-label">${en ? 'Item Search' : 'アイテム検索'}</p>
       ${featureBtnHtml({
         id: 'dashOpenSearchBtn', icon: 'i-search',
@@ -233,10 +226,18 @@ function renderShell() {
                  : '全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます',
       })}
 
+      <p class="sec-label">${en ? 'Music Sheet Completion' : '楽譜コンプリート管理'}</p>
+      ${featureBtnHtml({
+        href: `#/item/${MUSIC_SHEET_CAT ? MUSIC_SHEET_CAT.key : 'music_sheet'}`, icon: 'i-sheet-music',
+        label: en ? 'Music Sheet Completion Tracker' : '楽譜コンプリート率',
+        desc: en ? "Track which of the in-game Music Sheets you've collected, by acquisition method and candle cost"
+                 : 'ゲーム内の楽譜の入手状況とコンプリート率を管理できます',
+      })}
+
       <p class="sec-label">${en ? 'Cost Management' : 'コスト管理'}</p>
       <div class="dash-feature-row">
         ${featureBtnHtml({
-          href: '#/item/cost', icon: 'i-candle',
+          href: '#/item/cost', icon: 'i-coin',
           label: en ? 'Item Cost Breakdown' : 'アイテム別コスト',
           desc: en ? 'Check the actual acquisition cost of owned items (Candles, Wax, Hearts, real currency)'
                    : '所持アイテムの実際の入手コスト（キャンドル・星のキャンドル・ハート・実額）を確認できます',
@@ -254,8 +255,31 @@ function renderShell() {
         })}
       </div>
 
-      <p class="sec-label">${en ? 'Coord Features' : 'コーデ機能'}</p>
+      <p class="sec-label">${en ? 'Share Achievement Rate' : '達成率をシェア'}</p>
       <div class="dash-feature-row">
+        ${featureBtnHtml({
+          id: 'dashShareOnXBtn', icon: 'i-upload', variant: 'twitter',
+          label: en ? 'Share Image to X' : 'Xで画像を共有',
+          desc: en ? 'Turn your achievement rate into an image and post it to X (also saves the image)'
+                   : '達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）',
+        })}
+        ${featureBtnHtml({
+          id: 'dashCustomizeShareBtn', icon: 'i-palette',
+          label: en ? 'Customize & Share' : 'カスタマイズして共有',
+          desc: en ? 'Choose which categories to show, a background theme, and a comment before saving/sharing'
+                   : '表示するカテゴリ・背景テーマ・コメントを自分好みに設定してから保存/共有できます',
+        })}
+      </div>
+
+      <p class="sec-label">${en ? 'Share Your Favorites' : 'お気に入りをシェア'}</p>
+      ${featureBtnHtml({
+        id: 'dashFavShareBtn', icon: 'i-star',
+        label: en ? 'Share Favorite Items' : 'お気に入りアイテムを共有',
+        desc: en ? 'Save and share your favorited items as an image with a comment' : 'お気に入り登録したアイテムをコメント付きの画像で保存・共有できます',
+      })}
+
+      <p class="sec-label">${en ? 'Coord Features' : 'コーデ機能'}</p>
+      <div class="dash-feature-row dash-feature-grid">
         ${featureBtnHtml({
           id: 'dashOpenRandomCoordBtn', icon: 'i-dice',
           label: en ? 'Random Coord' : 'ランダムコーデ',
@@ -273,29 +297,6 @@ function renderShell() {
                    : '所持アイテムや自分の写真をマス目に並べて、かわいいコラージュ画像を作成・共有できます',
         })}
       </div>
-
-      <p class="sec-label">${en ? 'Share Achievement Rate' : '達成率をシェア'}</p>
-      <div class="dash-feature-row">
-        ${featureBtnHtml({
-          id: 'dashShareOnXBtn', icon: 'i-upload',
-          label: en ? 'Share Image to X' : 'Xで画像を共有',
-          desc: en ? 'Turn your achievement rate into an image and post it to X (also saves the image)'
-                   : '達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）',
-        })}
-        ${featureBtnHtml({
-          id: 'dashCustomizeShareBtn', icon: 'i-palette',
-          label: en ? 'Customize & Share' : 'カスタマイズして共有',
-          desc: en ? 'Choose which categories to show, a background theme, and a comment before saving/sharing'
-                   : '表示するカテゴリ・背景テーマ・コメントを自分好みに設定してから保存/共有できます',
-        })}
-      </div>
-
-      <p class="sec-label">${en ? 'Share Your Favorites' : 'お気に入りをシェア'}</p>
-      ${featureBtnHtml({
-        id: 'dashFavShareBtn', icon: 'i-heart',
-        label: en ? 'Share Favorite Items' : 'お気に入りアイテムを共有',
-        desc: en ? 'Save and share your favorited items as an image with a comment' : 'お気に入り登録したアイテムをコメント付きの画像で保存・共有できます',
-      })}
     </div>
     </div>`;
 }

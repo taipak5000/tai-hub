@@ -24,6 +24,13 @@
    tai-nomacan/star-candle の各 *-view.js と同じ方式）。
    ================================================================ */
 
+/* 🩹 元サイトの .inline-icon（アイコンの色と線の太さ）。ハブ共通の既定（currentColor・1.8）のままだと
+   アイコンが黒っぽく細くなっていた。:where()で詳細度を元の .inline-icon と同じに保つ */
+:where(.share-view) .inline-icon { stroke: var(--blue); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; color: var(--blue); }
+:where(.share-view) .inline-icon.warn { stroke: var(--red); color: var(--red); }
+:where(.share-view) .inline-icon.ok { stroke: var(--green); color: var(--green); }
+
+
 .share-view {
   --card: #FFFFFF;
   --bg2: #F2F2F7;
@@ -53,11 +60,12 @@
 
   color: var(--text);
   min-height: 100%;
-  padding: 16px 16px 24px;
-  max-width: 720px;
+  /* 元サイトは body{padding:0 8px} ＋ .container{max-width:720px} で、カードは画面端から8px */
+  padding: 12px 8px 24px;
+  max-width: 736px;
   margin: 0 auto;
 }
-@media (min-width: 850px) { .share-view { max-width: 960px; } }
+@media (min-width: 850px) { .share-view { max-width: 976px; } }
 
 [data-theme="dark"] .share-view {
   --card: #1C1C1E;
@@ -103,7 +111,8 @@
 /* ── ページ見出し（元の.large-title相当。tai-hubではナビバー/スクロール連動の
      iOSラージタイトル演出はchrome側に無いため、他の移植済みツールと同じ
      単純な静的h1に簡略化してある） ── */
-.sv-page-title { text-align: center; margin: 0 0 16px; font-size: 19px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+/* 元サイトの .large-title（左寄せの大見出し） */
+.sv-page-title { text-align: left; margin: 0.5rem 8px 1rem; font-size: clamp(1.625rem, 7.6vw, 2.125rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: var(--text); }
 
 /* ── カード共通（Inset Grouped List） ── */
 .sv-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-bottom: 18px; }

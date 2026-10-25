@@ -937,7 +937,7 @@ function wireEcoStats() {
     row.innerHTML = `
       <div class="tc-eco-field-head">
         <label>${f.icon} ${escapeHtml(EN ? f.labelEn : f.label)} <span style="color:var(--tc-teal-ink);font-family:'IBM Plex Mono',monospace;font-size:10px;">→ ${escapeHtml(EN ? f.sourceEn : f.source)}</span></label>
-        <label class="tc-switch tc-eco-vis-switch"><input type="checkbox" ${f.visible ? 'checked' : ''}><span class="tc-track"></span><span class="tc-knob"></span></label>
+        <label class="tc-switch tc-eco-vis-switch"><input type="checkbox" ${f.visible ? 'checked' : ''} aria-label="${escapeHtml(t('makePublicAriaLabelTemplate', { label: EN ? f.labelEn : f.label }))}"><span class="tc-track"></span><span class="tc-knob"></span></label>
       </div>
       <input type="text" value="${escapeHtml(f.value || '')}" placeholder="${escapeHtml(EN ? f.placeholderEn : f.placeholder)}">`;
     ecoEl.appendChild(row);
@@ -1020,7 +1020,7 @@ function wireTrendGraphs() {
     row.innerHTML = `
       <div class="tc-eco-field-head">
         <label>${g.icon} ${escapeHtml(EN ? g.labelEn : g.label)} <span style="color:var(--tc-teal-ink);font-family:'IBM Plex Mono',monospace;font-size:10px;">→ ${escapeHtml(EN ? g.sourceEn : g.source)}</span></label>
-        <label class="tc-switch tc-eco-vis-switch"><input type="checkbox" ${g.visible ? 'checked' : ''}><span class="tc-track"></span><span class="tc-knob"></span></label>
+        <label class="tc-switch tc-eco-vis-switch"><input type="checkbox" ${g.visible ? 'checked' : ''} aria-label="${escapeHtml(t('reflectInProfileAriaLabelTemplate', { label: EN ? g.labelEn : g.label }))}"><span class="tc-track"></span><span class="tc-knob"></span></label>
       </div>`;
     trendEditEl.appendChild(row);
     row.querySelector('input[type="checkbox"]').addEventListener('change', e => { g.visible = e.target.checked; renderCard(); });

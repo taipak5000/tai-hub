@@ -127,9 +127,8 @@ function renderShell() {
   return `
     <div class="tai-info-view">
       <div class="ti-layout">
-        <header class="ti-page-head">
-          <svg class="inline-icon" width="19" height="19"><use href="#i-settings"/></svg>
-          <span>${escapeHtml(tt('設定・クレジット', 'Settings & Credits'))}</span>
+        <header class="tool-nav-head">
+          <h1><svg class="inline-icon" width="19" height="19"><use href="#i-settings"/></svg> ${escapeHtml(tt('設定・クレジット', 'Settings & Credits'))}</h1>
         </header>
 
         <div class="page-tabs" id="tiPageTabs" role="tablist">
