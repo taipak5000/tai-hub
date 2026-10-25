@@ -10,6 +10,7 @@ Sky: Children of the Light ファンツール群（アイテム・エモート�
 の停止・iOSホーム画面アプリのデータ移行）は `_ecosystem-tools/retire-stubs/README.md` に準備してあり、
 **まだデプロイしていない**。リポジトリ名は `tai-hub` に改名予定（公開URLは
 `https://taipak5000.github.io/tai-hub/`）。
+10月末の引っ越しに向けた告知・データ移行の整理は `MIGRATION.md` を参照。
 
 ## 公開に向けた準備（2026-10-14）
 
