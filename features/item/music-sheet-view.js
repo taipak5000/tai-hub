@@ -251,6 +251,8 @@ function updateMethodSummary() {
   if (el) el.innerHTML = html;
 }
 
+// 難易度が未公開（null）の楽譜は「?」と表示する
+const dq = (v) => (v == null ? '?' : v);
 function trKey(k) {
   return CURRENT_LANG === 'en' ? k.replace('メジャー', ' Major').trim() : k;
 }
@@ -414,7 +416,7 @@ function filterAndRender() {
       spiritName ? (en ? `Spirit: ${spiritName}` : `精霊: ${spiritName}`) : '',
       s.price === null ? (en ? 'Price unlisted on wiki' : '価格: Wiki未記載') : (en ? `Price: ${s.price}` : `価格: ${s.price}`),
       trKey(s.key),
-      `${en ? 'Melody' : '旋律'}${s.diff.m} / ${en ? 'Wind' : '管楽器'}${s.diff.w} / ${en ? 'Bass' : '低音'}${s.diff.b} / ${en ? 'Percussion' : '打楽器'}${s.diff.p}`,
+      `${en ? 'Melody' : '旋律'}${dq(s.diff.m)} / ${en ? 'Wind' : '管楽器'}${dq(s.diff.w)} / ${en ? 'Bass' : '低音'}${dq(s.diff.b)} / ${en ? 'Percussion' : '打楽器'}${dq(s.diff.p)}`,
       s.note ? (en ? (s.noteEn || s.note) : s.note) : ''
     ].filter(Boolean).join(' ／ ');
     const wikiUrl = `https://www.google.com/search?q=${encodeURIComponent('Sky 星を紡ぐ子どもたち 楽譜 ' + s.name)}`;
@@ -450,7 +452,7 @@ function filterAndRender() {
       [t('低音', 'Bass'), s.diff.b],
       [t('打楽器', 'Percussion'), s.diff.p],
     ];
-    const diffHtml = diffParts.map(([label, v]) => `<span class="ms-diff-part">${label} ${v} ${diffDotsHtml(v)}</span>`).join('');
+    const diffHtml = diffParts.map(([label, v]) => `<span class="ms-diff-part">${label} ${dq(v)} ${diffDotsHtml(v)}</span>`).join('');
 
     return `
       <div class="ms-item-card ${isOwned ? 'is-owned' : ''}" id="card_${s.id}">

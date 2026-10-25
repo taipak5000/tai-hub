@@ -40,6 +40,7 @@ export const SEASON_PENDANT_ICON = {
   '光の修繕者の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/60/Season-of-Lightmending-icon.png/revision/latest/scale-to-width-down/51',
   'カーニバルの季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/51',
   '親愛なるファン・ゴッホへ': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/9d/Dear-Van-Gogh-icon.png/revision/latest/scale-to-width-down/51',
+  '遥かなる真珠の季節': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6e/Season-of-Pearl-icon.png/revision/latest/scale-to-width-down/51',
 };
 // 季節名からその季節のペンダント画像を小さな丸アイコンとして返す。対応する季節が無い場合
 // （日々イベント等）は従来通り線アイコン（fallbackSymbolId）にフォールバックする。

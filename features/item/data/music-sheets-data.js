@@ -60,6 +60,7 @@ export const MUSIC_SHEETS = [
   { id:'44', num:'44', name:'生命と楽園', nameEn:'Life and Sanctuary', season:'ふたつの灯火の季節　前編', spirit:'厳格なマナティ飼い', spiritEn:'Stern Shepherd', method:'S', price:null, diff:{m:2,w:3,b:4,p:4}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/98/Season-of-the-Two-Embers-icon.png/revision/latest/scale-to-width-down/24' },
   { id:'45', season:'渡りの季節', spirit:'渡りの鐘職人', spiritEn:'Migrating Bellmaker', num:'45', name:'Ancient Echo',                method:'S', price:null, diff:{m:3,w:3,b:3,p:3}, key:'D♭メジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/59/Season-of-Migration-icon.png/revision/latest/scale-to-width-down/24' },
   { id:'46', season:'カーニバルの季節', spirit:'カーニバルの謎解き座長', spiritEn:'Carnival Puzzle Director', num:'46', name:'Airship',                     method:'S', price:19,   diff:{m:3,w:2,b:2,p:3}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/5/51/Season-of-Carnival-icon.png/revision/latest/scale-to-width-down/24' },
+  { id:'47', season:'遥かなる真珠の季節', spirit:'老いた漁師', spiritEn:'Old Angler', num:'47', name:'The Old Angler',            method:'S', price:18,   diff:{m:null,w:null,b:null,p:null}, key:'?', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6e/Season-of-Pearl-icon.png/revision/latest/scale-to-width-down/24' },
   { id:'ex1', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏1', name:"Music's Embrace",           method:'P', price:10,   diff:{m:1,w:1,b:1,p:1}, key:'Dメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
   { id:'ex2', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏2', name:'Etude No. 1',                method:'P', price:10,   diff:{m:1,w:1,b:1,p:2}, key:'Gメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
   { id:'ex3', season:'奏の音楽堂', spirit:null, spiritEn:null, num:'奏3', name:'Etude No. 2',                method:'P', price:10,   diff:{m:2,w:1,b:1,p:1}, key:'Cメジャー', img:'https://static.wikia.nocookie.net/sky-children-of-the-light/images/3/3c/Four-point-star-Ray.png/revision/latest/scale-to-width-down/24' },
@@ -83,6 +84,6 @@ export const SEASON_ORDER = [
   '楽園の季節', '預言者の季節', '夢かなう季節', '大樹に集う季節', '星の王子さまの季節',
   '羽ばたく季節', '深淵の季節', '表現者たちの季節', '砕ケル闇ノ季節', 'AURORAの季節',
   '瞬きの季節', '復古の季節', '九色の鹿の季節', '重なる音色の季節', 'ムーミンの季節',
-  '青い鳥の季節', 'ふたつの灯火の季節　前編', '渡りの季節', 'カーニバルの季節',
+  '青い鳥の季節', 'ふたつの灯火の季節　前編', '渡りの季節', 'カーニバルの季節', '遥かなる真珠の季節',
   '来福の日々', 'Skyアニバーサリー', '聖なる星の日々', '愛しみの日々'
 ];

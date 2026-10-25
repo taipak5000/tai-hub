@@ -105,6 +105,7 @@ function srLabel(realmKey) { return t(REALM_LABEL[realmKey].ja, REALM_LABEL[real
 // 季節名・期間限定イベント名の英訳（未収録分は日本語のままフォールバック）
 const DASH_EVENT_NAME_EN = {
   '親愛なるファン・ゴッホへ': 'Dear Van Gogh',
+  '遥かなる真珠の季節': 'Season of Pearl',
   '陽光の日々': 'Days of Sunlight',
   '光に染まるイベント': 'Event of Radiant Light',
   '来訪する精霊団': 'Traveling Spirit Troupe',
