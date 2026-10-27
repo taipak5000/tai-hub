@@ -12,7 +12,7 @@ import { SITE_LINK_TOOLS } from './site-links-data.js';
 // 非公開のため一覧データ(site-links-data.js)には載せていない、tai-hub内でだけ使うツール。
 // afterId の直後に差し込む。
 const HUB_ONLY_TOOLS = [
-  { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro' },
+  { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', badgeTest: true },
 ];
 
 let tools = null;
