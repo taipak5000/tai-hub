@@ -6,6 +6,7 @@
 import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import { navigate } from '../router.js';
 import { initSiteLinks, refreshSiteLinks, getSiteLinks, siteLinkHref, siteLinkName } from '../site-links.js';
+import { refreshToLatest } from '../refresh.js';
 
 let siteLinksStarted = false;
 
@@ -59,7 +60,19 @@ function renderNavInto(nav) {
       <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
       ${s.badgeTest ? `<span class="pf-drawer-badge-test">${t('test', 'test')}</span>` : ''} ${escapeHtml(siteLinkName(s, CURRENT_LANG))}
     </a>`;
-  }).join('');
+  }).join('') + `
+    <div class="hub-refresh">
+      <button type="button" class="hub-refresh-btn js-hub-refresh">
+        <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${t('最新の状態に更新', 'Update to the latest version')}
+      </button>
+      <p class="hub-refresh-hint">${t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
+    </div>`;
+  nav.querySelector('.js-hub-refresh').addEventListener('click', e => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.lastChild.textContent = ` ${t('更新しています…', 'Updating…')}`;
+    refreshToLatest();
+  });
   nav.querySelectorAll('a[data-hub-route]').forEach(a => {
     const route = a.dataset.hubRoute;
     if (!route) return;

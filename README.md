@@ -15,7 +15,8 @@ Sky: Children of the Light ファンツール群（アイテム・エモート�
 ## 公開に向けた準備（2026-10-14）
 
 - **PWA**: `manifest.json`・アイコン・`service-worker.js`（stale-while-revalidate。localhostでは
-  `?sw=1` を付けた時だけ登録）。外部サイトへの依存（サイト一覧など）は静的データに置き換え済み。
+  `?sw=1` を付けた時だけ登録）。関連ツール一覧の下に「最新の状態に更新」ボタン（`js/refresh.js`。保存した版を消して読み込み直す。
+  利用者のデータは消さない）。Service Workerは裏で取り直す時にブラウザのキャッシュを経由しない（`cache:'no-cache'`）。外部サイトへの依存（サイト一覧など）は静的データに置き換え済み。
 - **共有URLの切替**: `js/site-config.js` の `USE_HUB_SHARE_URLS`。移行日までは共有文のURLが旧サイトのまま、
   `true` にすると全ツールの共有文・画像がハブのURLになる。
 - **コーデの共有リンク**: `#/item/coord=<code>`（旧サイトの `#coord=<code>` も自動で読み替える）。

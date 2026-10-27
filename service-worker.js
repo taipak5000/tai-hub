@@ -6,6 +6,10 @@
    キャッシュを更新する（初回のキャッシュが無い時だけネットワークを待つ）。
    → CACHE_VERSIONを上げ忘れても、サイトを1回開けば裏で最新化される。
    CACHE_VERSIONは「今すぐ全端末のキャッシュを捨てたい」時の手動トリガー。
+   ・裏で取り直す時（とキャッシュが無い時）は、同一オリジンのファイルを cache:'no-cache' で取る。
+     ブラウザ自体のキャッシュ（GitHub Pagesは最大10分）を使い回さず、必ずサーバーに最新か
+     問い合わせる（変わっていなければ304で済むので重くない）。関連ツール一覧の
+     「最新の状態に更新」（js/refresh.js）は、保存分を消してこの経路で取り直させる。
 
    ・同一オリジンのGETと、Vue / html2canvas / フォントのCDNだけを対象にする
      （Wikiの画像などの外部画像は対象外＝オフラインでは表示されない）。
@@ -45,7 +49,10 @@ self.addEventListener('fetch', (event) => {
       : await caches.match(req);
     const revalidate = (async () => {
       try {
-        const res = await fetch(req);
+        // 同一オリジンはブラウザのキャッシュを経由せずサーバーに確かめる（ページ遷移は index.html を取る）
+        const res = sameOrigin
+          ? await fetch(isNav ? new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : new Request(req, { cache: 'no-cache' }))
+          : await fetch(req);
         // 同一オリジンは成功したものだけ、CDNは不透明レスポンス（no-corsのscript）も保存する
         if (res && (res.ok || (!sameOrigin && res.type === 'opaque'))) {
           const cache = await caches.open(CACHE_NAME);

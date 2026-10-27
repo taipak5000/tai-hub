@@ -10,6 +10,8 @@ import * as siteDock from './chrome/site-dock.js';
 import * as sidePanels from './chrome/side-panels.js';
 import { initTheme } from './theme.js';
 import { initSheetEngine } from './sheet-engine.js';
+import { showRefreshedToastIfNeeded } from './refresh.js';
+import { CURRENT_LANG } from './i18n.js';
 
 // 🩹 applyThemeToDOM(isDark)は真偽値を受け取る（'light'/'dark'の文字列をそのまま
 // 渡すと、'light'も空でない文字列なので常にtruthy判定され、常にダークになって
@@ -63,6 +65,9 @@ try {
     import('../features/tai-nomacan-pro/nomacan-pro-notify.js').then(m => m.startIfEnabled()).catch(() => {});
   }
 } catch (e) { /* localStorageが使えない環境では何もしない */ }
+
+// 🔄 関連ツール一覧の「最新の状態に更新」で読み込み直した直後なら、短く知らせる
+showRefreshedToastIfNeeded(CURRENT_LANG === 'en' ? 'Updated to the latest version' : '最新の状態にしました');
 
 // 📲 Service Worker（オフライン対応・起動の高速化。service-worker.js、stale-while-revalidate方式）。
 // 開発中に「更新したのに古い画面が出る」混乱を避けるため、localhost系では ?sw=1 を付けた時だけ登録する。

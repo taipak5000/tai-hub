@@ -234,6 +234,8 @@
 .pf-drawer {
   display: none; position: fixed; top: 0; left: 0; bottom: 0; z-index: 1000; width: min(84vw, 320px);
   background: var(--hub-card); color: var(--hub-text); padding: 20px; overflow-y: auto;
+  /* 画面下のメニュー（.site-dock、z-index:1001）は引き出しより手前に出るので、そのぶん下を空けて最後まで見えるようにする */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
   box-shadow: 8px 0 40px rgba(0, 0, 0, 0.25);
 }
 .pf-drawer.mobile-open { display: block; animation: iosSlideIn 0.32s cubic-bezier(0.25, 1, 0.5, 1); }
@@ -249,6 +251,36 @@
   font-size: 9px; font-weight: 800; background: #ff9500; color: #fff; padding: 1px 5px; border-radius: 5px;
 }
 
+/* 🔄 関連ツール一覧の下の「最新の状態に更新」（js/refresh.js） */
+.hub-refresh { margin-top: 10px; padding-top: 12px; border-top: 0.5px solid var(--hub-sep); }
+.hub-refresh-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 12px; border: 1px solid var(--hub-sep); border-radius: 10px; background: var(--hub-bg);
+  color: var(--hub-accent); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+.hub-refresh-btn:active { transform: scale(0.97); }
+.hub-refresh-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+.hub-refresh-hint { margin: 6px 2px 0; font-size: 11px; line-height: 1.6; color: var(--hub-text-2); }
+/* 読み込み直した直後の短い知らせ（非ブロッキングなので、スクリムなし＋半透明） */
+.hub-refresh-toast {
+  position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 1300; transform: translateX(-50%);
+  padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--hub-text);
+  background: var(--hub-card-glass); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15); pointer-events: none; animation: hubToastIn 0.25s ease-out;
+}
+.hub-refresh-toast.out { animation: hubToastOut 0.25s ease-in forwards; }
+@keyframes hubToastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes hubToastOut { to { opacity: 0; transform: translate(-50%, 8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .hub-refresh-toast { animation: iosFade 200ms ease; }
+  .hub-refresh-toast.out { animation: none; opacity: 0; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .hub-refresh-toast { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .hub-refresh-toast { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
 
 /* ── ワイド画面のサイドパネル（関連ツール＝左端／ダッシュボード＝右端） ──
    幅1280px以上で、設定（表示設定 > ワイド画面のサイドパネル。左右を別々にオフにできる）がオンの時だけ出る。
