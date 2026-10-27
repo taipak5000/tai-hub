@@ -480,6 +480,22 @@ export function migrateRegularCapeTier2Link() {
   try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
 }
 
+/* 🩹 2026-10-27に、itemのアイテムとの紐づけが無かったノード243件（各季節の究極アイテム・大精霊のヘア・
+   巣づくりの家具など）を紐づけた。紐づけ前にこのツールで解放していたノードは、item側が未所持のまま
+   残っているので、プロフィールごとに1回だけ、解放済みノードに対応するitemのアイテムを所持扱いにする。
+   追加のみ（所持の取り消しはしない）。 */
+export function migrateNodeItemLinks20261027() {
+  const flagKey = nsKey('nodeItemLinksMigrated_20261027');
+  try { if (localStorage.getItem(flagKey)) return; } catch (_) { return; }
+  const unlocked = getUnlockedMap();
+  SPIRIT_TREE_DATA.forEach((s) => {
+    s.nodes.forEach((n) => {
+      if (n.itemCatKey && n.itemCostId && unlocked[n.guid]) syncItemOwned(n, true);
+    });
+  });
+  try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
+}
+
 /* ================================================================
    emote（エモート所持率管理）の所持データと自動同期
    emoteOwned_v1 = { [emoteId]: [所持レベル番号の配列] }

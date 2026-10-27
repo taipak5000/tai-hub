@@ -66,7 +66,9 @@
 //   actual branching tree diagram instead of a flat list.
 // - Each node may carry itemCatKey + itemCostId: a best-effort match
 //   against item repo's cost-data.js (id + category key), present only
-//   when a confident name-based match was found (389/2343 nodes, mostly
+//   when a confident name-based match was found (652 of the 670 item-type
+//   nodes as of 2026-10-27; the 18 left are items with no clear counterpart
+//   in item, e.g. two posters of the same spirit; originally 389 nodes, mostly
 //   Cape/Hair/Mask/Outfit/Necklace/etc type items). Use this to sync node
 //   unlocks with item's gameItems_<catKey> owned-item storage.
 // - Emote-type nodes may carry emoteId + emoteLevel: a match against
@@ -178,6 +180,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Music Player",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_063",
                           "nw":  null,
                           "n":  null,
                           "ne":  null
@@ -301,6 +305,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Stone Figurine",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_093",
                           "nw":  null,
                           "n":  null,
                           "ne":  null
@@ -424,6 +430,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Instrument Stand",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_116",
                           "nw":  null,
                           "n":  null,
                           "ne":  null
@@ -1381,8 +1389,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_001"
                       },
                       {
                           "guid":  "EItymn8qgx",
@@ -1814,8 +1822,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "jetfYJJq_T",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_032"
                       },
                       {
                           "guid":  "jetfYJJq_T",
@@ -1829,8 +1837,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_009"
                       }
                   ],
         "nameJa":  "草原の長老",
@@ -1957,8 +1965,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_003"
                       },
                       {
                           "guid":  "YmBGpYCWdW",
@@ -2619,8 +2627,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_035"
                       },
                       {
                           "guid":  "ly8KHx3QI2",
@@ -2828,8 +2836,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_005"
                       },
                       {
                           "guid":  "RQ573VDk7I",
@@ -2879,8 +2887,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_036"
                       }
                   ],
         "nameJa":  "捨てられた地の長老",
@@ -3184,8 +3192,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_031"
                       },
                       {
                           "guid":  "qY74NM6AV4",
@@ -4334,8 +4342,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "jqNuraptWZ",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_033"
                       },
                       {
                           "guid":  "jqNuraptWZ",
@@ -4349,8 +4357,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_010"
                       }
                   ],
         "nameJa":  "雨林の長老",
@@ -4914,8 +4922,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "f_N0Z_WSAi",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_031"
                       },
                       {
                           "guid":  "f_N0Z_WSAi",
@@ -4929,8 +4937,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_008"
                       }
                   ],
         "nameJa":  "孤島の長老",
@@ -5659,8 +5667,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_004"
                       },
                       {
                           "guid":  "5C5Os6jguA",
@@ -6088,8 +6096,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "5jxMyDhBtf",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_035"
                       },
                       {
                           "guid":  "5jxMyDhBtf",
@@ -6103,8 +6111,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_012"
                       },
                       {
                           "guid":  "-fyqgqgPHx",
@@ -6133,8 +6141,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "0FImNOUHCt",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_034"
                       },
                       {
                           "guid":  "0FImNOUHCt",
@@ -6148,8 +6156,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_011"
                       }
                   ],
         "nameJa":  "峡谷の長老",
@@ -7021,8 +7029,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_037"
                       }
                   ],
         "nameJa":  "書庫の長老",
@@ -7070,8 +7078,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "TOO3VxqYRZ",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_012"
                       },
                       {
                           "guid":  "TOO3VxqYRZ",
@@ -7085,8 +7093,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "MSoJcvKCKg",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "head_accessory",
+                          "itemCostId":  "head_accessory_004"
                       },
                       {
                           "guid":  "MSoJcvKCKg",
@@ -7100,8 +7108,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "_3YV2lzNDS",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_063"
                       },
                       {
                           "guid":  "_3YV2lzNDS",
@@ -7115,8 +7123,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_051"
                       },
                       {
                           "guid":  "TeAhpF5l2v",
@@ -7190,8 +7198,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_052"
                       },
                       {
                           "guid":  "e9NqD94Wf-",
@@ -8157,8 +8165,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "rYnGpAsHAN",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_009"
                       },
                       {
                           "guid":  "rYnGpAsHAN",
@@ -8172,8 +8180,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "A4Dkmob6-c",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_040"
                       },
                       {
                           "guid":  "A4Dkmob6-c",
@@ -8187,8 +8195,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "lekFrRUyKi",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_071"
                       },
                       {
                           "guid":  "lekFrRUyKi",
@@ -8202,8 +8210,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Ji2B6vFsuJ",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_019"
                       },
                       {
                           "guid":  "Ji2B6vFsuJ",
@@ -8217,8 +8225,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_049"
                       },
                       {
                           "guid":  "MmSP3pMVsf",
@@ -8352,8 +8360,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_010"
                       },
                       {
                           "guid":  "P2yh773_w5",
@@ -8367,8 +8375,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_013"
                       },
                       {
                           "guid":  "89NgpQUrsx",
@@ -8397,8 +8405,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_009"
                       },
                       {
                           "guid":  "iux67QpUTH",
@@ -8412,8 +8420,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_010"
                       },
                       {
                           "guid":  "vsgFsnH6Q2",
@@ -8442,8 +8450,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_011"
                       },
                       {
                           "guid":  "KVqudTeVQ7",
@@ -9688,8 +9696,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "pDWQme751I",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_015"
                       },
                       {
                           "guid":  "pDWQme751I",
@@ -9703,8 +9711,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "caXDPylsfl",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_103"
                       },
                       {
                           "guid":  "caXDPylsfl",
@@ -9718,8 +9726,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "VmydFPHMOG",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_015"
                       },
                       {
                           "guid":  "VmydFPHMOG",
@@ -9733,8 +9741,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_077"
                       },
                       {
                           "guid":  "Y88dgRuvKn",
@@ -9942,8 +9950,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_016"
                       },
                       {
                           "guid":  "q4ec0pxmQD",
@@ -9957,8 +9965,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_065"
                       },
                       {
                           "guid":  "U8tAk12n_V",
@@ -10949,8 +10957,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "gfUmbkQi_h",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_003"
                       },
                       {
                           "guid":  "gfUmbkQi_h",
@@ -11926,8 +11934,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_010",
                           "emoteId":  null,
                           "emoteLevel":  null
                       }
@@ -12098,8 +12106,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_012",
                           "emoteId":  null,
                           "emoteLevel":  null
                       }
@@ -12162,8 +12170,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Up0rwUsuH1",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_025"
                       },
                       {
                           "guid":  "Up0rwUsuH1",
@@ -12177,8 +12185,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Xsro0z3Ycn",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_018"
                       },
                       {
                           "guid":  "Xsro0z3Ycn",
@@ -12192,8 +12200,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_108"
                       },
                       {
                           "guid":  "gggE-xUgSU",
@@ -12316,8 +12324,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_023"
                       },
                       {
                           "guid":  "xRKncXxnCs",
@@ -13342,8 +13350,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Carnival Ultimate Pendant",
                           "itemNameJa":  "カーニバルのペンダント",
                           "itemType":  "Necklace",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_029"
                       },
                       {
                           "guid":  "7328exK2tY",
@@ -13357,8 +13365,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Carnival Ultimate Hair",
                           "itemNameJa":  "カーニバルの究極ヘア",
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_139"
                       },
                       {
                           "guid":  "ZAjT74eH3m",
@@ -13402,8 +13410,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Carnival Ultimate Cape",
                           "itemNameJa":  "カーニバルの究極ケープ",
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_121"
                       },
                       {
                           "guid":  "XQLqNFLZBI",
@@ -13492,8 +13500,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Challenge Bounce Pad",
                           "itemNameJa":  null,
                           "itemType":  "Furniture",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_116"
                       },
                       {
                           "guid":  "Dql3b9ZXLY",
@@ -13507,8 +13515,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Challenge Platform",
                           "itemNameJa":  null,
                           "itemType":  "Furniture",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_117"
                       },
                       {
                           "guid":  "askYc-YXUN",
@@ -13537,8 +13545,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Carnival Rhythm Bird Plush",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_030"
                       },
                       {
                           "guid":  "-r5lQ3ZugZ",
@@ -14280,8 +14288,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Carnival Stunt Actor Cape",
                           "itemNameJa":  null,
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_119"
                       },
                       {
                           "guid":  "RlUsPEBewo",
@@ -14469,8 +14477,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Dear Van Gogh Ultimate Pendant",
                           "itemNameJa":  "親愛なるファン・ゴッホへ　ペンダント",
                           "itemType":  "Necklace",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_029b"
                       },
                       {
                           "guid":  "rTMkyo8ps7",
@@ -14499,8 +14507,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Bulb Field Painting Prop",
                           "itemNameJa":  "オランダの花壇",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132c"
                       },
                       {
                           "guid":  "ucBnU6hQc5",
@@ -14514,8 +14522,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Dear Van Gogh Ultimate Hair",
                           "itemNameJa":  "親愛なるファン・ゴッホへ　究極ヘア",
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_141c"
                       },
                       {
                           "guid":  "h4ekoTqcZt",
@@ -14544,8 +14552,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Self-Portrait with Grey Felt Hat",
                           "itemNameJa":  "灰色のフェルト帽の自画像",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132f"
                       },
                       {
                           "guid":  "en_VEKZitX",
@@ -14574,8 +14582,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Bedroom in Arles Painting Prop",
                           "itemNameJa":  "ファン・ゴッホの寝室",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132e"
                       },
                       {
                           "guid":  "33dXqWBULr",
@@ -14604,8 +14612,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Almond Blossoms Painting Prop",
                           "itemNameJa":  "花咲くアーモンドの木の枝",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132b"
                       },
                       {
                           "guid":  "Qh9AhzqiqW",
@@ -14619,8 +14627,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Dear Van Gogh Ultimate Cape",
                           "itemNameJa":  "親愛なるファン・ゴッホへ　究極ケープ",
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_121c"
                       },
                       {
                           "guid":  "FnIHKbjcox",
@@ -14649,8 +14657,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Wheatfield with Crows Painting Prop",
                           "itemNameJa":  "カラスのいる麦畑",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132i"
                       },
                       {
                           "guid":  "rV1VNPET-F",
@@ -14694,8 +14702,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Starry Night Painting Prop",
                           "itemNameJa":  "星月夜",
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132j"
                       },
                       {
                           "guid":  "x5N0ozZYJr",
@@ -14709,8 +14717,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Dear Van Gogh Ultimate Teaset",
                           "itemNameJa":  null,
                           "itemType":  "Furniture",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_026b"
                       },
                       {
                           "guid":  "t--OeyBCT7",
@@ -14724,8 +14732,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Easel Prop",
                           "itemNameJa":  "イーゼル",
                           "itemType":  "Furniture",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_128"
                       },
                       {
                           "guid":  "m_CWBnno1c",
@@ -14789,8 +14797,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Sunflower Painting",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132g"
                       },
                       {
                           "guid":  "izD2zr-6RM",
@@ -14819,8 +14827,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Artistic Memory Hair Accessory",
                           "itemNameJa":  null,
                           "itemType":  "HairAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_031d"
                       },
                       {
                           "guid":  "CdgjxPQh9X",
@@ -14883,8 +14891,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Vase with Sunflowers",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_030c"
                       },
                       {
                           "guid":  "8umzOnbZfa",
@@ -14945,8 +14953,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Artistic Memory Cape",
                           "itemNameJa":  null,
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_121f"
                       },
                       {
                           "guid":  "vE6eICrPQl",
@@ -15040,8 +15048,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Vase with Blue Flowers",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_030b"
                       },
                       {
                           "guid":  "BA6W0KDR88",
@@ -15231,8 +15239,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "The Yellow House Painting",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132h"
                       },
                       {
                           "guid":  "JbUR1eaADW",
@@ -15293,8 +15301,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Joyful Memory Hair Accessory",
                           "itemNameJa":  null,
                           "itemType":  "HairAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_031c"
                       },
                       {
                           "guid":  "Fx9pWIP6re",
@@ -15325,8 +15333,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Joyful Memory Hair",
                           "itemNameJa":  null,
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_141d"
                       },
                       {
                           "guid":  "yUY8kBLjab",
@@ -15355,8 +15363,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Joyful Memory Cape",
                           "itemNameJa":  null,
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_121d"
                       },
                       {
                           "guid":  "wlE6WQEuYi",
@@ -15482,8 +15490,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Windmill Painting",
                           "itemNameJa":  null,
                           "itemType":  "Prop",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_132d"
                       },
                       {
                           "guid":  "WO9gVRcY0M",
@@ -15671,8 +15679,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "oqHi3BKS0C",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_008"
                       },
                       {
                           "guid":  "oqHi3BKS0C",
@@ -15686,8 +15694,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "p_rZs-XFkt",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_039"
                       },
                       {
                           "guid":  "p_rZs-XFkt",
@@ -15701,8 +15709,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_048"
                       },
                       {
                           "guid":  "kha7LQ60kq",
@@ -15977,8 +15985,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_076"
                       },
                       {
                           "guid":  "HquaKixBk7",
@@ -16009,8 +16017,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "head_accessory",
+                          "itemCostId":  "head_accessory_003"
                       },
                       {
                           "guid":  "pwOQisOIDM",
@@ -16230,8 +16238,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_018",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -16739,8 +16747,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "NEO0V_QhWq",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_022"
                       },
                       {
                           "guid":  "NEO0V_QhWq",
@@ -16754,8 +16762,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "w2j-Z-vruS",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_100"
                       },
                       {
                           "guid":  "w2j-Z-vruS",
@@ -16769,8 +16777,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "qUqOUDuxMR",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_097"
                       },
                       {
                           "guid":  "qUqOUDuxMR",
@@ -16784,8 +16792,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_099c"
                       },
                       {
                           "guid":  "EaE3N7kN0v",
@@ -16906,8 +16914,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_079"
                       }
                   ],
         "nameJa":  "重なる音色の季節の案内人",
@@ -16940,8 +16948,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "ni_Zpp_oim",
                           "n":  "pc8GNxOJAo",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_124"
                       },
                       {
                           "guid":  "pc8GNxOJAo",
@@ -17079,8 +17087,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "6TGMPUcKG8",
                           "n":  "2AI3FARJ7P",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_123"
                       },
                       {
                           "guid":  "2AI3FARJ7P",
@@ -17109,8 +17117,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "TKzZHv9B7d",
                           "n":  "93HuF0OnrW",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_110"
                       },
                       {
                           "guid":  "93HuF0OnrW",
@@ -17342,8 +17350,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "ApzfWYIqEh",
                           "n":  "lePw35T9ls",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_111"
                       },
                       {
                           "guid":  "lePw35T9ls",
@@ -17650,8 +17658,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_027"
                       },
                       {
                           "guid":  "5Zp6CYDD9F",
@@ -17714,8 +17722,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "GfsdlwRU-0",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_005"
                       },
                       {
                           "guid":  "GfsdlwRU-0",
@@ -17729,8 +17737,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "VYrv1UraQ5",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "head_accessory",
+                          "itemCostId":  "head_accessory_002"
                       },
                       {
                           "guid":  "VYrv1UraQ5",
@@ -17744,8 +17752,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_058"
                       },
                       {
                           "guid":  "i4einymP9d",
@@ -19100,8 +19108,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Bdht1YgRfV",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_011"
                       },
                       {
                           "guid":  "Bdht1YgRfV",
@@ -19115,8 +19123,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "UhutWl8JrX",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_005"
                       },
                       {
                           "guid":  "UhutWl8JrX",
@@ -19130,8 +19138,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_079"
                       },
                       {
                           "guid":  "xeBmep90uk",
@@ -19845,8 +19853,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_020",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -20119,8 +20127,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "UlZx8WcHeb",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_001"
                       },
                       {
                           "guid":  "UlZx8WcHeb",
@@ -20134,8 +20142,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_009"
                       }
                   ],
         "nameJa":  "感謝の季節の案内人",
@@ -20754,8 +20762,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_006",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -21135,8 +21143,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_007",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -21301,8 +21309,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Ultimate Pendant",
                           "itemNameJa":  "光の修繕者のペンダント",
                           "itemType":  "Necklace",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_028"
                       },
                       {
                           "guid":  "c1FH1Cn71T",
@@ -21346,8 +21354,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Ultimate Mask",
                           "itemNameJa":  "光の修繕者の究極　マスク",
                           "itemType":  "Mask",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_084"
                       },
                       {
                           "guid":  "ZvrM10f_vq",
@@ -21406,8 +21414,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Ultimate Hair",
                           "itemNameJa":  "光の修繕者の究極ヘア",
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_136"
                       },
                       {
                           "guid":  "QC-oaf4MXx",
@@ -21496,8 +21504,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Ultimate Cape",
                           "itemNameJa":  "光の修繕者の究極ケープ",
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_116"
                       },
                       {
                           "guid":  "FysTz26WFj",
@@ -21696,8 +21704,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Light Scholar Hairstyle",
                           "itemNameJa":  "光修繕する光学者 ヘアスタイル",
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_137"
                       },
                       {
                           "guid":  "VSYyKQ1JgS",
@@ -21745,8 +21753,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Light Scholar Cape",
                           "itemNameJa":  null,
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_118"
                       },
                       {
                           "guid":  "Mqzp2uplfE",
@@ -22187,8 +22195,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Lightmending Champion Head Accessory",
                           "itemNameJa":  null,
                           "itemType":  "HeadAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "head_accessory",
+                          "itemCostId":  "head_accessory_013"
                       },
                       {
                           "guid":  "CHDzkfCDKD",
@@ -22488,8 +22496,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "j32mxvIF5N",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_002"
                       },
                       {
                           "guid":  "j32mxvIF5N",
@@ -22503,8 +22511,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_038"
                       }
                   ],
         "nameJa":  "光の探求者の季節の案内人",
@@ -22847,8 +22855,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_008",
                           "emoteId":  null,
                           "emoteLevel":  null
                       }
@@ -23208,8 +23216,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_009",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -23667,8 +23675,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migration Ultimate Pendant",
                           "itemNameJa":  "渡りのペンダント",
                           "itemType":  "Necklace",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_027"
                       },
                       {
                           "guid":  "DEjV0YzK4j",
@@ -23697,8 +23705,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migration Ultimate Shoes",
                           "itemNameJa":  "渡りの究極　靴",
                           "itemType":  "Shoes",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "shoes",
+                          "itemCostId":  "shoes_014"
                       },
                       {
                           "guid":  "eoqXwyNVfY",
@@ -23742,8 +23750,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migration Ultimate Outfit",
                           "itemNameJa":  "渡りの究極　服",
                           "itemType":  "Outfit",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_041"
                       },
                       {
                           "guid":  "zoNkAU2lUv",
@@ -23817,8 +23825,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migration Ultimate Face Accessory",
                           "itemNameJa":  "渡りの究極　フェイスアクセサリー",
                           "itemType":  "FaceAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_020"
                       },
                       {
                           "guid":  "iBoxpERjGF",
@@ -23937,8 +23945,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migration Bell",
                           "itemNameJa":  "渡りの持ち物アイテム",
                           "itemType":  "Furniture",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_026"
                       },
                       {
                           "guid":  "aLhY8eo_Vs",
@@ -24126,8 +24134,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migrating Jelly Whisperer Hair Accessory",
                           "itemNameJa":  null,
                           "itemType":  "HairAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_028"
                       },
                       {
                           "guid":  "QJJYnXGIoF",
@@ -24364,8 +24372,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migrating Butterfly Charmer Hair Accessory",
                           "itemNameJa":  null,
                           "itemType":  "HairAccessory",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_027"
                       },
                       {
                           "guid":  "p7mcxC2ejL",
@@ -24459,8 +24467,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migrating Manta Whisperer Hair",
                           "itemNameJa":  null,
                           "itemType":  "Hair",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_134"
                       },
                       {
                           "guid":  "yX7mOxGi79",
@@ -24585,8 +24593,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migrating Manta Whisperer Outfit",
                           "itemNameJa":  null,
                           "itemType":  "OutfitShoes",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_097"
                       },
                       {
                           "guid":  "QmXPOnc7Bf",
@@ -24791,8 +24799,8 @@ export const SPIRIT_TREE_DATA = [
                           "itemName":  "Migrating Bird Whisperer Cape",
                           "itemNameJa":  null,
                           "itemType":  "Cape",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_113"
                       },
                       {
                           "guid":  "N9bSJRLzCI",
@@ -25037,8 +25045,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "nla9RZusTP",
                           "n":  "V0aNfjCk_Z",
                           "ne":  "9tzFO12e02",
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_041"
                       },
                       {
                           "guid":  "9tzFO12e02",
@@ -25052,8 +25060,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "VQzAr7Sh76",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_018"
                       },
                       {
                           "guid":  "VQzAr7Sh76",
@@ -25067,8 +25075,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "b6cfikXL46",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "face_accessory",
+                          "itemCostId":  "face_accessory_014"
                       },
                       {
                           "guid":  "b6cfikXL46",
@@ -25082,8 +25090,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "vRNYKRs1OX",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_040"
                       },
                       {
                           "guid":  "vRNYKRs1OX",
@@ -25097,8 +25105,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_011"
                       },
                       {
                           "guid":  "V0aNfjCk_Z",
@@ -26114,8 +26122,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "K8tJUE8H_e",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_023"
                       },
                       {
                           "guid":  "K8tJUE8H_e",
@@ -26129,8 +26137,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "3d_lsspaRe",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_042"
                       },
                       {
                           "guid":  "3d_lsspaRe",
@@ -26144,8 +26152,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "hkcc7q0eXn",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_023"
                       },
                       {
                           "guid":  "hkcc7q0eXn",
@@ -26249,8 +26257,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_112"
                       },
                       {
                           "guid":  "luXj-OBMiq",
@@ -26516,8 +26524,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_100"
                       },
                       {
                           "guid":  "IUv03484by",
@@ -26749,8 +26757,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "lDAHhqfMW7",
                           "n":  "_vrQxjRIn0",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_028"
                       },
                       {
                           "guid":  "_vrQxjRIn0",
@@ -26888,8 +26896,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "y5cBorC481",
                           "n":  "QQW0H-_PZN",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_101"
                       },
                       {
                           "guid":  "QQW0H-_PZN",
@@ -27102,8 +27110,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "WMymtPk-KU",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_021"
                       },
                       {
                           "guid":  "WMymtPk-KU",
@@ -27117,8 +27125,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "FEqH_JDtX2",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_092"
                       },
                       {
                           "guid":  "FEqH_JDtX2",
@@ -27301,8 +27309,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "vDLf8joLje",
                           "n":  "hhUS-TaknV",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_095"
                       },
                       {
                           "guid":  "hhUS-TaknV",
@@ -27331,8 +27339,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "zkvh0hDgL7",
                           "n":  "tBc6wjJrDn",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_098"
                       },
                       {
                           "guid":  "tBc6wjJrDn",
@@ -27376,8 +27384,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_016"
                       },
                       {
                           "guid":  "zkvh0hDgL7",
@@ -27406,8 +27414,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_091"
                       },
                       {
                           "guid":  "vDLf8joLje",
@@ -27470,8 +27478,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "0BFopcD8oP",
                           "n":  "HOeCZLzjEh",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_095"
                       },
                       {
                           "guid":  "HOeCZLzjEh",
@@ -27500,8 +27508,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "am9uLSykDd",
                           "n":  "GCCqk0H9ml",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_090"
                       },
                       {
                           "guid":  "GCCqk0H9ml",
@@ -27545,8 +27553,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_093"
                       },
                       {
                           "guid":  "0BFopcD8oP",
@@ -27575,8 +27583,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_097"
                       }
                   ],
         "nameJa":  "巣づくりのサンルーム",
@@ -27609,8 +27617,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "xA19FAWJ0W",
                           "n":  "Lq5L5tMiHm",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_099"
                       },
                       {
                           "guid":  "Lq5L5tMiHm",
@@ -27684,8 +27692,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_094"
                       },
                       {
                           "guid":  "sMVxibv23U",
@@ -27714,8 +27722,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_092"
                       },
                       {
                           "guid":  "xA19FAWJ0W",
@@ -27778,8 +27786,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "SkZ_OTsUJO",
                           "n":  "9a5BpV4FCk",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_089"
                       },
                       {
                           "guid":  "9a5BpV4FCk",
@@ -27808,8 +27816,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "HH-Hi2vfX6",
                           "n":  "j78wRmsyJl",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_096"
                       },
                       {
                           "guid":  "j78wRmsyJl",
@@ -27853,8 +27861,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_096"
                       },
                       {
                           "guid":  "SkZ_OTsUJO",
@@ -27883,8 +27891,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_088"
                       }
                   ],
         "nameJa":  "巣づくりのロフト",
@@ -27947,8 +27955,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "QMGvJNWoaa",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_020"
                       },
                       {
                           "guid":  "QMGvJNWoaa",
@@ -27962,8 +27970,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "3Tm0igcl3q",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_118"
                       },
                       {
                           "guid":  "3Tm0igcl3q",
@@ -27977,8 +27985,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "VK13DJd426",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_023"
                       },
                       {
                           "guid":  "VK13DJd426",
@@ -27992,8 +28000,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_091"
                       },
                       {
                           "guid":  "bLnAtun9f2",
@@ -28097,8 +28105,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_014"
                       },
                       {
                           "guid":  "2TXRk9FRs-",
@@ -28941,8 +28949,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "WcvmuMq3K-",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_017"
                       },
                       {
                           "guid":  "WcvmuMq3K-",
@@ -28956,8 +28964,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "GIBxV4HFwm",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_068"
                       },
                       {
                           "guid":  "GIBxV4HFwm",
@@ -28971,8 +28979,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_084"
                       },
                       {
                           "guid":  "dBj9hABf3E",
@@ -29031,8 +29039,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_070"
                       },
                       {
                           "guid":  "u5QFXViCSA",
@@ -29061,8 +29069,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_072"
                       },
                       {
                           "guid":  "xBoxl_xrLg",
@@ -29091,8 +29099,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_020"
                       },
                       {
                           "guid":  "RAzgLPfsBN",
@@ -29106,8 +29114,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_071"
                       },
                       {
                           "guid":  "H9nzrYqUMY",
@@ -29166,8 +29174,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_069"
                       },
                       {
                           "guid":  "flX8ILZRu5",
@@ -29872,8 +29880,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_025",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -30040,8 +30048,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "deY2PDU3Yf",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_013"
                       },
                       {
                           "guid":  "deY2PDU3Yf",
@@ -30055,8 +30063,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "X_Odiyggx5",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_054"
                       },
                       {
                           "guid":  "X_Odiyggx5",
@@ -30070,8 +30078,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "_4vW_20oCx",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_064"
                       },
                       {
                           "guid":  "_4vW_20oCx",
@@ -30085,8 +30093,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_090"
                       },
                       {
                           "guid":  "C2PneP8_R4",
@@ -30235,8 +30243,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_017"
                       },
                       {
                           "guid":  "YBGLFTjsSu",
@@ -30340,8 +30348,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_057"
                       },
                       {
                           "guid":  "U4PjPoPWuB",
@@ -30481,8 +30489,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_085"
                       },
                       {
                           "guid":  "Ae7N8PozQz",
@@ -30909,8 +30917,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_021"
                       },
                       {
                           "guid":  "XVCxWwLYlz",
@@ -31321,8 +31329,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_048"
                       },
                       {
                           "guid":  "n5c5Bls5Ve",
@@ -31351,8 +31359,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_033"
                       }
                   ],
         "nameJa":  "奏の音楽堂の案内人",
@@ -31400,8 +31408,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "hIoiw2gLzF",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_007"
                       },
                       {
                           "guid":  "hIoiw2gLzF",
@@ -31415,8 +31423,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "xM4sZDf0RW",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_017"
                       },
                       {
                           "guid":  "xM4sZDf0RW",
@@ -31430,8 +31438,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_035"
                       },
                       {
                           "guid":  "kLTHS0ihd6",
@@ -32542,8 +32550,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "HndDpIMu7D",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_024"
                       },
                       {
                           "guid":  "HndDpIMu7D",
@@ -32557,8 +32565,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "x_zEnC5ju3",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_104"
                       },
                       {
                           "guid":  "x_zEnC5ju3",
@@ -32572,8 +32580,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_080"
                       },
                       {
                           "guid":  "mp-IH0OP49",
@@ -33299,8 +33307,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_029"
                       },
                       {
                           "guid":  "r4k_989hLR",
@@ -33632,8 +33640,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "PhQTB1_FIi",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_016"
                       },
                       {
                           "guid":  "PhQTB1_FIi",
@@ -33647,8 +33655,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "ePwOq1TrlQ",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_037"
                       },
                       {
                           "guid":  "ePwOq1TrlQ",
@@ -33662,8 +33670,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_020"
                       },
                       {
                           "guid":  "XPsU7JBKX1",
@@ -33827,8 +33835,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_017"
                       },
                       {
                           "guid":  "YDygyIriIZ",
@@ -33917,8 +33925,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_016"
                       },
                       {
                           "guid":  "KbrXnz9HFX",
@@ -33947,8 +33955,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_018"
                       },
                       {
                           "guid":  "1JWBlZuNl3",
@@ -33992,8 +34000,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_019"
                       },
                       {
                           "guid":  "p-kVey7GM4",
@@ -34037,8 +34045,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_015"
                       },
                       {
                           "guid":  "DPspPCXE1w",
@@ -34845,8 +34853,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "_JCjS6YPaL",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_019"
                       },
                       {
                           "guid":  "_JCjS6YPaL",
@@ -34860,8 +34868,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "lTjGn2SRZi",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_116"
                       },
                       {
                           "guid":  "lTjGn2SRZi",
@@ -34875,8 +34883,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_090"
                       },
                       {
                           "guid":  "5P-YD46er8",
@@ -35254,8 +35262,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_114"
                       }
                   ],
         "nameJa":  "寂れたオアシスの面影",
@@ -35348,8 +35356,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_022"
                       },
                       {
                           "guid":  "WGCAvqnFoQ",
@@ -35363,8 +35371,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_115"
                       }
                   ],
         "nameJa":  "失われし村の記憶",
@@ -35457,8 +35465,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_012"
                       },
                       {
                           "guid":  "zX5tWK_Rmu",
@@ -35581,8 +35589,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_013"
                       },
                       {
                           "guid":  "UU1jeKr_87",
@@ -35611,8 +35619,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "shoes",
+                          "itemCostId":  "shoes_007"
                       }
                   ],
         "nameJa":  "忘れ去られた楽園のなごり",
@@ -35645,8 +35653,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "f_s2BUACQM",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_004"
                       },
                       {
                           "guid":  "f_s2BUACQM",
@@ -35660,8 +35668,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "0Nch2ACn4Y",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_021"
                       },
                       {
                           "guid":  "0Nch2ACn4Y",
@@ -35675,8 +35683,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_051"
                       }
                   ],
         "nameJa":  "リズムが弾ける季節の案内人",
@@ -36706,8 +36714,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_014",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -36912,8 +36920,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null,
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_013",
                           "emoteId":  null,
                           "emoteLevel":  null
                       },
@@ -36978,8 +36986,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "sc-l5plcYF",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_006"
                       },
                       {
                           "guid":  "sc-l5plcYF",
@@ -36993,8 +37001,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "z9iDVc4j9_",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_015"
                       },
                       {
                           "guid":  "z9iDVc4j9_",
@@ -37008,8 +37016,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_039"
                       },
                       {
                           "guid":  "Zk9eCLRTna",
@@ -38390,8 +38398,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "6_DftEd25-",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_014"
                       },
                       {
                           "guid":  "6_DftEd25-",
@@ -38420,8 +38428,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_068"
                       },
                       {
                           "guid":  "jNqy_nUaIN",
@@ -38709,8 +38717,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_069"
                       },
                       {
                           "guid":  "ygrTEPiRQo",
@@ -38724,8 +38732,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_008"
                       },
                       {
                           "guid":  "OU3A1U_pK9",
@@ -38739,8 +38747,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_097"
                       }
                   ],
         "nameJa":  "万古の光（海月）",
@@ -38848,8 +38856,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_070"
                       },
                       {
                           "guid":  "9m4-9EZzAw",
@@ -38863,8 +38871,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_013"
                       },
                       {
                           "guid":  "G8G2RostCx",
@@ -38878,8 +38886,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_096"
                       },
                       {
                           "guid":  "Vzn43X8E11",
@@ -39002,8 +39010,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_023"
                       },
                       {
                           "guid":  "FIGh_Zu_Wx",
@@ -39017,8 +39025,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_095"
                       },
                       {
                           "guid":  "UESz19bsxr",
@@ -39032,8 +39040,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_033"
                       }
                   ],
         "nameJa":  "万古の闇（暗黒竜）",
@@ -39141,8 +39149,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_067"
                       },
                       {
                           "guid":  "bgNVUVL8RT",
@@ -39156,8 +39164,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_060"
                       },
                       {
                           "guid":  "db2Hz8J0M4",
@@ -39171,8 +39179,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_007"
                       },
                       {
                           "guid":  "22CelRcUbU",
@@ -39235,8 +39243,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Cpnr3X3E4D",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_010"
                       },
                       {
                           "guid":  "Cpnr3X3E4D",
@@ -39250,8 +39258,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "wRsM_2F1fZ",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_082"
                       },
                       {
                           "guid":  "wRsM_2F1fZ",
@@ -39265,8 +39273,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "D1tl2QKs9P",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_078"
                       },
                       {
                           "guid":  "D1tl2QKs9P",
@@ -39280,8 +39288,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_012"
                       },
                       {
                           "guid":  "o4aGEZcBdG",
@@ -39385,8 +39393,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "outfit",
+                          "itemCostId":  "outfit_077"
                       },
                       {
                           "guid":  "_m05Qv859t",
@@ -40661,8 +40669,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "Gd4gn3SMX-",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "necklace",
+                          "itemCostId":  "necklace_026"
                       },
                       {
                           "guid":  "Gd4gn3SMX-",
@@ -40676,8 +40684,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  "llRyyb4IzA",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hair_accessory",
+                          "itemCostId":  "hair_accessory_025"
                       },
                       {
                           "guid":  "llRyyb4IzA",
@@ -40691,8 +40699,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_111"
                       },
                       {
                           "guid":  "F76niRD4U2",
@@ -40766,8 +40774,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_028"
                       },
                       {
                           "guid":  "CooOSXEL7X",
@@ -40890,8 +40898,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "JVpoCSJcOL",
                           "n":  "2jAYnaQ61M",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_044"
                       },
                       {
                           "guid":  "2jAYnaQ61M",
@@ -40995,8 +41003,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_027"
                       }
                   ],
         "nameJa":  "心優しき玩具職人",
@@ -41089,8 +41097,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "YZ3cdXyCLq",
                           "n":  "6HblThtJcY",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "mask",
+                          "itemCostId":  "mask_083"
                       },
                       {
                           "guid":  "6HblThtJcY",
@@ -41134,8 +41142,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_043"
                       },
                       {
                           "guid":  "jCew8MjPtR",
@@ -41164,8 +41172,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_133"
                       }
                   ],
         "nameJa":  "厳格なマナティ飼い",
@@ -41412,8 +41420,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "3iBGJh3CwS",
                           "n":  "_Dvi4zvM6x",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_046"
                       },
                       {
                           "guid":  "_Dvi4zvM6x",
@@ -41457,8 +41465,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_045"
                       },
                       {
                           "guid":  "3iBGJh3CwS",
@@ -41487,8 +41495,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "shoes",
+                          "itemCostId":  "shoes_013"
                       },
                       {
                           "guid":  "SbK-m2Zvo8",
@@ -41502,8 +41510,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_109"
                       },
                       {
                           "guid":  "ZjrF-HEgom",
@@ -41566,8 +41574,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_025"
                       },
                       {
                           "guid":  "CI48zASaY2",

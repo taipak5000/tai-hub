@@ -88,6 +88,7 @@ export function mount(container, sub) {
   if (els.costToggle) els.costToggle.checked = S.getCostDisplayEnabled();
 
   S.migrateRegularCapeTier2Link(); // 🩹 恒常精霊ティア2ケープのitem紐づけ修正に伴う、既存の解放済みデータの移行（1回のみ）
+  S.migrateNodeItemLinks20261027(); // 🩹 紐づけを足したノードについて、既存の解放済みデータをitemへ反映（1回のみ）
   renderGrid();
   renderRevisitBadge();
   startRevisitBadgeTimer();
