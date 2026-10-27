@@ -209,6 +209,18 @@ function formatShardTime(d) {
   const hh = String(d.getHours()).padStart(2, '0'), mi = String(d.getMinutes()).padStart(2, '0');
   return `${mm}/${dd} ${hh}:${mi}`;
 }
+// 闇の破片は出現（開始）から4時間で終わる（星のキャンドル計算機の END_LAG_SEC と同じ規則）
+const SHARD_DURATION_MS = 4 * 3600000;
+function shardEnd(start) { return new Date(start.getTime() + SHARD_DURATION_MS); }
+// 「10/27 14:40〜18:40」。日付をまたぐ時だけ終了側にも日付を付ける
+function formatShardRange(start) {
+  const end = shardEnd(start);
+  const sameDay = start.getDate() === end.getDate() && start.getMonth() === end.getMonth();
+  const endLabel = sameDay
+    ? `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+    : formatShardTime(end);
+  return `${formatShardTime(start)}〜${endLabel}`;
+}
 
 // 日替わり大キャンドル：太平洋時間0時に、草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる固定ローテーション
 // 大キャンドルの地域の並び（草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる）。起点は「2026/10/25(太平洋時間)が峡谷」。
@@ -556,12 +568,17 @@ function buildHtml(data) {
     const realmLabel = srLabel(shard.realm);
     const locationLabel = t(shard.location.ja, shard.location.en);
     const now = new Date();
+    // 開始〜終了を1回ずつ1行で出す。終わった回は打ち消し線、出現中の回には「出現中」を付ける
+    const active = shard.occurrences.find(occ => occ.getTime() <= now.getTime() && now.getTime() < shardEnd(occ).getTime());
     const times = shard.occurrences.map(occ => {
-      const past = occ.getTime() <= now.getTime();
-      return `<span class="dash-shard-time${past ? ' past' : ''}">${formatShardTime(occ)}</span>`;
-    }).join(' / ');
+      const past = shardEnd(occ).getTime() <= now.getTime();
+      const isActive = occ === active;
+      return `<span class="dash-shard-time${past ? ' past' : ''}${isActive ? ' active' : ''}">${formatShardRange(occ)}${isActive ? `<span class="dash-shard-active">${t('出現中', 'Active')}</span>` : ''}</span>`;
+    }).join('');
     const soon = soonestFuture(shard.occurrences) || nextShardTime();
-    const countdownHtml = soon ? `<span class="dash-countdown">${t('次まで', 'Next in')} ${countdown(soon)}</span>` : '';
+    const countdownHtml = active
+      ? `<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(shardEnd(active))}</span>`
+      : (soon ? `<span class="dash-countdown">${t('次まで', 'Next in')} ${countdown(soon)}</span>` : '');
     const shardLine = t(
       `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）が出現：`,
       `${colorLabel} (<b>${realmLabel} · ${locationLabel}</b>) erupts: `,
@@ -794,7 +811,8 @@ function injectStyles() {
 .dash-count-unit { font-weight: 500; opacity: 0.75; font-size: 0.85em; margin-right: 3px; }
 .dash-note { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--hub-text-2); }
 .dash-shard-times { display: block; margin-top: 3px; }
-.dash-shard-time { color: var(--hub-accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.dash-shard-time { display: block; color: var(--hub-accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.dash-shard-active { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.6; color: #fff; background: var(--hub-accent); vertical-align: 1px; }
 .dash-shard-time.past { color: var(--hub-text-2); font-weight: 400; text-decoration: line-through; }
 .dash-empty { font-size: 12.5px; color: var(--hub-text-2); padding: 2px 2px 4px; }
 .dash-calendar-summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 12.5px; font-weight: 600; color: var(--hub-text); padding: 9px 11px; background: var(--hub-bg); border-radius: var(--hub-r-sm); user-select: none; }
@@ -935,7 +953,7 @@ function exportIcs(statusEl) {
         events.push(...icsBuildEvent({
           uid: `edb-shard-${occ.getTime()}@${uidHost}`,
           start: occ,
-          end: new Date(occ.getTime() + 20 * 60000),
+          end: shardEnd(occ),
           summary: `${info.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard')}${t('の出現', ' Eruption')}`,
           description: label,
           alarmTrigger: '-PT10M',
