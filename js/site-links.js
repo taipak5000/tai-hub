@@ -27,7 +27,8 @@ export async function refreshSiteLinks() {
   return false;
 }
 
-/** 描画用の一覧（ハブ専用ツール込み）。未取得ならnull */
+/** 描画用の一覧（ハブ専用ツール込み）。未取得ならnull。
+    testの印が付いたツールは、作者プロフィールより下（一覧の最後）にまとめる（元の順番は保つ） */
 export function getSiteLinks() {
   if (!tools) return null;
   const list = [];
@@ -35,7 +36,7 @@ export function getSiteLinks() {
     list.push(t);
     HUB_ONLY_TOOLS.filter(h => h.afterId === t.id).forEach(h => list.push(h));
   });
-  return list;
+  return [...list.filter(t => !t.badgeTest), ...list.filter(t => t.badgeTest)];
 }
 
 /** リンク先: ハブ内ルートがあれば #/<id>、無ければ外部URL */
