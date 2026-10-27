@@ -140,6 +140,33 @@ function injectLocalIconSprite() {
 }
 
 /* ================================================================
+   ホーム画面に追加したアプリで使っている人向けの引っ越し手順。
+   アプリはブラウザ（Safari等）と保存先が別なので、データは自動では移らない。
+   コードのコピーは長すぎて貼り付けられないことがあるため、ファイルでの手順だけを案内する。
+   ================================================================ */
+function appGuideHtml() {
+  const steps = CURRENT_LANG === 'en' ? [
+    'In the app you have been using (the old site), open "Data Transfer", select the sites, tap "Create Code for Selected Sites", then "Download as File". On iPhone the file goes to the Downloads folder in the Files app. From November 1, the screen shown on the old sites also has "Save data to a file", which works the same way.',
+    'Open tai-hub where you will use it from now on. To use it from your home screen, open tai-hub in Safari, tap the Share button → "Add to Home Screen", and open it from the new icon. (A home-screen app and Safari keep separate data, so do the next step in the one you will use.)',
+    'In tai-hub, go to "Data Transfer" → "Restore from a Code", tap "Choose File" and pick the saved file. Select the sites to restore and tap "Restore Selected Sites".',
+  ] : [
+    '今まで使っていたアプリ（旧サイト）で「データ引継ぎ」を開き、移したいサイトを選んで「選んだサイトのコードを作成」→「ファイルとしてダウンロード」を押します。iPhoneでは「ファイル」アプリの「ダウンロード」フォルダに保存されます。11月1日からは、旧サイトを開くと出る画面の「データをファイルに保存」でも同じように保存できます。',
+    'tai-hubを、これから使う場所で開きます。ホーム画面から使う場合は、Safariでtai-hubを開いて共有ボタン →「ホーム画面に追加」を選び、追加したアイコンから開いてください（ホーム画面のアプリとSafariでもデータは別々なので、使う方で次の手順を行います）。',
+    'tai-hubの「データ引継ぎ」→「コードから復元」で「ファイルを選択」を押し、保存したファイルを選びます。復元したいサイトを選んで「選んだサイトを復元する」を押せば完了です。',
+  ];
+  return `
+        <details class="card dt-app-guide">
+          <summary class="dt-app-guide-summary">${escapeHtml(tt('ホーム画面に追加したアプリで使っている方へ', 'If you use a home-screen app'))}</summary>
+          <p class="dt-app-guide-lead">${escapeHtml(tt(
+            'ホーム画面のアプリは、ブラウザとは別の場所にデータを保存しているため、データは自動では移りません。ファイルを使って引っ越してください。コードのコピーは長すぎて貼り付けられないことがあるので、使わなくて大丈夫です。',
+            'A home-screen app stores its data separately from the browser, so your data does not move automatically. Please move it with a file. Copying the code is not needed — it can be too long to paste.',
+          ))}</p>
+          <ol class="dt-app-guide-steps">${steps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>
+          <p class="dt-app-guide-note">${escapeHtml(tt('保存したファイルは、復元が終わるまで消さずに残しておいてください。何度でも読み込み直せます。', 'Keep the saved file until the restore is done — you can load it again as many times as you need.'))}</p>
+        </details>`;
+}
+
+/* ================================================================
    マークアップ（外枠）
    ================================================================ */
 function renderShell() {
@@ -149,6 +176,8 @@ function renderShell() {
         <header class="tool-nav-head">
           <h1><svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${escapeHtml(tt('データ引継ぎ', 'Data Transfer'))}</h1>
         </header>
+
+        ${appGuideHtml()}
 
         <p class="sec-label" id="dtExportSection">${escapeHtml(t('page.sectionExport'))}</p>
         <div class="card">
@@ -711,7 +740,10 @@ async function processImportCode(code) {
 
   let payload;
   try {
-    payload = JSON.parse(await S.decodeTransferCode(code));
+    // 旧サイトの終了画面・表示設定の「データのバックアップ」で書き出したファイルは、
+    // 圧縮していないJSON（{ exportedFrom, exportedAt, data }）。それもそのまま読めるようにする
+    const trimmed = code.trim();
+    payload = JSON.parse(trimmed.startsWith('{') ? trimmed : await S.decodeTransferCode(trimmed));
   } catch (e) {
     statusEl.className = 'status-msg err';
     statusEl.textContent = t('dyn.codeLoadFailed');

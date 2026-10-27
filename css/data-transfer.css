@@ -67,6 +67,16 @@
 .data-transfer-view .sec-label:first-of-type { padding-top: 0; }
 .data-transfer-view .card { background: var(--card); border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); }
 .data-transfer-view .hint { font-size: 12px; color: var(--text-2); line-height: 1.7; margin-bottom: 14px; }
+/* ホーム画面アプリで使っている人向けの引っ越し手順（開閉はネイティブの<details>） */
+.data-transfer-view .dt-app-guide { margin-bottom: 4px; }
+.data-transfer-view .dt-app-guide-summary { font-size: 14px; font-weight: 700; color: var(--text); cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; }
+.data-transfer-view .dt-app-guide-summary::-webkit-details-marker { display: none; }
+.data-transfer-view .dt-app-guide-summary::before { content: '›'; display: inline-block; font-size: 18px; line-height: 1; transition: transform 0.2s ease; }
+.data-transfer-view .dt-app-guide[open] .dt-app-guide-summary::before { transform: rotate(90deg); }
+.data-transfer-view .dt-app-guide-lead { margin-top: 10px; font-size: 13px; line-height: 1.75; color: var(--text); }
+.data-transfer-view .dt-app-guide-steps { margin: 10px 0 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.75; color: var(--text); }
+.data-transfer-view .dt-app-guide-note { margin-top: 10px; font-size: 12px; line-height: 1.7; color: var(--text-2); }
+@media (prefers-reduced-motion: reduce) { .data-transfer-view .dt-app-guide-summary::before { transition: none; } }
 
 .data-transfer-view .site-opt {
   display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 0.5px solid var(--sep);
