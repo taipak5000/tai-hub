@@ -222,12 +222,12 @@ function formatShardRange(start) {
   return `${formatShardTime(start)}〜${endLabel}`;
 }
 
-// 日替わり大キャンドル：太平洋時間0時に、草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる固定ローテーション
-// 大キャンドルの地域の並び（草原→雨林→峡谷→書庫→荒野の順で毎日切り替わる）。起点は「2026/10/27(太平洋時間)が書庫」（前日の10/26が峡谷）。
-// ※ 闇の破片のレルム順(SHARD_REALMS)とは別の並びなので、共用しないこと。クエスト・シーズンキャンドルは大キャンドルの前日として計算する。
-const GRAND_CANDLE_ORDER = ['prairie', 'forest', 'valley', 'vault', 'wasteland'];
+// 日替わり大キャンドル：太平洋時間0時に、草原→雨林→峡谷→捨てられた地→書庫の順で毎日切り替わる固定ローテーション
+// 大キャンドルの地域の並び（草原→雨林→峡谷→捨てられた地→書庫の順で毎日切り替わる）。起点は「2026/10/27(太平洋時間)が書庫」（翌日10/28は草原）。
+// ※ クエスト・シーズンキャンドルは「2日前の大キャンドル」と同じ地域になる（10/27=峡谷、10/28=捨てられた地で確認）。
+const GRAND_CANDLE_ORDER = ['prairie', 'forest', 'valley', 'wasteland', 'vault'];
 const GRAND_CANDLE_ANCHOR_DATE = new Date(2026, 9, 27); // 月は0始まりなので9=10月
-const GRAND_CANDLE_ANCHOR_REALM_IDX = 3; // 書庫（GRAND_CANDLE_ORDERの添字）
+const GRAND_CANDLE_ANCHOR_REALM_IDX = 4; // 書庫（GRAND_CANDLE_ORDERの添字）
 function grandCandleRealm(dayOffset = 0) {
   const pacNow = pacificNow();
   const today = new Date(pacNow);
@@ -591,7 +591,7 @@ function buildHtml(data) {
   }
   const candleRealm = grandCandleRealm();
   dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `${t('大キャンドル', 'Grand Candle')}${t('：', ': ')}<b>${srLabel(candleRealm)}</b><span class="dash-countdown">${t('次の変更まで', 'Changes in')} ${countdown(nextPacificMidnight())}</span>`));
-  const questCandleRealm = grandCandleRealm(-1);
+  const questCandleRealm = grandCandleRealm(-2);
   dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-scroll"/></svg>', `${t('クエスト・シーズンキャンドル', 'Quest & Season Candle')}${t('：', ': ')}<b>${srLabel(questCandleRealm)}</b><span class="dash-countdown">${t('次の変更まで', 'Changes in')} ${countdown(nextPacificMidnight())}</span>`));
   dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-geyser"/></svg>', `${t('ウニ焼き', 'Geyser')}<span class="dash-countdown">${t('次回まで', 'Next in')} ${countdown(nextEvenHourEvent(5))}</span>`));
   dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-bread"/></svg>', `${t('パン焼き', 'Bread Baking')}<span class="dash-countdown">${t('次回まで', 'Next in')} ${countdown(nextEvenHourEvent(35))}</span>`));
