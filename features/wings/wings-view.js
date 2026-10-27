@@ -45,6 +45,7 @@ import { SEASON_SPIRITS } from './data/season-spirits.js';
 import { REALM_SPIRITS, CAPE_LEVELS } from './data/realm-spirits.js';
 import { LIGHT_CHILDREN } from './data/light-children.js';
 import { TITLES } from './data/titles.js';
+import { REVISIT_DATA } from '../tai-revisit/data/revisit-data.js';
 import * as S from './wings-state.js';
 import * as Share from './wings-share.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
@@ -71,6 +72,9 @@ let permFilterUnowned = false;
 let lightChildrenFilterUnowned = false;
 let spiritSearchQuery = '';
 const seasonCollapsedIds = new Set();
+// 季節精霊一覧の並び順（'season'=季節順 / 'revisit'=最新再訪順）。これだけは端末に保存して次回も引き継ぐ
+const SORT_MODE_KEY = 'wingsSeasonSortMode_v1';
+let seasonSortMode = (() => { try { return localStorage.getItem(SORT_MODE_KEY) === 'revisit' ? 'revisit' : 'season'; } catch (e) { return 'season'; } })();
 let currentTitlesLoaded = null; // checkAndUnlockTitles()の新規解除トースト表示用に一時保持
 
 /* ================================================================
@@ -208,7 +212,12 @@ function renderShell() {
             <span>${t('季節精霊・再訪の光の翼: ', 'Seasonal Spirits · Revisit Winged Light: ')}<b id="wgSumFeathersSeason">0 / 0</b>${t('体分', '')}</span>
             <button type="button" class="filter-toggle-btn" id="wgSeasonFilterBtn">${t('未取得のみ表示', 'Show unowned only')}</button>
           </div>
-          <div class="season-jump-row">
+          <div class="wg-sort-row" role="group" aria-label="${escapeAttr(t('並び順', 'Sort order'))}">
+            <span class="season-jump-label"><svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${t('並び順', 'Sort')}</span>
+            <button type="button" class="filter-toggle-btn" id="wgSortSeasonBtn">${t('季節順', 'By season')}</button>
+            <button type="button" class="filter-toggle-btn" id="wgSortRevisitBtn">${t('最新再訪順', 'Latest revisit')}</button>
+          </div>
+          <div class="season-jump-row" id="wgSeasonJumpRow">
             <label for="wgSeasonJumpSelect" class="season-jump-label"><svg class="inline-icon" width="14" height="14"><use href="#i-search"/></svg> ${t('季節へジャンプ', 'Jump to season')}</label>
             <select class="pf-input season-jump-select" id="wgSeasonJumpSelect">
               <option value="">${t('選択してください', 'Select a season...')}</option>
@@ -310,6 +319,8 @@ function wireEvents() {
   q('#wgPermFilterBtn').addEventListener('click', () => { permFilterUnowned = !permFilterUnowned; render(); });
   q('#wgLightChildrenFilterBtn').addEventListener('click', () => { lightChildrenFilterUnowned = !lightChildrenFilterUnowned; render(); });
   q('#wgSeasonJumpSelect').addEventListener('change', e => jumpToSeason(e.target.value));
+  q('#wgSortSeasonBtn').addEventListener('click', () => setSeasonSortMode('season'));
+  q('#wgSortRevisitBtn').addEventListener('click', () => setSeasonSortMode('revisit'));
 
   q('#wgMarkAllLcBtn').addEventListener('click', markAllLightChildren);
   q('#wgResetAllLcBtn').addEventListener('click', resetAllLightChildren);
@@ -512,6 +523,81 @@ function clearAllFilters() {
   lightChildrenFilterUnowned = false;
   render();
 }
+function setSeasonSortMode(mode) {
+  if (seasonSortMode === mode) return;
+  seasonSortMode = mode;
+  try { localStorage.setItem(SORT_MODE_KEY, mode); } catch (e) { /* 保存できなくても今回の表示は切り替える */ }
+  kbNavReset();
+  render();
+}
+
+// 精霊ごとの最後の再訪日（YYYY-MM-DD）。再訪精霊データベースの来訪記録のうち、今日までに始まったもの
+// （通常の再訪・特別来訪。誤って出現した回は数えない）の最新日。まだ再訪していない精霊は入らない
+let latestRevisitCache = null;
+function latestRevisitMap() {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  if (latestRevisitCache && latestRevisitCache.day === todayStr) return latestRevisitCache.map;
+  const map = new Map();
+  REVISIT_DATA.forEach(x => {
+    const dates = (x.visits || []).filter(v => v.type !== 'TS-Error' && v.date && v.date <= todayStr).map(v => v.date);
+    if (dates.length) map.set(x.nameJa, dates.sort().pop());
+  });
+  latestRevisitCache = { day: todayStr, map };
+  return map;
+}
+function formatRevisitDate(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return `${y}/${m}/${d}`;
+}
+
+// 「最新再訪順」: 季節の枠を外して1つの一覧にし、最後に再訪した日が新しい精霊から並べる。
+// まだ再訪していない精霊は最後に、新しい季節から並べる。チェック欄の作りは季節順と同じ（data-season/data-spirit）
+function renderRevisitOrderList(tracker, endingSoon) {
+  const latest = latestRevisitMap();
+  const rows = [];
+  SEASON_SPIRITS.forEach(({ season, spirits }, seasonIdx) => {
+    const checked = tracker[season.ja] || {};
+    spirits.forEach((sp, spiritIdx) => {
+      const val = checked[sp.ja];
+      if (seasonFilterUnowned && val) return;
+      if (spiritSearchQuery && !spiritMatchesSearch(L(sp))) return;
+      rows.push({ season, sp, val, seasonIdx, spiritIdx, last: latest.get(sp.ja) || '' });
+    });
+  });
+  rows.sort((a, b) => {
+    if (a.last !== b.last) {
+      if (!a.last) return 1;
+      if (!b.last) return -1;
+      return a.last < b.last ? 1 : -1;
+    }
+    if (!a.last && a.seasonIdx !== b.seasonIdx) return b.seasonIdx - a.seasonIdx; // 未再訪は新しい季節から
+    return a.seasonIdx - b.seasonIdx || a.spiritIdx - b.spiritIdx;
+  });
+  if (!rows.length) return '';
+  const html = rows.map(({ season, sp, val, last }) => {
+    const dateStr = formatObtainedDate(S.wingObtainedAt(val));
+    const warnThis = !val && endingSoon && endingSoon.seasonJa === season.ja;
+    const sub = last
+      ? t(`${L(season)}・最終再訪 ${formatRevisitDate(last)}`, `${L(season)} · Last revisit ${formatRevisitDate(last)}`)
+      : t(`${L(season)}・まだ再訪なし`, `${L(season)} · Not revisited yet`);
+    return `
+      <label class="spirit-opt${warnThis ? ' warn' : ''}" data-season="${escapeAttr(season.ja)}" data-spirit="${escapeAttr(sp.ja)}">
+        <input type="checkbox" ${val ? 'checked' : ''}>
+        <span class="spirit-opt-label">${escapeHtml(L(sp))}<span class="wg-spirit-sub">${escapeHtml(sub)}</span></span>
+        ${dateStr ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${dateStr}に獲得`, `Obtained on ${dateStr}`))}"><svg class="inline-icon" width="12" height="12"><use href="#i-calendar"/></svg> ${escapeHtml(dateStr)}</span>` : ''}
+      </label>`;
+  }).join('');
+  return `
+    <div class="season-card">
+      <div class="season-head">
+        <div class="season-name">${t('最新の再訪順', 'Latest revisit first')}</div>
+        <span class="season-sub-badge">${rows.length} ${t('体', 'spirits')}</span>
+      </div>
+      <div class="spirit-list">${html}</div>
+    </div>`;
+}
+
 function jumpToSeason(value) {
   if (value === '') return;
   const idx = parseInt(value, 10);
@@ -829,7 +915,15 @@ function render() {
         <div class="spirit-list">${spiritsHtml}</div>`}
       </div>`;
   }).join('');
-  containerEl.querySelector('#wgSeasonList').innerHTML = seasonHtml
+  // 並び順の切替（季節順の集計は上のループで済ませ、表示だけ差し替える）
+  const byRevisit = seasonSortMode === 'revisit';
+  containerEl.querySelector('#wgSortSeasonBtn').classList.toggle('active', !byRevisit);
+  containerEl.querySelector('#wgSortSeasonBtn').setAttribute('aria-pressed', String(!byRevisit));
+  containerEl.querySelector('#wgSortRevisitBtn').classList.toggle('active', byRevisit);
+  containerEl.querySelector('#wgSortRevisitBtn').setAttribute('aria-pressed', String(byRevisit));
+  containerEl.querySelector('#wgSeasonJumpRow').style.display = byRevisit ? 'none' : '';
+  const listHtml = byRevisit ? renderRevisitOrderList(tracker, endingSoon) : seasonHtml;
+  containerEl.querySelector('#wgSeasonList').innerHTML = listHtml
     || (spiritSearchQuery ? `<div class="notice-card">${t('検索条件に一致する精霊が見つかりません。', 'No spirits match your search.')}</div>` : '');
 
   // ── 恒常精霊 ──

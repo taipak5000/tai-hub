@@ -112,6 +112,11 @@
 }
 .wings-view .wg-dash-trigger-btn:hover { background: var(--bg); }
 
+/* 🔀 季節精霊一覧の並び順（季節順・最新再訪順） */
+.wings-view .wg-sort-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.wings-view .wg-sort-row .season-jump-label { margin-right: 2px; }
+.wings-view .wg-spirit-sub { display: block; margin-top: 1px; font-size: 11px; color: var(--text-2); line-height: 1.4; }
+
 /* 🔎 季節ジャンプ */
 .wings-view .season-jump-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .wings-view .season-jump-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
