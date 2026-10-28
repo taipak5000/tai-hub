@@ -589,6 +589,23 @@ function buildHtml(data) {
     const nextHtml = nextShard ? `<span class="dash-countdown">${t('次まで', 'Next in')} ${countdown(nextShard)}</span>` : '';
     dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', `${t('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
   }
+  // 次のデイリー（太平洋時間0時の切り替わり後）の闇の破片。今日の分と同じ形で、時刻だけを並べる
+  const tomorrowShard = shardInfoForOffset(1);
+  const afterReset = t('デイリー切替後', 'After daily reset');
+  if (tomorrowShard.hasShard) {
+    const icon = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${tomorrowShard.isRed ? '#ff453a' : '#8e8e93'};opacity:0.55;"></span>`;
+    const colorLabel = tomorrowShard.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard');
+    const realmLabel = srLabel(tomorrowShard.realm);
+    const locationLabel = t(tomorrowShard.location.ja, tomorrowShard.location.en);
+    const times = tomorrowShard.occurrences.map(occ => `<span class="dash-shard-time">${formatShardRange(occ)}</span>`).join('');
+    const line = t(
+      `${afterReset}：${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）が出現：`,
+      `${afterReset}: ${colorLabel} (<b>${realmLabel} · ${locationLabel}</b>) erupts: `,
+    );
+    dailyRows.push(row(icon, line + `<span class="dash-shard-times">${times}</span>`));
+  } else {
+    dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', t(`${afterReset}：闇の破片の出現はありません`, `${afterReset}: no shard eruptions`)));
+  }
   const candleRealm = grandCandleRealm();
   dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `${t('大キャンドル', 'Grand Candle')}${t('：', ': ')}<b>${srLabel(candleRealm)}</b><span class="dash-countdown">${t('次の変更まで', 'Changes in')} ${countdown(nextPacificMidnight())}</span>`));
   const questCandleRealm = grandCandleRealm(-2);
