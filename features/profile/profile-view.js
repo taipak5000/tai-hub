@@ -226,11 +226,8 @@ function renderShell() {
   `;
 }
 
-// 🩹 LINKS配列のうち姉妹ツールの11件は、以前は常に外部URL+target="_blank"で
-// 開いていたが、tools-drawer.js/tai-info-view.jsと同じくtai-hub内蔵済みの
-// ツールは内部ルートへ遷移するのが site全体の規約になったため、hubRouteが
-// 設定されている項目（profile-data.js参照）はSPA内遷移に切り替えた。
-// X(Twitter)・お題箱の2件はhubRouteを持たないため、従来通り外部リンクのまま。
+// リンクはX(Twitter)・お題箱の2件だけ（姉妹ツールの一覧は「関連ツール」と重複するため2026-10-28に削除）。
+// hubRouteを持つ項目を足した場合はSPA内遷移、無ければ外部リンクとして開く。
 function renderLinksHtml() {
   return LINKS.map(link => {
     const titleHtml = link.badgeTest ? `<span class="tool-badge-test">test</span>${escapeHtml(localizedField(link, 'title'))}` : escapeHtml(localizedField(link, 'title'));
