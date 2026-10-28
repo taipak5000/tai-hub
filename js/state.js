@@ -460,11 +460,19 @@ export function setShowTitlesEnabled(checked) {
    ================================================================ */
 export const CURRENCY_WISH_KEY = 'wishOwnCurrency';
 export const CURRENCY_COMPANION_KEY = 'sky_companion_v4_data';
+// 旧「精霊同行ツール」だけは、メイン以外の保存枠のデータを `sky_companion_v4_data__<id>`（__p_ なし）に
+// 保存していた。ハブの `__p_<id>` にまだデータが無い保存枠は、旧形式のキーから読む（旧データは消さない。
+// 次に保存した時点で `__p_<id>` 側に書かれる）。
+export function readCompanionDataRaw(profileId = getActiveProfileId()) {
+  const raw = localStorage.getItem(nsKeyFor(CURRENCY_COMPANION_KEY, profileId));
+  if (raw !== null || profileId === DEFAULT_PROFILE_ID) return raw;
+  return localStorage.getItem(`${CURRENCY_COMPANION_KEY}__${profileId}`);
+}
 export function loadOwnedCurrency(profileId = getActiveProfileId()) {
   let wish;
   try { wish = JSON.parse(localStorage.getItem(nsKeyFor(CURRENCY_WISH_KEY, profileId))) || {}; } catch (e) { wish = {}; }
   let companionData;
-  try { companionData = JSON.parse(localStorage.getItem(nsKeyFor(CURRENCY_COMPANION_KEY, profileId))) || {}; } catch (e) { companionData = {}; }
+  try { companionData = JSON.parse(readCompanionDataRaw(profileId)) || {}; } catch (e) { companionData = {}; }
   return {
     candle: wish.candle || 0,
     heart: wish.heart || 0,
@@ -480,7 +488,7 @@ export function saveOwnedCurrencyField(field, rawValue, profileId = getActivePro
   if (field === 'seasonCandle') {
     const key = nsKeyFor(CURRENCY_COMPANION_KEY, profileId);
     let data;
-    try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { data = {}; }
+    try { data = JSON.parse(readCompanionDataRaw(profileId)) || {}; } catch (e) { data = {}; }
     data.ownedCandles = n;
     localStorage.setItem(key, JSON.stringify(data));
   } else {

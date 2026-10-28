@@ -86,7 +86,7 @@
      （cp-i-* プレフィックス）を追加注入している。
    ================================================================ */
 import { CURRENT_LANG, RAW_LANG } from '../../js/i18n.js';
-import { nsKey } from '../../js/state.js';
+import { nsKey, readCompanionDataRaw } from '../../js/state.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
 import {
   TRANSLATIONS_ZH_TW, TRANSLATIONS_KO, NAME_ZH_TW, NAME_KO, TYPE_LABELS_ZH_TW, TYPE_LABELS_KO,
@@ -2053,7 +2053,7 @@ function buildSetup(Vue) {
     };
     const load = () => {
       try {
-        const saved = localStorage.getItem(nsKey(DATA_KEY));
+        const saved = readCompanionDataRaw();
         if (saved) applyLoadedData(JSON.parse(saved));
       } catch (e) { console.error(e); }
       try { oneYearBannerDismissedToday.value = localStorage.getItem(nsKey(ONEYEAR_BANNER_DISMISS_KEY)) === pfLocalDateStr(); } catch (e) { oneYearBannerDismissedToday.value = false; }
