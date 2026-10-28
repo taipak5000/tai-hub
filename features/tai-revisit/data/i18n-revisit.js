@@ -62,6 +62,10 @@ export const REVISIT_I18N = {
     footerCreditLabel: '作成・ご意見: ',
     footerRequestForm: 'リクエストフォーム',
     footerInfoLink: '設定・クレジット・プライバシーポリシー',
+    treeProgressLabel: '精霊ツリー',
+    treeManageBtn: 'ツリーを管理',
+    treeLoading: '精霊ツリーを読み込み中…',
+    treeManageTitle: '精霊ツリー管理で、この精霊のツリーをチェックする（閉じるとここに戻ります）',
   },
   en: {
     introPart1: 'A read-only reference database for looking up the visit history of Traveling Spirits and Returning Spirits. There is no ownership-tracking feature here. Data is based on the',
@@ -110,6 +114,10 @@ export const REVISIT_I18N = {
     footerCreditLabel: 'Created by / feedback: ',
     footerRequestForm: 'Request form',
     footerInfoLink: "Settings / Credits / Privacy Policy",
+    treeProgressLabel: 'Spirit tree',
+    treeManageBtn: 'Manage tree',
+    treeLoading: 'Loading spirit tree…',
+    treeManageTitle: 'Check off this spirit\'s tree in the Spirit Tree Tracker (closing it brings you back here)',
   },
 };
 

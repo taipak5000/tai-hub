@@ -365,3 +365,16 @@
   pointer-events: none;
 }
 .sc-share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 🌳 詳細画面の「来訪の記録」（再訪精霊DBと同じデータ）と、再訪精霊DBへの行き来 */
+.spirit-catalog-view .sc-visit-history { background: var(--sc-card); border-radius: var(--sc-r); padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); margin-bottom: 14px; }
+.spirit-catalog-view .sc-visit-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 12.5px; color: var(--sc-text-2); }
+.spirit-catalog-view .sc-revisit-link { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--sc-blue); text-decoration: none; cursor: pointer; }
+.spirit-catalog-view .sc-revisit-link:active { opacity: 0.6; }
+.spirit-catalog-view .sc-visit-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.spirit-catalog-view .sc-visit-chip { padding: 3px 8px; border-radius: 6px; background: var(--sc-bg); color: var(--sc-text); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.spirit-catalog-view .sc-visit-chip.sv { background: var(--sc-green-bg); color: var(--sc-green-d); }
+.spirit-catalog-view .sc-visit-none { font-size: 12px; color: var(--sc-text-2); }
+@media (prefers-contrast: more) {
+  .spirit-catalog-view .sc-visit-chip { border: 1px solid var(--sc-text-2); }
+}

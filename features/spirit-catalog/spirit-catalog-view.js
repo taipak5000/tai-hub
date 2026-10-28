@@ -38,6 +38,7 @@ import { t, tt } from './data/i18n-catalog.js';
 import * as S from './spirit-catalog-state.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
 import * as scShare from './spirit-catalog-share.js';
+import { REVISIT_DATA, NEVER_REVISITED_DATA } from '../tai-revisit/data/revisit-data.js';
 
 const STYLE_LINK_ID = 'spirit-catalog-view-styles';
 const ICON_SPRITE_ID = 'spirit-catalog-icon-sprite';
@@ -48,6 +49,10 @@ let els = {};
 let browseMode = 'grid'; // 'grid' | 'area' | 'season'
 let revisitOnlyFilter = false;
 let currentDetailGuid = null;
+// 再訪精霊DBの「ツリーを管理」から開いた（#/spirit-catalog/<guid>&from=revisit）時だけtrue。
+// 詳細を閉じると再訪精霊DBへ戻る
+let returnToRevisit = false;
+const REVISIT_RETURN_KEY = 'tai_revisit_return_v1'; // tai-revisit-view.js と同じキー
 
 let markAllConfirming = false;
 let markQuestsConfirming = false;
@@ -77,6 +82,7 @@ export function mount(container, sub) {
   browseMode = 'grid';
   revisitOnlyFilter = false;
   currentDetailGuid = null;
+  returnToRevisit = false;
   markAllConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false; resetTreeConfirming = false;
   bulkScopeRegistry = {}; bulkCatchUpConfirmingScope = null; bulkQuestConfirmingScope = null; bulkHeartConfirmingScope = null;
 
@@ -101,7 +107,13 @@ export function mount(container, sub) {
     if (currentDetailGuid) renderDetail(currentDetailGuid);
   });
 
-  if (sub) openDetail(sub);
+  if (sub) {
+    const [guidPart, ...flags] = sub.split('&');
+    let guid = guidPart;
+    try { guid = decodeURIComponent(guidPart); } catch (e) { /* そのまま使う */ }
+    returnToRevisit = flags.includes('from=revisit') && !!S.spiritByGuid[guid];
+    openDetail(guid);
+  }
 }
 
 export function unmount() {
@@ -740,6 +752,41 @@ function closeDetail() {
   els.detailOverlay.classList.remove('open');
   currentDetailGuid = null;
   markAllConfirming = false; resetTreeConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false;
+  if (returnToRevisit) {
+    returnToRevisit = false;
+    // 再訪精霊DBから来た履歴があれば戻る（フィルター・スクロール位置もそのまま）。
+    // リンクを直接開いた等で履歴が無ければ、再訪精霊DBを開く
+    let cameFromRevisit = false;
+    try { cameFromRevisit = !!sessionStorage.getItem(REVISIT_RETURN_KEY); } catch (e) { /* 判定できなければ開き直す */ }
+    if (cameFromRevisit) history.back();
+    else location.hash = '#/tai-revisit';
+  }
+}
+
+// 詳細画面の「来訪の記録」。再訪精霊DBと同じデータから、来訪日を古い順に並べる
+function formatVisitDate(d) {
+  const [y, m, day] = String(d).split('-').map(Number);
+  return `${y}/${m}/${day}`;
+}
+function revisitHistoryHtml(s) {
+  if (!s.nameJa) return '';
+  const entry = REVISIT_DATA.find((r) => r.nameJa === s.nameJa);
+  const never = !entry && NEVER_REVISITED_DATA.some((r) => r.nameJa === s.nameJa);
+  if (!entry && !never) return ''; // 季節精霊以外（恒常精霊など）は再訪の対象外
+  const chips = entry
+    ? entry.visits.filter((v) => v.type !== 'TS-Error').map((v) => {
+      const label = (v.type === 'SV' && v.endDate) ? `${formatVisitDate(v.date)}–${formatVisitDate(v.endDate)}` : formatVisitDate(v.date);
+      return `<span class="sc-visit-chip${v.type === 'SV' ? ' sv' : ''}">${label}</span>`;
+    }).join('')
+    : `<span class="sc-visit-none">${escapeHtml(t('detail.visitHistoryNone'))}</span>`;
+  const action = returnToRevisit
+    ? `<button type="button" class="sc-revisit-link" data-sc-detail-act="close">${icon('i-chevron-left', 13)}${escapeHtml(t('detail.backToRevisitDb'))}</button>`
+    : (entry ? `<a class="sc-revisit-link" href="#/tai-revisit/spirit=${encodeURIComponent(s.nameJa)}">${escapeHtml(t('detail.openInRevisitDb'))}${icon('i-chevron-right', 13)}</a>` : '');
+  return `
+      <div class="sc-visit-history">
+        <div class="sc-visit-head"><span>${escapeHtml(t('detail.visitHistoryLabel'))}</span>${action}</div>
+        <div class="sc-visit-chips">${chips}</div>
+      </div>`;
 }
 
 function markAllArea(spiritGuid, remainingCount) {
@@ -924,6 +971,7 @@ function renderDetail(guid) {
         <span>${escapeHtml(t('detail.progress'))}: <b>${done} / ${total}</b></span>
         ${revisitNote}
       </div>
+      ${revisitHistoryHtml(s)}
       ${markAllArea(guid, total - done)}
       ${markQuestsArea(guid, S.spiritNodesRemaining(s, S.isQuestNode))}
       ${markHeartsArea(guid, S.spiritNodesRemaining(s, S.isHeartNode))}

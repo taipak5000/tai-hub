@@ -49,6 +49,10 @@ import { AREA_JA, areaJa, SEASON_ORDER } from './data/revisit-meta.js';
 
 const STYLE_LINK_ID = 'tai-revisit-view-styles';
 const ROUTE_BASE = '#/tai-revisit';
+// 精霊ツリー管理へ移る直前のスクロール位置（閉じて戻ってきた時に元の位置へ戻すため）。
+// spirit-catalog-view.js も「再訪精霊DBから来たか」の判定にこのキーを読む
+const RETURN_KEY = 'tai_revisit_return_v1';
+const RETURN_MAX_AGE_MS = 30 * 60 * 1000;
 
 let containerEl = null;
 let els = {};
@@ -65,6 +69,8 @@ export function mount(container, sub) {
   wireEvents();
 
   const parsed = parseSub(sub);
+  const returning = consumeReturnState();
+  if (sc) { sc.invalidateUnlockedMapCache(); sc.invalidateExternalOwnCache(); } // ツリー管理側で変えた進行度を読み直す
   populateSeasonFilterFor(els.seasonFilter, REVISIT_DATA, parsed.season);
   populateSeasonFilterFor(els.neverRevisitedSeasonFilter, NEVER_REVISITED_DATA, 'all');
   populateAreaFilter(parsed.area);
@@ -76,6 +82,10 @@ export function mount(container, sub) {
   renderNeverRevisited();
 
   if (parsed.spirit) applySpiritHash(parsed.spirit);
+  else if (returning) {
+    // ツリーの進行度を描き終えてから戻す（先に戻すと、進行度の行が入った分だけ位置がずれる）
+    loadSpiritCatalog().catch(() => {}).then(() => { if (containerEl) window.scrollTo(0, returning.y || 0); });
+  }
 }
 
 export function unmount() {
@@ -206,6 +216,66 @@ function spiritItemsHtml(nameEn) {
   if (!items || !items.length) return '';
   const icons = items.map((it) => `<span class="spirit-item-icon" title="${escapeHtml(it.name)}"><img src="${it.icon}" alt="${escapeHtml(it.name)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.style.display='none'"></span>`).join('');
   return `<div class="spirit-items">${icons}</div>`;
+}
+
+/* ================================================================
+   🌳 精霊ツリー管理（spirit-catalog）との連携
+   各精霊カードにツリーの進行度を出し、「ツリーを管理」で精霊ツリー管理の
+   その精霊の画面を開く（閉じるとこの画面の同じ位置に戻る）。ツリーのデータは
+   約1.7MBあるので、カードを描いた後に読み込んでから進行度を埋める。
+   ================================================================ */
+let sc = null;
+let scLoading = null;
+let scByNameJa = null;
+function loadSpiritCatalog() {
+  if (sc) return Promise.resolve(sc);
+  if (!scLoading) {
+    scLoading = import('../spirit-catalog/spirit-catalog-state.js').then((m) => {
+      scByNameJa = new Map();
+      m.SPIRIT_TREE_DATA.forEach((s) => { if (s.nameJa && !scByNameJa.has(s.nameJa)) scByNameJa.set(s.nameJa, s); });
+      sc = m;
+      fillTreeSlots();
+      return m;
+    });
+    scLoading.catch(() => { scLoading = null; });
+  }
+  return scLoading;
+}
+function treeSlotHtml(nameJa) {
+  return `<div class="tr-tree" data-tree-name="${escapeHtml(nameJa)}"><span class="tr-tree-loading">${escapeHtml(t('treeLoading'))}</span></div>`;
+}
+function fillTreeSlots() {
+  if (!containerEl) return;
+  if (!sc) { loadSpiritCatalog().catch(() => {}); return; }
+  containerEl.querySelectorAll('.tr-tree:not(.filled)').forEach((slot) => {
+    slot.classList.add('filled');
+    const spirit = scByNameJa.get(slot.dataset.treeName);
+    if (!spirit) { slot.remove(); return; }
+    const { done, total } = sc.spiritProgress(spirit);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    slot.innerHTML = `
+      <button type="button" class="tr-tree-btn${total && done === total ? ' complete' : ''}" data-tree-guid="${escapeHtml(spirit.guid)}" title="${escapeHtml(t('treeManageTitle'))}">
+        <span class="tr-tree-label">${escapeHtml(t('treeProgressLabel'))}</span>
+        <span class="tr-tree-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>
+        <span class="tr-tree-num">${done} / ${total}</span>
+        <span class="tr-tree-manage">${escapeHtml(t('treeManageBtn'))}<svg class="inline-icon" width="12" height="12"><use href="#i-chevron-right"/></svg></span>
+      </button>`;
+  });
+}
+function openTreeManager(btn) {
+  const card = btn.closest('.spirit-card');
+  try {
+    sessionStorage.setItem(RETURN_KEY, JSON.stringify({ y: window.scrollY, name: (card && card.dataset.spiritName) || '', at: Date.now() }));
+  } catch (e) { /* 保存できなくても移動はする（戻った時に先頭から表示されるだけ） */ }
+  location.hash = `#/spirit-catalog/${encodeURIComponent(btn.dataset.treeGuid)}&from=revisit`;
+}
+function consumeReturnState() {
+  try {
+    const raw = sessionStorage.getItem(RETURN_KEY);
+    sessionStorage.removeItem(RETURN_KEY);
+    const st = raw ? JSON.parse(raw) : null;
+    return st && Date.now() - (st.at || 0) < RETURN_MAX_AGE_MS ? st : null;
+  } catch (e) { return null; }
 }
 
 function findSpiritCardEl(nameJa) {
@@ -350,9 +420,11 @@ function renderUpcomingRevisits() {
           </div>
           ${spiritItemsHtml(s.nameEn)}
           <div class="visit-list"><span class="visit-chip sv">${dateLabel}</span></div>
+          ${treeSlotHtml(s.nameJa)}
         </div>
       </div>`;
   }).join('');
+  fillTreeSlots();
 }
 
 /* ================================================================
@@ -485,9 +557,11 @@ function render() {
           ${spiritItemsHtml(s.nameEn)}
           <div class="visit-list">${chips}</div>
           <div class="visit-count">${rankBadge}${t('visitCountLine', { count: s.visits.length, days: daysSince(lastVisitEndDate(s)) })}</div>
+          ${treeSlotHtml(s.nameJa)}
         </div>
       </div>`;
   }).join('');
+  fillTreeSlots();
 }
 
 /* ================================================================
@@ -534,8 +608,10 @@ function renderNeverRevisited() {
           <span class="spirit-badge area">${escapeHtml(areaLabel(s.area))}</span>
         </div>
         ${spiritItemsHtml(s.nameEn)}
+        ${treeSlotHtml(s.nameJa)}
       </div>
     </div>`).join('');
+  fillTreeSlots();
 }
 
 /* ================================================================
@@ -671,6 +747,10 @@ function wireEvents() {
     const section = containerEl.querySelector('#trNeverRevisitedSection');
     section.open = true;
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  containerEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tr-tree-btn');
+    if (btn) openTreeManager(btn);
   });
   els.neverRevisitedSearchInput.addEventListener('input', renderNeverRevisited);
   els.neverRevisitedSeasonFilter.addEventListener('change', renderNeverRevisited);

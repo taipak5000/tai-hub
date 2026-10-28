@@ -93,6 +93,10 @@ export const I18N = {
   detail: {
     progress: { ja: '進捗', en: 'Progress' },
     revisitTemplate: { ja: '再訪ツリー({name} / {date})', en: 'Revisit Tree ({name} / {date})' },
+    visitHistoryLabel: { ja: '来訪の記録', en: 'Visit history' },
+    visitHistoryNone: { ja: 'まだ一度も再訪していません', en: 'Has not returned yet' },
+    openInRevisitDb: { ja: '再訪精霊DBで見る', en: 'View in Returning Spirit DB' },
+    backToRevisitDb: { ja: '再訪精霊DBに戻る', en: 'Back to Returning Spirit DB' },
     revisitTreeBadgeTitle: { ja: '再訪ツリー', en: 'Revisit Tree' },
     noItemName: { ja: '（アイテム不明）', en: '(Unknown Item)' },
     warpNodeTitleTemplate: { ja: '{name}（イベント期間限定のワープ機能のため管理対象外）', en: '{name} (event-limited warp feature — not tracked)' },
