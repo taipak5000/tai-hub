@@ -83,7 +83,7 @@ export const TITLE_CATALOG = {
   // に切り替わったため、元実装の namespaced:false ではなく true にする
   // （ファイル冒頭コメント参照）。
   score: {
-    storageKey: 'taiScoreTitles_v1', namespaced: true, source: '姉妹サイト', sourceEn: 'Sibling Site',
+    storageKey: 'taiScoreTitles_v1', namespaced: true, sharedFallback: true, source: '姉妹サイト', sourceEn: 'Sibling Site',
     extract: d => ((d && d.earned) || []).map(e => e.id),
     titles: {
       firstSong: { icon: '🎼', name: 'はじめの一歩', nameEn: 'First Step', desc: 'はじめての1曲をライブラリに加えた', descEn: 'Added your first song to the library' },

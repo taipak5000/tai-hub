@@ -45,12 +45,20 @@ export const LOOP_RANGE_KEY = () => nsKey('taiScoreLoopRangeEnabled_v1');
            lastPracticeResult?: { at }、lastTestResult?: { at, mistakes } }
    （形状は移植元と完全に同一。詳細は移植元コメント参照）
    ================================================================ */
+// 旧サイトの楽譜づくりには保存枠（プロフィール）が無く、曲・称号・キー割り当ては1つの共通キーにあった
+// （どの保存枠を選んでいても同じ曲が見えていた）。ハブで保存枠ごとのデータがまだ無い間は、その共通キーを読む。
+// 保存した時点でこの保存枠専用のキーに書かれ、以後はそちらが使われる
+function readProfileOrShared(key, rawKey) {
+  const v = localStorage.getItem(key);
+  return v === null && key !== rawKey ? localStorage.getItem(rawKey) : v;
+}
+
 export function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 export function songNoteCount(s) { return s.frames.reduce((sum, f) => sum + f.length, 0); }
 
 export function loadSongs() {
   try {
-    const songs = JSON.parse(localStorage.getItem(SONGS_KEY())) || [];
+    const songs = JSON.parse(readProfileOrShared(SONGS_KEY(), 'taiScoreSongs_v1')) || [];
     // 🧹 以前この端末に存在した2レイヤー機能(値0〜14=レイヤー1, 15〜29=レイヤー2の
     // オフセット方式)の名残りが保存済みの楽譜に残っていた場合、%15で正規化して
     // 単一レイヤーの音程に統合する(重複除去つき)。レイヤー機能を廃止した今、
@@ -78,7 +86,7 @@ export const TITLES = [
 ];
 export function loadTitlesData() {
   try {
-    const d = JSON.parse(localStorage.getItem(TITLES_KEY()));
+    const d = JSON.parse(readProfileOrShared(TITLES_KEY(), 'taiScoreTitles_v1'));
     if (d && typeof d === 'object') {
       return {
         earned: d.earned || [],
@@ -154,7 +162,7 @@ export function sortSongs(songs, sortMode) {
    ================================================================ */
 export function loadKeyBindings() {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY_BINDINGS_KEY()));
+    const saved = JSON.parse(readProfileOrShared(KEY_BINDINGS_KEY(), 'taiScoreKeyBindings_v1'));
     if (Array.isArray(saved) && saved.length === 15) return saved;
   } catch (_) { /* 無視してデフォルトを使う */ }
   return DEFAULT_KEY_BINDINGS.slice();

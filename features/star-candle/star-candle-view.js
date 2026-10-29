@@ -60,6 +60,7 @@ const NOTIFY_SHARD_LEAD_MS = 10 * 60 * 1000;      // 着地10分前
 const NOTIFY_GOAL_LEAD_MS = 24 * 60 * 60 * 1000;  // 前日
 
 let containerEl = null;
+let refreshDateTrigger = () => {}; // 目標日ボタンの表示を値に合わせ直す（wireDatePicker()が差し替える）
 let els = {};
 let mountToken = 0;
 
@@ -110,6 +111,7 @@ export function mount(container) {
   wireEvents();
 
   loadState();
+  refreshDateTrigger(); // 目標日の表示はloadState()より前に作られるので、読み込んだ値で作り直す
   update();
 
   const ctx = {
@@ -722,6 +724,7 @@ function wireDatePicker() {
   onDocumentClickCloseDatePicker = (ev) => { if (!datePickerEl.contains(ev.target)) close(); };
   document.addEventListener('click', onDocumentClickCloseDatePicker);
 
+  refreshDateTrigger = updateTriggerText;
   updateTriggerText();
 }
 

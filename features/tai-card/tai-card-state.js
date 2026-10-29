@@ -199,7 +199,9 @@ export function syncSpiritStat() {
 // ここも同じくnsKey()経由で読む（ファイル冒頭コメント参照）。
 export function syncScoreStat() {
   let songs;
-  try { songs = JSON.parse(localStorage.getItem(nsKey('taiScoreSongs_v1'))); } catch (_) { songs = null; }
+  // 楽譜づくりと同じく、この保存枠の曲がまだ無ければ旧サイトの共通キーを読む
+  const raw = localStorage.getItem(nsKey('taiScoreSongs_v1'));
+  try { songs = JSON.parse(raw === null ? localStorage.getItem('taiScoreSongs_v1') : raw); } catch (_) { songs = null; }
   if (!Array.isArray(songs) || !songs.length) return null;
   return songs.length + '曲';
 }
@@ -231,7 +233,10 @@ export function syncEarnedTitles(profileId) {
     const tool = TITLE_CATALOG[toolId];
     const key = tool.namespaced ? nsKeyFor(tool.storageKey, pid) : tool.storageKey;
     let data;
-    try { data = JSON.parse(localStorage.getItem(key)); } catch (_) { data = null; }
+    let raw = localStorage.getItem(key);
+    // 旧サイトに保存枠が無かったツール（楽譜づくり）は、この保存枠のデータがまだ無ければ共通キーを読む
+    if (raw === null && tool.sharedFallback && key !== tool.storageKey) raw = localStorage.getItem(tool.storageKey);
+    try { data = JSON.parse(raw); } catch (_) { data = null; }
     let ids = [];
     try { ids = tool.extract(data) || []; } catch (_) { ids = []; }
     ids.forEach(id => {
