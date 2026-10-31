@@ -355,3 +355,24 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 /* 印刷（縮小で線が消えないよう太さを --dc-hair で補う。間隔は同じ --dc-pitch） */
 .daily-check-view .dc-print-area .dc-paper.paper-lined { background-image: linear-gradient(transparent calc(var(--dc-pitch) - var(--dc-hair, 1px)), var(--dc-line) calc(var(--dc-pitch) - var(--dc-hair, 1px))); }
 .daily-check-view .dc-print-area .dc-memo-lines { min-height: calc(var(--dc-pitch) * 2); background-size: 100% var(--dc-pitch); background-image: linear-gradient(transparent calc(var(--dc-pitch) - var(--dc-hair, 1px)), var(--dc-line) calc(var(--dc-pitch) - var(--dc-hair, 1px))); }
+
+/* 🔥 連続記録・通算記録日数・記録カレンダー */
+.daily-check-view .dc-streak-wrap { margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--hub-sep); }
+.daily-check-view .dc-streak { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; font-size: 13px; line-height: 1.6; }
+.daily-check-view .dc-streak-main { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; color: #E8590C; }
+.daily-check-view .dc-streak-main .inline-icon { stroke: currentColor; }
+.daily-check-view .dc-streak-main.is-empty { font-weight: 600; color: var(--hub-text-2); }
+.daily-check-view .dc-streak-hint { font-size: 12px; color: var(--hub-text-2); }
+.daily-check-view .dc-streak-stats { color: var(--hub-text-2); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.daily-check-view .dc-hm { margin-top: 6px; }
+.daily-check-view .dc-hm summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--hub-accent); }
+.daily-check-view .dc-hm-grid { --hm-cell: 12px; display: grid; grid-template-columns: repeat(12, var(--hm-cell)); grid-template-rows: repeat(7, var(--hm-cell)); gap: 3px; width: max-content; margin-top: 8px; }
+.daily-check-view .dc-hm-cell { display: inline-block; width: var(--hm-cell, 12px); height: var(--hm-cell, 12px); border-radius: 3px; background: var(--hub-sep); }
+.daily-check-view .dc-hm-cell.on { background: #F08C3A; }
+.daily-check-view .dc-hm-cell.today { box-shadow: inset 0 0 0 1.5px #C2410C; }
+.daily-check-view .dc-hm-legend { display: flex; align-items: center; gap: 4px 6px; margin-top: 6px; font-size: 11px; color: var(--hub-text-2); }
+.daily-check-view .dc-hm-legend .dc-hm-cell { --hm-cell: 10px; margin-left: 6px; }
+[data-theme="dark"] .daily-check-view .dc-streak-main { color: #FF922B; }
+@media (prefers-contrast: more) {
+  .daily-check-view .dc-hm-cell { box-shadow: inset 0 0 0 1px var(--hub-text-2); }
+}

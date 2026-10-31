@@ -24,6 +24,7 @@ import { ptParts, ptToReal } from '../../js/pacific-time.js';
 const STYLE_LINK_ID = 'daily-check-view-styles';
 const SHEETS_KEY = 'dailyCheckSheets_v1';
 const STATE_KEY = 'dailyCheckState_v1';
+const LOG_KEY = 'dailyCheckLog_v1'; // 記録した日（連続記録・通算日数用）: { days: { 'YYYY-M-D': 1 }, best }
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 
@@ -232,6 +233,75 @@ function loadChecks() {
   } catch (e) { /* 壊れたデータは使わない */ }
   return { dayKey: dayKeyNow(), sheets: {} };
 }
+/* ================================================================
+   🔥 連続記録・通算記録日数（ほかのツールの連続記録と同じ考え方）
+   どのシートでも1つチェックを付けた日（ゲーム内の日付＝太平洋時間）を「記録した日」として残す。
+   チェックを外しても記録した日は消さない。今日まだ記録していなくても、前日まで続いていれば途切れていない扱い
+   ================================================================ */
+function loadLog() {
+  try {
+    const l = JSON.parse(localStorage.getItem(nsKey(LOG_KEY)));
+    if (l && l.days && typeof l.days === 'object') return { days: l.days, best: Number(l.best) || 0 };
+  } catch (e) { /* 壊れたデータは使わない */ }
+  return { days: {}, best: 0 };
+}
+const dayNum = key => { const [y, m, d] = key.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const keyOfDayNum = n => { const dt = new Date(n * 86400000); return `${dt.getUTCFullYear()}-${dt.getUTCMonth() + 1}-${dt.getUTCDate()}`; };
+function currentStreak(log) {
+  const today = dayNum(dayKeyNow());
+  let n = log.days[keyOfDayNum(today)] ? today : today - 1; // 今日まだなら前日から数える
+  let count = 0;
+  while (log.days[keyOfDayNum(n)]) { count++; n--; }
+  return count;
+}
+function recordToday() {
+  const log = loadLog();
+  const key = dayKeyNow();
+  if (log.days[key]) return;
+  log.days[key] = 1;
+  log.best = Math.max(log.best, currentStreak(log));
+  try { localStorage.setItem(nsKey(LOG_KEY), JSON.stringify(log)); } catch (e) { /* 容量不足などは今回だけ諦める */ }
+  const el = viewRoot() && viewRoot().querySelector('.dc-streak-wrap');
+  if (el) el.innerHTML = streakInnerHtml();
+}
+function streakHtml() { return `<div class="dc-streak-wrap">${streakInnerHtml()}</div>`; }
+function streakInnerHtml() {
+  const log = loadLog();
+  const cur = currentStreak(log);
+  const best = Math.max(log.best, cur);
+  const total = Object.keys(log.days).length;
+  const recordedToday = !!log.days[dayKeyNow()];
+  const main = cur > 0
+    ? `<span class="dc-streak-main"><svg class="inline-icon" width="16" height="16"><use href="#i-flame"/></svg>${escapeHtml(t(`${cur}日連続で記録中`, `${cur}-day streak`))}</span>${recordedToday ? '' : `<span class="dc-streak-hint">${escapeHtml(t('今日チェックすると続きます', 'Check something today to keep it'))}</span>`}`
+    : `<span class="dc-streak-main is-empty">${escapeHtml(t('チェックを付けると連続記録が始まります', 'Check something to start a streak'))}</span>`;
+  const stats = total > 0
+    ? `<span class="dc-streak-stats">${escapeHtml(t(`最長 ${best}日 ・ 通算 ${total}日`, `Best ${best} days · ${total} days total`))}</span>`
+    : '';
+  return `<div class="dc-streak">${main}${stats}</div>${total > 0 ? heatmapHtml(log) : ''}`;
+}
+// 直近の記録をカレンダー状に（1列＝1週間・日曜はじまり）。古い週は左、今日の週は右端
+const HEATMAP_WEEKS = 12;
+function heatmapHtml(log) {
+  const today = dayNum(dayKeyNow());
+  const todayDow = new Date(today * 86400000).getUTCDay();
+  const start = today - todayDow - (HEATMAP_WEEKS - 1) * 7;
+  let cells = '';
+  for (let w = 0; w < HEATMAP_WEEKS; w++) {
+    for (let d = 0; d < 7; d++) {
+      const n = start + w * 7 + d;
+      if (n > today) continue;
+      const key = keyOfDayNum(n);
+      const [, m, dd] = key.split('-');
+      const on = !!log.days[key];
+      cells += `<span class="dc-hm-cell${on ? ' on' : ''}${n === today ? ' today' : ''}" style="grid-column:${w + 1};grid-row:${d + 1}" title="${escapeHtml(`${m}/${dd}${on ? t(' 記録あり', ' recorded') : ''}`)}"></span>`;
+    }
+  }
+  return `<details class="dc-hm"><summary>${escapeHtml(t(`記録カレンダー（直近${HEATMAP_WEEKS}週）`, `Log calendar (last ${HEATMAP_WEEKS} weeks)`))}</summary>
+    <div class="dc-hm-grid" role="img" aria-label="${escapeHtml(t('記録した日のカレンダー', 'Calendar of recorded days'))}">${cells}</div>
+    <div class="dc-hm-legend"><span class="dc-hm-cell"></span>${escapeHtml(t('記録なし', 'None'))}<span class="dc-hm-cell on"></span>${escapeHtml(t('記録あり', 'Recorded'))}</div>
+  </details>`;
+}
+
 function saveChecks() {
   try { localStorage.setItem(nsKey(STATE_KEY), JSON.stringify(chk)); } catch (e) { /* 同上 */ }
 }
@@ -353,6 +423,7 @@ function toolbarHtml(sheet) {
         <button type="button" class="dc-btn primary" data-act="print">${escapeHtml(t('印刷する', 'Print'))}</button>
         <button type="button" class="dc-btn danger" data-act="sheet-del">${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
       </div>${goalHint}
+      ${streakHtml()}
       <div class="dc-reset">
         <span class="dc-reset-next">${escapeHtml(resetInfoText())}</span>
         <span class="dc-reset-note">${escapeHtml(sheet.autoReset
@@ -679,6 +750,7 @@ function onClick(ev) {
     const c = rowChecks(sheet, btn.dataset.r, true);
     if (c[i]) delete c[i]; else c[i] = true;
     saveChecks();
+    if (c[i]) recordToday();
     // 押したボタンだけ差し替える（行全体を描き直すと数の入力欄のフォーカスが外れるため）
     const on = !!c[i];
     btn.classList.toggle('on', on);
@@ -811,6 +883,7 @@ function onInput(ev) {
     const boxBtn = el.parentElement.querySelector('.dc-box');
     if (v && Number(v) > 0 && !c[i]) {
       c[i] = true;
+      recordToday();
       boxBtn.classList.add('on'); boxBtn.setAttribute('aria-checked', 'true');
       boxBtn.querySelector('.dc-box-svg').outerHTML = shapeSvg(sheet.style, true);
       refreshProgress();
