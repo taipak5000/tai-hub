@@ -415,7 +415,7 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
       ${chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分（縦）', en: '1 day (portrait)' }, 2: { ja: '2日分（横に並べる）', en: '2 days side by side' } }, st.perPage)}
       <p class="dc-style-note">${escapeHtml(st.perPage === 2
-    ? t('A4を横向きにして、左右に1枚ずつ並べて印刷します。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Prints two sheets side by side on landscape A4. Cut along the center line to get two A5 sheets.')
+    ? t('A4を横向きにして、左右に1枚ずつ並べて印刷します。真ん中の点線で切ると、A5サイズのシートが2枚になります。項目が少ないシートは、その側の上半分と下半分に1回ずつ印刷します。', 'Prints two sheets side by side on landscape A4. Cut along the center line to get two A5 sheets. A short sheet is printed twice on its side, top and bottom.')
     : t('A4の縦向きで印刷します。項目が少なく半分の高さに収まるシートは、上半分と下半分に1回ずつ印刷します。', 'Prints on portrait A4. A short sheet that fits in half the height is printed twice, top and bottom.'))}</p>
       ${st.perPage === 2 ? printPairHtml(sheet) : ''}
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
@@ -543,24 +543,19 @@ const PRINT_MARGIN_MM = 8;
 const PX_PER_MM = 96 / 25.4;
 const HOLE_FROM_EDGE_MM = 12;
 const HOLE_GAP_MM = 80;
+// w,h: 余白の内側の大きさ（hは丸め誤差で2枚目にはみ出さないよう2mm控える）。
+// sides: シートを置く列（縦は1列、2日分は左右2列）。x,w: シートの位置と幅、x0〜x1: その列の範囲（上下の区切り線を引く範囲）、
+// midY: 用紙の上下の真ん中（用紙の端から148.5mm／105mm）。holes: ●の中心
 const LAYOUTS = {
-  // w,h: 余白の内側の大きさ（hは丸め誤差で2枚目にはみ出さないよう2mm控える）。slots: シートを置く枠。holes: ●の中心
   portrait: {
     w: 194, h: 279,
-    slots: [{ x: 14, y: 0, w: 180, h: 279 }],
+    sides: [{ x: 14, w: 180, x0: 0, x1: 194, midY: 140.5 }],
     holes: [[HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 - HOLE_GAP_MM / 2], [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 + HOLE_GAP_MM / 2]],
     cut: null,
   },
-  // 項目が少ないシート（1日分）は、同じシートを上半分と下半分に1回ずつ。真ん中（用紙の端から148.5mm）に区切りの点線
-  portraitStack: {
-    w: 194, h: 279,
-    slots: [{ x: 14, y: 0, w: 180, h: 134 }, { x: 14, y: 147, w: 180, h: 132 }],
-    holes: [[HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 - HOLE_GAP_MM / 2], [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 + HOLE_GAP_MM / 2]],
-    cut: null, cutY: 140.5,
-  },
   landscape: {
     w: 281, h: 192,
-    slots: [{ x: 14, y: 0, w: 118.5, h: 192 }, { x: 162.5, y: 0, w: 118.5, h: 192 }],
+    sides: [{ x: 14, w: 118.5, x0: 0, x1: 140.5, midY: 97 }, { x: 162.5, w: 118.5, x0: 140.5, x1: 281, midY: 97 }],
     holes: [
       [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 97 - HOLE_GAP_MM / 2], [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 97 + HOLE_GAP_MM / 2],
       [140.5 + HOLE_FROM_EDGE_MM, 97 - HOLE_GAP_MM / 2], [140.5 + HOLE_FROM_EDGE_MM, 97 + HOLE_GAP_MM / 2],
@@ -568,6 +563,14 @@ const LAYOUTS = {
     cut: 140.5,
   },
 };
+const STACK_GAP_MM = 6.5; // 上下に2回印刷する時の、区切り線から上下のシートまでの間隔
+
+// その列にシートを置く枠。stack なら同じシートを上半分と下半分に1つずつ
+function sideSlots(layout, side, stack) {
+  if (!stack) return [{ x: side.x, y: 0, w: side.w, h: layout.h }];
+  const bottomY = side.midY + STACK_GAP_MM;
+  return [{ x: side.x, y: 0, w: side.w, h: side.midY - STACK_GAP_MM }, { x: side.x, y: bottomY, w: side.w, h: layout.h - bottomY }];
+}
 
 // シート1枚を枠（px）に収まる縮小率を求める。縮めると横幅に余裕ができて折り返しが減り高さが変わるので、
 // 幅を広げて測り直すのを数回くり返す
@@ -588,56 +591,59 @@ function fitScale(paper, availW, availH) {
   return scale < 1 ? scale * 0.97 : 1;
 }
 
-// 項目が少なく、半分の高さでもあまり縮めずに収まる（この縮小率以上）なら、上下に2回印刷する
-const STACK_MIN_SCALE = 0.85;
+// 項目が少ないシートは、その列の上半分と下半分に1回ずつ印刷する（メモが紙の大半を占めないように）。
+// 半分の高さに入れた時の縮小率が、列いっぱいに入れた時のこの割合以上（＝あまり縮めずに収まる）なら上下2回にする
+const STACK_MIN_RATIO = 0.85;
 
-function renderPrintArea(area, layout, sheets, showHoles) {
+// plan: 列ごとの { sheet, stack }。枠・区切り線・●を描き、各シートの要素と枠を返す
+function renderPrintArea(area, layout, plan, showHoles) {
   const mm = v => `${v}mm`;
+  const slots = [];
+  plan.forEach((p, i) => sideSlots(layout, layout.sides[i], p.stack).forEach(sl => slots.push({ ...sl, sheet: p.sheet })));
   area.innerHTML = `
     <div class="dc-print-sheet" style="width:${mm(layout.w)};height:${mm(layout.h)}">
-      ${layout.slots.map((sl, i) => `<div class="dc-slot" style="left:${mm(sl.x)};top:${mm(sl.y)};width:${mm(sl.w)};height:${mm(sl.h)}">${paperHtml(sheets[i], { mode: 'print' })}</div>`).join('')}
+      ${slots.map(sl => `<div class="dc-slot" style="left:${mm(sl.x)};top:${mm(sl.y)};width:${mm(sl.w)};height:${mm(sl.h)}">${paperHtml(sl.sheet, { mode: 'print' })}</div>`).join('')}
       ${layout.cut != null ? `<div class="dc-cut" style="left:${mm(layout.cut)}"></div>` : ''}
-      ${layout.cutY != null ? `<div class="dc-cut-h" style="top:${mm(layout.cutY)}"></div>` : ''}
+      ${plan.map((p, i) => (p.stack ? `<div class="dc-cut-h" style="top:${mm(layout.sides[i].midY)};left:${mm(layout.sides[i].x0)};width:${mm(layout.sides[i].x1 - layout.sides[i].x0)}"></div>` : '')).join('')}
       ${showHoles ? layout.holes.map(([x, y]) => `<span class="dc-hole" style="left:${mm(x)};top:${mm(y)}"></span>`).join('') : ''}
     </div>`;
+  return { papers: [...area.querySelectorAll('.dc-slot > .dc-paper')], slots };
 }
-function measureScale(area, layout) {
-  const papers = [...area.querySelectorAll('.dc-slot > .dc-paper')];
-  return Math.min(...papers.map((paper, i) => fitScale(paper, layout.slots[i].w * PX_PER_MM, layout.slots[i].h * PX_PER_MM)));
+// 列ごとの縮小率（上下2回なら2つのうち小さい方）
+function sideScales(rendered, plan) {
+  const out = [];
+  let k = 0;
+  plan.forEach((p) => {
+    const n = p.stack ? 2 : 1;
+    let sc = 1;
+    for (let j = 0; j < n; j++, k++) sc = Math.min(sc, fitScale(rendered.papers[k], rendered.slots[k].w * PX_PER_MM, rendered.slots[k].h * PX_PER_MM));
+    out.push(sc);
+  });
+  return out;
 }
 
 function doPrint() {
   const sheet = activeSheet();
   const two = sheet.style.perPage === 2;
+  const layout = LAYOUTS[two ? 'landscape' : 'portrait'];
+  const sheets = two ? printPairSheets(sheet) : [sheet];
   const area = viewRoot().querySelector('.dc-print-area');
   const html = document.documentElement;
-  // 画面外で、印刷時と同じ見た目にして測る。左右（上下）のシートは同じ縮小率にそろえる（大きさが揃って見えるように）
+  // 画面外で、印刷時と同じ見た目にして測る。列いっぱいに1回の場合と上下2回の場合を両方測り、列ごとに決める
   html.classList.add('dc-measuring');
-  let layout;
-  let scale;
-  if (two) {
-    layout = LAYOUTS.landscape;
-    renderPrintArea(area, layout, printPairSheets(sheet), sheet.style.showHoles);
-    scale = measureScale(area, layout);
-  } else {
-    // まず上下2回で収まるか試し、項目が多くて縮みすぎるなら1回（縦いっぱい）に戻す
-    layout = LAYOUTS.portraitStack;
-    renderPrintArea(area, layout, [sheet, sheet], sheet.style.showHoles);
-    scale = measureScale(area, layout);
-    if (scale < STACK_MIN_SCALE) {
-      layout = LAYOUTS.portrait;
-      renderPrintArea(area, layout, [sheet], sheet.style.showHoles);
-      scale = measureScale(area, layout);
-    }
-  }
+  const full = sideScales(renderPrintArea(area, layout, sheets.map(sh => ({ sheet: sh, stack: false })), false), sheets.map(() => ({ stack: false })));
+  const stacked = sideScales(renderPrintArea(area, layout, sheets.map(sh => ({ sheet: sh, stack: true })), false), sheets.map(() => ({ stack: true })));
+  const plan = sheets.map((sh, i) => ({ sheet: sh, stack: stacked[i] >= full[i] * STACK_MIN_RATIO }));
+  const rendered = renderPrintArea(area, layout, plan, sheet.style.showHoles);
+  // 左右（上下）のシートは同じ縮小率にそろえる（大きさが揃って見えるように）
+  const scale = Math.min(...plan.map((p, i) => (p.stack ? stacked[i] : full[i])));
 
   let styleEl = document.getElementById('dcPageStyle');
   if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dcPageStyle'; document.head.appendChild(styleEl); }
   styleEl.textContent = `@page { size: A4 ${two ? 'landscape' : 'portrait'}; margin: ${PRINT_MARGIN_MM}mm; }`;
 
-  const papers = [...area.querySelectorAll('.dc-slot > .dc-paper')];
-  papers.forEach((paper, i) => {
-    const sl = layout.slots[i];
+  rendered.papers.forEach((paper, i) => {
+    const sl = rendered.slots[i];
     paper.style.width = `${(sl.w * PX_PER_MM) / scale}px`;
     // 枠の高さいっぱいに伸ばす。項目が少なくて余った分はメモの欄が広がって埋める（.dc-print-area の flex 指定）
     paper.style.height = `${(sl.h * PX_PER_MM) / scale}px`;
