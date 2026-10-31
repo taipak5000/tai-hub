@@ -307,3 +307,50 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 .daily-check-view .dc-player { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0 6px; padding-right: 40px; }
 .daily-check-view .dc-player-label { flex-shrink: 0; font-size: 12px; font-weight: 800; color: var(--dc-accent); letter-spacing: 0.04em; }
 .daily-check-view .dc-player-line { flex: 0 1 220px; height: 1.4em; border-bottom: 1.5px solid var(--dc-ink); opacity: 0.6; }
+
+/* ================================================================
+   📏 シートの中身を紙の線の間隔（--dc-pitch）にそろえる
+   方眼・罫線・ドットの線が文字の真ん中にかからないよう、見出し・日付・プレイヤー名・セクション見出し・行・
+   チェック・メモの高さをすべて線の間隔ちょうど（またはその整数倍）にし、紙の内側の余白も同じ間隔にする。
+   線は紙の内側（padding-box）の左上から引くので、余白＝1マスにすると中身の上端がちょうど線に乗る。
+   編集中（.editing）は入力欄の大きさを優先するので対象外。
+   ================================================================ */
+.daily-check-view .dc-paper { --dc-pitch: 28px; }
+.daily-check-view .dc-paper:not(.editing) { padding: var(--dc-pitch); }
+.daily-check-view .dc-paper.paper-grid { background-size: var(--dc-pitch) var(--dc-pitch); background-position: 0 0; }
+.daily-check-view .dc-paper.paper-lined { background-image: linear-gradient(transparent calc(var(--dc-pitch) - 1px), var(--dc-line) calc(var(--dc-pitch) - 1px)); background-size: 100% var(--dc-pitch); }
+/* ドットはマスの角（＝行と行の境目）に打つ */
+.daily-check-view .dc-paper.paper-dot { background-size: var(--dc-pitch) var(--dc-pitch); background-position: calc(var(--dc-pitch) / -2) calc(var(--dc-pitch) / -2); }
+
+.daily-check-view .dc-paper:not(.editing) .dc-paper-head { margin: 0; gap: 0 12px; align-items: center; }
+.daily-check-view .dc-paper:not(.editing) .dc-title,
+.daily-check-view .dc-paper:not(.editing) .dc-date { line-height: var(--dc-pitch); }
+.daily-check-view .dc-paper:not(.editing) .dc-player { margin: 0; height: var(--dc-pitch); align-items: center; }
+.daily-check-view .dc-paper:not(.editing) .dc-player-line { height: 18px; }
+.daily-check-view .dc-paper:not(.editing) .dc-section { margin-top: var(--dc-pitch); display: flow-root; } /* flow-root: 見出しのピルの余白とセクションの余白が相殺されて3pxずれるのを防ぐ */
+.daily-check-view .dc-paper:not(.editing) .dc-paper-head + .dc-section,
+.daily-check-view .dc-paper:not(.editing) .dc-player + .dc-section { margin-top: 0; }
+.daily-check-view .dc-paper:not(.editing) .dc-sec { display: table; margin: 3px 0; padding: 0 12px; line-height: 22px; }
+.daily-check-view .dc-paper:not(.editing) .dc-row { min-height: var(--dc-pitch); padding: 0 2px; gap: 0 12px; border-bottom: 0; align-items: flex-start; } /* 上詰め: 何段にもなる行（染料上限など）で行名が線の上に来ないように */
+.daily-check-view .dc-paper:not(.editing) .dc-label,
+.daily-check-view .dc-paper:not(.editing) .dc-opt-label { line-height: var(--dc-pitch); }
+.daily-check-view .dc-paper:not(.editing) .dc-opts { gap: 0 10px; }
+.daily-check-view .dc-paper:not(.editing) .dc-opts.cols-2 { gap: 0 18px; }
+.daily-check-view .dc-paper:not(.editing) .dc-box { min-height: var(--dc-pitch); padding: 0 4px 0 0; }
+.daily-check-view .dc-paper:not(.editing) .dc-box-svg { width: 22px; height: 22px; }
+.daily-check-view .dc-paper:not(.editing) .dc-num { height: 24px; margin: 2px 0; }
+/* 線の無い紙（無地・ドット）では、行の区切りを高さの増えない点線（背景）で描く */
+.daily-check-view .dc-paper.paper-plain:not(.editing) .dc-row:not(:last-child),
+.daily-check-view .dc-paper.paper-dot:not(.editing) .dc-row:not(:last-child) {
+  background: linear-gradient(to right, var(--dc-line) 50%, transparent 0) left bottom / 8px 1px repeat-x;
+}
+.daily-check-view .dc-paper:not(.editing) .dc-memo { margin-top: var(--dc-pitch); padding-top: 0; border-top: 0; }
+.daily-check-view .dc-paper:not(.editing) .dc-memo-label { line-height: var(--dc-pitch); }
+.daily-check-view .dc-paper:not(.editing) .dc-memo-lines { height: calc(var(--dc-pitch) * 3); background-size: 100% var(--dc-pitch); background-image: linear-gradient(transparent calc(var(--dc-pitch) - 1px), var(--dc-line) calc(var(--dc-pitch) - 1px)); }
+.daily-check-view .dc-paper:not(.editing) .dc-memo-lines.short { height: calc(var(--dc-pitch) * 2); }
+/* 方眼・罫線の紙は、紙の線がそのままメモの罫線になる */
+.daily-check-view .dc-paper.paper-grid .dc-memo-lines,
+.daily-check-view .dc-paper.paper-lined .dc-memo-lines { background-image: none !important; }
+/* 印刷（縮小で線が消えないよう太さを --dc-hair で補う。間隔は同じ --dc-pitch） */
+.daily-check-view .dc-print-area .dc-paper.paper-lined { background-image: linear-gradient(transparent calc(var(--dc-pitch) - var(--dc-hair, 1px)), var(--dc-line) calc(var(--dc-pitch) - var(--dc-hair, 1px))); }
+.daily-check-view .dc-print-area .dc-memo-lines { min-height: calc(var(--dc-pitch) * 2); background-size: 100% var(--dc-pitch); background-image: linear-gradient(transparent calc(var(--dc-pitch) - var(--dc-hair, 1px)), var(--dc-line) calc(var(--dc-pitch) - var(--dc-hair, 1px))); }
