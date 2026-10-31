@@ -20,6 +20,7 @@
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
 import { ptParts, ptToReal } from '../../js/pacific-time.js';
+import { shareSheetImage } from './daily-check-share.js';
 
 const STYLE_LINK_ID = 'daily-check-view-styles';
 const SHEETS_KEY = 'dailyCheckSheets_v1';
@@ -122,6 +123,8 @@ export function unmount() {
   if (onAfterPrint) { window.removeEventListener('afterprint', onAfterPrint); onAfterPrint = null; }
   document.documentElement.classList.remove('dc-printing');
   closeConfirm(true);
+  document.querySelector('.dc-share-overlay')?.remove();
+  document.querySelector('.dc-toast')?.remove();
   containerEl = null;
 }
 
@@ -396,6 +399,11 @@ function render() {
       ${styling ? stylePanelHtml(sheet) : ''}
       ${paperHtml(sheet, { mode: editing ? 'edit' : 'screen' })}
       ${editing ? sheetAdminHtml() : ''}
+      <footer class="dc-footer">
+        <span>${escapeHtml(t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</span><br>
+        <span>${escapeHtml(t('作成・ご意見:', 'Created by / feedback:'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(t('リクエストフォーム', 'Request form'))}</a><br>
+        <a class="dc-footer-sub" href="#/tai-info">${escapeHtml(t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy'))}</a>
+      </footer>
     </div>
     <div class="dc-print-area" aria-hidden="true"></div>`;
 }
@@ -421,6 +429,7 @@ function toolbarHtml(sheet) {
         <button type="button" class="dc-btn${editing ? ' on' : ''}" data-act="toggle-edit" aria-pressed="${editing}">${escapeHtml(editing ? t('編集を終える', 'Done editing') : t('項目を編集', 'Edit items'))}</button>
         <button type="button" class="dc-btn${styling ? ' on' : ''}" data-act="toggle-style" aria-pressed="${styling}">${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}</button>
         <button type="button" class="dc-btn primary" data-act="print">${escapeHtml(t('印刷する', 'Print'))}</button>
+        <button type="button" class="dc-btn" data-act="share">${escapeHtml(t('画像で保存・共有', 'Save / share image'))}</button>
         <button type="button" class="dc-btn danger" data-act="sheet-del">${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
       </div>${goalHint}
       ${streakHtml()}
@@ -775,6 +784,14 @@ function onClick(ev) {
   }
   if (act === 'toggle-style') { styling = !styling; render(); return; }
   if (act === 'print') { flushSave(); doPrint(); return; }
+  if (act === 'share') {
+    flushSave();
+    if (btn.dataset.busy) return; // 作っている間の連打を防ぐ
+    btn.dataset.busy = '1';
+    shareSheetImage(viewRoot(), paperHtml(sheet, { mode: 'print' }), sheet.title || t('チェックシート', 'Checklist'), showToast)
+      .finally(() => { delete btn.dataset.busy; });
+    return;
+  }
   if (act === 'clear-today') { delete chk.sheets[sheet.id]; saveChecks(); render(); return; }
   if (act === 'theme') {
     const th = THEMES[btn.dataset.v];
@@ -999,4 +1016,16 @@ function closeConfirm(immediate) {
   }
   if (!immediate && confirmReturnFocus && document.contains(confirmReturnFocus)) confirmReturnFocus.focus();
   confirmReturnFocus = null;
+}
+
+// 短いお知らせ（画面下・数秒で消える）。操作は止めないので半透明の面
+let toastTimer = null;
+function showToast(msg) {
+  let el = document.querySelector('.dc-toast');
+  if (msg === null) { clearTimeout(toastTimer); if (el) el.classList.remove('show'); return; }
+  if (!el) { el = document.createElement('div'); el.className = 'dc-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 2600);
 }

@@ -376,3 +376,35 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 @media (prefers-contrast: more) {
   .daily-check-view .dc-hm-cell { box-shadow: inset 0 0 0 1px var(--hub-text-2); }
 }
+
+/* フッター（ほかのツールと同じ文言） */
+.daily-check-view .dc-footer { margin-top: 28px; padding: 20px 8px 8px; border-top: 1px solid var(--hub-sep); text-align: center; font-size: 12.5px; line-height: 1.8; color: var(--hub-text-2); }
+.daily-check-view .dc-footer a { color: var(--hub-accent); font-weight: 700; }
+.daily-check-view .dc-footer .dc-footer-sub { font-weight: 400; font-size: 12px; }
+
+/* 画像で保存・共有: 画面外に組み立てる配布用のカード（daily-check-share.js） */
+.daily-check-view .dc-share-stage { position: fixed; left: -10000px; top: 0; }
+.daily-check-view .dc-share-card { width: 720px; padding: 24px 24px 14px; background: #fff; }
+.daily-check-view .dc-share-card .dc-paper { box-shadow: none; border: 1px solid var(--dc-line); }
+.daily-check-view .dc-share-card .dc-shape { fill: #fff; }
+.daily-check-view .dc-share-url { margin-top: 10px; text-align: right; font-size: 11px; letter-spacing: 0.02em; color: #8E8E93; }
+.dc-share-modal { max-width: 420px; max-height: calc(100vh - 48px); overflow-y: auto; }
+.dc-share-img { display: block; width: 100%; margin-top: 12px; border-radius: 10px; box-shadow: 0 0 0 1px rgba(0,0,0,0.08); }
+.dc-share-actions a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.dc-share-x { background: #000 !important; border-color: #000 !important; color: #fff !important; font-weight: 700; }
+.dc-share-close { width: 100%; margin-top: 8px; flex: none; }
+
+/* お知らせ（トースト）。並行して見える非ブロッキングな面なので、スクリム無し＋半透明 */
+.dc-toast {
+  position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 3100; transform: translateX(-50%);
+  max-width: calc(100vw - 32px); padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 600; line-height: 1.5;
+  background: var(--hub-card-glass); color: var(--hub-text); box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%);
+  opacity: 0; pointer-events: none;
+}
+.dc-toast.show { animation: dcToastIn 2.6s ease both; }
+@keyframes dcToastIn { 0% { opacity: 0; transform: translate(-50%, 8px); } 8%, 88% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .dc-toast.show { animation: dcScrimIn 0.2s ease both; opacity: 1; } }
+@media (prefers-reduced-transparency: reduce) { .dc-toast { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (prefers-contrast: more) { .dc-toast { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media print { .dc-toast { display: none !important; } }
