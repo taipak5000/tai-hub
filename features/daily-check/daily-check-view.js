@@ -56,7 +56,24 @@ const FONTS = {
   basic: { ja: 'ふつう', en: 'Standard', css: '-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif' },
   hand: { ja: '手書き風', en: 'Handwritten', css: '"Klee", "Klee One", "Yomogi", "Hiragino Maru Gothic ProN", cursive' },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'grid', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, showDate: true, showMemo: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, showDate: true, showMemo: true };
+
+// テーマ＝色・チェックの形・紙・飾り・文字の組み合わせ。選ぶと5つをまとめて切り替える
+// （その後で1つずつ変えるのは自由。5つが一致するテーマが無ければ「カスタム」と表示する）
+const THEMES = {
+  standard: { ja: 'スタンダード', en: 'Standard', color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round' },
+  sakura: { ja: 'さくら', en: 'Sakura', color: 'pink', shape: 'heart', paper: 'dot', sticker: 'flower', font: 'round' },
+  mintnote: { ja: 'ミントノート', en: 'Mint notebook', color: 'mint', shape: 'circle', paper: 'lined', sticker: 'none', font: 'basic' },
+  yume: { ja: 'ゆめかわ', en: 'Dreamy', color: 'lavender', shape: 'star', paper: 'dot', sticker: 'star', font: 'round' },
+  lemon: { ja: 'レモンティー', en: 'Lemon tea', color: 'lemon', shape: 'circle', paper: 'grid', sticker: 'flower', font: 'hand' },
+  sky: { ja: '空とくも', en: 'Sky & clouds', color: 'sky', shape: 'circle', paper: 'plain', sticker: 'cloud', font: 'round' },
+  simple: { ja: 'シンプル', en: 'Simple', color: 'mono', shape: 'square', paper: 'plain', sticker: 'none', font: 'basic' },
+  notebook: { ja: '方眼ノート', en: 'Graph notebook', color: 'mono', shape: 'square', paper: 'grid', sticker: 'none', font: 'hand' },
+};
+const THEME_KEYS = ['color', 'shape', 'paper', 'sticker', 'font'];
+function currentThemeKey(style) {
+  return Object.keys(THEMES).find(k => THEME_KEYS.every(f => THEMES[k][f] === style[f])) || null;
+}
 
 // 「エリアごと」の既定の行。草原・雨林・峡谷は人によって回るところが違うので、小エリアごとにチェックを並べる
 // （小エリア名はノマキャン計算機プロのエリアデータ features/tai-nomacan-pro/data/areas-data.js に合わせた）
@@ -349,11 +366,31 @@ function chipGroup(label, key, options, current) {
   }).join('');
   return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(label)}</span><div class="dc-chips">${chips}</div></div>`;
 }
+function themeGroupHtml(st) {
+  const cur = currentThemeKey(st);
+  const cards = Object.keys(THEMES).map(k => {
+    const th = THEMES[k];
+    const c = COLORS[th.color];
+    const on = cur === k;
+    const ch = STICKERS[th.sticker].ch;
+    return `<button type="button" class="dc-theme${on ? ' on' : ''}" data-act="theme" data-v="${k}" aria-pressed="${on}">
+      <span class="dc-theme-swatch paper-${th.paper}" style="--dc-accent:${c.accent};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-soft:${c.soft};font-family:${FONTS[th.font].css}">
+        ${ch ? `<span class="dc-theme-stk">${ch}</span>` : ''}
+        <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape on" d="${SHAPES[th.shape].d}"/><path class="dc-tick" d="${TICK_D}"/></svg><span class="dc-theme-bar"></span></span>
+        <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape" d="${SHAPES[th.shape].d}"/></svg><span class="dc-theme-bar short"></span></span>
+      </span>
+      <span class="dc-theme-name">${escapeHtml(t(th.ja, th.en))}</span>
+    </button>`;
+  }).join('');
+  return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('テーマ', 'Theme'))}${cur ? '' : `<span class="dc-custom-tag">${escapeHtml(t('カスタム', 'Custom'))}</span>`}</span><div class="dc-themes">${cards}</div></div>`;
+}
 function stylePanelHtml(sheet) {
   const st = sheet.style;
   const onOff = (k, val, label) => `<label class="dc-switch"><input type="checkbox" data-style-check="${k}"${val ? ' checked' : ''}><span>${escapeHtml(label)}</span></label>`;
   return `
     <section class="dc-panel" aria-label="${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}">
+      ${themeGroupHtml(st)}
+      <div class="dc-style-sub">${escapeHtml(t('ひとつずつ変える', 'Customize'))}</div>
       ${chipGroup(t('色', 'Color'), 'color', COLORS, st.color)}
       ${chipGroup(t('チェックの形', 'Check shape'), 'shape', SHAPES, st.shape)}
       ${chipGroup(t('紙', 'Paper'), 'paper', PAPERS, st.paper)}
@@ -544,6 +581,11 @@ function onClick(ev) {
   if (act === 'toggle-style') { styling = !styling; render(); return; }
   if (act === 'print') { flushSave(); doPrint(); return; }
   if (act === 'clear-today') { delete chk.sheets[sheet.id]; saveChecks(); render(); return; }
+  if (act === 'theme') {
+    const th = THEMES[btn.dataset.v];
+    if (th) THEME_KEYS.forEach(f => { sheet.style[f] = th[f]; });
+    saveDoc(); render(); return;
+  }
   if (act === 'style') {
     const k = btn.dataset.k;
     sheet.style[k] = k === 'perPage' ? Number(btn.dataset.v) : btn.dataset.v;
