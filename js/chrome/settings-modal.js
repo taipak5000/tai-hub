@@ -39,7 +39,7 @@ function currentThemeLabel() {
 // 「起動時に開くツール」の選択肢（ツール名はルーターの表示名から「 - tai-hub」を除いたもの）
 function startRouteOptions() {
   const cur = getStartRoute();
-  return Object.keys(ROUTES).map(k => {
+  return Object.keys(ROUTES).filter(k => !ROUTES[k].hidden || k === cur).map(k => {
     let name = k;
     try { name = String(ROUTES[k].title('')).replace(/ - tai-hub$/, ''); } catch (e) { /* 表示名が取れなければキー名 */ }
     return `<option value="${k}"${cur === k ? ' selected' : ''}>${escapeHtml(name)}</option>`;

@@ -325,7 +325,7 @@ const rule = (sel, o) => `${sel}{${decl(o)}}`;
 const VIEW_ROOTS = [
   '.item-view', '.emote-view', '.share-view', '.nomacan-view', '.nomacan-pro-view', '.star-candle-view',
   '.wings-view', '.companion-view', '.spirit-catalog-view', '.tai-revisit-view', '.tai-score-view',
-  '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view',
+  '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view', '.daily-check-view',
 ];
 
 // 面（背景・カード・区切り・文字）の共通トークンを、ツールごとの変数名へ割り当てる

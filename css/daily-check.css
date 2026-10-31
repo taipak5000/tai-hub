@@ -1,0 +1,200 @@
+/* ================================================================
+   デイリーチェックシート（features/daily-check/daily-check-view.js）。
+   画面まわり（タブ・ボタン・着せ替えパネル）はハブ共通のトークン（--hub-*）で描き、
+   着せ替え（テーマ）にも追従する。シート本体（.dc-paper）は「紙」なので、
+   選んだ色（--dc-*。daily-check-view.js が style 属性で渡す）でダークモードでも明るいまま描く。
+   ================================================================ */
+
+.daily-check-view { color: var(--hub-text); background: var(--hub-bg); min-height: 100%; }
+:where(.daily-check-view *, .daily-check-view *::before, .daily-check-view *::after) { box-sizing: border-box; }
+.daily-check-view .dc-wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 24px; }
+
+.daily-check-view .dc-head { margin-bottom: 12px; }
+.daily-check-view .dc-h1 { margin: 0; font-size: 22px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.daily-check-view .dc-beta { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-accent); background: var(--hub-accent-bg); border-radius: 999px; padding: 2px 8px; }
+.daily-check-view .dc-lead { margin: 6px 0 0; font-size: 13px; line-height: 1.7; color: var(--hub-text-2); }
+
+/* ── シートのタブ ── */
+.daily-check-view .dc-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
+.daily-check-view .dc-tabs::-webkit-scrollbar { display: none; }
+.daily-check-view .dc-tab {
+  flex-shrink: 0; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border: 1px solid var(--hub-sep); background: var(--hub-card); color: var(--hub-text);
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.daily-check-view .dc-tab.on { background: var(--hub-accent); border-color: var(--hub-accent); color: #fff; }
+.daily-check-view .dc-tab-add { color: var(--hub-accent); border-style: dashed; }
+.daily-check-view .dc-tab:active, .daily-check-view .dc-btn:active, .daily-check-view .dc-chip:active, .daily-check-view .dc-mini:active { transform: scale(0.96); }
+
+/* ── 進捗・ボタン・リセット表示 ── */
+.daily-check-view .dc-bar { background: var(--hub-card); border-radius: var(--hub-r); padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.daily-check-view .dc-progress { display: flex; align-items: center; gap: 10px; }
+.daily-check-view .dc-progress-num { flex-shrink: 0; font-size: 13px; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.daily-check-view .dc-progress-num b { font-size: 18px; color: var(--hub-text); letter-spacing: -0.02em; }
+.daily-check-view .dc-progress-track { flex: 1; height: 8px; border-radius: 4px; background: var(--hub-sep); overflow: hidden; }
+.daily-check-view .dc-progress-track > span { display: block; height: 100%; border-radius: inherit; background: var(--hub-accent); transition: width 0.3s ease; }
+.daily-check-view .dc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.daily-check-view .dc-btn {
+  border: 1px solid var(--hub-sep); background: var(--hub-card); color: var(--hub-text);
+  border-radius: var(--hub-r-sm); padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.daily-check-view .dc-btn.on { background: var(--hub-accent-bg); border-color: var(--hub-accent); color: var(--hub-accent); }
+.daily-check-view .dc-btn.primary { background: var(--hub-accent); border-color: var(--hub-accent); color: #fff; }
+.daily-check-view .dc-btn.danger { color: #E5484D; }
+.daily-check-view .dc-btn:disabled { opacity: 0.4; cursor: default; }
+.daily-check-view .dc-reset { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 10px; font-size: 12px; color: var(--hub-text-2); line-height: 1.6; }
+.daily-check-view .dc-reset-next { color: var(--hub-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.daily-check-view .dc-link { border: 0; background: none; padding: 0; font: inherit; font-size: 12px; color: var(--hub-accent); text-decoration: underline; cursor: pointer; }
+
+/* ── 着せ替え・印刷設定 ── */
+.daily-check-view .dc-panel { background: var(--hub-card); border-radius: var(--hub-r); padding: 6px 14px 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); animation: dcFadeIn 0.22s ease; }
+.daily-check-view .dc-style-row { padding: 9px 0; border-bottom: 0.5px solid var(--hub-sep); }
+.daily-check-view .dc-style-row:last-child { border-bottom: 0; }
+.daily-check-view .dc-style-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-text-2); }
+.daily-check-view .dc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.daily-check-view .dc-chip {
+  display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--hub-sep); background: var(--hub-bg); color: var(--hub-text);
+  border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; transition: transform 0.12s ease;
+}
+.daily-check-view .dc-chip.on { border-color: var(--hub-accent); background: var(--hub-accent-bg); color: var(--hub-accent); font-weight: 700; }
+.daily-check-view .dc-swatch { width: 14px; height: 14px; border-radius: 50%; }
+.daily-check-view .dc-chip-shape { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
+.daily-check-view .dc-chip-sticker { font-size: 13px; }
+.daily-check-view .dc-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 4px 10px 4px 2px; cursor: pointer; }
+.daily-check-view .dc-switch input { width: 18px; height: 18px; accent-color: var(--hub-accent); }
+
+/* ================================================================
+   シート本体（紙）
+   ================================================================ */
+.daily-check-view .dc-paper {
+  position: relative; overflow: hidden;
+  background-color: var(--dc-paper); color: var(--dc-ink); font-family: var(--dc-font);
+  border-radius: 18px; padding: 22px 20px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08), 0 0 0 1px var(--dc-line);
+}
+.daily-check-view .dc-paper.paper-grid { background-image: linear-gradient(var(--dc-line) 1px, transparent 1px), linear-gradient(90deg, var(--dc-line) 1px, transparent 1px); background-size: 22px 22px; background-position: -1px -1px; }
+.daily-check-view .dc-paper.paper-dot { background-image: radial-gradient(var(--dc-line) 1.4px, transparent 1.6px); background-size: 18px 18px; }
+.daily-check-view .dc-paper.paper-lined { background-image: linear-gradient(transparent 31px, var(--dc-line) 31px); background-size: 100% 32px; }
+.daily-check-view .dc-stk { position: absolute; color: var(--dc-accent); opacity: 0.55; pointer-events: none; line-height: 1; }
+.daily-check-view .dc-stk.s1 { top: 12px; right: 16px; font-size: 28px; transform: rotate(12deg); }
+.daily-check-view .dc-stk.s2 { top: 40px; right: 46px; font-size: 16px; transform: rotate(-10deg); opacity: 0.4; }
+.daily-check-view .dc-stk.s3 { bottom: 12px; left: 16px; font-size: 22px; transform: rotate(-8deg); opacity: 0.45; }
+
+.daily-check-view .dc-paper-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding-right: 40px; margin-bottom: 8px; }
+.daily-check-view .dc-title { margin: 0; font-size: 21px; line-height: 1.15; letter-spacing: -0.01em; font-weight: 800; color: var(--dc-ink); }
+.daily-check-view .dc-date { font-size: 14px; font-weight: 700; color: var(--dc-accent); white-space: pre; }
+
+.daily-check-view .dc-section { margin-top: 12px; }
+.daily-check-view .dc-sec {
+  display: inline-block; margin: 0 0 6px; padding: 3px 12px; border-radius: 999px;
+  background: var(--dc-soft); color: var(--dc-ink); font-size: 13px; font-weight: 800; letter-spacing: 0.04em;
+}
+.daily-check-view .dc-rows { display: flex; flex-direction: column; }
+.daily-check-view .dc-row { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; padding: 6px 2px; border-bottom: 1px dashed var(--dc-line); }
+.daily-check-view .dc-row:last-child { border-bottom: 0; }
+.daily-check-view .dc-label { flex: 0 0 auto; min-width: 6.5em; font-size: 15px; font-weight: 700; color: var(--dc-ink); }
+.daily-check-view .dc-row.done .dc-label { color: var(--dc-accent); }
+.daily-check-view .dc-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.daily-check-view .dc-opt { display: inline-flex; align-items: center; gap: 3px; }
+
+.daily-check-view .dc-box {
+  display: inline-flex; align-items: center; gap: 3px; min-height: 36px; padding: 2px 4px 2px 0;
+  border: 0; background: none; color: var(--dc-ink); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.daily-check-view .dc-box-svg { width: 26px; height: 26px; flex-shrink: 0; overflow: visible; }
+.daily-check-view .dc-shape { fill: #fff; stroke: var(--dc-accent); stroke-width: 1.8; stroke-linejoin: round; transition: fill 0.15s ease; }
+.daily-check-view .dc-box.on .dc-shape { fill: var(--dc-accent); }
+.daily-check-view .dc-tick { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.daily-check-view .dc-box.pop .dc-box-svg { animation: dcPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.daily-check-view .dc-opt-label { font-size: 14px; color: var(--dc-ink); }
+.daily-check-view .dc-num {
+  width: 3.4em; height: 30px; padding: 0 6px; border: 0; border-bottom: 2px solid var(--dc-accent); border-radius: 0;
+  background: transparent; color: var(--dc-ink); font: inherit; font-size: 15px; font-weight: 700; text-align: center;
+}
+.daily-check-view .dc-num:focus { outline: none; background: var(--dc-soft); }
+.daily-check-view .dc-num-line { display: inline-block; width: 2.4em; height: 1.1em; border-bottom: 1.5px solid var(--dc-ink); margin: 0 2px; }
+.daily-check-view .dc-num-line.sm { width: 1.4em; }
+
+.daily-check-view .dc-memo { display: flex; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 2px dotted var(--dc-line); }
+.daily-check-view .dc-memo-label { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--dc-accent); }
+.daily-check-view .dc-memo-lines { flex: 1; height: 72px; background-image: linear-gradient(transparent 23px, var(--dc-line) 23px); background-size: 100% 24px; }
+.daily-check-view .dc-memo-lines.short { height: 48px; }
+
+/* ── 編集中 ── */
+.daily-check-view .dc-in {
+  border: 1px solid var(--dc-line); background: rgba(255,255,255,0.85); color: var(--dc-ink);
+  border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 14px;
+}
+.daily-check-view .dc-in:focus { outline: 2px solid var(--dc-accent); outline-offset: 0; }
+.daily-check-view .dc-in-title { font-size: 18px; font-weight: 800; width: 100%; max-width: 360px; }
+.daily-check-view .dc-in-sec { font-weight: 800; flex: 1; min-width: 0; }
+.daily-check-view .dc-in-label { font-weight: 700; flex: 1; min-width: 0; }
+.daily-check-view .dc-in-opt { padding: 4px 6px; font-size: 13px; }
+.daily-check-view .dc-sec-head, .daily-check-view .dc-row-edit-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.daily-check-view .dc-row.editing { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
+.daily-check-view .dc-row-tools { display: inline-flex; gap: 4px; }
+.daily-check-view .dc-edit-opt { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 4px; border-radius: 10px; background: var(--dc-soft); }
+.daily-check-view .dc-edit-opt .dc-box-svg { width: 18px; height: 18px; }
+.daily-check-view .dc-num-blank { color: var(--dc-ink); font-size: 12px; }
+.daily-check-view .dc-x { border: 0; background: none; color: var(--dc-ink); opacity: 0.55; font: inherit; font-size: 16px; line-height: 1; padding: 4px 6px; cursor: pointer; }
+.daily-check-view .dc-mini {
+  border: 1px solid var(--dc-line); background: #fff; color: var(--dc-ink);
+  border-radius: 8px; padding: 5px 9px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: transform 0.12s ease;
+}
+.daily-check-view .dc-mini.danger { color: #D93A4A; }
+.daily-check-view .dc-mini:disabled { opacity: 0.35; cursor: default; }
+.daily-check-view .dc-add {
+  display: block; width: 100%; margin-top: 6px; padding: 8px; border: 1.5px dashed var(--dc-accent); border-radius: 10px;
+  background: transparent; color: var(--dc-accent); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.daily-check-view .dc-add-sec { margin-top: 14px; }
+.daily-check-view .dc-admin { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* ── 1週間分の表（印刷用） ── */
+.daily-check-view .dc-wk { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.daily-check-view .dc-wk th, .daily-check-view .dc-wk td { border: 1px solid var(--dc-line); padding: 4px; text-align: center; vertical-align: middle; }
+.daily-check-view .dc-wk tr:first-child th { background: var(--dc-soft); font-weight: 800; }
+.daily-check-view .dc-wk-item { width: 22%; text-align: left !important; font-weight: 700; }
+.daily-check-view .dc-wk-legend { display: block; font-size: 9px; font-weight: 400; opacity: 0.7; }
+.daily-check-view .dc-wk-date { display: block; font-size: 9px; font-weight: 400; opacity: 0.6; }
+.daily-check-view .dc-wk-sec th { text-align: left; background: var(--dc-soft); font-size: 11px; letter-spacing: 0.04em; }
+.daily-check-view .dc-wk-boxes { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 1px; }
+.daily-check-view .dc-wk-box { display: inline-flex; align-items: center; }
+.daily-check-view .dc-wk-box .dc-box-svg { width: 14px; height: 14px; }
+
+@keyframes dcPop { 0% { transform: scale(0.7); } 100% { transform: scale(1); } }
+@keyframes dcFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-check-view .dc-box.pop .dc-box-svg { animation: none; }
+  .daily-check-view .dc-panel { animation: none; }
+  .daily-check-view .dc-tab, .daily-check-view .dc-btn, .daily-check-view .dc-chip, .daily-check-view .dc-mini { transition: none; }
+  .daily-check-view .dc-tab:active, .daily-check-view .dc-btn:active, .daily-check-view .dc-chip:active, .daily-check-view .dc-mini:active { transform: none; opacity: 0.7; }
+}
+@media (prefers-contrast: more) {
+  .daily-check-view .dc-paper { box-shadow: 0 0 0 2px var(--dc-ink); }
+  .daily-check-view .dc-shape { stroke-width: 2.4; }
+  .daily-check-view .dc-row { border-bottom-style: solid; }
+}
+
+/* ================================================================
+   印刷（html.dc-printing の間だけ。印刷用の面だけを紙に出す）
+   ================================================================ */
+.daily-check-view .dc-print-area { display: none; }
+@page dcWeek { size: A4 landscape; margin: 10mm; }
+@media print {
+  html.dc-printing body > *:not(#app-root) { display: none !important; }
+  html.dc-printing #app-root { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+  html.dc-printing body, html.dc-printing .daily-check-view { background: #fff !important; }
+  html.dc-printing .daily-check-view .dc-wrap { display: none !important; }
+  html.dc-printing .daily-check-view .dc-print-area { display: block; }
+  html.dc-printing .dc-print-page.landscape { page: dcWeek; }
+  html.dc-printing .daily-check-view .dc-paper { box-shadow: none; border: 1px solid var(--dc-line); border-radius: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html.dc-printing .daily-check-view .dc-print-page.two .dc-paper { padding: 14px 16px; }
+  html.dc-printing .daily-check-view .dc-print-page.two .dc-row { padding: 3px 2px; }
+  html.dc-printing .daily-check-view .dc-print-page.two .dc-memo-lines { height: 48px; }
+  html.dc-printing .daily-check-view .dc-cut { margin: 8mm 0; border-top: 1px dashed #999; }
+  html.dc-printing .daily-check-view .dc-shape { fill: #fff; }
+  html.dc-printing .daily-check-view .dc-row { break-inside: avoid; }
+}
