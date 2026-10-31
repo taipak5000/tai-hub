@@ -511,6 +511,7 @@ export function saveState(state) {
       visibleSections: state.visibleSections,
       myRoutes: state.myRoutes.map((r) => ({
         id: r.id, name: r.name, memo: r.memo,
+        ...(r.isTemplate ? { isTemplate: true } : {}), // 「20本ルート」テンプレート（名前を変えても参考元リンクを出すための印）
         selectedSpotIds: r.selectedSpotIds || [],
         actualSeconds: r.actualSeconds || 0,
         splitTimes: r.splitTimes || {},
@@ -597,6 +598,7 @@ export function loadState() {
       id: r.id || uuid(),
       name: r.name || '',
       memo: r.memo || '',
+      ...(r.isTemplate ? { isTemplate: true } : {}),
       isExpanded: false,
       selectedSpotIds: Array.isArray(r.selectedSpotIds) ? r.selectedSpotIds : [],
       actualSeconds: Number(r.actualSeconds) || 0,
@@ -853,12 +855,26 @@ export function applyRouteSpell(areas, spellText, importedNamePrefix) {
 }
 
 /* ================================================================
-   🌟 有名プレイヤー公開の「ソロ・試練なし 20本ルート」テンプレート
+   🌟 「20本ルート（ソロ・試練無し）」テンプレート
+   以前は「有名プレイヤーのルートを読み込む」ボタンで追加していたが、2026-10-31から
+   マイルートに最初から入れておく（nomacan-pro-routes.js の seedTemplateRoute()）。
+   参考元（ツイート・動画・作成者）へのリンクはルートのカードに出す（TEMPLATE_ROUTE_CREDITS）。
    ================================================================ */
-export const TEMPLATE_ROUTE_AREA_NAME = '20本ルート（ソロ・試練なし）';
+export const TEMPLATE_ROUTE_AREA_NAME = '20本ルート（ソロ・試練無し）';
+// 以前の名前。既に追加済みのエリア・ルートはこの名前なので、見つけたら新しい名前に揃える
+export const TEMPLATE_ROUTE_OLD_NAMES = ['20本ルート（ソロ・試練なし）'];
+export const TEMPLATE_ROUTE_CREDITS = [
+  { kind: 'tweet', ja: '参考にさせていただいたツイート', en: 'Original post on X', url: 'https://x.com/gmexNK/status/2102794759224123532?s=20' },
+  { kind: 'video', ja: '参考にさせていただいた動画', en: 'Reference video on YouTube', url: 'https://www.youtube.com/watch?v=VyzCXABi8ao' },
+  { kind: 'author', ja: '作成者様（YouTube）@kyohe', en: 'Creator (YouTube) @kyohe', url: 'https://www.youtube.com/@kyohe' },
+  { kind: 'author', ja: '作成者様（X）@gmexNK', en: 'Creator (X) @gmexNK', url: 'https://x.com/gmexNK' },
+];
+export function isTemplateRouteName(name) {
+  return name === TEMPLATE_ROUTE_AREA_NAME || TEMPLATE_ROUTE_OLD_NAMES.includes(name);
+}
 export const FAMOUS_ROUTE_TEMPLATE = {
-  routeName: '20本ルート（ソロ・試練なし）',
-  memo: '有名プレイヤー公開のルートを再現したテンプレートです。※チャレスペ・パン焼きはシーズンパスやフレンドのハート等の条件付きのため、状況により獲得できないことがあります（その場合は個別にチェックを外してください）。',
+  routeName: '20本ルート（ソロ・試練無し）',
+  memo: '参考にさせていただいたルートを再現したテンプレートです。※チャレスペ・パン焼きはシーズンパスやフレンドのハート等の条件付きのため、状況により獲得できないことがあります（その場合は個別にチェックを外してください）。',
   subAreas: [
     { name: '雨林（固定）', time: 990, spots: [
       { name: '開拓地〜3門', light: 45 },
@@ -919,7 +935,8 @@ export const FAMOUS_ROUTE_TEMPLATE = {
 };
 
 export function ensureTemplateArea(areas) {
-  let templateArea = areas.find((a) => a && a.name === TEMPLATE_ROUTE_AREA_NAME);
+  let templateArea = areas.find((a) => a && isTemplateRouteName(a.name));
+  if (templateArea) templateArea.name = TEMPLATE_ROUTE_AREA_NAME;
   if (!templateArea) {
     templateArea = {
       id: uuid(),

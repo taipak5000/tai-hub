@@ -265,3 +265,19 @@
 .nmp-main-detail { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px dashed var(--npb-border); }
 .nmp-main-detail-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .nmp-eff { color: var(--npb-orange); font-size: 12px; }
+
+/* 「20本ルート（ソロ・試練無し）」の参考元（ツイート・動画・作成者）へのリンク */
+.nmp-route-credits { margin-top: 8px; padding: 10px; border-radius: 8px; background: var(--npb-card); border: 1px solid var(--npb-border); }
+.nmp-route-credits-title { font-size: 12px; font-weight: bold; color: var(--npb-text-2); margin-bottom: 6px; letter-spacing: 0.02em; }
+.nmp-route-credits-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 6px; }
+.nmp-credit-link {
+  display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px;
+  background: var(--npb-input-bg); color: var(--npb-blue); font-size: 13px; font-weight: bold; text-decoration: none;
+  border: 1px solid var(--npb-border); transition: transform 0.12s ease;
+}
+.nmp-credit-link span { flex: 1; min-width: 0; }
+.nmp-credit-link .inline-icon { stroke: currentColor; flex-shrink: 0; }
+.nmp-credit-link .nmp-credit-arrow { opacity: 0.6; }
+.nmp-credit-link:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .nmp-credit-link { transition: none; } .nmp-credit-link:active { transform: none; opacity: 0.7; } }
+@media (prefers-contrast: more) { .nmp-credit-link { border-width: 2px; } }

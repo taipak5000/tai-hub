@@ -32,7 +32,7 @@ import { nsKey } from '../../js/state.js';
 import { t } from './data/i18n-nomacan-pro.js';
 import { displayAreaName as displayAreaNameRaw } from './data/area-names-en.js';
 import * as S from './nomacan-pro-state.js';
-import { initRoutes, renderRoutes, teardownRoutes } from './nomacan-pro-routes.js';
+import { initRoutes, renderRoutes, teardownRoutes, seedTemplateRoute } from './nomacan-pro-routes.js';
 import * as Top from './nomacan-pro-top.js';
 
 const STYLE_LINK_ID = 'nomacan-pro-view-styles';
@@ -138,6 +138,7 @@ export function mount(container) {
     displayName: displayAreaName,
     showToast,
   });
+  seedTemplateRoute(); // 「20本ルート（ソロ・試練無し）」を最初から入れておく（プロフィールごとに1回）
 
   // 🔗 所持キャンドル数を他ツール(item等)の所持通貨と同期する
   const sharedRaw = readSharedCandleRaw();

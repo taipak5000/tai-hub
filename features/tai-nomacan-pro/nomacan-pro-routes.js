@@ -7,6 +7,9 @@
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { t } from './data/i18n-nomacan-pro.js';
 import * as S from './nomacan-pro-state.js';
+import { nsKey } from '../../js/state.js';
+
+const TEMPLATE_SEEDED_KEY = 'skyNomacanProTemplateSeeded_v1';
 
 let containerEl = null;
 let getAreas = null; // () => areas配列（親の最新参照を都度取得）
@@ -45,7 +48,6 @@ export function initRoutes(container, opts) {
   window.__nmpRouteHistoryClearReq = (id) => { requestClearRunHistory(id); };
   window.__nmpSpellImportInput = (val) => { spellImportValue = val; };
   window.__nmpSpellImportGo = () => { doImportSpell(); };
-  window.__nmpLoadTemplate = () => { loadTemplate(); };
   window.__nmpConfirmDeleteRoute = (id) => { confirmDeleteRoute(id); };
   window.__nmpCancelDeleteRoute = () => { deletingRouteId = null; renderRoutes(); };
 }
@@ -70,9 +72,6 @@ export function renderRoutes() {
   const routes = getMyRoutes();
   el.innerHTML = `
     <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" style="margin-top:0; margin-bottom:4px;" onclick="__nmpSaveCurrentRoute()">${escT(t('route.saveCurrentBtn'))}</button>
-    <button type="button" class="nmp-btn-outline-blue nmp-btn-block" style="margin-bottom:4px; font-weight:bold;" onclick="__nmpLoadTemplate()">
-      <svg class="inline-icon" width="13" height="13"><use href="#i-star"/></svg> ${escT(t('route.loadTemplateBtn'))}
-    </button>
     <div class="nmp-spell-import">
       <div class="nmp-spell-import-label">${escT(t('route.importLabel'))}</div>
       <div class="nmp-spell-import-row">
@@ -106,7 +105,7 @@ function renderRouteCard(route) {
     <div class="nmp-route-card-head">
       <input type="text" class="nmp-route-name-input" value="${escapeHtml(route.name)}" oninput="__nmpRouteNameInput('${route.id}', this.value)">
       <div class="nmp-route-card-actions">
-        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', -1)" title="↑"><svg class="inline-icon" width="12" height="12"><use href="#i-chevron-down" style="transform:rotate(180deg)"/></svg></button>
+        <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', -1)" title="↑"><svg class="inline-icon" width="12" height="12" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
         <button type="button" class="nmp-icon-btn" onclick="__nmpRouteMove('${route.id}', 1)" title="↓"><svg class="inline-icon" width="12" height="12"><use href="#i-chevron-down"/></svg></button>
         <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-sm" onclick="__nmpRouteApply('${route.id}')">${escT(t('route.apply'))}</button>
         <button type="button" class="nmp-btn nmp-btn-purple nmp-btn-sm" onclick="__nmpRouteShare('${route.id}')">${escT(t('route.share'))}</button>
@@ -115,6 +114,7 @@ function renderRouteCard(route) {
         <button type="button" class="nmp-icon-btn nmp-icon-btn-danger" onclick="__nmpRouteDelete('${route.id}')"><svg class="inline-icon" width="12" height="12"><use href="#i-close"/></svg></button>
       </div>
     </div>
+    ${S.isTemplateRouteName(route.name) || route.isTemplate ? templateCreditsHtml() : ''}
     <div class="nmp-route-path">${escT(t('route.via'))} <b>${areaNames ? escapeHtml(areaNames) : escT(t('route.viaNone'))}</b></div>
     ${route.generatedSpell ? `<textarea class="nmp-route-spell-out" readonly onclick="this.select()">${escapeHtml(route.generatedSpell)}</textarea>` : ''}
     ${route.generatedTextExport ? `<textarea class="nmp-route-spell-out" readonly onclick="this.select()">${escapeHtml(route.generatedTextExport)}</textarea>` : ''}
@@ -235,26 +235,46 @@ function doImportSpell() {
     renderRoutes();
   } catch (e) { showToast(t('route.spellInvalid'), 'error'); }
 }
-function loadTemplate() {
-  const areas = getAreas();
-  const templateArea = S.ensureTemplateArea(areas);
-  const selectedIds = [];
-  templateArea.subAreas.forEach((sub) => sub.spots.forEach((s) => selectedIds.push(s.id)));
-  let route = getMyRoutes().find((r) => r.name === S.FAMOUS_ROUTE_TEMPLATE.routeName);
-  if (route) {
-    route.selectedSpotIds = selectedIds;
-    showToast(t('route.templateUpdatedHint'), 'success');
-  } else {
-    route = {
-      id: S.uuid(), name: S.FAMOUS_ROUTE_TEMPLATE.routeName, memo: S.FAMOUS_ROUTE_TEMPLATE.memo,
-      selectedSpotIds: selectedIds, isExpanded: true, actualSeconds: 0, splitTimes: {}, runHistory: [],
+// 「20本ルート（ソロ・試練無し）」を、プロフィールごとに最初の1回だけマイルートへ入れておく。
+// 利用者が消した後に勝手に戻らないよう、入れたことを覚えておく（既に入っている人は名前だけ新しいものに揃える）
+export function seedTemplateRoute() {
+  const routes = getMyRoutes();
+  const existing = routes.find((r) => r.isTemplate || S.isTemplateRouteName(r.name));
+  let seeded = false;
+  try { seeded = localStorage.getItem(nsKey(TEMPLATE_SEEDED_KEY)) === '1'; } catch (e) { /* 読めなければ未登録扱い */ }
+  if (existing) {
+    existing.isTemplate = true;
+    if (S.isTemplateRouteName(existing.name)) existing.name = S.FAMOUS_ROUTE_TEMPLATE.routeName;
+    S.ensureTemplateArea(getAreas()); // エリア側の名前も揃える
+  } else if (!seeded) {
+    const templateArea = S.ensureTemplateArea(getAreas());
+    const selectedIds = [];
+    templateArea.subAreas.forEach((sub) => sub.spots.forEach((s) => selectedIds.push(s.id)));
+    routes.unshift({
+      id: S.uuid(), name: S.FAMOUS_ROUTE_TEMPLATE.routeName, memo: S.FAMOUS_ROUTE_TEMPLATE.memo, isTemplate: true,
+      selectedSpotIds: selectedIds, isExpanded: false, actualSeconds: 0, splitTimes: {}, runHistory: [],
       generatedSpell: '', generatedTextExport: '',
-    };
-    getMyRoutes().push(route);
-    showToast(t('route.templateAddedHint'), 'success');
+    });
+  } else {
+    return;
   }
+  try { localStorage.setItem(nsKey(TEMPLATE_SEEDED_KEY), '1'); } catch (e) { /* 次回また試みる */ }
   onChanged(true);
-  renderRoutes();
+}
+
+// テンプレートルートのカードに出す、参考元（ツイート・動画・作成者）へのリンク
+function templateCreditsHtml() {
+  const ICON = { tweet: 'i-link', video: 'i-monitor', author: 'i-person' };
+  const links = S.TEMPLATE_ROUTE_CREDITS.map((c) => `
+      <a class="nmp-credit-link" href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer">
+        <svg class="inline-icon" width="14" height="14"><use href="#${ICON[c.kind]}"/></svg>
+        <span>${escapeHtml(CURRENT_LANG === 'en' ? c.en : c.ja)}</span>
+        <svg class="inline-icon nmp-credit-arrow" width="12" height="12"><use href="#i-chevron-right"/></svg>
+      </a>`).join('');
+  return `<div class="nmp-route-credits">
+    <div class="nmp-route-credits-title">${escapeHtml(CURRENT_LANG === 'en' ? 'Route credits' : 'このルートの参考元')}</div>
+    <div class="nmp-route-credits-links">${links}</div>
+  </div>`;
 }
 
 /* ================================================================
