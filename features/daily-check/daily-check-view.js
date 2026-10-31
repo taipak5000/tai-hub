@@ -167,7 +167,7 @@ function templateSheet(title) {
       {
         id: genId(),
         title: t('エリアごと', 'By area'),
-        rows: AREA_ROWS.map(a => row(en ? a.en : a.ja, a.spots ? a.spots.map(box) : [box(t('キャンドル回収', 'Candle run'))])),
+        rows: AREA_ROWS.map(a => row(en ? a.en : a.ja, a.spots ? a.spots.map(box) : [box(t('完了', 'Done'))])),
       },
     ],
   };
@@ -197,7 +197,10 @@ function normalizeSheet(s) {
         label: String(r.label || ''),
         ...(r.cols === 2 ? { cols: 2 } : {}),
         ...(r.goal ? { goal: true } : {}),
-        opts: r.opts.filter(o => o && (o.t === 'box' || o.t === 'num')).map(o => ({ t: o.t, label: String(o.label || '') })),
+        opts: r.opts.filter(o => o && (o.t === 'box' || o.t === 'num')).map(o => ({ t: o.t, label: String(o.label || '') })).map((o, i, all) => (
+          // 以前の既定「孤島/捨てられた地/書庫 □キャンドル回収」は「□完了」に変わった（自分で書き換えた行はそのまま）
+          all.length === 1 && o.t === 'box' && o.label === 'キャンドル回収' && ['孤島', '捨てられた地', '書庫'].includes(r.label) ? { ...o, label: '完了' } : o
+        )),
       })),
     })),
   };
