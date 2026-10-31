@@ -95,6 +95,7 @@ export function unmount() {
   flushSave();
   if (onAfterPrint) { window.removeEventListener('afterprint', onAfterPrint); onAfterPrint = null; }
   document.documentElement.classList.remove('dc-printing');
+  closeConfirm(true);
   containerEl = null;
 }
 
@@ -553,8 +554,15 @@ function onClick(ev) {
     sheet.sections.push({ id: genId(), title: t('見出し', 'Heading'), rows: [row('', [box('1回')])] });
   } else if (act === 'sec-del') {
     const sec = sheet.sections.find(s => s.id === btn.dataset.s);
-    if (!sec || (sec.rows.length && !window.confirm(t(`「${sec.title || '見出し'}」と中の${sec.rows.length}行を削除しますか？`, `Delete this heading and its ${sec.rows.length} rows?`)))) return;
-    sheet.sections = sheet.sections.filter(s => s !== sec);
+    if (!sec) return;
+    const removeSec = () => { sheet.sections = sheet.sections.filter(s => s !== sec); saveDoc(); render(); };
+    if (!sec.rows.length) { removeSec(); return; }
+    askConfirm({
+      title: t('見出しを削除しますか？', 'Delete this heading?'),
+      message: t(`「${sec.title || '見出し'}」と、中の${sec.rows.length}行を削除します。`, `"${sec.title || 'Heading'}" and its ${sec.rows.length} rows will be deleted.`),
+      okLabel: t('削除する', 'Delete'), danger: true, onOk: removeSec,
+    });
+    return;
   } else if (act === 'sheet-dup') {
     flushSave();
     const copy = normalizeSheet(JSON.parse(JSON.stringify(sheet)));
@@ -563,15 +571,31 @@ function onClick(ev) {
     copy.sections.forEach(sec => { sec.id = genId(); sec.rows.forEach(r => { r.id = genId(); }); });
     doc.sheets.push(copy); doc.activeId = copy.id;
   } else if (act === 'sheet-template') {
-    if (!window.confirm(t('このシートの項目を、はじめの内容に戻しますか？（着せ替えはそのまま）', 'Reset this sheet\'s items to the template? (Style is kept)'))) return;
-    const tpl = templateSheet(sheet.title);
-    sheet.sections = tpl.sections;
-    delete chk.sheets[sheet.id]; saveChecks();
+    askConfirm({
+      title: t('はじめの内容に戻しますか？', 'Reset to the template?'),
+      message: t('このシートの項目と今日のチェックが、はじめの内容に戻ります。着せ替えはそのまま残ります。', 'This sheet\'s items and today\'s checks go back to the template. The style is kept.'),
+      okLabel: t('戻す', 'Reset'), danger: true,
+      onOk: () => {
+        sheet.sections = templateSheet(sheet.title).sections;
+        delete chk.sheets[sheet.id]; saveChecks();
+        saveDoc(); render();
+      },
+    });
+    return;
   } else if (act === 'sheet-del') {
-    if (doc.sheets.length <= 1 || !window.confirm(t(`「${sheet.title}」を削除しますか？`, `Delete "${sheet.title}"?`))) return;
-    doc.sheets = doc.sheets.filter(s => s !== sheet);
-    delete chk.sheets[sheet.id]; saveChecks();
-    doc.activeId = doc.sheets[0].id;
+    if (doc.sheets.length <= 1) return;
+    askConfirm({
+      title: t('シートを削除しますか？', 'Delete this sheet?'),
+      message: t(`「${sheet.title || '無題のシート'}」の項目とチェックを削除します。元に戻せません。`, `"${sheet.title || 'Untitled'}" and its checks will be deleted. This can't be undone.`),
+      okLabel: t('削除する', 'Delete'), danger: true,
+      onOk: () => {
+        doc.sheets = doc.sheets.filter(s => s !== sheet);
+        delete chk.sheets[sheet.id]; saveChecks();
+        doc.activeId = doc.sheets[0].id;
+        saveDoc(); render();
+      },
+    });
+    return;
   } else {
     return;
   }
@@ -637,4 +661,70 @@ function refreshProgress() {
   if (numEl) numEl.textContent = p.done;
   const bar = root.querySelector('.dc-progress-track > span');
   if (bar) bar.style.width = `${p.total ? Math.round((p.done / p.total) * 100) : 0}%`;
+}
+
+/* ================================================================
+   確認ダイアログ（ページ内）
+   window.confirm() は広告ブロックや一部のアプリ内ブラウザで出ないことがあるため、自前で出す。
+   操作を止めて確認を求めるので、暗いスクリム＋不透明なカード。閉じる時も開く時と同じ道筋で消す。
+   ================================================================ */
+let confirmEl = null;
+let confirmKeyHandler = null;
+let confirmReturnFocus = null;
+
+function askConfirm({ title, message, okLabel, danger, onOk }) {
+  closeConfirm(true);
+  confirmReturnFocus = document.activeElement;
+  const el = document.createElement('div');
+  el.className = 'dc-confirm-overlay';
+  el.innerHTML = `
+    <div class="dc-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="dcConfirmTitle" aria-describedby="dcConfirmMsg">
+      <h2 class="dc-confirm-title" id="dcConfirmTitle">${escapeHtml(title)}</h2>
+      <p class="dc-confirm-msg" id="dcConfirmMsg">${escapeHtml(message)}</p>
+      <div class="dc-confirm-actions">
+        <button type="button" class="dc-confirm-btn" data-confirm="cancel">${escapeHtml(t('キャンセル', 'Cancel'))}</button>
+        <button type="button" class="dc-confirm-btn ok${danger ? ' danger' : ''}" data-confirm="ok">${escapeHtml(okLabel || 'OK')}</button>
+      </div>
+    </div>`;
+  el.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-confirm]');
+    if (b) {
+      const ok = b.dataset.confirm === 'ok';
+      closeConfirm();
+      if (ok) onOk();
+    } else if (ev.target === el) {
+      closeConfirm(); // 外側をタップしたらキャンセル
+    }
+  });
+  confirmKeyHandler = (ev) => {
+    if (ev.key === 'Escape') { ev.preventDefault(); closeConfirm(); return; }
+    if (ev.key === 'Tab') { // フォーカスをダイアログの2つのボタンの中に留める
+      const btns = [...el.querySelectorAll('button')];
+      const idx = btns.indexOf(document.activeElement);
+      ev.preventDefault();
+      btns[(idx + (ev.shiftKey ? -1 : 1) + btns.length) % btns.length].focus();
+    }
+  };
+  document.addEventListener('keydown', confirmKeyHandler);
+  document.body.appendChild(el);
+  confirmEl = el;
+  // 誤って消してしまわないよう、最初のフォーカスはキャンセル側に置く
+  el.querySelector('[data-confirm="cancel"]').focus();
+}
+
+function closeConfirm(immediate) {
+  if (!confirmEl) return;
+  const el = confirmEl;
+  confirmEl = null;
+  document.removeEventListener('keydown', confirmKeyHandler);
+  confirmKeyHandler = null;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (immediate || reduce) el.remove();
+  else {
+    el.classList.add('closing');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 400); // animationendが来ない環境の保険
+  }
+  if (!immediate && confirmReturnFocus && document.contains(confirmReturnFocus)) confirmReturnFocus.focus();
+  confirmReturnFocus = null;
 }
