@@ -8,7 +8,7 @@
      box（□＋ラベル）と num（□＋数の入力欄＋「個まで」などのラベル）。
    - チェックはゲームのデイリーと同じく太平洋時間0時（日本時間で夏時間中16時・それ以外17時）に
      自動で外れる（シートごとにオフにできる）。日付の判定は js/pacific-time.js を通す。
-   - 印刷: 1日分（1枚に1日分か2日分）か1週間分の表を、空欄のまま印刷する。印刷中だけ
+   - 印刷: A4に、1日分（縦）か2日分（横向きで左右に並べる）を空欄のまま印刷する。印刷中だけ
      html.dc-printing を付け、@media print で印刷用の面（.dc-print-area）以外を隠す。
    - 着せ替え: 色・チェックの形・紙の柄・飾り（テーマでまとめて切り替えもできる）。紙の色はシートの見た目そのものなので、
      ダークモードでも明るい紙のまま（印刷結果と同じ見た目にするため）。
@@ -51,7 +51,7 @@ const STICKERS = {
   heart: { ja: 'ハート', en: 'Hearts', ch: '♡' },
   cloud: { ja: 'くも', en: 'Clouds', ch: '☁' },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', printLayout: 'day', perPage: 1, paperSize: 'A4', showDate: true, showMemo: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showMemo: true };
 
 // テーマ＝色・チェックの形・紙・飾りの組み合わせ。選ぶと4つをまとめて切り替える
 // （その後で1つずつ変えるのは自由。4つが一致するテーマが無ければ「カスタム」と表示する）
@@ -182,9 +182,8 @@ function normalizeSheet(s) {
   if (!PAPERS[style.paper]) style.paper = DEFAULT_STYLE.paper;
   if (!STICKERS[style.sticker]) style.sticker = DEFAULT_STYLE.sticker;
   delete style.font; // 以前の「文字」設定の名残りは捨てる
-  if (style.printLayout !== 'week') style.printLayout = 'day';
   style.perPage = style.perPage === 2 ? 2 : 1;
-  if (style.paperSize !== 'A5') style.paperSize = 'A4';
+  delete style.printLayout; delete style.paperSize; // 以前の「印刷する形」「用紙」の名残り（今はA4・1日分単位に固定）
   return {
     id: String(s.id || genId()),
     title: String(s.title || ''),
@@ -398,12 +397,10 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('チェックの形', 'Check shape'), 'shape', SHAPES, st.shape)}
       ${chipGroup(t('紙', 'Paper'), 'paper', PAPERS, st.paper)}
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
-      ${chipGroup(t('用紙', 'Paper size'), 'paperSize', { A4: { ja: 'A4', en: 'A4' }, A5: { ja: 'A5', en: 'A5' } }, st.paperSize)}
-      ${chipGroup(t('印刷する形', 'Print layout'), 'printLayout', { day: { ja: '1日分', en: 'One day' }, week: { ja: '1週間分の表', en: 'Weekly table' } }, st.printLayout)}
-      ${st.printLayout === 'day' ? chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分（縦）', en: '1 day (portrait)' }, 2: { ja: '2日分（横に並べる）', en: '2 days side by side' } }, st.perPage) : ''}
-      ${st.printLayout === 'day' && st.perPage === 2 ? `<p class="dc-style-note">${escapeHtml(st.paperSize === 'A4'
-    ? t('用紙を横向きにして左右に1日分ずつ並べます。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Two days side by side on a landscape page. Cut along the center line to get two A5 sheets.')
-    : t('用紙を横向きにして左右に1日分ずつ並べます。真ん中の点線で切ると、A6サイズのシートが2枚になります。', 'Two days side by side on a landscape page. Cut along the center line to get two A6 sheets.'))}</p>` : ''}
+      ${chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分（縦）', en: '1 day (portrait)' }, 2: { ja: '2日分（横に並べる）', en: '2 days side by side' } }, st.perPage)}
+      <p class="dc-style-note">${escapeHtml(st.perPage === 2
+    ? t('A4を横向きにして、左右に1日分ずつ並べて印刷します。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Prints two days side by side on landscape A4. Cut along the center line to get two A5 sheets.')
+    : t('A4の縦向きで印刷します。', 'Prints on portrait A4.'))}</p>
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
         ${onOff('showDate', st.showDate, t('日付の欄', 'Date field'))}
         ${onOff('showMemo', st.showMemo, t('メモの欄', 'Memo field'))}
@@ -515,43 +512,20 @@ function sheetAdminHtml() {
     </div>`;
 }
 
-/* ── 印刷用（1週間分の表）── */
-function weekHtml(sheet) {
-  const st = sheet.style;
-  const days = t('月火水木金土日', 'MTWTFSS').split('');
-  const head = `<tr><th class="dc-wk-item"></th>${days.map(d => `<th>${d}<span class="dc-wk-date">／</span></th>`).join('')}</tr>`;
-  const body = sheet.sections.map(sec => {
-    const secRow = sec.title ? `<tr class="dc-wk-sec"><th colspan="8">${escapeHtml(sec.title)}</th></tr>` : '';
-    const rows = sec.rows.map(r => {
-      const cell = `<td><span class="dc-wk-boxes${r.cols === 2 ? ' cols-2' : ''}">${r.opts.map(o => `<span class="dc-wk-box">${shapeSvg(st, false)}${o.t === 'num' ? '<span class="dc-num-line sm"></span>' : ''}</span>`).join('')}</span></td>`;
-      const legend = r.opts.map(o => escapeHtml(o.label)).join(' / ');
-      return `<tr><th class="dc-wk-item">${r.goal ? '<span class="dc-goal-mark">★</span>' : ''}${escapeHtml(r.label)}<span class="dc-wk-legend">${legend}</span></th>${cell.repeat(7)}</tr>`;
-    }).join('');
-    return secRow + rows;
-  }).join('');
-  return `
-    <article class="dc-paper dc-week paper-${st.paper}" style="${sheetVars(st)}">
-      ${stickersHtml(st)}
-      <div class="dc-paper-head"><h2 class="dc-title">${escapeHtml(sheet.title)}</h2>${st.showDate ? `<div class="dc-date">${escapeHtml(t('　　月　　日 〜 　　月　　日', '____ to ____'))}</div>` : ''}</div>
-      <table class="dc-wk">${head}${body}</table>
-      ${st.showMemo ? `<div class="dc-memo"><span class="dc-memo-label">${escapeHtml(t('メモ', 'Memo'))}</span><span class="dc-memo-lines"></span></div>` : ''}
-    </article>`;
-}
-
-// 印刷する紙（A4/A5・縦/横）に合わせて@pageを指定し、中身が1枚に収まるよう縮める。
+// A4に合わせて@pageを指定し、中身が1枚に収まるよう縮める。
 // 縮めると横幅にも余裕ができて折り返しが減り高さが変わるので、幅を広げて測り直すのを数回くり返す
-const PAPER_MM = { A4: [210, 297], A5: [148, 210] };
+const A4_MM = [210, 297];
+const PRINT_MARGIN_MM = 8;
 const PX_PER_MM = 96 / 25.4;
 function fitPrintPage(area, style) {
-  // 1週間分の表と、2日分を左右に並べる時は横向き（A4横の真ん中で切るとA5が2枚になる）
-  const landscape = style.printLayout === 'week' || style.perPage === 2;
-  const [w, h] = PAPER_MM[style.paperSize] || PAPER_MM.A4;
-  const marginMm = style.paperSize === 'A5' ? 6 : 8;
-  const pageW = (landscape ? h : w) - marginMm * 2;
-  const pageH = (landscape ? w : h) - marginMm * 2 - 2; // 2mmは丸め誤差で2枚目にはみ出さないための余白
+  // 2日分を左右に並べる時は横向き（A4横の真ん中で切るとA5が2枚になる）
+  const landscape = style.perPage === 2;
+  const [w, h] = A4_MM;
+  const pageW = (landscape ? h : w) - PRINT_MARGIN_MM * 2;
+  const pageH = (landscape ? w : h) - PRINT_MARGIN_MM * 2 - 2; // 2mmは丸め誤差で2枚目にはみ出さないための余白
   let styleEl = document.getElementById('dcPageStyle');
   if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dcPageStyle'; document.head.appendChild(styleEl); }
-  styleEl.textContent = `@page { size: ${style.paperSize} ${landscape ? 'landscape' : 'portrait'}; margin: ${marginMm}mm; }`;
+  styleEl.textContent = `@page { size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: ${PRINT_MARGIN_MM}mm; }`;
 
   const page = area.querySelector('.dc-print-page');
   const availW = pageW * PX_PER_MM, availH = pageH * PX_PER_MM;
@@ -580,12 +554,8 @@ function fitPrintPage(area, style) {
 function doPrint() {
   const sheet = activeSheet();
   const area = viewRoot().querySelector('.dc-print-area');
-  if (sheet.style.printLayout === 'week') {
-    area.innerHTML = `<div class="dc-print-page landscape">${weekHtml(sheet)}</div>`;
-  } else {
-    const one = paperHtml(sheet, { mode: 'print' });
-    area.innerHTML = `<div class="dc-print-page${sheet.style.perPage === 2 ? ' two' : ''}">${one}${sheet.style.perPage === 2 ? `<div class="dc-cut" aria-hidden="true"></div>${one}` : ''}</div>`;
-  }
+  const one = paperHtml(sheet, { mode: 'print' });
+  area.innerHTML = `<div class="dc-print-page${sheet.style.perPage === 2 ? ' two' : ''}">${one}${sheet.style.perPage === 2 ? `<div class="dc-cut" aria-hidden="true"></div>${one}` : ''}</div>`;
   fitPrintPage(area, sheet.style);
   const html = document.documentElement;
   html.classList.add('dc-printing');
