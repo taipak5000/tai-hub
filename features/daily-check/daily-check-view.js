@@ -58,8 +58,19 @@ const FONTS = {
 };
 const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'grid', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, showDate: true, showMemo: true };
 
-const REALMS_JA = ['孤島', '草原', '雨林', '峡谷', '捨てられた地', '書庫', '暴風域'];
-const REALMS_EN = ['Isle', 'Prairie', 'Forest', 'Valley', 'Wasteland', 'Vault', 'Eye of Eden'];
+// 「エリアごと」の既定の行。草原・雨林・峡谷は人によって回るところが違うので、小エリアごとにチェックを並べる
+// （小エリア名はノマキャン計算機プロのエリアデータ features/tai-nomacan-pro/data/areas-data.js に合わせた）
+const AREA_ROWS = [
+  { ja: 'ホーム', en: 'Home', spots: ['花鳥郷', '海ホーム', 'カーニバル', 'アリス'] },
+  { ja: '孤島', en: 'Isle', spots: null },
+  { ja: '草原', en: 'Prairie', spots: ['蝶々の住処', '草原の村', '草原高地', '草原の神殿', '草原の洞窟', '鳥の巣', '楽園'] },
+  { ja: '雨林', en: 'Forest', spots: ['前庭', '小川', '墓場', '晴れ間', '大空洞', '雨林の神殿', '聖なる池', 'ツリーハウス'] },
+  { ja: '峡谷', en: 'Valley', spots: ['凍った湖', '陸レ', '城塞都市', '空レ', '円形劇場', '峡谷の神殿', '夢見の町', '隠者の峠', '奏の音楽堂'] },
+  { ja: '捨てられた地', en: 'Wasteland', spots: null },
+  { ja: '書庫', en: 'Vault', spots: null },
+];
+const DYES_JA = ['赤', '黄', '緑', '水', '青', '紫', '黒', '白'];
+const DYES_EN = ['Red', 'Yellow', 'Green', 'Cyan', 'Blue', 'Purple', 'Black', 'White'];
 
 let containerEl = null;
 let doc = null;    // シート一式（SHEETS_KEY）
@@ -115,7 +126,7 @@ function viewRoot() { return containerEl && containerEl.querySelector('.daily-ch
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 const box = label => ({ t: 'box', label });
 const num = label => ({ t: 'num', label });
-const row = (label, opts) => ({ id: genId(), label, opts });
+const row = (label, opts, cols) => ({ id: genId(), label, opts, ...(cols ? { cols } : {}) });
 
 function templateSheet(title) {
   const en = CURRENT_LANG === 'en';
@@ -133,12 +144,16 @@ function templateSheet(title) {
           row(t('クエスト', 'Quests'), [num(t('個まで', 'done')), box(t('すべて完了', 'All done'))]),
           row(t('パン焼き', 'Bread baking'), ['1回', '2回'].map((l, i) => box(en ? `#${i + 1}` : l))),
           row(t('ウニ焼き', 'Geyser'), ['1回', '2回', '3回', '4回'].map((l, i) => box(en ? `#${i + 1}` : l))),
+          row(t('シーキャン', 'Season candles'), [box(t('完了', 'Done'))]),
+          row(t('連れ歩き', 'Spirit walk'), [box(t('完了', 'Done'))]),
+          row(t('日々チケット', 'Daily tickets'), [box(t('完了', 'Done'))]),
+          row(t('染料上限', 'Dye cap'), (en ? DYES_EN : DYES_JA).map(box), 2),
         ],
       },
       {
         id: genId(),
         title: t('エリアごと', 'By area'),
-        rows: (en ? REALMS_EN : REALMS_JA).map(r => row(r, [box(t('キャンドル回収', 'Candle run'))])),
+        rows: AREA_ROWS.map(a => row(en ? a.en : a.ja, a.spots ? a.spots.map(box) : [box(t('キャンドル回収', 'Candle run'))])),
       },
     ],
   };
@@ -166,6 +181,7 @@ function normalizeSheet(s) {
       rows: sec.rows.filter(r => r && Array.isArray(r.opts)).map(r => ({
         id: String(r.id || genId()),
         label: String(r.label || ''),
+        ...(r.cols === 2 ? { cols: 2 } : {}),
         opts: r.opts.filter(o => o && (o.t === 'box' || o.t === 'num')).map(o => ({ t: o.t, label: String(o.label || '') })),
       })),
     })),
@@ -256,11 +272,14 @@ function rowChecks(sheet, rowId, create) {
   if (!sc[rowId]) { if (!create) return {}; sc[rowId] = {}; }
   return sc[rowId];
 }
+// 進み具合は「1つでもチェックした項目（行）の数」で数える（大キャンなら何本目かに関わらず、1つ付いていれば済み）
 function progress(sheet) {
   let done = 0, total = 0;
   sheet.sections.forEach(sec => sec.rows.forEach(r => {
+    if (!r.opts.length) return;
+    total++;
     const c = rowChecks(sheet, r.id, false);
-    r.opts.forEach((o, i) => { total++; if (c[i]) done++; });
+    if (r.opts.some((o, i) => c[i])) done++;
   }));
   return { done, total };
 }
@@ -302,7 +321,7 @@ function toolbarHtml(sheet) {
   return `
     <div class="dc-bar">
       <div class="dc-progress">
-        <span class="dc-progress-num">${escapeHtml(t('今日', 'Today'))} <b>${p.done}</b> / ${p.total}</span>
+        <span class="dc-progress-num">${escapeHtml(t('今日チェックした項目', 'Items checked today'))} <b>${p.done}</b> / ${p.total}</span>
         <span class="dc-progress-track" aria-hidden="true"><span style="width:${pct}%"></span></span>
       </div>
       <div class="dc-actions">
@@ -421,6 +440,7 @@ function rowHtml(sheet, sec, r, index, mode) {
         <div class="dc-opts">${opts}
           <button type="button" class="dc-mini" data-act="opt-add-box" data-r="${rid}">＋ ${escapeHtml(t('チェック', 'Checkbox'))}</button>
           <button type="button" class="dc-mini" data-act="opt-add-num" data-r="${rid}">＋ ${escapeHtml(t('数を書くチェック', 'Count box'))}</button>
+          <button type="button" class="dc-mini${r.cols === 2 ? ' on' : ''}" data-act="row-cols" data-r="${rid}" aria-pressed="${r.cols === 2}">${escapeHtml(t('2列で並べる', 'Two columns'))}</button>
         </div>
       </div>`;
   }
@@ -437,7 +457,7 @@ function rowHtml(sheet, sec, r, index, mode) {
     return boxBtn;
   }).join('');
   const allDone = mode === 'screen' && r.opts.length > 0 && r.opts.every((o, i) => c[i]);
-  return `<div class="dc-row${allDone ? ' done' : ''}"><span class="dc-label">${escapeHtml(r.label)}</span><span class="dc-opts">${opts}</span></div>`;
+  return `<div class="dc-row${allDone ? ' done' : ''}"><span class="dc-label">${escapeHtml(r.label)}</span><span class="dc-opts${r.cols === 2 ? ' cols-2' : ''}">${opts}</span></div>`;
 }
 
 function sheetAdminHtml() {
@@ -457,7 +477,7 @@ function weekHtml(sheet) {
   const body = sheet.sections.map(sec => {
     const secRow = sec.title ? `<tr class="dc-wk-sec"><th colspan="8">${escapeHtml(sec.title)}</th></tr>` : '';
     const rows = sec.rows.map(r => {
-      const cell = `<td><span class="dc-wk-boxes">${r.opts.map(o => `<span class="dc-wk-box">${shapeSvg(st, false)}${o.t === 'num' ? '<span class="dc-num-line sm"></span>' : ''}</span>`).join('')}</span></td>`;
+      const cell = `<td><span class="dc-wk-boxes${r.cols === 2 ? ' cols-2' : ''}">${r.opts.map(o => `<span class="dc-wk-box">${shapeSvg(st, false)}${o.t === 'num' ? '<span class="dc-num-line sm"></span>' : ''}</span>`).join('')}</span></td>`;
       const legend = r.opts.map(o => escapeHtml(o.label)).join(' / ');
       return `<tr><th class="dc-wk-item">${escapeHtml(r.label)}<span class="dc-wk-legend">${legend}</span></th>${cell.repeat(7)}</tr>`;
     }).join('');
@@ -548,6 +568,8 @@ function onClick(ev) {
     saveChecks();
   } else if (act === 'opt-add-box' && hit) {
     hit.row.opts.push(box(`${hit.row.opts.length + 1}${t('回', '')}`));
+  } else if (act === 'row-cols' && hit) {
+    if (hit.row.cols === 2) delete hit.row.cols; else hit.row.cols = 2;
   } else if (act === 'opt-add-num' && hit) {
     hit.row.opts.push(num(t('個まで', 'done')));
   } else if (act === 'sec-add') {
