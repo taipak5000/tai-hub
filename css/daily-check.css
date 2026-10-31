@@ -204,7 +204,10 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 .daily-check-view .dc-print-area .dc-print-page.two .dc-paper { padding: 14px 16px; }
 .daily-check-view .dc-print-area .dc-print-page.two .dc-row { padding: 3px 2px; }
 .daily-check-view .dc-print-area .dc-print-page.two .dc-memo-lines { height: 48px; }
-.daily-check-view .dc-print-area .dc-cut { margin: 8mm 0; border-top: 1px dashed #999; }
+/* 2日分は左右に並べ、間に縦の切り取り線。左右の余白を同じにして、線が用紙のちょうど真ん中に来るようにする */
+.daily-check-view .dc-print-area .dc-print-page.two { display: flex; align-items: stretch; }
+.daily-check-view .dc-print-area .dc-print-page.two > .dc-paper { flex: 1 1 0; min-width: 0; }
+.daily-check-view .dc-print-area .dc-cut { flex: 0 0 auto; margin: 0 6mm; border-left: 1px dashed #999; }
 /* 項目が多くても1枚に収まりやすいよう、週の表は行を詰める */
 .daily-check-view .dc-print-area .dc-week { padding: 12px 14px; }
 .daily-check-view .dc-print-area .dc-wk th, .daily-check-view .dc-print-area .dc-wk td { padding: 2px 3px; }
@@ -299,3 +302,5 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 .daily-check-view .dc-goal-btn.on { background: var(--dc-accent); color: #fff; }
 .daily-check-view .dc-goal-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--hub-accent); }
 .daily-check-view .dc-actions:first-child { margin-top: 0; }
+
+.daily-check-view .dc-style-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--hub-text-2); }

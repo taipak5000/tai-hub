@@ -400,7 +400,10 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
       ${chipGroup(t('用紙', 'Paper size'), 'paperSize', { A4: { ja: 'A4', en: 'A4' }, A5: { ja: 'A5', en: 'A5' } }, st.paperSize)}
       ${chipGroup(t('印刷する形', 'Print layout'), 'printLayout', { day: { ja: '1日分', en: 'One day' }, week: { ja: '1週間分の表', en: 'Weekly table' } }, st.printLayout)}
-      ${st.printLayout === 'day' ? chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分', en: '1 day' }, 2: { ja: '2日分', en: '2 days' } }, st.perPage) : ''}
+      ${st.printLayout === 'day' ? chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分（縦）', en: '1 day (portrait)' }, 2: { ja: '2日分（横に並べる）', en: '2 days side by side' } }, st.perPage) : ''}
+      ${st.printLayout === 'day' && st.perPage === 2 ? `<p class="dc-style-note">${escapeHtml(st.paperSize === 'A4'
+    ? t('用紙を横向きにして左右に1日分ずつ並べます。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Two days side by side on a landscape page. Cut along the center line to get two A5 sheets.')
+    : t('用紙を横向きにして左右に1日分ずつ並べます。真ん中の点線で切ると、A6サイズのシートが2枚になります。', 'Two days side by side on a landscape page. Cut along the center line to get two A6 sheets.'))}</p>` : ''}
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
         ${onOff('showDate', st.showDate, t('日付の欄', 'Date field'))}
         ${onOff('showMemo', st.showMemo, t('メモの欄', 'Memo field'))}
@@ -540,7 +543,8 @@ function weekHtml(sheet) {
 const PAPER_MM = { A4: [210, 297], A5: [148, 210] };
 const PX_PER_MM = 96 / 25.4;
 function fitPrintPage(area, style) {
-  const landscape = style.printLayout === 'week';
+  // 1週間分の表と、2日分を左右に並べる時は横向き（A4横の真ん中で切るとA5が2枚になる）
+  const landscape = style.printLayout === 'week' || style.perPage === 2;
   const [w, h] = PAPER_MM[style.paperSize] || PAPER_MM.A4;
   const marginMm = style.paperSize === 'A5' ? 6 : 8;
   const pageW = (landscape ? h : w) - marginMm * 2;
