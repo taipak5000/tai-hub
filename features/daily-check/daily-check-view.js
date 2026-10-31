@@ -56,7 +56,7 @@ const FONTS = {
   basic: { ja: 'ふつう', en: 'Standard', css: '-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif' },
   hand: { ja: '手書き風', en: 'Handwritten', css: '"Klee", "Klee One", "Yomogi", "Hiragino Maru Gothic ProN", cursive' },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, showDate: true, showMemo: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, paperSize: 'A4', showDate: true, showMemo: true };
 
 // テーマ＝色・チェックの形・紙・飾り・文字の組み合わせ。選ぶと5つをまとめて切り替える
 // （その後で1つずつ変えるのは自由。5つが一致するテーマが無ければ「カスタム」と表示する）
@@ -80,9 +80,9 @@ function currentThemeKey(style) {
 const AREA_ROWS = [
   { ja: 'ホーム', en: 'Home', spots: ['花鳥郷', '海ホーム', 'カーニバル', 'アリス'] },
   { ja: '孤島', en: 'Isle', spots: null },
-  { ja: '草原', en: 'Prairie', spots: ['蝶々の住処', '草原の村', '草原高地', '草原の神殿', '草原の洞窟', '鳥の巣', '楽園'] },
-  { ja: '雨林', en: 'Forest', spots: ['前庭', '小川', '墓場', '晴れ間', '大空洞', '雨林の神殿', '聖なる池', 'ツリーハウス'] },
-  { ja: '峡谷', en: 'Valley', spots: ['凍った湖', '陸レ', '城塞都市', '空レ', '円形劇場', '峡谷の神殿', '夢見の町', '隠者の峠', '奏の音楽堂'] },
+  { ja: '草原', en: 'Prairie', spots: ['蝶々の住処', '草原の村', 'オレオ', '草原の神殿', '草原の洞窟', '鳥の巣', '楽園'] },
+  { ja: '雨林', en: 'Forest', spots: ['前庭', '小川', '墓場', '晴れ間', '雨林の神殿', '聖なる池', 'ツリーハウス'] },
+  { ja: '峡谷', en: 'Valley', spots: ['凍った湖', '陸レ', '城塞都市', '空レ', '峡谷の神殿', '夢見の町', '隠者の峠', '奏の音楽堂'] },
   { ja: '捨てられた地', en: 'Wasteland', spots: null },
   { ja: '書庫', en: 'Vault', spots: null },
 ];
@@ -94,6 +94,7 @@ let doc = null;    // シート一式（SHEETS_KEY）
 let chk = null;    // 今日のチェック（STATE_KEY）
 let editing = false;
 let styling = false;
+let goaling = false; // 「目標を決める」中（行をタップして目標に入れる/外す）
 let tickTimer = null;
 let saveTimer = null;
 let onAfterPrint = null;
@@ -106,6 +107,7 @@ export function mount(container) {
   containerEl = container;
   editing = false;
   styling = false;
+  goaling = false;
   doc = loadDoc();
   chk = loadChecks();
   rollOverIfNeeded();
@@ -187,6 +189,7 @@ function normalizeSheet(s) {
   if (!FONTS[style.font]) style.font = DEFAULT_STYLE.font;
   if (style.printLayout !== 'week') style.printLayout = 'day';
   style.perPage = style.perPage === 2 ? 2 : 1;
+  if (style.paperSize !== 'A5') style.paperSize = 'A4';
   return {
     id: String(s.id || genId()),
     title: String(s.title || ''),
@@ -199,6 +202,7 @@ function normalizeSheet(s) {
         id: String(r.id || genId()),
         label: String(r.label || ''),
         ...(r.cols === 2 ? { cols: 2 } : {}),
+        ...(r.goal ? { goal: true } : {}),
         opts: r.opts.filter(o => o && (o.t === 'box' || o.t === 'num')).map(o => ({ t: o.t, label: String(o.label || '') })),
       })),
     })),
@@ -289,11 +293,12 @@ function rowChecks(sheet, rowId, create) {
   if (!sc[rowId]) { if (!create) return {}; sc[rowId] = {}; }
   return sc[rowId];
 }
-// 進み具合は「1つでもチェックした項目（行）の数」で数える（大キャンなら何本目かに関わらず、1つ付いていれば済み）
+// 進み具合は「目標に入れた項目（行）のうち、1つでもチェックしたものの数」で数える
+// （大キャンなら何本目かに関わらず、1つ付いていれば済み）。目標を決めていなければ total は0で、表示しない
 function progress(sheet) {
   let done = 0, total = 0;
   sheet.sections.forEach(sec => sec.rows.forEach(r => {
-    if (!r.opts.length) return;
+    if (!r.goal || !r.opts.length) return;
     total++;
     const c = rowChecks(sheet, r.id, false);
     if (r.opts.some((o, i) => c[i])) done++;
@@ -335,17 +340,20 @@ function tabsHtml(sheet) {
 function toolbarHtml(sheet) {
   const p = progress(sheet);
   const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
-  return `
-    <div class="dc-bar">
+  const progressHtml = p.total ? `
       <div class="dc-progress">
-        <span class="dc-progress-num">${escapeHtml(t('今日チェックした項目', 'Items checked today'))} <b>${p.done}</b> / ${p.total}</span>
+        <span class="dc-progress-num">${escapeHtml(t('今日の目標', "Today's goals"))} <b>${p.done}</b> / ${p.total}</span>
         <span class="dc-progress-track" aria-hidden="true"><span style="width:${pct}%"></span></span>
-      </div>
+      </div>` : '';
+  const goalHint = goaling ? `<p class="dc-goal-hint">${escapeHtml(t('達成したい項目の「目標」をタップしてください。選んだ項目のうち、チェックした数が上に出ます。', 'Tap "Goal" on the items you want to finish. The count of checked goals appears above.'))}</p>` : '';
+  return `
+    <div class="dc-bar">${progressHtml}
       <div class="dc-actions">
+        <button type="button" class="dc-btn${goaling ? ' on' : ''}" data-act="toggle-goal" aria-pressed="${goaling}">${escapeHtml(goaling ? t('目標を決め終える', 'Done') : t('目標を決める', 'Set goals'))}</button>
         <button type="button" class="dc-btn${editing ? ' on' : ''}" data-act="toggle-edit" aria-pressed="${editing}">${escapeHtml(editing ? t('編集を終える', 'Done editing') : t('項目を編集', 'Edit items'))}</button>
         <button type="button" class="dc-btn${styling ? ' on' : ''}" data-act="toggle-style" aria-pressed="${styling}">${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}</button>
         <button type="button" class="dc-btn primary" data-act="print">${escapeHtml(t('印刷する', 'Print'))}</button>
-      </div>
+      </div>${goalHint}
       <div class="dc-reset">
         <span class="dc-reset-next">${escapeHtml(resetInfoText())}</span>
         <span class="dc-reset-note">${escapeHtml(sheet.autoReset
@@ -396,6 +404,7 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('紙', 'Paper'), 'paper', PAPERS, st.paper)}
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
       ${chipGroup(t('文字', 'Font'), 'font', FONTS, st.font)}
+      ${chipGroup(t('用紙', 'Paper size'), 'paperSize', { A4: { ja: 'A4', en: 'A4' }, A5: { ja: 'A5', en: 'A5' } }, st.paperSize)}
       ${chipGroup(t('印刷する形', 'Print layout'), 'printLayout', { day: { ja: '1日分', en: 'One day' }, week: { ja: '1週間分の表', en: 'Weekly table' } }, st.printLayout)}
       ${st.printLayout === 'day' ? chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分', en: '1 day' }, 2: { ja: '2日分', en: '2 days' } }, st.perPage) : ''}
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
@@ -494,7 +503,10 @@ function rowHtml(sheet, sec, r, index, mode) {
     return boxBtn;
   }).join('');
   const allDone = mode === 'screen' && r.opts.length > 0 && r.opts.every((o, i) => c[i]);
-  return `<div class="dc-row${allDone ? ' done' : ''}"><span class="dc-label">${escapeHtml(r.label)}</span><span class="dc-opts${r.cols === 2 ? ' cols-2' : ''}">${opts}</span></div>`;
+  const goalMark = r.goal && !goaling ? `<span class="dc-goal-mark" title="${escapeHtml(t('目標', 'Goal'))}" aria-label="${escapeHtml(t('目標', 'Goal'))}">★</span>` : '';
+  const goalBtn = goaling && mode === 'screen'
+    ? `<button type="button" class="dc-goal-btn${r.goal ? ' on' : ''}" data-act="goal" data-r="${rid}" aria-pressed="${!!r.goal}">${r.goal ? '★' : '☆'} ${escapeHtml(t('目標', 'Goal'))}</button>` : '';
+  return `<div class="dc-row${allDone ? ' done' : ''}${r.goal ? ' is-goal' : ''}"><span class="dc-label">${goalMark}${escapeHtml(r.label)}${goalBtn}</span><span class="dc-opts${r.cols === 2 ? ' cols-2' : ''}">${opts}</span></div>`;
 }
 
 function sheetAdminHtml() {
@@ -516,7 +528,7 @@ function weekHtml(sheet) {
     const rows = sec.rows.map(r => {
       const cell = `<td><span class="dc-wk-boxes${r.cols === 2 ? ' cols-2' : ''}">${r.opts.map(o => `<span class="dc-wk-box">${shapeSvg(st, false)}${o.t === 'num' ? '<span class="dc-num-line sm"></span>' : ''}</span>`).join('')}</span></td>`;
       const legend = r.opts.map(o => escapeHtml(o.label)).join(' / ');
-      return `<tr><th class="dc-wk-item">${escapeHtml(r.label)}<span class="dc-wk-legend">${legend}</span></th>${cell.repeat(7)}</tr>`;
+      return `<tr><th class="dc-wk-item">${r.goal ? '<span class="dc-goal-mark">★</span>' : ''}${escapeHtml(r.label)}<span class="dc-wk-legend">${legend}</span></th>${cell.repeat(7)}</tr>`;
     }).join('');
     return secRow + rows;
   }).join('');
@@ -529,6 +541,44 @@ function weekHtml(sheet) {
     </article>`;
 }
 
+// 印刷する紙（A4/A5・縦/横）に合わせて@pageを指定し、中身が1枚に収まるよう縮める。
+// 縮めると横幅にも余裕ができて折り返しが減り高さが変わるので、幅を広げて測り直すのを数回くり返す
+const PAPER_MM = { A4: [210, 297], A5: [148, 210] };
+const PX_PER_MM = 96 / 25.4;
+function fitPrintPage(area, style) {
+  const landscape = style.printLayout === 'week';
+  const [w, h] = PAPER_MM[style.paperSize] || PAPER_MM.A4;
+  const marginMm = style.paperSize === 'A5' ? 6 : 8;
+  const pageW = (landscape ? h : w) - marginMm * 2;
+  const pageH = (landscape ? w : h) - marginMm * 2 - 2; // 2mmは丸め誤差で2枚目にはみ出さないための余白
+  let styleEl = document.getElementById('dcPageStyle');
+  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dcPageStyle'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `@page { size: ${style.paperSize} ${landscape ? 'landscape' : 'portrait'}; margin: ${marginMm}mm; }`;
+
+  const page = area.querySelector('.dc-print-page');
+  const availW = pageW * PX_PER_MM, availH = pageH * PX_PER_MM;
+  // 画面外で、印刷時と同じ見た目（印刷用のクラス）にして高さを測る
+  const html = document.documentElement;
+  html.classList.add('dc-measuring');
+  let scale = 1;
+  for (let k = 0; k < 10; k++) {
+    page.style.width = `${availW / scale}px`;
+    const next = Math.min(1, availH / page.scrollHeight);
+    if (Math.abs(next - scale) < 0.003) { scale = next; break; }
+    scale = next;
+  }
+  // 最後の幅で実際に収まっているかを確かめ、はみ出すなら少しずつ縮める
+  page.style.width = `${availW / scale}px`;
+  for (let k = 0; k < 20 && page.scrollHeight * scale > availH; k++) {
+    scale *= 0.97;
+    page.style.width = `${availW / scale}px`;
+  }
+  // 印刷時は文字の配置が画面で測った時とわずかにずれることがある（縮小率が小さいほど大きい）ので、3%余裕を持たせる
+  if (scale < 1) { scale *= 0.97; page.style.width = `${availW / scale}px`; }
+  page.style.zoom = String(scale);
+  html.classList.remove('dc-measuring');
+}
+
 function doPrint() {
   const sheet = activeSheet();
   const area = viewRoot().querySelector('.dc-print-area');
@@ -538,10 +588,15 @@ function doPrint() {
     const one = paperHtml(sheet, { mode: 'print' });
     area.innerHTML = `<div class="dc-print-page${sheet.style.perPage === 2 ? ' two' : ''}">${one}${sheet.style.perPage === 2 ? `<div class="dc-cut" aria-hidden="true"></div>${one}` : ''}</div>`;
   }
+  fitPrintPage(area, sheet.style);
   const html = document.documentElement;
   html.classList.add('dc-printing');
   if (onAfterPrint) window.removeEventListener('afterprint', onAfterPrint);
-  onAfterPrint = () => { html.classList.remove('dc-printing'); window.removeEventListener('afterprint', onAfterPrint); onAfterPrint = null; };
+  onAfterPrint = () => {
+    html.classList.remove('dc-printing');
+    document.getElementById('dcPageStyle')?.remove();
+    window.removeEventListener('afterprint', onAfterPrint); onAfterPrint = null;
+  };
   window.addEventListener('afterprint', onAfterPrint);
   window.print();
 }
@@ -577,7 +632,12 @@ function onClick(ev) {
     const s = templateSheet(t(`チェックシート${doc.sheets.length + 1}`, `Checklist ${doc.sheets.length + 1}`));
     doc.sheets.push(s); doc.activeId = s.id; editing = true; saveDoc(); render(); return;
   }
-  if (act === 'toggle-edit') { flushSave(); editing = !editing; render(); return; }
+  if (act === 'toggle-edit') { flushSave(); editing = !editing; goaling = false; render(); return; }
+  if (act === 'toggle-goal') { flushSave(); goaling = !goaling; editing = false; render(); return; }
+  if (act === 'goal' && hit) {
+    if (hit.row.goal) delete hit.row.goal; else hit.row.goal = true;
+    saveDoc(); render(); return;
+  }
   if (act === 'toggle-style') { styling = !styling; render(); return; }
   if (act === 'print') { flushSave(); doPrint(); return; }
   if (act === 'clear-today') { delete chk.sheets[sheet.id]; saveChecks(); render(); return; }
@@ -721,6 +781,7 @@ function onChange(ev) {
 function refreshProgress() {
   const root = viewRoot();
   const p = progress(activeSheet());
+  if (!p.total) return;
   const numEl = root.querySelector('.dc-progress-num b');
   if (numEl) numEl.textContent = p.done;
   const bar = root.querySelector('.dc-progress-track > span');

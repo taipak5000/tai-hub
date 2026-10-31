@@ -182,22 +182,32 @@
    印刷（html.dc-printing の間だけ。印刷用の面だけを紙に出す）
    ================================================================ */
 .daily-check-view .dc-print-area { display: none; }
-@page dcWeek { size: A4 landscape; margin: 10mm; }
 @media print {
   html.dc-printing body > *:not(#app-root) { display: none !important; }
+  html.dc-printing body { margin: 0 !important; }
   html.dc-printing #app-root { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
   html.dc-printing body, html.dc-printing .daily-check-view { background: #fff !important; }
   html.dc-printing .daily-check-view .dc-wrap { display: none !important; }
   html.dc-printing .daily-check-view .dc-print-area { display: block; }
-  html.dc-printing .dc-print-page.landscape { page: dcWeek; }
-  html.dc-printing .daily-check-view .dc-paper { box-shadow: none; border: 1px solid var(--dc-line); border-radius: 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html.dc-printing .daily-check-view .dc-print-page.two .dc-paper { padding: 14px 16px; }
-  html.dc-printing .daily-check-view .dc-print-page.two .dc-row { padding: 3px 2px; }
-  html.dc-printing .daily-check-view .dc-print-page.two .dc-memo-lines { height: 48px; }
-  html.dc-printing .daily-check-view .dc-cut { margin: 8mm 0; border-top: 1px dashed #999; }
-  html.dc-printing .daily-check-view .dc-shape { fill: #fff; }
+  html.dc-printing .daily-check-view .dc-paper { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html.dc-printing .daily-check-view .dc-row { break-inside: avoid; }
 }
+/* 印刷前に高さを測る間だけ、印刷用の面を画面外に出す（fitPrintPage()）。見た目は下の印刷用の面のルールそのもの */
+html.dc-measuring .daily-check-view .dc-print-area { display: block; position: fixed; left: -10000px; top: 0; visibility: hidden; }
+
+/* 印刷用の面の見た目（印刷時と、上の高さを測る時にだけ表示される） */
+.daily-check-view .dc-print-area .dc-paper { box-shadow: none; border: 1px solid var(--dc-line); border-radius: 12px; }
+.daily-check-view .dc-print-area .dc-shape { fill: #fff; }
+.daily-check-view .dc-print-area .dc-print-page.two .dc-paper { padding: 14px 16px; }
+.daily-check-view .dc-print-area .dc-print-page.two .dc-row { padding: 3px 2px; }
+.daily-check-view .dc-print-area .dc-print-page.two .dc-memo-lines { height: 48px; }
+.daily-check-view .dc-print-area .dc-cut { margin: 8mm 0; border-top: 1px dashed #999; }
+/* 項目が多くても1枚に収まりやすいよう、週の表は行を詰める */
+.daily-check-view .dc-print-area .dc-week { padding: 12px 14px; }
+.daily-check-view .dc-print-area .dc-wk th, .daily-check-view .dc-print-area .dc-wk td { padding: 2px 3px; }
+.daily-check-view .dc-print-area .dc-wk-legend { font-size: 8px; line-height: 1.3; }
+.daily-check-view .dc-print-area .dc-wk-box .dc-box-svg { width: 12px; height: 12px; }
+.daily-check-view .dc-print-area .dc-week .dc-memo-lines { height: 48px; }
 
 /* ================================================================
    確認ダイアログ（ページ内。document.body直下に出すので.daily-check-viewの外）
@@ -243,14 +253,6 @@
 .daily-check-view .dc-opts.cols-2 { display: grid; grid-template-columns: repeat(2, max-content); gap: 0 18px; }
 .daily-check-view .dc-wk-boxes.cols-2 { display: inline-grid; grid-template-columns: repeat(2, auto); }
 .daily-check-view .dc-mini.on { border-color: var(--dc-accent); background: var(--dc-soft); color: var(--dc-ink); }
-@media print {
-  /* 項目が多くてもA4横1枚に収まりやすいよう、週の表は行を詰める */
-  html.dc-printing .daily-check-view .dc-week { padding: 12px 14px; }
-  html.dc-printing .daily-check-view .dc-wk th, html.dc-printing .daily-check-view .dc-wk td { padding: 2px 3px; }
-  html.dc-printing .daily-check-view .dc-wk-legend { font-size: 8px; line-height: 1.3; }
-  html.dc-printing .daily-check-view .dc-wk-box .dc-box-svg { width: 12px; height: 12px; }
-  html.dc-printing .daily-check-view .dc-week .dc-memo-lines { height: 48px; }
-}
 
 /* ── テーマ（色・形・紙・飾り・文字の組み合わせ）── */
 .daily-check-view .dc-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
@@ -283,3 +285,13 @@
 @media (prefers-contrast: more) {
   .daily-check-view .dc-theme.on { border-width: 3px; }
 }
+
+/* 目標 */
+.daily-check-view .dc-goal-mark { margin-right: 3px; color: var(--dc-accent); font-size: 0.9em; }
+.daily-check-view .dc-goal-btn {
+  margin-left: 8px; padding: 3px 9px; border: 1.5px solid var(--dc-accent); border-radius: 999px;
+  background: #fff; color: var(--dc-accent); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; vertical-align: 1px;
+}
+.daily-check-view .dc-goal-btn.on { background: var(--dc-accent); color: #fff; }
+.daily-check-view .dc-goal-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--hub-accent); }
+.daily-check-view .dc-actions:first-child { margin-top: 0; }
