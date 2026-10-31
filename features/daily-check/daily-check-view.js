@@ -347,6 +347,7 @@ function toolbarHtml(sheet) {
         <button type="button" class="dc-btn${editing ? ' on' : ''}" data-act="toggle-edit" aria-pressed="${editing}">${escapeHtml(editing ? t('編集を終える', 'Done editing') : t('項目を編集', 'Edit items'))}</button>
         <button type="button" class="dc-btn${styling ? ' on' : ''}" data-act="toggle-style" aria-pressed="${styling}">${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}</button>
         <button type="button" class="dc-btn primary" data-act="print">${escapeHtml(t('印刷する', 'Print'))}</button>
+        <button type="button" class="dc-btn danger" data-act="sheet-del">${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
       </div>${goalHint}
       <div class="dc-reset">
         <span class="dc-reset-next">${escapeHtml(resetInfoText())}</span>
@@ -508,7 +509,6 @@ function sheetAdminHtml() {
     <div class="dc-admin">
       <button type="button" class="dc-btn" data-act="sheet-dup">${escapeHtml(t('このシートを複製', 'Duplicate sheet'))}</button>
       <button type="button" class="dc-btn" data-act="sheet-template">${escapeHtml(t('はじめの内容に戻す', 'Reset to template'))}</button>
-      <button type="button" class="dc-btn danger" data-act="sheet-del"${doc.sheets.length <= 1 ? ' disabled' : ''}>${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
     </div>`;
 }
 
@@ -675,15 +675,21 @@ function onClick(ev) {
     });
     return;
   } else if (act === 'sheet-del') {
-    if (doc.sheets.length <= 1) return;
+    // 最後の1枚を消すとシートが無くなるので、その時ははじめの内容の新しいシートに置き換える
+    const last = doc.sheets.length <= 1;
+    const name = sheet.title || t('無題のシート', 'Untitled');
     askConfirm({
       title: t('シートを削除しますか？', 'Delete this sheet?'),
-      message: t(`「${sheet.title || '無題のシート'}」の項目とチェックを削除します。元に戻せません。`, `"${sheet.title || 'Untitled'}" and its checks will be deleted. This can't be undone.`),
+      message: last
+        ? t(`「${name}」の項目とチェックを削除し、はじめの内容のシートに置き換えます。元に戻せません。`, `"${name}" and its checks will be deleted and replaced with a fresh template sheet. This can't be undone.`)
+        : t(`「${name}」の項目とチェックを削除します。元に戻せません。`, `"${name}" and its checks will be deleted. This can't be undone.`),
       okLabel: t('削除する', 'Delete'), danger: true,
       onOk: () => {
         doc.sheets = doc.sheets.filter(s => s !== sheet);
         delete chk.sheets[sheet.id]; saveChecks();
+        if (!doc.sheets.length) doc.sheets.push(templateSheet());
         doc.activeId = doc.sheets[0].id;
+        editing = false;
         saveDoc(); render();
       },
     });
