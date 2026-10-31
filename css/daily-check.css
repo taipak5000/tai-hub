@@ -302,3 +302,8 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
   max-width: 220px; padding: 7px 10px; border: 1px solid var(--hub-sep); border-radius: var(--hub-r-sm);
   background: var(--hub-bg); color: var(--hub-text); font: inherit; font-size: 13px; font-weight: 600;
 }
+
+/* 手書きで書き込むプレイヤー名の欄（任意） */
+.daily-check-view .dc-player { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0 6px; padding-right: 40px; }
+.daily-check-view .dc-player-label { flex-shrink: 0; font-size: 12px; font-weight: 800; color: var(--dc-accent); letter-spacing: 0.04em; }
+.daily-check-view .dc-player-line { flex: 0 1 220px; height: 1.4em; border-bottom: 1.5px solid var(--dc-ink); opacity: 0.6; }

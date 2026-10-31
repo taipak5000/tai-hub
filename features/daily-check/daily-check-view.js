@@ -51,7 +51,7 @@ const STICKERS = {
   heart: { ja: 'ハート', en: 'Hearts', ch: '♡' },
   cloud: { ja: 'くも', en: 'Clouds', ch: '☁' },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showMemo: true, showHoles: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showYear: false, showPlayer: false, showMemo: true, showHoles: true };
 
 // テーマ＝色・チェックの形・紙・飾りの組み合わせ。選ぶと4つをまとめて切り替える
 // （その後で1つずつ変えるのは自由。4つが一致するテーマが無ければ「カスタム」と表示する）
@@ -420,6 +420,8 @@ function stylePanelHtml(sheet) {
       ${st.perPage === 2 ? printPairHtml(sheet) : ''}
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
         ${onOff('showDate', st.showDate, t('日付の欄', 'Date field'))}
+        ${st.showDate ? onOff('showYear', st.showYear, t('日付に年も入れる', 'Include the year')) : ''}
+        ${onOff('showPlayer', st.showPlayer, t('プレイヤー名の欄', 'Player name field'))}
         ${onOff('showMemo', st.showMemo, t('メモの欄', 'Memo field'))}
         ${onOff('showHoles', st.showHoles, t('穴あけの目印（●）', 'Punch hole marks (●)'))}
         ${onOff('autoReset', sheet.autoReset, t('毎日自動でリセット', 'Reset every day'))}
@@ -435,11 +437,11 @@ function stickersHtml(style) {
   if (!ch) return '';
   return `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
 }
-function todayLabel() {
+function todayLabel(withYear) {
   // 表示上の「今日」はゲーム内の日付（太平洋時間）。リセット前の16時台は前日扱いになる
   const [y, m, d] = dayKeyNow().split('-').map(Number);
   const wd = t('日月火水木金土', 'SMTWTFS')[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-  return t(`${m}月${d}日（${wd}）`, `${m}/${d} (${wd})`);
+  return withYear ? t(`${y}年${m}月${d}日（${wd}）`, `${y}/${m}/${d} (${wd})`) : t(`${m}月${d}日（${wd}）`, `${m}/${d} (${wd})`);
 }
 
 // mode: 'screen'（チェックできる）/ 'edit'（文言・構成を編集）/ 'print'（空欄の印刷用）
@@ -447,8 +449,12 @@ function paperHtml(sheet, { mode }) {
   const st = sheet.style;
   const dateHtml = st.showDate
     ? (mode === 'print'
-      ? `<div class="dc-date">${escapeHtml(t('　　月　　日（　　）', 'Date: ______'))}</div>`
-      : `<div class="dc-date">${escapeHtml(todayLabel())}</div>`)
+      ? `<div class="dc-date">${escapeHtml(st.showYear ? t('　　　　年　　月　　日（　　）', 'Date: ____/____/____') : t('　　月　　日（　　）', 'Date: ______'))}</div>`
+      : `<div class="dc-date">${escapeHtml(todayLabel(st.showYear))}</div>`)
+    : '';
+  // プレイヤー名は手書きで書き込む欄（画面でも印刷でも下線だけ）
+  const playerHtml = st.showPlayer && mode !== 'edit'
+    ? `<div class="dc-player"><span class="dc-player-label">${escapeHtml(t('プレイヤー名', 'Player'))}</span><span class="dc-player-line"></span></div>`
     : '';
   const titleHtml = mode === 'edit'
     ? `<input class="dc-in dc-in-title" data-edit="sheet-title" value="${escapeHtml(sheet.title)}" placeholder="${escapeHtml(t('シートの名前', 'Sheet name'))}" aria-label="${escapeHtml(t('シートの名前', 'Sheet name'))}">`
@@ -461,7 +467,7 @@ function paperHtml(sheet, { mode }) {
   return `
     <article class="dc-paper paper-${st.paper}${mode === 'edit' ? ' editing' : ''}" style="${sheetVars(st)}">
       ${stickersHtml(st)}
-      <div class="dc-paper-head">${titleHtml}${dateHtml}</div>
+      <div class="dc-paper-head">${titleHtml}${dateHtml}</div>${playerHtml}
       ${sections}${addSection}${memo}
     </article>`;
 }
