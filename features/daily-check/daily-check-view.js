@@ -51,7 +51,7 @@ const STICKERS = {
   heart: { ja: 'ハート', en: 'Hearts', ch: '♡' },
   cloud: { ja: 'くも', en: 'Clouds', ch: '☁' },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showMemo: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showMemo: true, showHoles: true };
 
 // テーマ＝色・チェックの形・紙・飾りの組み合わせ。選ぶと4つをまとめて切り替える
 // （その後で1つずつ変えるのは自由。4つが一致するテーマが無ければ「カスタム」と表示する）
@@ -183,6 +183,7 @@ function normalizeSheet(s) {
   if (!STICKERS[style.sticker]) style.sticker = DEFAULT_STYLE.sticker;
   delete style.font; // 以前の「文字」設定の名残りは捨てる
   style.perPage = style.perPage === 2 ? 2 : 1;
+  ['printLeft', 'printRight'].forEach(k => { if (typeof style[k] !== 'string') delete style[k]; });
   delete style.printLayout; delete style.paperSize; // 以前の「印刷する形」「用紙」の名残り（今はA4・1日分単位に固定）
   return {
     id: String(s.id || genId()),
@@ -390,6 +391,17 @@ function themeGroupHtml(st) {
   }).join('');
   return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('テーマ', 'Theme'))}${cur ? '' : `<span class="dc-custom-tag">${escapeHtml(t('カスタム', 'Custom'))}</span>`}</span><div class="dc-themes">${cards}</div></div>`;
 }
+// 2日分（左右に並べる）で、左と右にどのシートを印刷するか。初期値はどちらも今開いているシート
+function printPairHtml(sheet) {
+  const sel = (side, cur) => `<label class="dc-pair"><span>${escapeHtml(side === 'printLeft' ? t('左', 'Left') : t('右', 'Right'))}</span>
+    <select class="dc-pair-select" data-print-side="${side}">${doc.sheets.map(s => `<option value="${escapeHtml(s.id)}"${s.id === cur ? ' selected' : ''}>${escapeHtml(s.title || t('無題のシート', 'Untitled'))}</option>`).join('')}</select></label>`;
+  const [left, right] = printPairSheets(sheet).map(s => s.id);
+  return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('印刷するシート', 'Sheets to print'))}</span><div class="dc-pairs">${sel('printLeft', left)}${sel('printRight', right)}</div></div>`;
+}
+function printPairSheets(sheet) {
+  const find = id => doc.sheets.find(s => s.id === id) || sheet;
+  return [find(sheet.style.printLeft), find(sheet.style.printRight)];
+}
 function stylePanelHtml(sheet) {
   const st = sheet.style;
   const onOff = (k, val, label) => `<label class="dc-switch"><input type="checkbox" data-style-check="${k}"${val ? ' checked' : ''}><span>${escapeHtml(label)}</span></label>`;
@@ -403,11 +415,13 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
       ${chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分（縦）', en: '1 day (portrait)' }, 2: { ja: '2日分（横に並べる）', en: '2 days side by side' } }, st.perPage)}
       <p class="dc-style-note">${escapeHtml(st.perPage === 2
-    ? t('A4を横向きにして、左右に1日分ずつ並べて印刷します。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Prints two days side by side on landscape A4. Cut along the center line to get two A5 sheets.')
+    ? t('A4を横向きにして、左右に1枚ずつ並べて印刷します。真ん中の点線で切ると、A5サイズのシートが2枚になります。', 'Prints two sheets side by side on landscape A4. Cut along the center line to get two A5 sheets.')
     : t('A4の縦向きで印刷します。', 'Prints on portrait A4.'))}</p>
+      ${st.perPage === 2 ? printPairHtml(sheet) : ''}
       <div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('その他', 'Other'))}</span><div class="dc-chips">
         ${onOff('showDate', st.showDate, t('日付の欄', 'Date field'))}
         ${onOff('showMemo', st.showMemo, t('メモの欄', 'Memo field'))}
+        ${onOff('showHoles', st.showHoles, t('穴あけの目印（●）', 'Punch hole marks (●)'))}
         ${onOff('autoReset', sheet.autoReset, t('毎日自動でリセット', 'Reset every day'))}
       </div></div>
     </section>`;
@@ -515,52 +529,86 @@ function sheetAdminHtml() {
     </div>`;
 }
 
-// A4に合わせて@pageを指定し、中身が1枚に収まるよう縮める。
-// 縮めると横幅にも余裕ができて折り返しが減り高さが変わるので、幅を広げて測り直すのを数回くり返す
-const A4_MM = [210, 297];
+/* ── 印刷のレイアウト（A4固定。位置はすべて、印刷の余白8mmの内側を原点としたmm）──
+   左端は穴あけ用に空ける。穴の目印●は市販の2穴パンチ（穴の中心が紙の端から12mm・2つの穴の間隔80mm）に合わせ、
+   縮小しない外枠に置く（シートだけを縮めるので、●の位置はmmのまま正確に出る）。
+   2日分（横向き）は真ん中（用紙の端から148.5mm）に切り取り線。切るとA5が2枚になり、右のシートは切り取り線が左端になる */
 const PRINT_MARGIN_MM = 8;
 const PX_PER_MM = 96 / 25.4;
-function fitPrintPage(area, style) {
-  // 2日分を左右に並べる時は横向き（A4横の真ん中で切るとA5が2枚になる）
-  const landscape = style.perPage === 2;
-  const [w, h] = A4_MM;
-  const pageW = (landscape ? h : w) - PRINT_MARGIN_MM * 2;
-  const pageH = (landscape ? w : h) - PRINT_MARGIN_MM * 2 - 2; // 2mmは丸め誤差で2枚目にはみ出さないための余白
-  let styleEl = document.getElementById('dcPageStyle');
-  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dcPageStyle'; document.head.appendChild(styleEl); }
-  styleEl.textContent = `@page { size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: ${PRINT_MARGIN_MM}mm; }`;
+const HOLE_FROM_EDGE_MM = 12;
+const HOLE_GAP_MM = 80;
+const LAYOUTS = {
+  // w,h: 余白の内側の大きさ（hは丸め誤差で2枚目にはみ出さないよう2mm控える）。slots: シートを置く枠。holes: ●の中心
+  portrait: {
+    w: 194, h: 279,
+    slots: [{ x: 14, y: 0, w: 180, h: 279 }],
+    holes: [[HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 - HOLE_GAP_MM / 2], [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 140.5 + HOLE_GAP_MM / 2]],
+    cut: null,
+  },
+  landscape: {
+    w: 281, h: 192,
+    slots: [{ x: 14, y: 0, w: 118.5, h: 192 }, { x: 162.5, y: 0, w: 118.5, h: 192 }],
+    holes: [
+      [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 97 - HOLE_GAP_MM / 2], [HOLE_FROM_EDGE_MM - PRINT_MARGIN_MM, 97 + HOLE_GAP_MM / 2],
+      [140.5 + HOLE_FROM_EDGE_MM, 97 - HOLE_GAP_MM / 2], [140.5 + HOLE_FROM_EDGE_MM, 97 + HOLE_GAP_MM / 2],
+    ],
+    cut: 140.5,
+  },
+};
 
-  const page = area.querySelector('.dc-print-page');
-  const availW = pageW * PX_PER_MM, availH = pageH * PX_PER_MM;
-  // 画面外で、印刷時と同じ見た目（印刷用のクラス）にして高さを測る
-  const html = document.documentElement;
-  html.classList.add('dc-measuring');
+// シート1枚を枠（px）に収まる縮小率を求める。縮めると横幅に余裕ができて折り返しが減り高さが変わるので、
+// 幅を広げて測り直すのを数回くり返す
+function fitScale(paper, availW, availH) {
   let scale = 1;
   for (let k = 0; k < 10; k++) {
-    page.style.width = `${availW / scale}px`;
-    const next = Math.min(1, availH / page.scrollHeight);
+    paper.style.width = `${availW / scale}px`;
+    const next = Math.min(1, availH / paper.scrollHeight);
     if (Math.abs(next - scale) < 0.003) { scale = next; break; }
     scale = next;
   }
-  // 最後の幅で実際に収まっているかを確かめ、はみ出すなら少しずつ縮める
-  page.style.width = `${availW / scale}px`;
-  for (let k = 0; k < 20 && page.scrollHeight * scale > availH; k++) {
+  paper.style.width = `${availW / scale}px`;
+  for (let k = 0; k < 20 && paper.scrollHeight * scale > availH; k++) {
     scale *= 0.97;
-    page.style.width = `${availW / scale}px`;
+    paper.style.width = `${availW / scale}px`;
   }
   // 印刷時は文字の配置が画面で測った時とわずかにずれることがある（縮小率が小さいほど大きい）ので、3%余裕を持たせる
-  if (scale < 1) { scale *= 0.97; page.style.width = `${availW / scale}px`; }
-  page.style.zoom = String(scale);
-  html.classList.remove('dc-measuring');
+  return scale < 1 ? scale * 0.97 : 1;
 }
 
 function doPrint() {
   const sheet = activeSheet();
+  const two = sheet.style.perPage === 2;
+  const layout = LAYOUTS[two ? 'landscape' : 'portrait'];
+  const sheets = two ? printPairSheets(sheet) : [sheet];
+  const mm = v => `${v}mm`;
   const area = viewRoot().querySelector('.dc-print-area');
-  const one = paperHtml(sheet, { mode: 'print' });
-  area.innerHTML = `<div class="dc-print-page${sheet.style.perPage === 2 ? ' two' : ''}">${one}${sheet.style.perPage === 2 ? `<div class="dc-cut" aria-hidden="true"></div>${one}` : ''}</div>`;
-  fitPrintPage(area, sheet.style);
+  area.innerHTML = `
+    <div class="dc-print-sheet" style="width:${mm(layout.w)};height:${mm(layout.h)}">
+      ${layout.slots.map((sl, i) => `<div class="dc-slot" style="left:${mm(sl.x)};top:${mm(sl.y)};width:${mm(sl.w)};height:${mm(sl.h)}">${paperHtml(sheets[i], { mode: 'print' })}</div>`).join('')}
+      ${layout.cut !== null ? `<div class="dc-cut" style="left:${mm(layout.cut)}"></div>` : ''}
+      ${sheet.style.showHoles ? layout.holes.map(([x, y]) => `<span class="dc-hole" style="left:${mm(x)};top:${mm(y)}"></span>`).join('') : ''}
+    </div>`;
+
+  let styleEl = document.getElementById('dcPageStyle');
+  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dcPageStyle'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `@page { size: A4 ${two ? 'landscape' : 'portrait'}; margin: ${PRINT_MARGIN_MM}mm; }`;
+
+  // 画面外で、印刷時と同じ見た目にして測る。左右のシートは同じ縮小率にそろえる（大きさが揃って見えるように）
   const html = document.documentElement;
+  html.classList.add('dc-measuring');
+  const papers = [...area.querySelectorAll('.dc-slot > .dc-paper')];
+  const scale = Math.min(...papers.map((paper, i) => fitScale(paper, layout.slots[i].w * PX_PER_MM, layout.slots[i].h * PX_PER_MM)));
+  papers.forEach((paper, i) => {
+    const sl = layout.slots[i];
+    paper.style.width = `${(sl.w * PX_PER_MM) / scale}px`;
+    // 枠の高さいっぱいに伸ばす。項目が少なくて余った分はメモの欄が広がって埋める（.dc-print-area の flex 指定）
+    paper.style.height = `${(sl.h * PX_PER_MM) / scale}px`;
+    paper.style.zoom = String(scale);
+    // 背景で描く細い線（メモの罫線・方眼）は縮小で1px未満になると印刷で消えるので、縮めた後も1pxになる太さを渡す
+    paper.style.setProperty('--dc-hair', `${Math.max(1, 1 / scale)}px`);
+  });
+  html.classList.remove('dc-measuring');
+
   html.classList.add('dc-printing');
   if (onAfterPrint) window.removeEventListener('afterprint', onAfterPrint);
   onAfterPrint = () => {
@@ -746,6 +794,11 @@ function onInput(ev) {
 
 function onChange(ev) {
   const el = ev.target;
+  if (el.dataset && el.dataset.printSide) {
+    activeSheet().style[el.dataset.printSide] = el.value;
+    saveDoc();
+    return;
+  }
   const k = el.dataset && el.dataset.styleCheck;
   if (!k) return;
   const sheet = activeSheet();

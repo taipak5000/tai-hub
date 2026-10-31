@@ -186,16 +186,25 @@
 /* 印刷前に高さを測る間だけ、印刷用の面を画面外に出す（fitPrintPage()）。見た目は下の印刷用の面のルールそのもの */
 html.dc-measuring .daily-check-view .dc-print-area { display: block; position: fixed; left: -10000px; top: 0; visibility: hidden; }
 
-/* 印刷用の面の見た目（印刷時と、上の高さを測る時にだけ表示される） */
-.daily-check-view .dc-print-area .dc-paper { box-shadow: none; border: 1px solid var(--dc-line); border-radius: 12px; }
+/* 印刷用の面の見た目（印刷時と、上の高さを測る時にだけ表示される）。
+   .dc-print-sheet は余白の内側いっぱいの外枠（縮小しない）で、その中にシートの枠・切り取り線・穴の目印をmmで置く */
+.daily-check-view .dc-print-area .dc-print-sheet { position: relative; overflow: hidden; }
+.daily-check-view .dc-print-area .dc-slot { position: absolute; }
+.daily-check-view .dc-print-area .dc-cut { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed #999; }
+.daily-check-view .dc-print-area .dc-hole {
+  position: absolute; width: 6mm; height: 6mm; margin: -3mm 0 0 -3mm; border-radius: 50%;
+  background: #E3E3E6; box-shadow: inset 0 0 0 0.3mm #C7C7CC; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+/* シートは枠の高さいっぱいに伸ばし、項目が少なくて余った高さはメモの欄が広がって埋める */
+.daily-check-view .dc-print-area .dc-paper { display: flex; flex-direction: column; box-shadow: none; border: 1px solid var(--dc-line); border-radius: 12px; }
+.daily-check-view .dc-print-area .dc-memo { flex: 1 1 auto; align-items: stretch; }
+.daily-check-view .dc-print-area .dc-memo-lines {
+  height: auto; min-height: 48px;
+  background-image: linear-gradient(transparent calc(24px - var(--dc-hair, 1px)), var(--dc-line) calc(24px - var(--dc-hair, 1px)));
+}
+.daily-check-view .dc-print-area .dc-paper.paper-grid { background-image: linear-gradient(var(--dc-line) var(--dc-hair, 1px), transparent var(--dc-hair, 1px)), linear-gradient(90deg, var(--dc-line) var(--dc-hair, 1px), transparent var(--dc-hair, 1px)); }
+.daily-check-view .dc-print-area .dc-paper.paper-lined { background-image: linear-gradient(transparent calc(32px - var(--dc-hair, 1px)), var(--dc-line) calc(32px - var(--dc-hair, 1px))); }
 .daily-check-view .dc-print-area .dc-shape { fill: #fff; }
-.daily-check-view .dc-print-area .dc-print-page.two .dc-paper { padding: 14px 16px; }
-.daily-check-view .dc-print-area .dc-print-page.two .dc-row { padding: 3px 2px; }
-.daily-check-view .dc-print-area .dc-print-page.two .dc-memo-lines { height: 48px; }
-/* 2日分は左右に並べ、間に縦の切り取り線。左右の余白を同じにして、線が用紙のちょうど真ん中に来るようにする */
-.daily-check-view .dc-print-area .dc-print-page.two { display: flex; align-items: stretch; }
-.daily-check-view .dc-print-area .dc-print-page.two > .dc-paper { flex: 1 1 0; min-width: 0; }
-.daily-check-view .dc-print-area .dc-cut { flex: 0 0 auto; margin: 0 6mm; border-left: 1px dashed #999; }
 
 /* ================================================================
    確認ダイアログ（ページ内。document.body直下に出すので.daily-check-viewの外）
@@ -285,3 +294,11 @@ html.dc-measuring .daily-check-view .dc-print-area { display: block; position: f
 .daily-check-view .dc-actions:first-child { margin-top: 0; }
 
 .daily-check-view .dc-style-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--hub-text-2); }
+
+/* 2日分のときの「印刷するシート」（左・右） */
+.daily-check-view .dc-pairs { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.daily-check-view .dc-pair { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.daily-check-view .dc-pair-select {
+  max-width: 220px; padding: 7px 10px; border: 1px solid var(--hub-sep); border-radius: var(--hub-r-sm);
+  background: var(--hub-bg); color: var(--hub-text); font: inherit; font-size: 13px; font-weight: 600;
+}
