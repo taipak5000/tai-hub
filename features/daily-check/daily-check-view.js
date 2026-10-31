@@ -10,7 +10,7 @@
      自動で外れる（シートごとにオフにできる）。日付の判定は js/pacific-time.js を通す。
    - 印刷: 1日分（1枚に1日分か2日分）か1週間分の表を、空欄のまま印刷する。印刷中だけ
      html.dc-printing を付け、@media print で印刷用の面（.dc-print-area）以外を隠す。
-   - 着せ替え: 色・チェックの形・紙の柄・飾り・文字。紙の色はシートの見た目そのものなので、
+   - 着せ替え: 色・チェックの形・紙の柄・飾り（テーマでまとめて切り替えもできる）。紙の色はシートの見た目そのものなので、
      ダークモードでも明るい紙のまま（印刷結果と同じ見た目にするため）。
 
    保存（nsKey＝プロフィールごと）:
@@ -51,26 +51,21 @@ const STICKERS = {
   heart: { ja: 'ハート', en: 'Hearts', ch: '♡' },
   cloud: { ja: 'くも', en: 'Clouds', ch: '☁' },
 };
-const FONTS = {
-  round: { ja: 'まるもじ', en: 'Rounded', css: '"Hiragino Maru Gothic ProN", "M PLUS Rounded 1c", "Rounded Mplus 1c", "Arial Rounded MT Bold", system-ui, sans-serif' },
-  basic: { ja: 'ふつう', en: 'Standard', css: '-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif' },
-  hand: { ja: '手書き風', en: 'Handwritten', css: '"Klee", "Klee One", "Yomogi", "Hiragino Maru Gothic ProN", cursive' },
-};
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round', printLayout: 'day', perPage: 1, paperSize: 'A4', showDate: true, showMemo: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', printLayout: 'day', perPage: 1, paperSize: 'A4', showDate: true, showMemo: true };
 
-// テーマ＝色・チェックの形・紙・飾り・文字の組み合わせ。選ぶと5つをまとめて切り替える
-// （その後で1つずつ変えるのは自由。5つが一致するテーマが無ければ「カスタム」と表示する）
+// テーマ＝色・チェックの形・紙・飾りの組み合わせ。選ぶと4つをまとめて切り替える
+// （その後で1つずつ変えるのは自由。4つが一致するテーマが無ければ「カスタム」と表示する）
 const THEMES = {
-  standard: { ja: 'スタンダード', en: 'Standard', color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', font: 'round' },
-  sakura: { ja: 'さくら', en: 'Sakura', color: 'pink', shape: 'heart', paper: 'dot', sticker: 'flower', font: 'round' },
-  mintnote: { ja: 'ミントノート', en: 'Mint notebook', color: 'mint', shape: 'circle', paper: 'lined', sticker: 'none', font: 'basic' },
-  yume: { ja: 'ゆめかわ', en: 'Dreamy', color: 'lavender', shape: 'star', paper: 'dot', sticker: 'star', font: 'round' },
-  lemon: { ja: 'レモンティー', en: 'Lemon tea', color: 'lemon', shape: 'circle', paper: 'grid', sticker: 'flower', font: 'hand' },
-  sky: { ja: '空とくも', en: 'Sky & clouds', color: 'sky', shape: 'circle', paper: 'plain', sticker: 'cloud', font: 'round' },
-  simple: { ja: 'シンプル', en: 'Simple', color: 'mono', shape: 'square', paper: 'plain', sticker: 'none', font: 'basic' },
-  notebook: { ja: '方眼ノート', en: 'Graph notebook', color: 'mono', shape: 'square', paper: 'grid', sticker: 'none', font: 'hand' },
+  standard: { ja: 'スタンダード', en: 'Standard', color: 'pink', shape: 'square', paper: 'plain', sticker: 'star' },
+  sakura: { ja: 'さくら', en: 'Sakura', color: 'pink', shape: 'heart', paper: 'dot', sticker: 'flower' },
+  mintnote: { ja: 'ミントノート', en: 'Mint notebook', color: 'mint', shape: 'circle', paper: 'lined', sticker: 'none' },
+  yume: { ja: 'ゆめかわ', en: 'Dreamy', color: 'lavender', shape: 'star', paper: 'dot', sticker: 'star' },
+  lemon: { ja: 'レモンティー', en: 'Lemon tea', color: 'lemon', shape: 'circle', paper: 'grid', sticker: 'flower' },
+  sky: { ja: '空とくも', en: 'Sky & clouds', color: 'sky', shape: 'circle', paper: 'plain', sticker: 'cloud' },
+  simple: { ja: 'シンプル', en: 'Simple', color: 'mono', shape: 'square', paper: 'plain', sticker: 'none' },
+  notebook: { ja: '方眼ノート', en: 'Graph notebook', color: 'mono', shape: 'square', paper: 'grid', sticker: 'none' },
 };
-const THEME_KEYS = ['color', 'shape', 'paper', 'sticker', 'font'];
+const THEME_KEYS = ['color', 'shape', 'paper', 'sticker'];
 function currentThemeKey(style) {
   return Object.keys(THEMES).find(k => THEME_KEYS.every(f => THEMES[k][f] === style[f])) || null;
 }
@@ -186,7 +181,7 @@ function normalizeSheet(s) {
   if (!SHAPES[style.shape]) style.shape = DEFAULT_STYLE.shape;
   if (!PAPERS[style.paper]) style.paper = DEFAULT_STYLE.paper;
   if (!STICKERS[style.sticker]) style.sticker = DEFAULT_STYLE.sticker;
-  if (!FONTS[style.font]) style.font = DEFAULT_STYLE.font;
+  delete style.font; // 以前の「文字」設定の名残りは捨てる
   if (style.printLayout !== 'week') style.printLayout = 'day';
   style.perPage = style.perPage === 2 ? 2 : 1;
   if (style.paperSize !== 'A5') style.paperSize = 'A4';
@@ -307,7 +302,7 @@ function progress(sheet) {
 }
 function sheetVars(style) {
   const c = COLORS[style.color];
-  return `--dc-accent:${c.accent};--dc-soft:${c.soft};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-font:${FONTS[style.font].css};`;
+  return `--dc-accent:${c.accent};--dc-soft:${c.soft};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};`;
 }
 
 /* ================================================================
@@ -382,7 +377,7 @@ function themeGroupHtml(st) {
     const on = cur === k;
     const ch = STICKERS[th.sticker].ch;
     return `<button type="button" class="dc-theme${on ? ' on' : ''}" data-act="theme" data-v="${k}" aria-pressed="${on}">
-      <span class="dc-theme-swatch paper-${th.paper}" style="--dc-accent:${c.accent};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-soft:${c.soft};font-family:${FONTS[th.font].css}">
+      <span class="dc-theme-swatch paper-${th.paper}" style="--dc-accent:${c.accent};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-soft:${c.soft}">
         ${ch ? `<span class="dc-theme-stk">${ch}</span>` : ''}
         <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape on" d="${SHAPES[th.shape].d}"/><path class="dc-tick" d="${TICK_D}"/></svg><span class="dc-theme-bar"></span></span>
         <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape" d="${SHAPES[th.shape].d}"/></svg><span class="dc-theme-bar short"></span></span>
@@ -403,7 +398,6 @@ function stylePanelHtml(sheet) {
       ${chipGroup(t('チェックの形', 'Check shape'), 'shape', SHAPES, st.shape)}
       ${chipGroup(t('紙', 'Paper'), 'paper', PAPERS, st.paper)}
       ${chipGroup(t('飾り', 'Decoration'), 'sticker', STICKERS, st.sticker)}
-      ${chipGroup(t('文字', 'Font'), 'font', FONTS, st.font)}
       ${chipGroup(t('用紙', 'Paper size'), 'paperSize', { A4: { ja: 'A4', en: 'A4' }, A5: { ja: 'A5', en: 'A5' } }, st.paperSize)}
       ${chipGroup(t('印刷する形', 'Print layout'), 'printLayout', { day: { ja: '1日分', en: 'One day' }, week: { ja: '1週間分の表', en: 'Weekly table' } }, st.printLayout)}
       ${st.printLayout === 'day' ? chipGroup(t('1枚に', 'Per page'), 'perPage', { 1: { ja: '1日分', en: '1 day' }, 2: { ja: '2日分', en: '2 days' } }, st.perPage) : ''}
