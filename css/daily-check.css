@@ -465,15 +465,15 @@ html.dc-capturing .daily-check-view .dc-paper { -webkit-print-color-adjust: exac
 .daily-check-view .dc-section.done .dc-sec-done { display: inline; }
 .daily-check-view .dc-row.done .dc-label { transition: color 200ms ease; }
 
-/* 「できた！」のはんこ。全部済んだ日だけ、紙の右下（メモの欄の上）に押される */
+/* 「よくできました」のはんこ。全部済んだ日だけ、紙の右下（メモの欄の上）に押される */
 .daily-check-view .dc-stamp {
-  position: absolute; bottom: 30px; right: 26px; z-index: 2; width: 84px; height: 84px; border-radius: 50%;
+  position: absolute; bottom: 30px; right: 26px; z-index: 2; width: 90px; height: 90px; border-radius: 50%;
   display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   border: 3px double var(--dc-accent); color: var(--dc-accent); background: var(--dc-paper);
   transform: rotate(-12deg); pointer-events: none; line-height: 1.1;
 }
-.daily-check-view .dc-stamp-main { font-size: 17px; font-weight: 900; letter-spacing: 0.02em; }
-.daily-check-view .dc-stamp-sub { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; }
+.daily-check-view .dc-stamp-main { font-size: 15px; font-weight: 900; letter-spacing: 0; white-space: nowrap; }
+.daily-check-view .dc-stamp-sub { font-size: 12px; font-weight: 900; letter-spacing: 0.1em; }
 .daily-check-view .dc-paper.complete .dc-stamp { display: flex; }
 /* はんこの下に飾りの星が透けないよう、はんこは紙の色で塗ってある */
 .daily-check-view .dc-paper.stamped .dc-stamp { animation: dcStamp 360ms var(--dc-ease-pop); }

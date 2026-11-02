@@ -571,9 +571,9 @@ function stickersHtml(style) {
   return `<span class="dc-tape t1" aria-hidden="true"></span><span class="dc-tape t2" aria-hidden="true"></span>`
     + `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
 }
-// 全部済んだ日に紙に押される「できた！」のはんこ（画面のみ。印刷・画像には出さない）
+// 全部済んだ日に紙に押される「よくできました」のはんこ（画面のみ。印刷・画像には出さない）
 function stampHtml() {
-  return `<div class="dc-stamp" role="status"><span class="dc-stamp-main">${escapeHtml(t('できた！', 'Done!'))}</span><span class="dc-stamp-sub">${escapeHtml(t('おつかれさま', 'Great job'))}</span></div>`;
+  return `<div class="dc-stamp" role="status"><span class="dc-stamp-sub">${escapeHtml(t('よく', 'Well'))}</span><span class="dc-stamp-main">${escapeHtml(t('できました', 'done!'))}</span></div>`;
 }
 function todayLabel(withYear) {
   // 表示上の「今日」はゲーム内の日付（太平洋時間）。リセット前の16時台は前日扱いになる
