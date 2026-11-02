@@ -37,12 +37,21 @@ const COLORS = {
   lemon: { ja: 'レモン', en: 'Lemon', accent: '#C98F00', soft: '#FFF1C2', paper: '#FFFDF4', ink: '#54451C', line: '#F3E1A6' },
   sky: { ja: 'そら', en: 'Sky', accent: '#3489D6', soft: '#DCEEFF', paper: '#F8FBFF', ink: '#24405A', line: '#C3DDF6' },
   mono: { ja: 'モノクロ', en: 'Mono', accent: '#3A3A3C', soft: '#ECECEE', paper: '#FFFFFF', ink: '#1C1C1E', line: '#D1D1D6' },
+  // 大人かわいい・シック向けの、彩度を落とした色（文字の色は紙に対して4.2:1以上）
+  greige: { ja: 'グレージュ', en: 'Greige', accent: '#8A7366', soft: '#EFE8E2', paper: '#FBF8F5', ink: '#4A3F38', line: '#E2D8CF' },
+  dustyrose: { ja: 'くすみローズ', en: 'Dusty rose', accent: '#A8646F', soft: '#F3E3E4', paper: '#FCF8F8', ink: '#4E3437', line: '#EAD3D6' },
+  sage: { ja: 'セージ', en: 'Sage', accent: '#5F7F63', soft: '#E4ECE2', paper: '#F9FBF7', ink: '#33413A', line: '#D3DFD1' },
+  kraft: { ja: 'クラフト', en: 'Kraft', accent: '#83623A', soft: '#E9DCC6', paper: '#F6EFE3', ink: '#4A3A28', line: '#DCCBAF' },
+  navy: { ja: 'ネイビー', en: 'Navy', accent: '#34466B', soft: '#E2E6EF', paper: '#FAFAF7', ink: '#1F2A40', line: '#D3D8E3' },
+  bordeaux: { ja: 'ボルドー', en: 'Bordeaux', accent: '#7E2F3E', soft: '#F1E1E3', paper: '#FBF8F6', ink: '#3E1F25', line: '#E4CFD2' },
+  gold: { ja: 'ブラック＆ゴールド', en: 'Black & gold', accent: '#8C6A22', soft: '#F2EBDC', paper: '#FFFEFB', ink: '#1F1F1F', line: '#E3D9C3' },
 };
 const SHAPES = {
   square: { ja: '四角', en: 'Square', d: 'M7 3.5h10a3.5 3.5 0 0 1 3.5 3.5v10a3.5 3.5 0 0 1-3.5 3.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5z' },
   circle: { ja: 'まる', en: 'Circle', d: 'M12 3.2a8.8 8.8 0 1 1 0 17.6a8.8 8.8 0 1 1 0-17.6z' },
   heart: { ja: 'ハート', en: 'Heart', d: 'M12 20.3s-7.6-4.5-9.3-9.2C1.5 7.7 3.7 4.4 7.1 4.4c2 0 3.7 1.1 4.9 2.8 1.2-1.7 2.9-2.8 4.9-2.8 3.4 0 5.6 3.3 4.4 6.7-1.7 4.7-9.3 9.2-9.3 9.2z' },
   star: { ja: 'ほし', en: 'Star', d: 'M12 2.6l2.8 5.9 6.4.8-4.7 4.5 1.2 6.4L12 17.1l-5.7 3.1 1.2-6.4-4.7-4.5 6.4-.8z' },
+  diamond: { ja: 'ひし形', en: 'Diamond', d: 'M12 2.8l8.6 9.2-8.6 9.2-8.6-9.2z' },
 };
 const TICK_D = 'M8 12.4l2.7 2.7 5.3-5.6';
 const PAPERS = { plain: { ja: '無地', en: 'Plain' }, grid: { ja: '方眼', en: 'Grid' }, dot: { ja: 'ドット', en: 'Dots' }, lined: { ja: '罫線', en: 'Lined' } };
@@ -52,24 +61,49 @@ const STICKERS = {
   flower: { ja: '花', en: 'Flowers', ch: '✿' },
   heart: { ja: 'ハート', en: 'Hearts', ch: '♡' },
   cloud: { ja: 'くも', en: 'Clouds', ch: '☁' },
+  // 大人っぽい飾りは小さめの記号だけで、マスキングテープは貼らない（noTape）
+  twinkle: { ja: 'きらめき', en: 'Twinkle', ch: '✧', noTape: true },
+  moon: { ja: '月', en: 'Moon', ch: '☾', noTape: true },
 };
-const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', perPage: 1, showDate: true, showYear: false, showPlayer: false, showMemo: true, showHoles: true };
+// 書体はテーマが決める（「ひとつずつ変える」には出さない）。round＝丸ゴシック、serif＝明朝
+const TYPEFACES = { round: true, serif: true };
+const DEFAULT_STYLE = { color: 'pink', shape: 'square', paper: 'plain', sticker: 'star', typeface: 'round', perPage: 1, showDate: true, showYear: false, showPlayer: false, showMemo: true, showHoles: true };
 
 // テーマ＝色・チェックの形・紙・飾りの組み合わせ。選ぶと4つをまとめて切り替える
 // （その後で1つずつ変えるのは自由。4つが一致するテーマが無ければ「カスタム」と表示する）
 const THEMES = {
-  standard: { ja: 'スタンダード', en: 'Standard', color: 'pink', shape: 'square', paper: 'plain', sticker: 'star' },
-  sakura: { ja: 'さくら', en: 'Sakura', color: 'pink', shape: 'heart', paper: 'dot', sticker: 'flower' },
-  mintnote: { ja: 'ミントノート', en: 'Mint notebook', color: 'mint', shape: 'circle', paper: 'lined', sticker: 'none' },
-  yume: { ja: 'ゆめかわ', en: 'Dreamy', color: 'lavender', shape: 'star', paper: 'dot', sticker: 'star' },
-  lemon: { ja: 'レモンティー', en: 'Lemon tea', color: 'lemon', shape: 'circle', paper: 'grid', sticker: 'flower' },
-  sky: { ja: '空とくも', en: 'Sky & clouds', color: 'sky', shape: 'circle', paper: 'plain', sticker: 'cloud' },
-  simple: { ja: 'シンプル', en: 'Simple', color: 'mono', shape: 'square', paper: 'plain', sticker: 'none' },
-  notebook: { ja: '方眼ノート', en: 'Graph notebook', color: 'mono', shape: 'square', paper: 'grid', sticker: 'none' },
+  // かわいい
+  standard: { group: 'cute', ja: 'スタンダード', en: 'Standard', color: 'pink', shape: 'square', paper: 'plain', sticker: 'star' },
+  sakura: { group: 'cute', ja: 'さくら', en: 'Sakura', color: 'pink', shape: 'heart', paper: 'dot', sticker: 'flower' },
+  mintnote: { group: 'cute', ja: 'ミントノート', en: 'Mint notebook', color: 'mint', shape: 'circle', paper: 'lined', sticker: 'none' },
+  yume: { group: 'cute', ja: 'ゆめかわ', en: 'Dreamy', color: 'lavender', shape: 'star', paper: 'dot', sticker: 'star' },
+  lemon: { group: 'cute', ja: 'レモンティー', en: 'Lemon tea', color: 'lemon', shape: 'circle', paper: 'grid', sticker: 'flower' },
+  sky: { group: 'cute', ja: '空とくも', en: 'Sky & clouds', color: 'sky', shape: 'circle', paper: 'plain', sticker: 'cloud' },
+  // 大人かわいい（くすんだ色・小さな飾り）
+  greige: { group: 'adult', ja: 'グレージュ', en: 'Greige', color: 'greige', shape: 'circle', paper: 'plain', sticker: 'twinkle' },
+  rosemilk: { group: 'adult', ja: 'ローズミルク', en: 'Rose milk', color: 'dustyrose', shape: 'heart', paper: 'dot', sticker: 'twinkle' },
+  sage: { group: 'adult', ja: 'セージグリーン', en: 'Sage green', color: 'sage', shape: 'circle', paper: 'lined', sticker: 'none' },
+  kraft: { group: 'adult', ja: 'クラフト紙', en: 'Kraft paper', color: 'kraft', shape: 'square', paper: 'grid', sticker: 'star' },
+  milktea: { group: 'adult', ja: 'ミルクティー', en: 'Milk tea', color: 'greige', shape: 'heart', paper: 'dot', sticker: 'flower' },
+  antique: { group: 'adult', ja: 'アンティークローズ', en: 'Antique rose', color: 'dustyrose', shape: 'circle', paper: 'plain', sticker: 'moon', typeface: 'serif' },
+  // シック（落ち着いた色・明朝体）
+  simple: { group: 'chic', ja: 'シンプル', en: 'Simple', color: 'mono', shape: 'square', paper: 'plain', sticker: 'none' },
+  notebook: { group: 'chic', ja: '方眼ノート', en: 'Graph notebook', color: 'mono', shape: 'square', paper: 'grid', sticker: 'none' },
+  monotone: { group: 'chic', ja: 'モノトーン', en: 'Monotone', color: 'mono', shape: 'square', paper: 'lined', sticker: 'none', typeface: 'serif' },
+  navy: { group: 'chic', ja: 'ネイビー', en: 'Navy', color: 'navy', shape: 'square', paper: 'lined', sticker: 'none', typeface: 'serif' },
+  bordeaux: { group: 'chic', ja: 'ボルドー', en: 'Bordeaux', color: 'bordeaux', shape: 'diamond', paper: 'plain', sticker: 'moon', typeface: 'serif' },
+  blackgold: { group: 'chic', ja: 'ブラック＆ゴールド', en: 'Black & gold', color: 'gold', shape: 'diamond', paper: 'plain', sticker: 'twinkle', typeface: 'serif' },
 };
-const THEME_KEYS = ['color', 'shape', 'paper', 'sticker'];
+const THEME_GROUPS = [
+  { key: 'cute', ja: 'かわいい', en: 'Cute' },
+  { key: 'adult', ja: '大人かわいい', en: 'Grown-up cute' },
+  { key: 'chic', ja: 'シック', en: 'Chic' },
+];
+// テーマの書体（書いていなければ丸ゴシック）
+function themeField(th, f) { return f === 'typeface' ? (th.typeface || 'round') : th[f]; }
+const THEME_KEYS = ['color', 'shape', 'paper', 'sticker', 'typeface'];
 function currentThemeKey(style) {
-  return Object.keys(THEMES).find(k => THEME_KEYS.every(f => THEMES[k][f] === style[f])) || null;
+  return Object.keys(THEMES).find(k => THEME_KEYS.every(f => themeField(THEMES[k], f) === style[f])) || null;
 }
 
 // 「エリアごと」の既定の行。草原・雨林・峡谷は人によって回るところが違うので、小エリアごとにチェックを並べる
@@ -185,6 +219,7 @@ function normalizeSheet(s) {
   if (!SHAPES[style.shape]) style.shape = DEFAULT_STYLE.shape;
   if (!PAPERS[style.paper]) style.paper = DEFAULT_STYLE.paper;
   if (!STICKERS[style.sticker]) style.sticker = DEFAULT_STYLE.sticker;
+  if (!TYPEFACES[style.typeface]) style.typeface = DEFAULT_STYLE.typeface;
   delete style.font; // 以前の「文字」設定の名残りは捨てる
   style.perPage = style.perPage === 2 ? 2 : 1;
   ['printLeft', 'printRight', 'printLeftBottom', 'printRightBottom', 'printBottom'].forEach(k => { if (typeof style[k] !== 'string' || !style[k]) delete style[k]; });
@@ -483,21 +518,25 @@ function chipGroup(label, key, options, current) {
 }
 function themeGroupHtml(st) {
   const cur = currentThemeKey(st);
-  const cards = Object.keys(THEMES).map(k => {
+  const card = (k) => {
     const th = THEMES[k];
     const c = COLORS[th.color];
     const on = cur === k;
     const ch = STICKERS[th.sticker].ch;
     return `<button type="button" class="dc-theme${on ? ' on' : ''}" data-act="theme" data-v="${k}" aria-pressed="${on}">
-      <span class="dc-theme-swatch paper-${th.paper}" style="--dc-accent:${c.accent};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-soft:${c.soft}">
+      <span class="dc-theme-swatch paper-${th.paper} font-${themeField(th, 'typeface')}" style="--dc-accent:${c.accent};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};--dc-soft:${c.soft}">
         ${ch ? `<span class="dc-theme-stk">${ch}</span>` : ''}
         <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape on" d="${SHAPES[th.shape].d}"/><path class="dc-tick" d="${TICK_D}"/></svg><span class="dc-theme-bar"></span></span>
         <span class="dc-theme-line"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="dc-shape" d="${SHAPES[th.shape].d}"/></svg><span class="dc-theme-bar short"></span></span>
       </span>
-      <span class="dc-theme-name">${escapeHtml(t(th.ja, th.en))}</span>
+      <span class="dc-theme-name font-${themeField(th, 'typeface')}">${escapeHtml(t(th.ja, th.en))}</span>
     </button>`;
+  };
+  const groups = THEME_GROUPS.map(g => {
+    const keys = Object.keys(THEMES).filter(k => THEMES[k].group === g.key);
+    return `<div class="dc-theme-group"><span class="dc-theme-group-name">${escapeHtml(t(g.ja, g.en))}</span><div class="dc-themes">${keys.map(card).join('')}</div></div>`;
   }).join('');
-  return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('テーマ', 'Theme'))}${cur ? '' : `<span class="dc-custom-tag">${escapeHtml(t('カスタム', 'Custom'))}</span>`}</span><div class="dc-themes">${cards}</div></div>`;
+  return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('テーマ', 'Theme'))}${cur ? '' : `<span class="dc-custom-tag">${escapeHtml(t('カスタム', 'Custom'))}</span>`}</span>${groups}</div>`;
 }
 // 印刷するシートの選び方。2日分は左右（それぞれ上・下）、1日分は上（＝今のシート）と下。
 // 「下」は、上のシートと下のシートがどちらも半分の高さに収まって上下2段で印刷する時だけ使う（初期値は上と同じシート）。
@@ -567,9 +606,10 @@ function shapeSvg(style, on) {
 function stickersHtml(style) {
   const ch = STICKERS[style.sticker].ch;
   if (!ch) return '';
-  // 飾りがあるテーマでは、左上と右下の角にマスキングテープも貼る（紙の端で切れて、貼ってあるように見える）
-  return `<span class="dc-tape t1" aria-hidden="true"></span><span class="dc-tape t2" aria-hidden="true"></span>`
-    + `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
+  // 飾りがあるテーマでは、左上と右下の角にマスキングテープも貼る（紙の端で切れて、貼ってあるように見える）。
+  // 大人っぽい飾り（きらめき・月）はテープなし
+  const tape = STICKERS[style.sticker].noTape ? '' : `<span class="dc-tape t1" aria-hidden="true"></span><span class="dc-tape t2" aria-hidden="true"></span>`;
+  return tape + `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
 }
 // 全部済んだ日に紙に押される「よくできました」のはんこ（画面のみ。印刷・画像には出さない）
 function stampHtml() {
@@ -603,7 +643,7 @@ function paperHtml(sheet, { mode }) {
     ? `<div class="dc-memo"><span class="dc-memo-label">${escapeHtml(t('メモ', 'Memo'))}</span>${mode === 'print' ? '<span class="dc-memo-lines"></span>' : '<span class="dc-memo-lines short"></span>'}</div>`
     : '';
   return `
-    <article class="dc-paper paper-${st.paper}${mode === 'edit' ? ' editing' : ''}${mode === 'screen' && sheetComplete(sheet) ? ' complete' : ''}" style="${sheetVars(st)}">
+    <article class="dc-paper paper-${st.paper} font-${st.typeface}${mode === 'edit' ? ' editing' : ''}${mode === 'screen' && sheetComplete(sheet) ? ' complete' : ''}" style="${sheetVars(st)}">
       ${stickersHtml(st)}${mode === 'screen' ? stampHtml() : ''}
       <div class="dc-paper-head">${titleHtml}${dateHtml}</div>${playerHtml}
       ${sections}${addSection}${memo}
@@ -883,7 +923,7 @@ function onClick(ev) {
   if (act === 'clear-today') { delete chk.sheets[sheet.id]; saveChecks(); render(); return; }
   if (act === 'theme') {
     const th = THEMES[btn.dataset.v];
-    if (th) THEME_KEYS.forEach(f => { sheet.style[f] = th[f]; });
+    if (th) THEME_KEYS.forEach(f => { sheet.style[f] = themeField(th, f); });
     saveDoc(); render(); return;
   }
   if (act === 'style') {

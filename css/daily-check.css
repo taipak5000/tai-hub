@@ -507,3 +507,27 @@ html.dc-capturing .daily-check-view .dc-paper { -webkit-print-color-adjust: exac
 }
 /* 印刷にははんこ・きらきらを出さない（はんこは画面のシートにしか書き出さないが、念のため） */
 @media print { .daily-check-view .dc-stamp, .daily-check-view .dc-burst { display: none !important; } }
+
+/* ================================================================
+   🖋 明朝体のテーマ（シック。font-serif）と、テーマ一覧のまとまり（2026-11-02）
+   明朝はほぼどの端末にもある（iPhone・Mac＝ヒラギノ明朝、Windows＝游明朝、Android＝Noto Serif）。
+   丸ゴシックより細く見えるので、太さは少し落とし、字間を少し空けて落ち着かせる
+   ================================================================ */
+.daily-check-view .dc-paper.font-serif,
+.daily-check-view .dc-theme-swatch.font-serif,
+.daily-check-view .dc-theme-name.font-serif {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", "Source Han Serif JP", serif;
+}
+.daily-check-view .dc-paper.font-serif .dc-title { font-weight: 700; letter-spacing: 0.06em; }
+.daily-check-view .dc-paper.font-serif .dc-label { font-weight: 600; letter-spacing: 0.02em; }
+.daily-check-view .dc-paper.font-serif .dc-date { font-weight: 600; letter-spacing: 0.04em; }
+/* 見出しは塗りのピルではなく、細い下線の付いた見出しにする（済んだら色が付くのは同じ） */
+.daily-check-view .dc-paper.font-serif .dc-sec {
+  background: transparent; border-radius: 0; padding: 0 2px; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--dc-accent); box-shadow: inset 0 -1px 0 var(--dc-accent);
+}
+.daily-check-view .dc-paper.font-serif .dc-section.done .dc-sec { background: transparent; color: var(--dc-accent); box-shadow: inset 0 -2px 0 var(--dc-accent); }
+.daily-check-view .dc-paper.font-serif .dc-stamp-main { font-weight: 700; }
+
+.daily-check-view .dc-theme-group + .dc-theme-group { margin-top: 10px; }
+.daily-check-view .dc-theme-group-name { display: block; margin: 2px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--hub-text-2); }
