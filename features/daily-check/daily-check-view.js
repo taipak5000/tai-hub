@@ -376,6 +376,24 @@ function progress(sheet) {
   }));
   return { done, total };
 }
+// 行・見出し・シートが「全部済んだ」か（はんこ・見出しの色が変わる演出に使う）
+function rowDone(sheet, r) {
+  if (!r.opts.length) return false;
+  const c = rowChecks(sheet, r.id, false);
+  return r.opts.every((o, i) => c[i]);
+}
+function sectionDone(sheet, sec) {
+  const rows = sec.rows.filter(r => r.opts.length);
+  return rows.length > 0 && rows.every(r => rowDone(sheet, r));
+}
+// 目標を決めていれば「目標が全部済んだ」、決めていなければ「全部の行が済んだ」でシート完了
+function sheetComplete(sheet) {
+  const p = progress(sheet);
+  if (p.total) return p.done === p.total;
+  const secs = sheet.sections.filter(sec => sec.rows.some(r => r.opts.length));
+  return secs.length > 0 && secs.every(sec => sectionDone(sheet, sec));
+}
+
 function sheetVars(style) {
   const c = COLORS[style.color];
   return `--dc-accent:${c.accent};--dc-soft:${c.soft};--dc-paper:${c.paper};--dc-ink:${c.ink};--dc-line:${c.line};`;
@@ -391,7 +409,7 @@ function render() {
   root.innerHTML = `
     <div class="dc-wrap">
       <header class="dc-head">
-        <h1 class="dc-h1">${escapeHtml(t('デイリーチェックシート', 'Daily Checklist'))}<span class="dc-beta">${escapeHtml(t('試作', 'Preview'))}</span></h1>
+        <h1 class="dc-h1"><svg class="inline-icon dc-h1-ic" width="20" height="20" aria-hidden="true"><use href="#i-sparkle"/></svg>${escapeHtml(t('デイリーチェックシート', 'Daily Checklist'))}<span class="dc-beta">${escapeHtml(t('試作', 'Preview'))}</span></h1>
         <p class="dc-lead">${escapeHtml(t('毎日の予定をチェックできるシートです。印刷して紙で記録することもできます。', 'A checklist for your daily routine. You can also print it and keep a paper log.'))}</p>
       </header>
       ${tabsHtml(sheet)}
@@ -425,13 +443,17 @@ function toolbarHtml(sheet) {
   return `
     <div class="dc-bar">${progressHtml}
       <div class="dc-actions">
-        <button type="button" class="dc-btn${goaling ? ' on' : ''}" data-act="toggle-goal" aria-pressed="${goaling}">${escapeHtml(goaling ? t('目標を決め終える', 'Done') : t('目標を決める', 'Set goals'))}</button>
-        <button type="button" class="dc-btn${editing ? ' on' : ''}" data-act="toggle-edit" aria-pressed="${editing}">${escapeHtml(editing ? t('編集を終える', 'Done editing') : t('項目を編集', 'Edit items'))}</button>
-        <button type="button" class="dc-btn${styling ? ' on' : ''}" data-act="toggle-style" aria-pressed="${styling}">${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}</button>
-        <button type="button" class="dc-btn primary" data-act="print">${escapeHtml(t('印刷する', 'Print'))}</button>
-        <button type="button" class="dc-btn" data-act="pdf">${escapeHtml(t('PDFで保存', 'Save as PDF'))}</button>
-        <button type="button" class="dc-btn" data-act="share">${escapeHtml(t('画像で保存・共有', 'Save / share image'))}</button>
-        <button type="button" class="dc-btn danger" data-act="sheet-del">${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
+        <div class="dc-act-group" role="group" aria-label="${escapeHtml(t('シートを整える', 'Set up'))}">
+          <button type="button" class="dc-btn${goaling ? ' on' : ''}" data-act="toggle-goal" aria-pressed="${goaling}">${btnIcon('star')}${escapeHtml(goaling ? t('目標を決め終える', 'Done') : t('目標を決める', 'Set goals'))}</button>
+          <button type="button" class="dc-btn${editing ? ' on' : ''}" data-act="toggle-edit" aria-pressed="${editing}">${btnIcon('edit')}${escapeHtml(editing ? t('編集を終える', 'Done editing') : t('項目を編集', 'Edit items'))}</button>
+          <button type="button" class="dc-btn${styling ? ' on' : ''}" data-act="toggle-style" aria-pressed="${styling}">${btnIcon('palette')}${escapeHtml(t('着せ替え・印刷設定', 'Style & print'))}</button>
+        </div>
+        <div class="dc-act-group" role="group" aria-label="${escapeHtml(t('書き出す', 'Export'))}">
+          <button type="button" class="dc-btn primary" data-act="print">${PRINT_ICON}${escapeHtml(t('印刷する', 'Print'))}</button>
+          <button type="button" class="dc-btn" data-act="pdf">${PDF_ICON}${escapeHtml(t('PDFで保存', 'Save as PDF'))}</button>
+          <button type="button" class="dc-btn" data-act="share">${btnIcon('image')}${escapeHtml(t('画像で保存・共有', 'Save / share image'))}</button>
+          <button type="button" class="dc-btn danger dc-btn-quiet" data-act="sheet-del">${btnIcon('trash')}${escapeHtml(t('このシートを削除', 'Delete sheet'))}</button>
+        </div>
       </div>${goalHint}
       ${streakHtml()}
       <div class="dc-reset">
@@ -443,6 +465,11 @@ function toolbarHtml(sheet) {
       </div>
     </div>`;
 }
+
+// ツールバーのボタンのアイコン（共有スプライト）。印刷はスプライトに無いので線画をその場で描く
+function btnIcon(id) { return `<svg class="inline-icon dc-btn-ic" width="15" height="15" aria-hidden="true"><use href="#i-${id}"/></svg>`; }
+const PDF_ICON = '<svg class="dc-btn-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3.5V9h5.5"/><path d="M12 12v5m-2.2-2.2L12 17l2.2-2.2"/></svg>';
+const PRINT_ICON = '<svg class="dc-btn-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/></svg>';
 
 function chipGroup(label, key, options, current) {
   const chips = Object.keys(options).map(k => {
@@ -540,7 +567,13 @@ function shapeSvg(style, on) {
 function stickersHtml(style) {
   const ch = STICKERS[style.sticker].ch;
   if (!ch) return '';
-  return `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
+  // 飾りがあるテーマでは、左上と右下の角にマスキングテープも貼る（紙の端で切れて、貼ってあるように見える）
+  return `<span class="dc-tape t1" aria-hidden="true"></span><span class="dc-tape t2" aria-hidden="true"></span>`
+    + `<span class="dc-stk s1" aria-hidden="true">${ch}</span><span class="dc-stk s2" aria-hidden="true">${ch}</span><span class="dc-stk s3" aria-hidden="true">${ch}</span>`;
+}
+// 全部済んだ日に紙に押される「できた！」のはんこ（画面のみ。印刷・画像には出さない）
+function stampHtml() {
+  return `<div class="dc-stamp" role="status"><span class="dc-stamp-main">${escapeHtml(t('できた！', 'Done!'))}</span><span class="dc-stamp-sub">${escapeHtml(t('おつかれさま', 'Great job'))}</span></div>`;
 }
 function todayLabel(withYear) {
   // 表示上の「今日」はゲーム内の日付（太平洋時間）。リセット前の16時台は前日扱いになる
@@ -570,8 +603,8 @@ function paperHtml(sheet, { mode }) {
     ? `<div class="dc-memo"><span class="dc-memo-label">${escapeHtml(t('メモ', 'Memo'))}</span>${mode === 'print' ? '<span class="dc-memo-lines"></span>' : '<span class="dc-memo-lines short"></span>'}</div>`
     : '';
   return `
-    <article class="dc-paper paper-${st.paper}${mode === 'edit' ? ' editing' : ''}" style="${sheetVars(st)}">
-      ${stickersHtml(st)}
+    <article class="dc-paper paper-${st.paper}${mode === 'edit' ? ' editing' : ''}${mode === 'screen' && sheetComplete(sheet) ? ' complete' : ''}" style="${sheetVars(st)}">
+      ${stickersHtml(st)}${mode === 'screen' ? stampHtml() : ''}
       <div class="dc-paper-head">${titleHtml}${dateHtml}</div>${playerHtml}
       ${sections}${addSection}${memo}
     </article>`;
@@ -580,10 +613,11 @@ function paperHtml(sheet, { mode }) {
 function sectionHtml(sheet, sec, mode) {
   const head = mode === 'edit'
     ? `<div class="dc-sec-head"><input class="dc-in dc-in-sec" data-edit="sec-title" data-s="${escapeHtml(sec.id)}" value="${escapeHtml(sec.title)}" placeholder="${escapeHtml(t('見出し', 'Heading'))}" aria-label="${escapeHtml(t('見出し', 'Heading'))}"><button type="button" class="dc-mini danger" data-act="sec-del" data-s="${escapeHtml(sec.id)}">${escapeHtml(t('見出しごと削除', 'Delete heading'))}</button></div>`
-    : (sec.title ? `<h3 class="dc-sec">${escapeHtml(sec.title)}</h3>` : '');
+    : (sec.title ? `<h3 class="dc-sec"><span class="dc-sec-done" aria-hidden="true">✓</span>${escapeHtml(sec.title)}</h3>` : '');
   const rows = sec.rows.map((r, i) => rowHtml(sheet, sec, r, i, mode)).join('');
   const add = mode === 'edit' ? `<button type="button" class="dc-add" data-act="row-add" data-s="${escapeHtml(sec.id)}">＋ ${escapeHtml(t('行を追加', 'Add row'))}</button>` : '';
-  return `<section class="dc-section">${head}<div class="dc-rows">${rows}</div>${add}</section>`;
+  const done = mode === 'screen' && sectionDone(sheet, sec);
+  return `<section class="dc-section${done ? ' done' : ''}" data-s="${escapeHtml(sec.id)}">${head}<div class="dc-rows">${rows}</div>${add}</section>`;
 }
 
 function rowHtml(sheet, sec, r, index, mode) {
@@ -810,8 +844,7 @@ function onClick(ev) {
     btn.setAttribute('aria-checked', String(on));
     btn.querySelector('.dc-box-svg').outerHTML = shapeSvg(sheet.style, on);
     btn.classList.remove('pop'); void btn.offsetWidth; if (on) btn.classList.add('pop');
-    const rowEl = btn.closest('.dc-row');
-    if (rowEl && hit) rowEl.classList.toggle('done', hit.row.opts.every((o, k) => c[k]));
+    refreshDoneStates(btn);
     refreshProgress();
     return;
   }
@@ -958,6 +991,7 @@ function onInput(ev) {
       recordToday();
       boxBtn.classList.add('on'); boxBtn.setAttribute('aria-checked', 'true');
       boxBtn.querySelector('.dc-box-svg').outerHTML = shapeSvg(sheet.style, true);
+      refreshDoneStates(boxBtn);
       refreshProgress();
     }
     saveChecks();
@@ -996,6 +1030,55 @@ function onChange(ev) {
   else sheet.style[k] = el.checked;
   saveDoc();
   render();
+}
+
+/* 行・見出し・シートの「済んだ」表示を、押したチェック（el）のまわりだけ更新する。
+   済んでいなかったものが済んだ瞬間だけ、きらきら（見出し）とはんこ（シート）で知らせる。
+   どちらも1日に数回しか起きないので、少しだけ遊びのある動きにしてよい */
+function refreshDoneStates(el) {
+  const sheet = activeSheet();
+  const rowEl = el.closest('.dc-row');
+  const secEl = el.closest('.dc-section');
+  const paper = el.closest('.dc-paper');
+  const hit = el.dataset.r ? findRow(sheet, el.dataset.r) : null;
+  if (rowEl && hit) rowEl.classList.toggle('done', rowDone(sheet, hit.row));
+  if (secEl && hit) {
+    const was = secEl.classList.contains('done');
+    const now = sectionDone(sheet, hit.sec);
+    secEl.classList.toggle('done', now);
+    if (now && !was) burst(secEl.querySelector('.dc-sec') || el);
+  }
+  if (paper) {
+    const was = paper.classList.contains('complete');
+    const now = sheetComplete(sheet);
+    paper.classList.toggle('complete', now);
+    if (now && !was) { paper.classList.remove('stamped'); void paper.offsetWidth; paper.classList.add('stamped'); burst(paper.querySelector('.dc-stamp'), 10); }
+  }
+}
+// 小さな星が飛び散る演出。要素は終わったら消す
+function burst(anchor, count = 6) {
+  if (!anchor || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const paper = anchor.closest('.dc-paper');
+  if (!paper) return;
+  const pr = paper.getBoundingClientRect();
+  const ar = anchor.getBoundingClientRect();
+  const wrap = document.createElement('span');
+  wrap.className = 'dc-burst';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.style.left = `${ar.left - pr.left + ar.width / 2}px`;
+  wrap.style.top = `${ar.top - pr.top + ar.height / 2}px`;
+  for (let k = 0; k < count; k++) {
+    const a = (Math.PI * 2 * k) / count + Math.random() * 0.5;
+    const d = 26 + Math.random() * 18;
+    const sp = document.createElement('span');
+    sp.textContent = k % 2 ? '✦' : '•';
+    sp.style.setProperty('--dx', `${Math.cos(a) * d}px`);
+    sp.style.setProperty('--dy', `${Math.sin(a) * d}px`);
+    sp.style.animationDelay = `${k * 12}ms`;
+    wrap.appendChild(sp);
+  }
+  paper.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 700);
 }
 
 function refreshProgress() {

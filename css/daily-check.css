@@ -10,6 +10,8 @@
 .daily-check-view .dc-wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 24px; }
 
 .daily-check-view .dc-head { margin-bottom: 12px; }
+.daily-check-view { --dc-ease-out: cubic-bezier(0.23, 1, 0.32, 1); --dc-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); }
+.daily-check-view .dc-h1-ic { flex-shrink: 0; color: var(--hub-accent); stroke: currentColor; }
 .daily-check-view .dc-h1 { margin: 0; font-size: 22px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .daily-check-view .dc-beta { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-accent); background: var(--hub-accent-bg); border-radius: 999px; padding: 2px 8px; }
 .daily-check-view .dc-lead { margin: 6px 0 0; font-size: 13px; line-height: 1.7; color: var(--hub-text-2); }
@@ -21,11 +23,11 @@
   flex-shrink: 0; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   border: 1px solid var(--hub-sep); background: var(--hub-card); color: var(--hub-text);
   border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: transform 0.12s ease;
+  transition: transform 160ms var(--dc-ease-out), border-color 160ms ease;
 }
 .daily-check-view .dc-tab.on { background: var(--hub-accent); border-color: var(--hub-accent); color: #fff; }
 .daily-check-view .dc-tab-add { color: var(--hub-accent); border-style: dashed; }
-.daily-check-view .dc-tab:active, .daily-check-view .dc-btn:active, .daily-check-view .dc-chip:active, .daily-check-view .dc-mini:active { transform: scale(0.96); }
+.daily-check-view .dc-tab:active, .daily-check-view .dc-btn:active, .daily-check-view .dc-chip:active, .daily-check-view .dc-mini:active { transform: scale(0.97); }
 
 /* ── 進捗・ボタン・リセット表示 ── */
 .daily-check-view .dc-bar { background: var(--hub-card); border-radius: var(--hub-r); padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
@@ -34,15 +36,29 @@
 .daily-check-view .dc-progress-num b { font-size: 18px; color: var(--hub-text); letter-spacing: -0.02em; }
 .daily-check-view .dc-progress-track { flex: 1; height: 8px; border-radius: 4px; background: var(--hub-sep); overflow: hidden; }
 .daily-check-view .dc-progress-track > span { display: block; height: 100%; border-radius: inherit; background: var(--hub-accent); transition: width 0.3s ease; }
-.daily-check-view .dc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.daily-check-view .dc-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+/* 「整える」と「書き出す」の2つのまとまり。まとまりの間は細い線で区切る */
+.daily-check-view .dc-act-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.daily-check-view .dc-act-group + .dc-act-group { padding-top: 8px; border-top: 0.5px solid var(--hub-sep); }
+/* ボタンは枠線なしの、ころんとした塗りのピル */
 .daily-check-view .dc-btn {
-  border: 1px solid var(--hub-sep); background: var(--hub-card); color: var(--hub-text);
-  border-radius: var(--hub-r-sm); padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: transform 0.12s ease;
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px;
+  border: 0; background: var(--hub-bg); color: var(--hub-text);
+  border-radius: 999px; padding: 8px 14px 8px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: transform 160ms var(--dc-ease-out), background-color 160ms ease, color 160ms ease;
 }
-.daily-check-view .dc-btn.on { background: var(--hub-accent-bg); border-color: var(--hub-accent); color: var(--hub-accent); }
-.daily-check-view .dc-btn.primary { background: var(--hub-accent); border-color: var(--hub-accent); color: #fff; }
+.daily-check-view .dc-btn-ic { flex-shrink: 0; width: 15px; height: 15px; color: var(--hub-accent); stroke: currentColor; }
+.daily-check-view .dc-btn.on { background: var(--hub-accent-bg); color: var(--hub-accent); box-shadow: inset 0 0 0 1.5px var(--hub-accent); }
+.daily-check-view .dc-btn.primary { background: var(--hub-accent); color: #fff; box-shadow: 0 2px 8px var(--hub-accent-bg); }
+.daily-check-view .dc-btn.primary .dc-btn-ic { color: #fff; }
 .daily-check-view .dc-btn.danger { color: #E5484D; }
+.daily-check-view .dc-btn.danger .dc-btn-ic { color: currentColor; }
+.daily-check-view .dc-btn-quiet { background: transparent; margin-left: auto; font-weight: 600; }
+@media (hover: hover) and (pointer: fine) {
+  .daily-check-view .dc-btn:not(.primary):not(.on):hover { background: var(--hub-accent-bg); }
+  .daily-check-view .dc-btn.danger:hover { background: rgba(229, 72, 77, 0.1) !important; }
+  .daily-check-view .dc-tab:not(.on):hover { border-color: var(--hub-accent); }
+}
 .daily-check-view .dc-btn:disabled { opacity: 0.4; cursor: default; }
 .daily-check-view .dc-reset { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 10px; font-size: 12px; color: var(--hub-text-2); line-height: 1.6; }
 .daily-check-view .dc-reset-next { color: var(--hub-text); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -109,7 +125,11 @@
 .daily-check-view .dc-shape { fill: #fff; stroke: var(--dc-accent); stroke-width: 1.8; stroke-linejoin: round; transition: fill 0.15s ease; }
 .daily-check-view .dc-box.on .dc-shape { fill: var(--dc-accent); }
 .daily-check-view .dc-tick { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.daily-check-view .dc-box.pop .dc-box-svg { animation: dcPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.daily-check-view .dc-box-svg { transition: transform 160ms var(--dc-ease-out); }
+.daily-check-view .dc-box:active .dc-box-svg { transform: scale(0.9); }
+/* 付けた瞬間だけ、少し弾んで大きくなり、レ点を書くように描く（外す時は動かさない） */
+.daily-check-view .dc-box.pop .dc-box-svg { animation: dcPop 260ms var(--dc-ease-pop); }
+.daily-check-view .dc-box.pop .dc-tick { stroke-dasharray: 14; stroke-dashoffset: 14; animation: dcTick 180ms var(--dc-ease-out) 40ms forwards; }
 .daily-check-view .dc-opt-label { font-size: 14px; color: var(--dc-ink); }
 .daily-check-view .dc-num {
   width: 3.4em; height: 30px; padding: 0 6px; border: 0; border-bottom: 2px solid var(--dc-accent); border-radius: 0;
@@ -154,13 +174,16 @@
 .daily-check-view .dc-add-sec { margin-top: 14px; }
 .daily-check-view .dc-admin { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
-@keyframes dcPop { 0% { transform: scale(0.7); } 100% { transform: scale(1); } }
+@keyframes dcPop { 0% { transform: scale(0.82); } 100% { transform: scale(1); } }
+@keyframes dcTick { to { stroke-dashoffset: 0; } }
 @keyframes dcFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .daily-check-view .dc-box.pop .dc-box-svg { animation: none; }
+  .daily-check-view .dc-box.pop .dc-tick { animation: none; stroke-dashoffset: 0; }
+  .daily-check-view .dc-box:active .dc-box-svg { transform: none; }
   .daily-check-view .dc-panel { animation: none; }
-  .daily-check-view .dc-tab, .daily-check-view .dc-btn, .daily-check-view .dc-chip, .daily-check-view .dc-mini { transition: none; }
+  .daily-check-view .dc-tab, .daily-check-view .dc-btn, .daily-check-view .dc-chip, .daily-check-view .dc-mini, .daily-check-view .dc-box-svg { transition: none; }
   .daily-check-view .dc-tab:active, .daily-check-view .dc-btn:active, .daily-check-view .dc-chip:active, .daily-check-view .dc-mini:active { transform: none; opacity: 0.7; }
 }
 @media (prefers-contrast: more) {
@@ -418,3 +441,69 @@ html.dc-capturing .daily-check-view .dc-paper { -webkit-print-color-adjust: exac
 .daily-check-view .dc-pairs-grid .dc-pair { flex-direction: column; align-items: stretch; gap: 3px; font-size: 12px; }
 .daily-check-view .dc-pairs-grid .dc-pair-select { max-width: none; width: 100%; }
 .daily-check-view .dc-pair b { font-weight: 700; }
+
+/* ================================================================
+   🎀 かわいさの仕上げ（2026-11-02）
+   マスキングテープ・見出しの「済んだ」表示・はんこ・きらきら。
+   動きは「付けた瞬間」「全部済んだ瞬間」だけで、1日に何度も見るもの（タブの切替・外す操作）は動かさない
+   ================================================================ */
+/* マスキングテープ（飾りがあるテーマだけ）。紙の角で切れて、貼ってあるように見せる */
+.daily-check-view .dc-tape {
+  position: absolute; width: 78px; height: 20px; pointer-events: none; opacity: 0.85;
+  background: linear-gradient(90deg, var(--dc-line) 50%, var(--dc-soft) 50%) 0 0 / 10px 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.daily-check-view .dc-tape.t1 { top: 8px; left: -20px; transform: rotate(-38deg); }
+.daily-check-view .dc-tape.t2 { bottom: 8px; right: -20px; transform: rotate(-38deg); }
+/* テープと重ならないよう、左下の飾りは少し内側へ */
+.daily-check-view .dc-paper .dc-stk.s3 { left: 22px; }
+
+/* 見出しのピル: 中の行が全部済むと、塗りがアクセント色になってレ点が付く */
+.daily-check-view .dc-sec { transition: background-color 200ms ease, color 200ms ease; }
+.daily-check-view .dc-sec-done { display: none; margin-right: 4px; font-weight: 900; }
+.daily-check-view .dc-section.done .dc-sec { background: var(--dc-accent); color: #fff; }
+.daily-check-view .dc-section.done .dc-sec-done { display: inline; }
+.daily-check-view .dc-row.done .dc-label { transition: color 200ms ease; }
+
+/* 「できた！」のはんこ。全部済んだ日だけ、紙の右下（メモの欄の上）に押される */
+.daily-check-view .dc-stamp {
+  position: absolute; bottom: 30px; right: 26px; z-index: 2; width: 84px; height: 84px; border-radius: 50%;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  border: 3px double var(--dc-accent); color: var(--dc-accent); background: var(--dc-paper);
+  transform: rotate(-12deg); pointer-events: none; line-height: 1.1;
+}
+.daily-check-view .dc-stamp-main { font-size: 17px; font-weight: 900; letter-spacing: 0.02em; }
+.daily-check-view .dc-stamp-sub { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; }
+.daily-check-view .dc-paper.complete .dc-stamp { display: flex; }
+/* はんこの下に飾りの星が透けないよう、はんこは紙の色で塗ってある */
+.daily-check-view .dc-paper.stamped .dc-stamp { animation: dcStamp 360ms var(--dc-ease-pop); }
+@keyframes dcStamp { 0% { opacity: 0; transform: rotate(-12deg) scale(1.35); } 60% { opacity: 1; } 100% { opacity: 1; transform: rotate(-12deg) scale(1); } }
+
+/* きらきら（burst()が一時的に足す） */
+.daily-check-view .dc-burst { position: absolute; z-index: 3; width: 0; height: 0; pointer-events: none; }
+.daily-check-view .dc-burst > span {
+  position: absolute; left: 0; top: 0; margin: -7px 0 0 -5px; font-size: 12px; line-height: 14px; color: var(--dc-accent);
+  opacity: 0; animation: dcBurst 520ms var(--dc-ease-out) forwards;
+}
+@keyframes dcBurst {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.6); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+}
+
+/* 連続記録は、小さなピルにまとめる */
+.daily-check-view .dc-streak-main:not(.is-empty) { padding: 2px 10px 2px 8px; border-radius: 999px; background: rgba(232, 89, 12, 0.1); }
+[data-theme="dark"] .daily-check-view .dc-streak-main:not(.is-empty) { background: rgba(255, 146, 43, 0.14); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* はんこは弾ませず、ふわっと出すだけ。きらきらはJS側で出さない */
+  .daily-check-view .dc-paper.stamped .dc-stamp { animation: dcScrimIn 200ms ease both; }
+  .daily-check-view .dc-sec, .daily-check-view .dc-row.done .dc-label { transition: none; }
+}
+@media (prefers-contrast: more) {
+  .daily-check-view .dc-btn { box-shadow: inset 0 0 0 1px var(--hub-text-2); }
+  .daily-check-view .dc-tape { opacity: 1; box-shadow: 0 0 0 1px var(--dc-ink); }
+  .daily-check-view .dc-stamp { border-style: solid; border-color: var(--dc-ink); color: var(--dc-ink); }
+}
+/* 印刷にははんこ・きらきらを出さない（はんこは画面のシートにしか書き出さないが、念のため） */
+@media print { .daily-check-view .dc-stamp, .daily-check-view .dc-burst { display: none !important; } }
