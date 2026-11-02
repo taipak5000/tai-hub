@@ -534,7 +534,8 @@ function themeGroupHtml(st) {
   };
   const groups = THEME_GROUPS.map(g => {
     const keys = Object.keys(THEMES).filter(k => THEMES[k].group === g.key);
-    return `<div class="dc-theme-group"><span class="dc-theme-group-name">${escapeHtml(t(g.ja, g.en))}</span><div class="dc-themes">${keys.map(card).join('')}</div></div>`;
+    // まとまりには名前を出さず、細い線で区切るだけにする
+    return `<div class="dc-theme-group" role="group" aria-label="${escapeHtml(t(g.ja, g.en))}"><div class="dc-themes">${keys.map(card).join('')}</div></div>`;
   }).join('');
   return `<div class="dc-style-row"><span class="dc-style-label">${escapeHtml(t('テーマ', 'Theme'))}${cur ? '' : `<span class="dc-custom-tag">${escapeHtml(t('カスタム', 'Custom'))}</span>`}</span>${groups}</div>`;
 }

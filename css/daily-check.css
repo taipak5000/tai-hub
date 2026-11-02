@@ -529,5 +529,4 @@ html.dc-capturing .daily-check-view .dc-paper { -webkit-print-color-adjust: exac
 .daily-check-view .dc-paper.font-serif .dc-section.done .dc-sec { background: transparent; color: var(--dc-accent); box-shadow: inset 0 -2px 0 var(--dc-accent); }
 .daily-check-view .dc-paper.font-serif .dc-stamp-main { font-weight: 700; }
 
-.daily-check-view .dc-theme-group + .dc-theme-group { margin-top: 10px; }
-.daily-check-view .dc-theme-group-name { display: block; margin: 2px 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--hub-text-2); }
+.daily-check-view .dc-theme-group + .dc-theme-group { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--hub-sep); }
