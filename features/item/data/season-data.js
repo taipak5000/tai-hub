@@ -69,13 +69,13 @@ export const REVISIT_SPIRIT_SCHEDULES = [
     // 2週間おきに4日間だけ来る旅の精霊の再訪周期。来訪ごとに違う精霊が来るため、
     // 入れ替わるたびにitemsとanchorStart/anchorEndを直近の実際の来訪に合わせて更新する
     // （intervalDaysは周期そのものなので変更不要）。
-    // 直近の来訪(2026-10-22〜10-26)は「こけおどしの農家」(mask_029, hairstyle_053)。
+    // 直近の来訪(2026-11-05〜11-09)は「ぽんぽんする若者」(head_accessory_001＝イヤーマフ, portable_item_012＝ウクレレ)。
     items: [
-      { catKey: 'mask', id: 'mask_029' },
-      { catKey: 'hairstyle', id: 'hairstyle_053' },
+      { catKey: 'head_accessory', id: 'head_accessory_001' },
+      { catKey: 'portable_item', id: 'portable_item_012' },
     ],
-    anchorStart: '2026-10-22T16:00:00+09:00',
-    anchorEnd: '2026-10-26T15:59:59+09:00',
+    anchorStart: '2026-11-05T16:00:00+09:00',
+    anchorEnd: '2026-11-09T15:59:59+09:00',
     intervalDays: 14,
   },
   {
