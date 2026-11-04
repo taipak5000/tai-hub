@@ -521,12 +521,14 @@ html.dc-capturing .daily-check-view .dc-paper { -webkit-print-color-adjust: exac
 .daily-check-view .dc-paper.font-serif .dc-title { font-weight: 700; letter-spacing: 0.06em; }
 .daily-check-view .dc-paper.font-serif .dc-label { font-weight: 600; letter-spacing: 0.02em; }
 .daily-check-view .dc-paper.font-serif .dc-date { font-weight: 600; letter-spacing: 0.04em; }
-/* 見出しは塗りのピルではなく、細い下線の付いた見出しにする（済んだら色が付くのは同じ） */
+/* 見出しは塗りのピルではなく、細い下線の付いた見出しにする（済んだら色が付くのは同じ）。
+   下線は背景の線（linear-gradient）で描く。inset の box-shadow で描くと、PDFで保存（html2canvas）の時に
+   見出し全体が塗りつぶされて文字が黒い帯で隠れるため（border にすると高さが1px増えて罫線とずれる） */
 .daily-check-view .dc-paper.font-serif .dc-sec {
-  background: transparent; border-radius: 0; padding: 0 2px; font-weight: 700; letter-spacing: 0.12em;
-  color: var(--dc-accent); box-shadow: inset 0 -1px 0 var(--dc-accent);
+  background: linear-gradient(var(--dc-accent), var(--dc-accent)) left bottom / 100% 1px no-repeat;
+  border-radius: 0; padding: 0 2px; font-weight: 700; letter-spacing: 0.12em; color: var(--dc-accent);
 }
-.daily-check-view .dc-paper.font-serif .dc-section.done .dc-sec { background: transparent; color: var(--dc-accent); box-shadow: inset 0 -2px 0 var(--dc-accent); }
+.daily-check-view .dc-paper.font-serif .dc-section.done .dc-sec { background: linear-gradient(var(--dc-accent), var(--dc-accent)) left bottom / 100% 2px no-repeat; color: var(--dc-accent); }
 .daily-check-view .dc-paper.font-serif .dc-stamp-main { font-weight: 700; }
 
 .daily-check-view .dc-theme-group + .dc-theme-group { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--hub-sep); }
