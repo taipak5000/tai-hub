@@ -83,15 +83,134 @@ export function getSubMode(subArea) {
   return 'spot';
 }
 
-export function enforceSpotGroupExclusivity(spots) {
+// 同じ組（group）のスポットは1つだけ選べる。「最低値」「最高値」（隠者レースなど）は同じ組として扱う
+// （以前は別の組だったため両方選べて、火種を二重に数えていた）。keep を渡すと、その1件を残して他を外す
+const RANGE_GROUPS = ['最低', '最高'];
+export function spotGroupKey(spot) {
+  const g = spot && spot.group && spot.group.trim();
+  if (!g) return '';
+  return RANGE_GROUPS.includes(g) ? '範囲' : g;
+}
+export function enforceSpotGroupExclusivity(spots, keep) {
   if (!Array.isArray(spots)) return;
   const seenGroups = new Set();
+  const keepKey = keep && keep.isSelected ? spotGroupKey(keep) : '';
+  if (keepKey) seenGroups.add(keepKey);
   spots.forEach((s) => {
-    if (!s || !s.isSelected) return;
-    const g = s.group && s.group.trim();
+    if (!s || !s.isSelected || s === keep) return;
+    const g = spotGroupKey(s);
     if (!g) return;
     if (seenGroups.has(g)) { s.isSelected = false; } else { seenGroups.add(g); }
   });
+}
+
+/* ================================================================
+   🔢 サブエリアの火種の数え方（エリア管理・ルート・最適化で共通）
+   ・組の無いスポットは選んだ分だけ足す
+   ・「曜日」の組は、どの曜日の配置を選んでいても「今日の配置」の値で数える
+     （毎日選び直さなくても、その日の正しい火種になる）
+   ・それ以外の組（最低値/最高値）は選んだものの値
+   isSel(spot) で「選んでいるか」を決める（ルートの集計では route の id 一覧で判定する）
+   ================================================================ */
+function subSpotLight(sub, isSel) {
+  let light = 0; let any = false;
+  const groups = new Map();
+  (sub.spots || []).forEach((sp) => {
+    if (!sp) return;
+    const g = spotGroupKey(sp);
+    const sel = isSel(sp);
+    if (sel) any = true;
+    if (!g) { if (sel) light += sp.light || 0; return; }
+    if (!groups.has(g)) groups.set(g, { sel: [], all: [] });
+    const e = groups.get(g);
+    e.all.push(sp);
+    if (sel) e.sel.push(sp);
+  });
+  groups.forEach((e, g) => {
+    if (e.sel.length === 0) return;
+    if (g === '曜日') {
+      const today = e.all.find(isSpotActiveToday);
+      light += today ? (today.light || 0) : 0;
+    } else {
+      light += Math.max(...e.sel.map((sp) => sp.light || 0));
+    }
+  });
+  return { light, any };
+}
+// 選んでいる分の火種
+export function subSelectedLight(sub) {
+  if (!sub) return 0;
+  if (getSubMode(sub) === 'sub') return sub.isSelected ? (sub.light || 0) : 0;
+  return subSpotLight(sub, (sp) => !!sp.isSelected).light;
+}
+export function subHasSelection(sub) {
+  if (!sub) return false;
+  if (getSubMode(sub) === 'sub') return !!sub.isSelected;
+  return (sub.spots || []).some((sp) => sp && sp.isSelected);
+}
+// 今日このサブエリアで取れる火種の合計（組は今日の配置／最高値で数える）
+export function subTotalLight(sub) {
+  if (!sub) return 0;
+  if (getSubMode(sub) === 'sub') return sub.light || 0;
+  let light = 0;
+  const groups = new Map();
+  (sub.spots || []).forEach((sp) => {
+    if (!sp) return;
+    const g = spotGroupKey(sp);
+    if (!g) { light += sp.light || 0; return; }
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(sp);
+  });
+  groups.forEach((list, g) => {
+    if (g === '曜日') { const today = list.find(isSpotActiveToday); light += today ? (today.light || 0) : 0; } else light += Math.max(...list.map((sp) => sp.light || 0));
+  });
+  return light;
+}
+// サブエリアをまとめて選ぶ。曜日の組は今日の配置、最低値/最高値は確実に取れる「最低値」を選ぶ
+export function selectSubAll(sub) {
+  if (!sub) return;
+  if (getSubMode(sub) === 'sub') { sub.isSelected = true; return; }
+  const seen = new Set();
+  (sub.spots || []).forEach((sp) => {
+    if (!sp) return;
+    const g = spotGroupKey(sp);
+    if (!g) { sp.isSelected = true; return; }
+    let pick;
+    if (g === '曜日') pick = isSpotActiveToday(sp);
+    else if (g === '範囲') pick = sp.group.trim() === '最低';
+    else pick = !seen.has(g);
+    sp.isSelected = !!pick && !seen.has(g);
+    if (sp.isSelected) seen.add(g);
+  });
+}
+export function clearSub(sub) {
+  if (!sub) return;
+  sub.isSelected = false;
+  (sub.spots || []).forEach((sp) => { if (sp) sp.isSelected = false; });
+}
+// 'none' / 'some' / 'all'（組の無いスポットが全部選ばれ、組ごとに1つ選ばれていれば all）
+export function subSelectState(sub) {
+  if (!sub) return 'none';
+  if (getSubMode(sub) === 'sub') return sub.isSelected ? 'all' : 'none';
+  let total = 0; let done = 0;
+  const groups = new Map();
+  (sub.spots || []).forEach((sp) => {
+    if (!sp) return;
+    const g = spotGroupKey(sp);
+    if (!g) { total++; if (sp.isSelected) done++; return; }
+    if (!groups.has(g)) groups.set(g, false);
+    if (sp.isSelected) groups.set(g, true);
+  });
+  groups.forEach((sel) => { total++; if (sel) done++; });
+  if (done === 0) return 'none';
+  return done >= total ? 'all' : 'some';
+}
+export function mainSelectState(area) {
+  const subs = (area && area.subAreas) || [];
+  if (subs.length === 0) return area && area.isSelected ? 'all' : 'none';
+  const states = subs.map(subSelectState);
+  if (states.every((x) => x === 'none')) return 'none';
+  return states.every((x) => x === 'all') ? 'all' : 'some';
 }
 
 /* ================================================================
@@ -112,7 +231,7 @@ export function getMainAreaStats(mainArea) {
         if (sMode === 'sub') {
           if (sub.isSelected) light += sub.light || 0;
         } else if (Array.isArray(sub.spots)) {
-          sub.spots.forEach((s) => { if (s && s.isSelected) light += s.light; });
+          light += subSelectedLight(sub);
         }
       });
       if (light > 0) time = mainArea.time || 0;
@@ -122,9 +241,8 @@ export function getMainAreaStats(mainArea) {
         if (sMode === 'sub') {
           if (sub && sub.isSelected) { light += sub.light || 0; time += sub.time || 0; }
         } else if (sub && Array.isArray(sub.spots)) {
-          sub.spots.forEach((s) => { if (s && s.isSelected) light += s.light; });
-          const hasSelected = sub.spots.some((s) => s && s.isSelected);
-          if (hasSelected) time += sub.time || 0;
+          light += subSelectedLight(sub);
+          if (subHasSelection(sub)) time += sub.time || 0;
         }
       });
     }
@@ -141,7 +259,7 @@ export function getMainAreaTotalLight(mainArea) {
     mainArea.subAreas.forEach((sub) => {
       if (!sub) return;
       const sMode = getSubMode(sub);
-      if (sMode === 'sub') { light += sub.light || 0; } else if (Array.isArray(sub.spots)) { sub.spots.forEach((s) => { if (s) light += (s.light || 0); }); }
+      if (sMode === 'sub') { light += sub.light || 0; } else if (Array.isArray(sub.spots)) { light += subTotalLight(sub); }
     });
   }
   return light;
@@ -168,58 +286,10 @@ export function getSubAreaStats(subArea) {
   if (sMode === 'sub') {
     if (subArea && subArea.isSelected) { light = subArea.light || 0; time = subArea.time || 0; }
   } else if (subArea && Array.isArray(subArea.spots)) {
-    subArea.spots.forEach((s) => { if (s && s.isSelected) light += s.light; });
-    if (light > 0) time = subArea.time || 0;
+    light = subSelectedLight(subArea);
+    if (subHasSelection(subArea)) time = subArea.time || 0;
   }
   return { light, eff: time > 0 ? (light / time) : 0.0 };
-}
-
-/* ================================================================
-   🎯 エリア%スライダー: 目標%に達するまで、データ記載順に自然に選んでいく
-   ================================================================ */
-export function applyAreaPercent(mainArea, pct) {
-  if (!mainArea || !Array.isArray(mainArea.subAreas)) return;
-  const total = getMainAreaTotalLight(mainArea);
-  const targetLight = Math.round(total * pct / 100);
-  const flat = [];
-  mainArea.subAreas.forEach((sub) => {
-    if (!sub) return;
-    const sMode = getSubMode(sub);
-    if (sMode === 'sub') {
-      flat.push({ kind: 'sub', ref: sub });
-    } else if (Array.isArray(sub.spots)) {
-      sub.spots.forEach((sp) => flat.push({ kind: 'spot', ref: sp, subId: sub.id }));
-    }
-  });
-  // リセット
-  mainArea.subAreas.forEach((sub) => {
-    if (!sub) return;
-    if (getSubMode(sub) === 'sub') sub.isSelected = false;
-    else if (Array.isArray(sub.spots)) sub.spots.forEach((sp) => { if (sp) sp.isSelected = false; });
-  });
-  let acc = 0;
-  const usedGroups = new Set();
-  for (const item of flat) {
-    if (acc >= targetLight) break;
-    if (item.kind === 'sub') {
-      item.ref.isSelected = true;
-      acc += item.ref.light || 0;
-    } else {
-      const g = item.ref.group && item.ref.group.trim();
-      if (g) {
-        const key = `${item.subId}::${g}`;
-        if (usedGroups.has(key)) continue;
-        usedGroups.add(key);
-      }
-      item.ref.isSelected = true;
-      acc += item.ref.light || 0;
-    }
-  }
-}
-export function applyPresetToChecked(areas, pct) {
-  areas.forEach((area) => {
-    if (area && area.isSelected) applyAreaPercent(area, pct);
-  });
 }
 
 /* ================================================================
@@ -305,7 +375,7 @@ export function optimize(areas, targetLightNeeded) {
       accumulated += ref.light;
     } else if (ref.type === 'spot' && areas[ref.mIdx] && areas[ref.mIdx].subAreas[ref.sIdx] && areas[ref.mIdx].subAreas[ref.sIdx].spots[ref.spIdx]) {
       const spot = areas[ref.mIdx].subAreas[ref.sIdx].spots[ref.spIdx];
-      const g = spot.group && spot.group.trim();
+      const g = spotGroupKey(spot);
       if (g) {
         const key = ref.mIdx + '|' + ref.sIdx;
         let groupSet = selectedGroupsBySub.get(key);
@@ -322,7 +392,13 @@ export function optimize(areas, targetLightNeeded) {
 /* ================================================================
    🕯️ キャンドル計算（しきい値テーブル・繰越・日割り見込み）
    ================================================================ */
-export const THRESHOLDS = [94, 188, 282, 376, 470, 609, 748, 887, 1026, 1165, 1304, 1443, 1582, 1721, 1860, 1999, 2138, 2277, 2416, 2555];
+// n本目の精錬に必要な火種（デイリーライトの最新の値。出典:「2026年最新 光のかけら表」2024/12/20更新）。
+// 6〜10本目は139、11〜15本目は179、16本目からは213・213・238・488・988と急に増える
+// （以前は6本目以降をすべて139で数えていて、20本＝2555と少なく見積もっていた）。
+// 19本の合計3212は、きょへ。さんの「毎日キャンドル19本（光のかけら3212個以上）」ルートと一致する。
+export const REFINE_COSTS = [94, 94, 94, 94, 94, 139, 139, 139, 139, 139, 179, 179, 179, 179, 179, 213, 213, 238, 488, 988];
+// 累計（n本目までに必要な火種の合計）。20本＝4200
+export const THRESHOLDS = REFINE_COSTS.reduce((acc, c) => { acc.push((acc.length ? acc[acc.length - 1] : 0) + c); return acc; }, []);
 export function calcCandlesFromLight(totalLight) {
   let candles = 0;
   for (let i = 0; i < THRESHOLDS.length; i++) {
@@ -707,11 +783,9 @@ export function getRouteStats(areas, route) {
           if (!sub) return;
           if (route.selectedSpotIds.includes(sub.id)) { light += sub.light || 0; time += sub.time || 0; return; }
           if (Array.isArray(sub.spots)) {
-            let subHasSelected = false;
-            sub.spots.forEach((s) => {
-              if (s && route.selectedSpotIds.includes(s.id)) { light += s.light || 0; subHasSelected = true; }
-            });
-            if (subHasSelected) time += (sub.time || 0);
+            const r = subSpotLight(sub, (s) => route.selectedSpotIds.includes(s.id));
+            light += r.light;
+            if (r.any) time += (sub.time || 0);
           }
         });
       }

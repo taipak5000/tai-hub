@@ -126,20 +126,6 @@
 .nmp-empty-state { text-align: center; color: var(--npb-text-2); padding: 20px 0; font-size: 13px; line-height: 1.6; }
 
 /* ── エリア管理（元実装の .area-preset-row / .area-pct-row / .area-icon-badge / .area-accordion） ── */
-.nmp-preset-row { display: flex; gap: 6px; margin-bottom: 4px; }
-.nmp-preset-btn { flex: 1; min-width: 0; padding: 8px 2px; border-radius: 8px; border: 1px solid var(--npb-border); background: var(--npb-stat-bg); color: var(--npb-text); font-size: 11px; line-height: 1.5; text-align: center; cursor: pointer; font-family: inherit; }
-.nmp-preset-btn:active { background: var(--npb-blue); color: #fff; border-color: var(--npb-blue); }
-.nmp-preset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.nmp-preset-hint { font-size: 11px; color: var(--npb-text-2); margin: -4px 0 10px; }
-
-.nmp-area-pct-row { padding: 8px 0; border-bottom: 1px solid var(--npb-border); transition: opacity 0.15s; }
-.nmp-area-pct-row input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
-.nmp-area-pct-label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; cursor: pointer; min-width: 0; }
-.nmp-area-pct-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nmp-area-pct-frac { font-size: 13px; color: var(--npb-text-2); display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.nmp-area-pct-frac .inline-icon { stroke: currentColor; color: currentColor; }
-.nmp-area-pct-frac b { color: var(--npb-text); margin-left: 2px; }
-
 .nmp-area-icon-badge { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .nmp-area-icon-badge svg { width: 14px; height: 14px; stroke-width: 2.4; }
 .nmp-area-icon-badge.c-blue   { background: rgba(0,122,255,0.14); }
@@ -281,3 +267,54 @@
 .nmp-credit-link:active { transform: scale(0.98); }
 @media (prefers-reduced-motion: reduce) { .nmp-credit-link { transition: none; } .nmp-credit-link:active { transform: none; opacity: 0.7; } }
 @media (prefers-contrast: more) { .nmp-credit-link { border-width: 2px; } }
+
+/* ================================================================
+   🌲 エリアの選び方（エリア → サブエリア → 火種の位置）
+   ================================================================ */
+.nomacan-pro-view .nmp-at-hint { font-size: 12px; line-height: 1.6; color: var(--npb-text-2); margin: 0 0 8px; }
+.nomacan-pro-view .nmp-at { display: flex; flex-direction: column; }
+.nomacan-pro-view .nmp-at-main { border-bottom: 1px solid var(--npb-border); }
+.nomacan-pro-view .nmp-at-main-head,
+.nomacan-pro-view .nmp-at-sub-head { display: flex; align-items: center; gap: 8px; }
+.nomacan-pro-view .nmp-at-check { width: 20px; height: 20px; flex-shrink: 0; margin: 0; accent-color: var(--npb-blue); }
+.nomacan-pro-view .nmp-at-main-btn,
+.nomacan-pro-view .nmp-at-sub-btn {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 0;
+  border: 0; background: none; color: var(--npb-text); font: inherit; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: opacity 120ms ease;
+}
+.nomacan-pro-view .nmp-at-main-btn:disabled { cursor: default; }
+.nomacan-pro-view .nmp-at-main-btn:active,
+.nomacan-pro-view .nmp-at-sub-btn:active { opacity: 0.6; }
+.nomacan-pro-view .nmp-at-main-btn { font-size: 14px; font-weight: 600; }
+.nomacan-pro-view .nmp-at-sub-btn { min-height: 40px; font-size: 13px; }
+.nomacan-pro-view .nmp-at-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nomacan-pro-view .nmp-at-main:not(.is-on) .nmp-at-name,
+.nomacan-pro-view .nmp-at-sub:not(.is-on) .nmp-at-name { color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-at-sum { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; font-size: 12px; font-weight: 400; color: var(--npb-text-2); font-variant-numeric: tabular-nums; }
+.nomacan-pro-view .nmp-at-sum b { color: var(--npb-text); font-weight: 700; }
+.nomacan-pro-view .nmp-at-sum .inline-icon { stroke: currentColor; color: currentColor; }
+.nomacan-pro-view .nmp-at-chev { flex-shrink: 0; stroke: var(--npb-text-2); color: var(--npb-text-2); transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.nomacan-pro-view .nmp-at-chev.open { transform: rotate(90deg); }
+.nomacan-pro-view .nmp-at-chev-space { width: 11px; flex-shrink: 0; }
+.nomacan-pro-view .nmp-at-subs { padding: 0 0 6px 28px; }
+.nomacan-pro-view .nmp-at-sub + .nmp-at-sub { border-top: 1px dashed var(--npb-border); }
+.nomacan-pro-view .nmp-at-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: rgba(0, 122, 255, 0.1); color: var(--npb-blue); font-size: 10px; font-weight: 600; letter-spacing: 0.02em; vertical-align: 1px; }
+.nomacan-pro-view .nmp-at-eff { flex-shrink: 0; min-width: 44px; text-align: right; font-size: 13px; font-weight: 700; color: var(--npb-text); font-variant-numeric: tabular-nums; }
+.nomacan-pro-view .nmp-at-eff small { font-size: 10px; font-weight: 400; color: var(--npb-text-2); margin-left: 1px; }
+.nomacan-pro-view .nmp-at-eff.good { color: #1F9D48; }
+.nomacan-pro-view .nmp-at-eff.low { color: var(--npb-text-2); font-weight: 400; }
+[data-theme="dark"] .nomacan-pro-view .nmp-at-eff.good { color: #4CD964; }
+.nomacan-pro-view .nmp-at-spots { display: flex; flex-direction: column; gap: 2px; padding: 0 0 8px 28px; }
+.nomacan-pro-view .nmp-at-spot { display: flex; align-items: center; gap: 8px; min-height: 34px; font-size: 12.5px; color: var(--npb-text-2); cursor: pointer; }
+.nomacan-pro-view .nmp-at-spot input { width: 18px; height: 18px; margin: 0; flex-shrink: 0; accent-color: var(--npb-blue); }
+.nomacan-pro-view .nmp-at-spot.is-on { color: var(--npb-text); }
+.nomacan-pro-view .nmp-at-spot-name { flex: 1; min-width: 0; }
+.nomacan-pro-view .nmp-at-spot-light { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .nomacan-pro-view .nmp-at-chev, .nomacan-pro-view .nmp-at-main-btn, .nomacan-pro-view .nmp-at-sub-btn { transition: none; }
+}
+@media (prefers-contrast: more) {
+  .nomacan-pro-view .nmp-at-eff.low { color: var(--npb-text); }
+  .nomacan-pro-view .nmp-at-sub + .nmp-at-sub { border-top-style: solid; }
+}

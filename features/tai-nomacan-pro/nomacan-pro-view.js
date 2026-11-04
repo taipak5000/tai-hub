@@ -7,7 +7,7 @@
    chrome（プロフィール切替・環境設定・他のツールドロワー・サイトドック）
    を除いた「このツール自身」の部分：キャンドル管理（繰越・日割り見込み・
    黒シャード予測・所持キャンドル数の他ツール連携）・効率自動最適化・
-   エリア管理（%スライダー・検索・詳細設定でのチェックツリー）・
+   エリア管理（エリア→サブエリア→位置のチェック・検索・詳細設定での編集）・
    マイルート（別ファイルnomacan-pro-routes.jsへ委譲）。
 
    「今日の精錬状況」「キャンドル管理」の2枚のカードは nomacan-pro-top.js、
@@ -59,7 +59,15 @@ let currentTimeMult = 1.7;
 let showDetailedAreaSettings = localStorage.getItem(S.AREA_DETAIL_OPEN_KEY) === '1';
 let showTodayOnlyFilter = localStorage.getItem(S.AREA_TODAY_FILTER_KEY) === '1';
 let areaSearchQuery = '';
-let presetCheckedIds = new Set(); // 一括プリセットの対象として個別にチェックされたエリアid
+// 通常表示のツリーで開いているエリア・サブエリアのid（編集画面の開閉とは別。はじめは全部閉じておく）
+const TREE_OPEN_KEY = 'sky_area_tree_open_v1';
+let treeOpen = new Set();
+try { treeOpen = new Set(JSON.parse(localStorage.getItem(TREE_OPEN_KEY) || '[]')); } catch (e) { treeOpen = new Set(); }
+function toggleTreeOpen(id) {
+  if (treeOpen.has(id)) treeOpen.delete(id); else treeOpen.add(id);
+  try { localStorage.setItem(TREE_OPEN_KEY, JSON.stringify([...treeOpen])); } catch (e) { /* noop */ }
+  renderAreaList();
+}
 
 let deletingAreaPath = null; // {mIdx,sIdx,spIdx} の一部のみ持つ削除確認対象
 let toastSeq = 0;
@@ -98,10 +106,9 @@ export function mount(container) {
 
   window.__nmpAreaToggleExpand = (mIdx) => { toggleAreaExpand(mIdx); };
   window.__nmpSubToggleExpand = (mIdx, sIdx) => { toggleSubExpand(mIdx, sIdx); };
-  window.__nmpAreaCheckToggle = (mIdx) => { toggleAreaChecked(mIdx); };
-  window.__nmpAreaPctChange = (mIdx, val) => { onAreaPctChange(mIdx, val); };
-  window.__nmpAreaPctInput = (mIdx, val) => { onAreaPctInput(mIdx, val); };
-  window.__nmpPresetClick = (pct) => { applyPresetToChecked(pct); };
+  window.__nmpMainCheck = (mIdx) => { toggleMainAll(mIdx); };
+  window.__nmpTreeOpen = (id) => { toggleTreeOpen(id); };
+  window.__nmpSubCheck = (mIdx, sIdx) => { toggleSubAll(mIdx, sIdx); };
   window.__nmpSubSelectToggle = (mIdx, sIdx) => { toggleSubSelected(mIdx, sIdx); };
   window.__nmpSpotSelectToggle = (mIdx, sIdx, spIdx) => { toggleSpotSelected(mIdx, sIdx, spIdx); };
   window.__nmpSearchInput = (val) => { areaSearchQuery = val; renderAreaList(); };
@@ -227,26 +234,20 @@ function applyVisibleSections() {
    ================================================================ */
 function toggleAreaExpand(mIdx) { areas[mIdx].isExpanded = !areas[mIdx].isExpanded; renderAreaList(); }
 function toggleSubExpand(mIdx, sIdx) { areas[mIdx].subAreas[sIdx].isExpanded = !areas[mIdx].subAreas[sIdx].isExpanded; renderAreaList(); }
-function toggleAreaChecked(mIdx) {
+// エリアのチェック: 1つでも選んでいれば全部外す／何も選んでいなければ全部選ぶ（曜日の配置は今日の分）
+function toggleMainAll(mIdx) {
   const area = areas[mIdx];
-  area.isSelected = !area.isSelected; // このデータでは常時sub-modeのため「一括プリセット対象」フラグとして流用
-  persist(true);
-  renderAreaList();
-}
-function onAreaPctInput(mIdx, val) {
-  const readout = document.getElementById(`nmpPctReadout${mIdx}`);
-  if (readout) readout.textContent = `${val}%`;
-}
-function onAreaPctChange(mIdx, val) {
-  S.applyAreaPercent(areas[mIdx], Number(val) || 0);
+  const subs = area.subAreas || [];
+  if (subs.length === 0) area.isSelected = !area.isSelected;
+  else if (S.mainSelectState(area) === 'none') subs.forEach(S.selectSubAll);
+  else subs.forEach(S.clearSub);
   persist(true);
   renderAreaList();
   recomputeAndRenderTop();
 }
-function applyPresetToChecked(pct) {
-  const checked = areas.filter((a) => a.isSelected);
-  if (checked.length === 0) return;
-  checked.forEach((a) => S.applyAreaPercent(a, pct));
+function toggleSubAll(mIdx, sIdx) {
+  const sub = areas[mIdx].subAreas[sIdx];
+  if (S.subSelectState(sub) === 'none') S.selectSubAll(sub); else S.clearSub(sub);
   persist(true);
   renderAreaList();
   recomputeAndRenderTop();
@@ -262,7 +263,7 @@ function toggleSpotSelected(mIdx, sIdx, spIdx) {
   const sub = areas[mIdx].subAreas[sIdx];
   const spot = sub.spots[spIdx];
   spot.isSelected = !spot.isSelected;
-  if (spot.isSelected) S.enforceSpotGroupExclusivity(sub.spots);
+  if (spot.isSelected) S.enforceSpotGroupExclusivity(sub.spots, spot); // 同じ組の他のスポットは外す（押したものを残す）
   persist(true);
   renderAreaList();
   recomputeAndRenderTop();
@@ -505,18 +506,14 @@ function renderAreaList() {
   const el = document.getElementById('nmpAreaBody');
   if (!el) return;
   const hasSearch = areaSearchQuery.trim().length > 0;
-  const anyChecked = areas.some((a) => a.isSelected);
   const detailAreas = areas.map((a, i) => ({ a, i })).filter(({ a }) => !hasSearch || areaMatchesSearch(a));
-  const preset = (pct, key) => `<button type="button" class="nmp-preset-btn" ${anyChecked ? '' : 'disabled'} onclick="__nmpPresetClick(${pct})">${escHtml(t(key))}<br><b>${pct}%</b></button>`;
 
   el.innerHTML = `
-    <div class="nmp-preset-row">
-      ${preset(15, 'area.presetLittle')}${preset(60, 'area.presetSome')}${preset(80, 'area.presetMost')}${preset(100, 'area.presetAll')}
-    </div>
-    ${anyChecked ? '' : `<div class="nmp-preset-hint">${escHtml(t('area.presetHint'))}</div>`}
-    ${areas.map((a, i) => renderMainAreaRow(a, i)).join('')}
+    ${showDetailedAreaSettings ? '' : `
+    <div class="nmp-at-hint">${escHtml(t('area.treeHint'))}</div>
+    ${renderAreaTree()}`}
     <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" style="margin-top:10px;" onclick="${myRoutesQuickCreateHandler()}"><svg class="inline-icon" width="14" height="14"><use href="#i-pin"/></svg> ${escHtml(t('area.createRouteBtn'))}</button>
-    <button type="button" class="nmp-btn-outline-blue nmp-btn-block" style="margin-top:6px;" onclick="__nmpDetailToggle()"><svg class="inline-icon" width="13" height="13"><use href="#nmp-i-list"/></svg> ${escHtml(showDetailedAreaSettings ? t('area.hideDetail') : t('area.showDetail'))}</button>
+    <button type="button" class="nmp-btn-outline-blue nmp-btn-block" style="margin-top:6px;" onclick="__nmpDetailToggle()"><svg class="inline-icon" width="13" height="13"><use href="#i-edit"/></svg> ${escHtml(showDetailedAreaSettings ? t('area.hideDetail') : t('area.showDetail'))}</button>
     ${showDetailedAreaSettings ? `
     <div style="margin:12px 0 10px;">
       <input type="text" placeholder="${escHtml(t('area.searchPlaceholder'))}" value="${escHtml(areaSearchQuery)}" oninput="__nmpSearchInput(this.value)" style="font-size:16px;">
@@ -525,9 +522,96 @@ function renderAreaList() {
       <label class="nmp-today-filter"><input type="checkbox" ${showTodayOnlyFilter ? 'checked' : ''} onchange="__nmpTodayFilterToggle()"> ${escHtml(t('area.todayOnlyFilterLabel') || '今日対象のみ表示')}</label>
     </div>
     ${hasSearch && detailAreas.length === 0 ? `<div class="nmp-empty-state">${t('area.searchNoResults', { q: escHtml(areaSearchQuery) })}</div>` : ''}
-    ${detailAreas.map(({ a, i }) => renderMainAreaAccordion(a, i)).join('')}` : ''}
-    <button type="button" class="nmp-btn-add" onclick="__nmpAddMainArea()">${escHtml(t('area.addMainArea'))}</button>
+    ${detailAreas.map(({ a, i }) => renderMainAreaAccordion(a, i)).join('')}
+    <button type="button" class="nmp-btn-add" onclick="__nmpAddMainArea()">${escHtml(t('area.addMainArea'))}</button>` : ''}
   `;
+  // 一部だけ選んでいるエリア・サブエリアのチェックは「－」（indeterminate）で見せる
+  el.querySelectorAll('input[data-indet="1"]').forEach((cb) => { cb.indeterminate = true; });
+}
+
+/* ================================================================
+   🌲 エリアの選び方（通常表示）: エリア → サブエリア → 火種の位置 をチェックで選ぶ。
+   以前の「ちょっと15%・まあまあ60%・ほぼ80%・全部100%」は、どの位置を回る想定なのかが
+   分からず使いにくかったため廃止し、回る場所そのものを選ぶ形にした。
+   サブエリアには「火種/分」（今日取れる火種 ÷ そのサブエリアの所要時間）を出し、
+   全サブエリアの中で上位4分の1を緑、下位4分の1を灰色にして、外す・残すの判断に使えるようにする
+   ================================================================ */
+function fmtSec(sec) {
+  const v = Math.max(0, Math.round(Number(sec) || 0));
+  const m = Math.floor(v / 60); const r = v % 60;
+  if (CURRENT_LANG === 'en') return m ? `${m}m${r ? ` ${r}s` : ''}` : `${r}s`;
+  return m ? `${m}分${r ? `${r}秒` : ''}` : `${r}秒`;
+}
+function subPerMin(sub) {
+  const time = Number(sub.time) || 0;
+  return time > 0 ? (S.subTotalLight(sub) / time) * 60 : 0;
+}
+function effBands() {
+  const list = [];
+  areas.forEach((a) => (a.subAreas || []).forEach((sub) => { const v = subPerMin(sub); if (v > 0) list.push(v); }));
+  list.sort((x, y) => x - y);
+  if (list.length < 4) return { low: -1, high: Infinity };
+  return { low: list[Math.floor(list.length * 0.25)], high: list[Math.floor(list.length * 0.75)] };
+}
+function checkboxHtml(state, onchange, label) {
+  return `<input type="checkbox" class="nmp-at-check" ${state === 'all' ? 'checked' : ''} ${state === 'some' ? 'data-indet="1"' : ''} onchange="${onchange}" aria-label="${escHtml(label)}">`;
+}
+function renderAreaTree() {
+  const bands = effBands();
+  return `<div class="nmp-at">${areas.map((area, mIdx) => renderTreeMain(area, mIdx, bands)).join('')}</div>`;
+}
+function renderTreeMain(area, mIdx, bands) {
+  const vis = areaVisual(area);
+  const subs = area.subAreas || [];
+  const stats = S.getMainAreaStats(area);
+  const total = S.getMainAreaTotalLight(area);
+  const state = S.mainSelectState(area);
+  const name = displayAreaName(area.name);
+  const hasSubs = subs.length > 0;
+  const open = treeOpen.has(area.id);
+  return `
+    <div class="nmp-at-main ${state === 'none' ? '' : 'is-on'}">
+      <div class="nmp-at-main-head">
+        ${checkboxHtml(state, `__nmpMainCheck(${mIdx})`, t('area.selectAllAria', { name }))}
+        <button type="button" class="nmp-at-main-btn" ${hasSubs ? `onclick="__nmpTreeOpen('${area.id}')" aria-expanded="${open ? 'true' : 'false'}"` : 'disabled'}>
+          <span class="nmp-area-icon-badge c-${vis.color}"><svg class="inline-icon"><use href="#${vis.icon}"/></svg></span>
+          <span class="nmp-at-name">${escHtml(name)}</span>
+          <span class="nmp-at-sum"><b>${stats.light}</b>/${total} <svg class="inline-icon" width="11" height="11"><use href="#i-flame"/></svg>${stats.time > 0 ? ` · ${fmtSec(stats.time)}` : ''}</span>
+          ${hasSubs ? `<svg class="inline-icon nmp-at-chev ${open ? 'open' : ''}" width="12" height="12"><use href="#i-chevron-right"/></svg>` : ''}
+        </button>
+      </div>
+      ${hasSubs && open ? `<div class="nmp-at-subs">${subs.map((sub, sIdx) => renderTreeSub(sub, mIdx, sIdx, bands)).join('')}</div>` : ''}
+    </div>`;
+}
+function renderTreeSub(sub, mIdx, sIdx, bands) {
+  const state = S.subSelectState(sub);
+  const sel = S.subSelectedLight(sub);
+  const total = S.subTotalLight(sub);
+  const perMin = subPerMin(sub);
+  const band = perMin <= 0 ? '' : perMin >= bands.high ? 'good' : perMin <= bands.low ? 'low' : '';
+  const name = displayAreaName(sub.name);
+  const spots = (sub.spots || []).map((sp, i) => ({ sp, i })).filter(({ sp }) => sp && (!S.isWeekdayRotationSpot(sp) || S.isSpotActiveToday(sp)));
+  const canExpand = spots.length > 1;
+  const open = treeOpen.has(sub.id);
+  const hasWeekday = (sub.spots || []).some((sp) => S.isWeekdayRotationSpot(sp));
+  return `
+    <div class="nmp-at-sub ${state === 'none' ? '' : 'is-on'}">
+      <div class="nmp-at-sub-head">
+        ${checkboxHtml(state, `__nmpSubCheck(${mIdx}, ${sIdx})`, name)}
+        <button type="button" class="nmp-at-sub-btn" ${canExpand ? `onclick="__nmpTreeOpen('${sub.id}')" aria-expanded="${open ? 'true' : 'false'}"` : `onclick="__nmpSubCheck(${mIdx}, ${sIdx})"`}>
+          <span class="nmp-at-name">${escHtml(name)}${hasWeekday ? `<span class="nmp-at-tag">${escHtml(t('area.weekdayTag'))}</span>` : ''}</span>
+          <span class="nmp-at-sum">${state === 'some' ? `<b>${sel}</b>/` : ''}${total}<svg class="inline-icon" width="10" height="10"><use href="#i-flame"/></svg> · ${fmtSec(sub.time)}</span>
+          <span class="nmp-at-eff ${band}" title="${escHtml(t('area.perMinTitle'))}">${perMin > 0 ? perMin.toFixed(0) : '–'}<small>${escHtml(t('area.perMinUnit'))}</small></span>
+          ${canExpand ? `<svg class="inline-icon nmp-at-chev ${open ? 'open' : ''}" width="11" height="11"><use href="#i-chevron-right"/></svg>` : '<span class="nmp-at-chev-space"></span>'}
+        </button>
+      </div>
+      ${canExpand && open ? `<div class="nmp-at-spots">${spots.map(({ sp, i }) => `
+        <label class="nmp-at-spot ${sp.isSelected ? 'is-on' : ''}">
+          <input type="checkbox" ${sp.isSelected ? 'checked' : ''} onchange="__nmpSpotSelectToggle(${mIdx}, ${sIdx}, ${i})">
+          <span class="nmp-at-spot-name">${escHtml(displayAreaName(sp.name))}${S.spotGroupKey(sp) === '範囲' ? `<span class="nmp-at-tag">${escHtml(t('area.rangeTag'))}</span>` : ''}</span>
+          <span class="nmp-at-spot-light">${sp.light || 0}</span>
+        </label>`).join('')}</div>` : ''}
+    </div>`;
 }
 function myRoutesQuickCreateHandler() {
   const createRoute = () => {
@@ -549,27 +633,6 @@ function myRoutesQuickCreateHandler() {
     if (createRoute()) showToast(t('route.savedHint'), 'success');
   };
   return '__nmpCreateRouteFromSelection()';
-}
-
-// エリア%スライダーの1行（元実装の .area-pct-row と同じ。チェックしていないエリアは薄く・スライダー無効）
-function renderMainAreaRow(area, mIdx) {
-  const total = S.getMainAreaTotalLight(area);
-  const stats = S.getMainAreaStats(area);
-  const pct = total > 0 ? Math.round((stats.light / total) * 100) : 0;
-  const vis = areaVisual(area);
-  return `
-    <div class="nmp-area-pct-row" style="opacity:${area.isSelected ? 1 : 0.55};">
-      <div class="nmp-row" style="border-bottom:none; padding-bottom:2px;">
-        <label class="nmp-area-pct-label">
-          <input type="checkbox" ${area.isSelected ? 'checked' : ''} onchange="__nmpAreaCheckToggle(${mIdx})" style="flex-shrink:0;">
-          <span class="nmp-area-icon-badge c-${vis.color}"><svg class="inline-icon"><use href="#${vis.icon}"/></svg></span>
-          <span class="nmp-area-pct-name">${escHtml(displayAreaName(area.name))}</span>
-        </label>
-        <span class="nmp-area-pct-frac">${stats.light} / ${total} <svg class="inline-icon" width="12" height="12"><use href="#i-flame"/></svg> <b id="nmpPctReadout${mIdx}">${pct}%</b></span>
-      </div>
-      <input type="range" min="0" max="100" step="1" value="${pct}" ${area.isSelected ? '' : 'disabled'} aria-label="${escHtml(t('area.pctSliderAria', { name: displayAreaName(area.name) }))}"
-        oninput="__nmpAreaPctInput(${mIdx}, this.value)" onchange="__nmpAreaPctChange(${mIdx}, this.value)">
-    </div>`;
 }
 
 // 詳細設定のアコーディオン1件（元実装の .area-accordion。展開でサブエリア・スポットを編集）
