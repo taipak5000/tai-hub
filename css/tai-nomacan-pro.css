@@ -318,3 +318,52 @@
   .nomacan-pro-view .nmp-at-eff.low { color: var(--npb-text); }
   .nomacan-pro-view .nmp-at-sub + .nmp-at-sub { border-top-style: solid; }
 }
+
+/* ================================================================
+   ⏰ 時間が決まっているイベント・📊 効率の内訳・⏱ 実測ストップウォッチ（nomacan-pro-extras.js）
+   ================================================================ */
+.nomacan-pro-view .nmp-at-measured { margin-left: 4px; padding: 0 5px; border-radius: 999px; background: rgba(255, 149, 0, 0.14); color: #B86200; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+[data-theme="dark"] .nomacan-pro-view .nmp-at-measured { color: #FFB340; }
+
+.nomacan-pro-view .nmp-tm-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--npb-border); }
+.nomacan-pro-view .nmp-tm-row:last-of-type { border-bottom: 0; }
+.nomacan-pro-view .nmp-tm-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
+.nomacan-pro-view .nmp-tm-sub { margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--npb-text-2); letter-spacing: 0.02em; }
+.nomacan-pro-view .nmp-tm-when { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+.nomacan-pro-view .nmp-tm-next { font-size: 20px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+.nomacan-pro-view .nmp-tm-left { font-size: 11.5px; color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-tm-live { padding: 3px 10px; border-radius: 999px; background: rgba(52, 199, 89, 0.16); color: #1F9D48; font-size: 12.5px; font-weight: 700; }
+[data-theme="dark"] .nomacan-pro-view .nmp-tm-live { color: #4CD964; }
+.nomacan-pro-view .nmp-tm-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--npb-text-2); }
+
+.nomacan-pro-view .nmp-ef-empty { margin: 0; font-size: 13px; line-height: 1.6; color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-ef-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.nomacan-pro-view .nmp-ef-stats > div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; background: var(--npb-stat-bg); border: 1px solid var(--npb-border); text-align: center; }
+.nomacan-pro-view .nmp-ef-stats b { font-size: 18px; line-height: 1.1; letter-spacing: -0.02em; color: var(--npb-orange); font-variant-numeric: tabular-nums; }
+.nomacan-pro-view .nmp-ef-stats span { font-size: 10.5px; color: var(--npb-text-2); letter-spacing: 0.02em; }
+.nomacan-pro-view .nmp-ef-tablewrap { overflow-x: auto; }
+.nomacan-pro-view .nmp-ef-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.nomacan-pro-view .nmp-ef-table th { padding: 4px 4px; font-size: 11px; font-weight: 600; color: var(--npb-text-2); text-align: left; border-bottom: 1px solid var(--npb-border); white-space: nowrap; }
+.nomacan-pro-view .nmp-ef-table td { padding: 6px 4px; border-bottom: 1px solid var(--npb-border); vertical-align: top; }
+.nomacan-pro-view .nmp-ef-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nomacan-pro-view .nmp-ef-table small { font-size: 10.5px; color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-ef-name { font-weight: 600; }
+.nomacan-pro-view .nmp-ef-ph { font-weight: 700; }
+.nomacan-pro-view .nmp-ef-table tr.is-low td { color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-ef-note { margin: 6px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--npb-text-2); }
+
+.nomacan-pro-view .nmp-sw-label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: var(--npb-text-2); letter-spacing: 0.02em; }
+.nomacan-pro-view .nmp-sw-select { width: 100%; font-size: 16px; text-align: left; text-align-last: left; }
+.nomacan-pro-view .nmp-sw-info { margin-top: 4px; font-size: 12px; color: var(--npb-text-2); }
+.nomacan-pro-view .nmp-sw-disp { margin: 10px 0; text-align: center; font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.nomacan-pro-view .nmp-sw.is-running .nmp-sw-disp, .nomacan-pro-view .is-running .nmp-sw-disp { color: var(--npb-blue); }
+.nomacan-pro-view .nmp-sw-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.nomacan-pro-view .nmp-sw-btns .nmp-btn:disabled { opacity: 0.4; }
+.nomacan-pro-view .nmp-sw-restore { margin-top: 6px; }
+.nomacan-pro-view .nmp-sw-restore:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 380px) {
+  .nomacan-pro-view .nmp-ef-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-contrast: more) {
+  .nomacan-pro-view .nmp-ef-table tr.is-low td { color: var(--npb-text); text-decoration: underline dotted; }
+}

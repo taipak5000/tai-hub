@@ -34,6 +34,7 @@ import { displayAreaName as displayAreaNameRaw } from './data/area-names-en.js';
 import * as S from './nomacan-pro-state.js';
 import { initRoutes, renderRoutes, teardownRoutes, seedTemplateRoute } from './nomacan-pro-routes.js';
 import * as Top from './nomacan-pro-top.js';
+import * as Extras from './nomacan-pro-extras.js';
 
 const STYLE_LINK_ID = 'nomacan-pro-view-styles';
 const ICON_SPRITE_ID = 'nomacan-pro-icon-sprite';
@@ -126,7 +127,7 @@ export function mount(container) {
   window.__nmpAreaNameInput = (mIdx, val) => { areas[mIdx].name = val; persist(true); };
   window.__nmpSubNameInput = (mIdx, sIdx, val) => { areas[mIdx].subAreas[sIdx].name = val; persist(true); };
   window.__nmpSpotNameInput = (mIdx, sIdx, spIdx, val) => { areas[mIdx].subAreas[sIdx].spots[spIdx].name = val; persist(true); };
-  window.__nmpSubTimeInput = (mIdx, sIdx, val) => { areas[mIdx].subAreas[sIdx].time = Math.max(0, Number(val) || 0); persist(true); recomputeAndRenderTop(); };
+  window.__nmpSubTimeInput = (mIdx, sIdx, val) => { const sub = areas[mIdx].subAreas[sIdx]; sub.time = Math.max(0, Number(val) || 0); sub.measured = true; persist(true); recomputeAndRenderTop(); Extras.refreshStopwatchOptions(); };
 
   window.__nmpTargetInput = (val) => { targetCandlesForOptimization = Math.max(0, Number(val) || 0); persist(); };
   window.__nmpOptimizeClick = () => { doOptimize(); };
@@ -165,7 +166,15 @@ export function mount(container) {
   renderAreaList();
   renderRoutes();
   Top.mountTop(document.getElementById('nmpRefineBody'), document.getElementById('nmpCandleBody'), topContext);
+  Extras.mountExtras(document.getElementById('nmpTimedBody'), document.getElementById('nmpEffBody'), document.getElementById('nmpSwBody'), extrasContext);
 }
+
+// 追加カード（時間が決まっているイベント・効率の内訳・実測ストップウォッチ。nomacan-pro-extras.js）とのやり取り
+const extrasContext = {
+  get: () => ({ areas, carryOverPercent, carryOverGap, dailyBonusArea, dailyShard, timeMult: currentTimeMult }),
+  onAreasChanged: () => { persist(true); renderAreaList(); recomputeAndRenderTop(); },
+  showToast: (msg, type) => showToast(msg, type),
+};
 
 // 「今日の精錬状況」「キャンドル管理」カード(nomacan-pro-top.js)とのやり取り
 const topContext = {
@@ -189,6 +198,7 @@ const topContext = {
 
 export function unmount() {
   Top.unmountTop();
+  Extras.unmountExtras();
   if (onCurrencyStorageListener) { window.removeEventListener('storage', onCurrencyStorageListener); onCurrencyStorageListener = null; }
   if (onVisibilityCommit) { document.removeEventListener('visibilitychange', onVisibilityCommit); onVisibilityCommit = null; }
   teardownRoutes();
@@ -223,7 +233,7 @@ function persist(skip) {
 // 👁️ 表示するカードのチェックボックスをトグルした直後、シェル全体を作り直さずに
 // 対象セクションのdisplayだけ切り替える（他セクションの入力中の値やスクロール位置を保持するため）
 function applyVisibleSections() {
-  const map = { candleManage: 'nmpSectionCandleManage', optimization: 'nmpSectionOptimization', myRoutes: 'nmpSectionMyRoutes' };
+  const map = { candleManage: 'nmpSectionCandleManage', optimization: 'nmpSectionOptimization', myRoutes: 'nmpSectionMyRoutes', timed: 'nmpSectionTimed', efficiency: 'nmpSectionEfficiency', stopwatch: 'nmpSectionStopwatch' };
   Object.keys(map).forEach((key) => {
     const el = document.getElementById(map[key]);
     if (el) el.style.display = visibleSections[key] ? '' : 'none';
@@ -419,6 +429,9 @@ function renderShell() {
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.candleManage ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('candleManage', this.checked)"> ${escHtml(t('settings.candleManage'))}</label>
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.optimization ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('optimization', this.checked)"> ${escHtml(t('settings.optimization'))}</label>
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.myRoutes ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('myRoutes', this.checked)"> ${escHtml(t('settings.myRoutes'))}</label>
+          <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.timed ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('timed', this.checked)"> ${escHtml(t('settings.timed'))}</label>
+          <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.efficiency ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('efficiency', this.checked)"> ${escHtml(t('settings.efficiency'))}</label>
+          <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.stopwatch ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('stopwatch', this.checked)"> ${escHtml(t('settings.stopwatch'))}</label>
         </div>
       </details>
       <div class="nmp-grid">
@@ -426,6 +439,14 @@ function renderShell() {
           <section class="nmp-card" id="nmpSectionRefine">
             <div class="nmp-card-header">${escHtml(t('refine.sectionHeader'))}</div>
             <div id="nmpRefineBody"></div>
+          </section>
+          <section class="nmp-card" id="nmpSectionEfficiency" style="${visibleSections.efficiency ? '' : 'display:none;'}">
+            <div class="nmp-card-header">${escHtml(t('extras.effHeader'))}</div>
+            <div id="nmpEffBody"></div>
+          </section>
+          <section class="nmp-card" id="nmpSectionTimed" style="${visibleSections.timed ? '' : 'display:none;'}">
+            <div class="nmp-card-header">${escHtml(t('extras.timedHeader'))}</div>
+            <div id="nmpTimedBody"></div>
           </section>
           <section class="nmp-card" id="nmpSectionCandleManage" style="${visibleSections.candleManage ? '' : 'display:none;'}">
             <div class="nmp-card-header nmp-card-header-split"><span>${escHtml(t('candle.sectionHeader') || (CURRENT_LANG === 'en' ? 'Candle Management' : 'キャンドル管理'))}</span><span class="nmp-dim nmp-normal">${escHtml(t('candle.dcNote'))}</span></div>
@@ -445,6 +466,10 @@ function renderShell() {
           <section class="nmp-card">
             <div class="nmp-card-header">${escHtml(t('area.sectionHeader'))}</div>
             <div id="nmpAreaBody"></div>
+          </section>
+          <section class="nmp-card nmp-sw" id="nmpSectionStopwatch" style="${visibleSections.stopwatch ? '' : 'display:none;'}">
+            <div class="nmp-card-header">${escHtml(t('extras.swHeader'))}</div>
+            <div id="nmpSwBody"></div>
           </section>
         </div>
       </div>
@@ -472,6 +497,7 @@ function renderShell() {
 function recomputeAndRenderTop() {
   Top.syncInputs();
   Top.update();
+  Extras.renderEfficiency();
 }
 
 /* ================================================================
@@ -527,6 +553,7 @@ function renderAreaList() {
   `;
   // 一部だけ選んでいるエリア・サブエリアのチェックは「－」（indeterminate）で見せる
   el.querySelectorAll('input[data-indet="1"]').forEach((cb) => { cb.indeterminate = true; });
+  Extras.refreshStopwatchOptions(); // ストップウォッチのサブエリア一覧（名前・時間の表示）も合わせる
 }
 
 /* ================================================================
@@ -600,7 +627,7 @@ function renderTreeSub(sub, mIdx, sIdx, bands) {
         ${checkboxHtml(state, `__nmpSubCheck(${mIdx}, ${sIdx})`, name)}
         <button type="button" class="nmp-at-sub-btn" ${canExpand ? `onclick="__nmpTreeOpen('${sub.id}')" aria-expanded="${open ? 'true' : 'false'}"` : `onclick="__nmpSubCheck(${mIdx}, ${sIdx})"`}>
           <span class="nmp-at-name">${escHtml(name)}${hasWeekday ? `<span class="nmp-at-tag">${escHtml(t('area.weekdayTag'))}</span>` : ''}</span>
-          <span class="nmp-at-sum">${state === 'some' ? `<b>${sel}</b>/` : ''}${total}<svg class="inline-icon" width="10" height="10"><use href="#i-flame"/></svg> · ${fmtSec(sub.time)}</span>
+          <span class="nmp-at-sum">${state === 'some' ? `<b>${sel}</b>/` : ''}${total}<svg class="inline-icon" width="10" height="10"><use href="#i-flame"/></svg> · ${fmtSec(sub.time)}${sub.measured ? `<span class="nmp-at-measured" title="${escHtml(t('extras.swMeasured'))}">${escHtml(t('extras.swMeasured'))}</span>` : ''}</span>
           <span class="nmp-at-eff ${band}" title="${escHtml(t('area.perMinTitle'))}">${perMin > 0 ? perMin.toFixed(0) : '–'}<small>${escHtml(t('area.perMinUnit'))}</small></span>
           ${canExpand ? `<svg class="inline-icon nmp-at-chev ${open ? 'open' : ''}" width="11" height="11"><use href="#i-chevron-right"/></svg>` : '<span class="nmp-at-chev-space"></span>'}
         </button>

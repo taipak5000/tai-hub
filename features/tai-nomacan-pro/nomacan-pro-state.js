@@ -399,6 +399,12 @@ export function optimize(areas, targetLightNeeded) {
 export const REFINE_COSTS = [94, 94, 94, 94, 94, 139, 139, 139, 139, 139, 179, 179, 179, 179, 179, 213, 213, 238, 488, 988];
 // 累計（n本目までに必要な火種の合計）。20本＝4200
 export const THRESHOLDS = REFINE_COSTS.reduce((acc, c) => { acc.push((acc.length ? acc[acc.length - 1] : 0) + c); return acc; }, []);
+// エリア以外から入る火種（繰越＋当日の大キャンドル群＋黒シャード）。今日の精錬状況と効率の内訳で共通
+export function baseLightFor(v) {
+  const carry = Math.floor((Number(v.carryOverGap) || 0) * ((Number(v.carryOverPercent) || 0) / 100));
+  const bonus = (Number(v.dailyBonusArea) || 0) * 50 + (v.dailyShard === 'black' ? 200 : 0);
+  return { carry, bonus, total: carry + bonus };
+}
 export function calcCandlesFromLight(totalLight) {
   let candles = 0;
   for (let i = 0; i < THRESHOLDS.length; i++) {
@@ -564,7 +570,7 @@ export function predictUpcomingBlackShard(count) {
 /* ================================================================
    👁️ 表示するカード（ダッシュボードの各セクションの表示/非表示設定）
    ================================================================ */
-export const DEFAULT_VISIBLE_SECTIONS = { candleManage: true, optimization: true, myRoutes: true };
+export const DEFAULT_VISIBLE_SECTIONS = { candleManage: true, optimization: true, myRoutes: true, timed: true, efficiency: true, stopwatch: true };
 
 /* ================================================================
    💾 本体の保存/読込
