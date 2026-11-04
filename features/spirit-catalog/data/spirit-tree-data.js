@@ -41815,7 +41815,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "pjt9rRZ1QV",
                 "itemName": "Arm Wrestle",
-                "itemNameJa": null,
+                "itemNameJa": "腕相撲",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -41988,7 +41988,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "5C0kNVybSW",
                 "itemName": "Show Off",
-                "itemNameJa": null,
+                "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42059,7 +42059,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "bQ7e8g5GU5",
                 "itemName": "Show Off",
-                "itemNameJa": null,
+                "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42074,7 +42074,7 @@ export const SPIRIT_TREE_DATA = [
                 },
                 "itemGuid": "M2Q_2upiIe",
                 "itemName": "Show Off",
-                "itemNameJa": null,
+                "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42130,7 +42130,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "yFCmXodzt4",
                 "itemName": "Show Off",
-                "itemNameJa": null,
+                "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42176,7 +42176,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "hY0rd2pgh9",
                 "itemName": "Hesitate",
-                "itemNameJa": null,
+                "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42247,7 +42247,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "ObrO1bQkXI",
                 "itemName": "Hesitate",
-                "itemNameJa": null,
+                "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42262,7 +42262,7 @@ export const SPIRIT_TREE_DATA = [
                 },
                 "itemGuid": "2OPdGex5nD",
                 "itemName": "Hesitate",
-                "itemNameJa": null,
+                "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42318,7 +42318,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "PhTtOn84_x",
                 "itemName": "Hesitate",
-                "itemNameJa": null,
+                "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42377,7 +42377,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "TjM2punhhG",
                 "itemName": "Wallow",
-                "itemNameJa": null,
+                "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42448,7 +42448,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "oGuKnxgnHM",
                 "itemName": "Wallow",
-                "itemNameJa": null,
+                "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42463,7 +42463,7 @@ export const SPIRIT_TREE_DATA = [
                 },
                 "itemGuid": "O3e0ty7h8o",
                 "itemName": "Wallow",
-                "itemNameJa": null,
+                "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
@@ -42519,7 +42519,7 @@ export const SPIRIT_TREE_DATA = [
                 "cost": {},
                 "itemGuid": "NgLp5MDwoF",
                 "itemName": "Wallow",
-                "itemNameJa": null,
+                "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
                 "itemCostId": null
