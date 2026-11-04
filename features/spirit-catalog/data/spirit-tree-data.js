@@ -13311,7 +13311,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "ZQJXf88hyx",
                           "tier":  0,
-                          "row":  0,
+                          "row":  1,
                           "col":  0,
                           "cost":  {
 
@@ -13326,7 +13326,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "kybez3XHgY",
                           "tier":  0,
-                          "row":  0,
+                          "row":  1,
                           "col":  1,
                           "cost":  {
 
@@ -13341,7 +13341,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "lNLHILtVQX",
                           "tier":  0,
-                          "row":  0,
+                          "row":  1,
                           "col":  2,
                           "cost":  {
 
@@ -13356,7 +13356,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "7328exK2tY",
                           "tier":  0,
-                          "row":  1,
+                          "row":  0,
                           "col":  2,
                           "cost":  {
                                        "sh":  2
@@ -13371,7 +13371,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "ZAjT74eH3m",
                           "tier":  1,
-                          "row":  0,
+                          "row":  1,
                           "col":  0,
                           "cost":  {
 
@@ -13386,7 +13386,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "W2QSmuvsWN",
                           "tier":  1,
-                          "row":  0,
+                          "row":  1,
                           "col":  1,
                           "cost":  {
 
@@ -13401,7 +13401,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "RtqRuRH6fZ",
                           "tier":  1,
-                          "row":  0,
+                          "row":  1,
                           "col":  2,
                           "cost":  {
                                        "sh":  2
@@ -13416,7 +13416,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "XQLqNFLZBI",
                           "tier":  1,
-                          "row":  1,
+                          "row":  0,
                           "col":  1,
                           "cost":  {
 
@@ -13725,7 +13725,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "o0yLYlBDq7",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  0,
                           "cost":  {
                                        "sc":  28
@@ -13740,7 +13740,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "rX6BUQ1g7H",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  2,
                           "cost":  {
 
@@ -13757,7 +13757,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "JSSGmDIdXl",
                           "tier":  3,
-                          "row":  1,
+                          "row":  0,
                           "col":  2,
                           "cost":  {
 
@@ -14152,7 +14152,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "fpLYw7GYu6",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  0,
                           "cost":  {
                                        "sc":  28
@@ -14167,7 +14167,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "6NjuVh1BBF",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  2,
                           "cost":  {
 
@@ -14184,7 +14184,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "fUijpYjsJG",
                           "tier":  3,
-                          "row":  1,
+                          "row":  0,
                           "col":  2,
                           "cost":  {
 
@@ -14373,7 +14373,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "RXwnGQ3oVv",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  0,
                           "cost":  {
                                        "sc":  28
@@ -14388,7 +14388,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "fwlhQvBqyx",
                           "tier":  3,
-                          "row":  0,
+                          "row":  1,
                           "col":  2,
                           "cost":  {
 
@@ -14405,7 +14405,7 @@ export const SPIRIT_TREE_DATA = [
                       {
                           "guid":  "jttR7EfxcD",
                           "tier":  3,
-                          "row":  1,
+                          "row":  0,
                           "col":  2,
                           "cost":  {
 
