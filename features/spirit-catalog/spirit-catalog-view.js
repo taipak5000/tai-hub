@@ -865,23 +865,21 @@ function treeNodeHtml(spirit, n, style, prereqSatisfied) {
   const unlocked = !!unlockSource;
   const nextAvailable = !unlocked && !!prereqSatisfied;
   const costChips = Object.keys(n.cost || {}).map((k) => `<span class="cost-chip cost-${k}">${icon(S.COST_ICON[k], 10)}${n.cost[k]}</span>`).join('');
-  const wingTag = n.itemType === 'WingBuff' ? `<span class="tree-node-wingtag" title="${escapeHtml(t('detail.wingSyncTitle'))}">${icon('i-sync', 11)}</span>` : '';
-  const emoteTag = (n.itemType === 'Emote' && n.emoteId && n.emoteLevel)
-    ? `<span class="tree-node-wingtag" title="${escapeHtml(t('detail.emoteSyncTitleTemplate', { level: n.emoteLevel }))}">${icon('i-sync', 11)}</span>` : '';
+  // 羽トラッカー・エモート管理と同期するノードの印（🔄）と、連携ツールから自動で解放された印は、
+  // ツリーの中にたくさん並んで邪魔になるため出さない（同期そのものは今までどおり行う）
   const tierBadge = S.getCostTierBadge(spirit, n);
   const tierBadgeHtml = tierBadge
     ? (tierBadge.mode === 'emote'
       ? `<span class="tree-node-tier-badge" title="${escapeHtml(t('detail.emoteLevelBadgeTitleTemplate', { n: tierBadge.n, total: tierBadge.total }))}">Lv${tierBadge.n}</span>`
       : `<span class="tree-node-tier-badge" title="${escapeHtml(t(tierBadge.mode === 'cape' ? 'detail.capeTierTitleTemplate' : 'detail.tierVariantTitleTemplate', { n: tierBadge.n, total: tierBadge.total }))}">T${tierBadge.n}</span>`)
     : '';
-  const syncBadge = unlockSource === 'sync' ? `<span class="tree-node-sync-badge" title="${escapeHtml(t('detail.syncBadgeTitle'))}">${icon('i-sync', 11)}</span>` : '';
   return `
     <div class="tree-node-wrap" style="${style || ''}">
       <div class="tree-node-circle-holder">
         <button type="button" class="tree-node ${unlocked ? 'checked' : ''} ${nextAvailable ? 'next-available' : ''}" data-sc-toggle-guid="${n.guid}" title="${escapeHtml(name)}" aria-pressed="${unlocked}">
           <span class="tree-node-icon">${treeNodeIconHtml(n, spirit, S.isQuestNode(n))}</span>
         </button>
-        ${wingTag}${emoteTag}${tierBadgeHtml}${syncBadge}
+        ${tierBadgeHtml}
       </div>
       <div class="tree-node-label ${noJa ? 'no-ja' : ''}">${escapeHtml(name)}</div>
       <div class="tree-node-cost">${costChips}</div>

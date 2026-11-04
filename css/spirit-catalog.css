@@ -276,13 +276,11 @@
 .spirit-catalog-view .tree-node-icon { line-height: 1; display: flex; align-items: center; justify-content: center; }
 .spirit-catalog-view .tree-node-icon svg { width: calc(24px * var(--tree-scale, 1)); height: calc(24px * var(--tree-scale, 1)); }
 .spirit-catalog-view .tree-node-icon img { width: calc(28px * var(--tree-scale, 1)); height: calc(28px * var(--tree-scale, 1)); object-fit: contain; }
-.spirit-catalog-view .tree-node-wingtag { position: absolute; top: -6px; right: -4px; font-size: calc(13px * var(--tree-scale, 1)); }
 .spirit-catalog-view .tree-node-tier-badge {
   position: absolute; top: -6px; left: -6px; font-size: calc(9px * var(--tree-scale, 1));
   font-weight: 800; padding: 1px 5px; border-radius: 999px; line-height: 1.4;
   background: var(--sc-blue); color: #fff; white-space: nowrap;
 }
-.spirit-catalog-view .tree-node-sync-badge { position: absolute; bottom: -4px; right: -4px; font-size: calc(12px * var(--tree-scale, 1)); }
 .spirit-catalog-view .tree-node-label {
   font-size: calc(10px * var(--tree-scale, 1)); color: var(--sc-text); text-align: center; margin-top: 3px; line-height: 1.25;
   max-width: calc(74px * var(--tree-scale, 1)); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
