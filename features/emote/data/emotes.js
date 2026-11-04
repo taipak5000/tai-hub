@@ -7,6 +7,7 @@
    の形状・値ともに完全に同一。emote_072/073のようにidの番号と配列内の並び順が
    一致しない箇所が元データに1箇所あるが、これも意図的に維持している）。
    要素数は121件（idの欠番なし・重複なし、抽出時に確認済み）。
+   その後に追加: emote_122〜125（遥かなる真珠の季節、2026-11-04）。
    ================================================================ */
 
 export const EMOTES = [
@@ -131,4 +132,9 @@ export const EMOTES = [
   { id: 'emote_119', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/b8/Dear-Van-Gogh-Joyful-Memory-Emote-icon.png/revision/latest/scale-to-width-down/51', name: 'ゆっくり歩く', nameEn: 'Slow Walk', maxLevel: 4, location: '星々の展示（仮訳）', locationEn: 'Starlight Exhibition (tentative)', spirit: '歓喜の思い出', spiritEn: 'Joyful Memory' },
   { id: 'emote_120', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/fc/Dear-Van-Gogh-Rustic-Memory-Emote-icon.png/revision/latest/scale-to-width-down/51', name: '浴びる', nameEn: 'Bask', maxLevel: 4, location: '星々の展示（仮訳）', locationEn: 'Starlight Exhibition (tentative)', spirit: '素朴な思い出', spiritEn: 'Rustic Memory' },
   { id: 'emote_121', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/1/1c/Dear-Van-Gogh-Artistic-Memory-Emote-icon.png/revision/latest/scale-to-width-down/51', name: '描く', nameEn: 'Draw', maxLevel: 4, location: '星々の展示（仮訳）', locationEn: 'Starlight Exhibition (tentative)', spirit: '画家の思い出', spiritEn: 'Artistic Memory' },
+  // 遥かなる真珠の季節（2026-10-16〜）。腕相撲は2人で行うフレンドエモートでレベルは1つだけ
+  { id: 'emote_122', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/eb/Wrestling-Sailor-Emote-icon.png/revision/latest/scale-to-width-down/51', name: '腕相撲', nameEn: 'Arm Wrestle', maxLevel: 1, location: '真珠の村（仮訳）', locationEn: 'Pearl Village', spirit: '腕っぷし自慢の船乗り', spiritEn: 'Wrestling Sailor' },
+  { id: 'emote_123', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/e/e5/Showy-Merchant-Emote-icon.png/revision/latest/scale-to-width-down/51', name: '見せびらかす', nameEn: 'Show Off', maxLevel: 4, location: '真珠の村（仮訳）', locationEn: 'Pearl Village', spirit: '見せびらかしの商人', spiritEn: 'Showy Merchant' },
+  { id: 'emote_124', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/c/c1/Old-Angler-Emote-icon.png/revision/latest/scale-to-width-down/51', name: 'ためらう', nameEn: 'Hesitate', maxLevel: 4, location: '真珠の村（仮訳）', locationEn: 'Pearl Village', spirit: '老いた漁師', spiritEn: 'Old Angler' },
+  { id: 'emote_125', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/bc/Cuddly-Rolling-Child-Emote-icon.png/revision/latest/scale-to-width-down/51', name: '転げまわる', nameEn: 'Wallow', maxLevel: 4, location: '真珠の村（仮訳）', locationEn: 'Pearl Village', spirit: '転げまわる幼子', spiritEn: 'Cuddly Rolling Child' },
 ];

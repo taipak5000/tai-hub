@@ -41818,7 +41818,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "腕相撲",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_122",
+                "emoteLevel": 1
             },
             {
                 "guid": "mTTqEGh5ra",
@@ -41991,7 +41993,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_123",
+                "emoteLevel": 1
             },
             {
                 "guid": "NoShqLH4KS",
@@ -42062,7 +42066,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_123",
+                "emoteLevel": 2
             },
             {
                 "guid": "Xwq3Ol0dfb",
@@ -42077,7 +42083,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_123",
+                "emoteLevel": 3
             },
             {
                 "guid": "bRlUwXkjAo",
@@ -42133,7 +42141,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "見せびらかす",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_123",
+                "emoteLevel": 4
             },
             {
                 "guid": "odpnshEj2y",
@@ -42179,7 +42189,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_124",
+                "emoteLevel": 1
             },
             {
                 "guid": "dmI29cY24o",
@@ -42250,7 +42262,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_124",
+                "emoteLevel": 2
             },
             {
                 "guid": "xi34Z8MXLd",
@@ -42265,7 +42279,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_124",
+                "emoteLevel": 3
             },
             {
                 "guid": "IX37b2ufll",
@@ -42321,7 +42337,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "ためらう",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_124",
+                "emoteLevel": 4
             },
             {
                 "guid": "SHb_PVo8Ty",
@@ -42380,7 +42398,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_125",
+                "emoteLevel": 1
             },
             {
                 "guid": "-iVAbtd_8-",
@@ -42451,7 +42471,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_125",
+                "emoteLevel": 2
             },
             {
                 "guid": "M-3lq41Pc6",
@@ -42466,7 +42488,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_125",
+                "emoteLevel": 3
             },
             {
                 "guid": "HIIK0NaKTR",
@@ -42522,7 +42546,9 @@ export const SPIRIT_TREE_DATA = [
                 "itemNameJa": "転げまわる",
                 "itemType": "Emote",
                 "itemCatKey": null,
-                "itemCostId": null
+                "itemCostId": null,
+                "emoteId": "emote_125",
+                "emoteLevel": 4
             },
             {
                 "guid": "RRp_VIXqZb",
