@@ -41584,6 +41584,976 @@ export const SPIRIT_TREE_DATA = [
                   ],
         "nameJa":  "寄り添うお友だち",
         "rootNodeGuid":  "ataTovLcTn"
+    },
+    // 遥かなる真珠の季節（2026-10-16〜）: SkyGame-Data 1.4.12 のツリー（tier形式）から追加。日本語名はアイテム所持管理の名前に合わせた
+    {
+        "guid": "HTcOmszhIP",
+        "name": "Angler's Lantern",
+        "type": "Guide",
+        "season": "Season of Pearl",
+        "seasonOrderIndex": 0,
+        "area": "Pearl Village",
+        "imageUrl": "https://static.wikia.nocookie.net/sky-children-of-the-light/images/4/43/Angler%27s-Lantern-cutout.png",
+        "treeGuid": "ahYhtDJ7Zk",
+        "treeSource": "original",
+        "revisitDate": null,
+        "revisitName": null,
+        "isTiered": true,
+        "nodeCount": 14,
+        "nodes": [
+            {
+                "guid": "5Cs7xdYkyT",
+                "tier": 0,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "butrbd8g_m",
+                "itemName": "Quest 1",
+                "itemNameJa": "クエスト1",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "ijvs77GnHT",
+                "tier": 0,
+                "row": 0,
+                "col": 1,
+                "cost": {},
+                "itemGuid": "apFaWB-Mji",
+                "itemName": "Pearl Village Warp",
+                "itemNameJa": "ワープ",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "dZT3lcfiBX",
+                "tier": 0,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "_bdueAJEDx",
+                "itemName": "Pearl Ultimate Pendant",
+                "itemNameJa": "遥かなる真珠のペンダント",
+                "itemType": "Necklace",
+                "itemCatKey": "necklace",
+                "itemCostId": "necklace_061"
+            },
+            {
+                "guid": "nLhMlqv2Nn",
+                "tier": 0,
+                "row": 1,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "rZ-0R6DX_0",
+                "itemName": "Quest 2",
+                "itemNameJa": "クエスト2",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "5COKdSwPjH",
+                "tier": 0,
+                "row": 1,
+                "col": 2,
+                "cost": {
+                    "sh": 1
+                },
+                "itemGuid": "tKu1p0kVL9",
+                "itemName": "Pearl Ultimate Hair Accessory",
+                "itemNameJa": "遥かなる真珠の究極ヘアアクセサリー",
+                "itemType": "HairAccessory",
+                "itemCatKey": "hair_accessory",
+                "itemCostId": "hair_accessory_082"
+            },
+            {
+                "guid": "JVfSTZCtCx",
+                "tier": 1,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "sTr3UijKgQ",
+                "itemName": "Quest 3",
+                "itemNameJa": "クエスト3",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "AojrqNQLDb",
+                "tier": 1,
+                "row": 0,
+                "col": 1,
+                "cost": {},
+                "itemGuid": "ADs0mBOXnN",
+                "itemName": "Heart",
+                "itemNameJa": "ハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "5ny38lgRPX",
+                "tier": 1,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sh": 1
+                },
+                "itemGuid": "sMnmLHdloe",
+                "itemName": "Pearl Ultimate Prop",
+                "itemNameJa": "真珠の究極チェア",
+                "itemType": "Prop",
+                "itemCatKey": "small_placeable",
+                "itemCostId": "small_placeable_136"
+            },
+            {
+                "guid": "EJTaLxBQ27",
+                "tier": 1,
+                "row": 1,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "091OOns7k9",
+                "itemName": "Quest 4",
+                "itemNameJa": "クエスト4",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "C3UgAtTVBT",
+                "tier": 2,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "vbGplcah0R",
+                "itemName": "Quest 5",
+                "itemNameJa": "クエスト5",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "U6l6oLD3YB",
+                "tier": 2,
+                "row": 0,
+                "col": 1,
+                "cost": {},
+                "itemGuid": "LPutMRQZ6h",
+                "itemName": "Heart",
+                "itemNameJa": "ハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "OWRIU44btr",
+                "tier": 2,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sh": 2
+                },
+                "itemGuid": "RXLiFm6ixb",
+                "itemName": "Pearl Ultimate Cape",
+                "itemNameJa": "遥かなる真珠の究極ケープ",
+                "itemType": "Cape",
+                "itemCatKey": "cape",
+                "itemCostId": "cape_184"
+            },
+            {
+                "guid": "KUPXLonQNH",
+                "tier": 2,
+                "row": 1,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "JA4u5ePnT1",
+                "itemName": "Quest 6",
+                "itemNameJa": "クエスト6",
+                "itemType": "Quest",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "Aq3jSTveXS",
+                "tier": 3,
+                "row": 0,
+                "col": 1,
+                "cost": {},
+                "itemGuid": "gT6un3Ej3d",
+                "itemName": "Pearl Prop",
+                "itemNameJa": "ボトルシップ",
+                "itemType": "Prop",
+                "itemCatKey": "small_placeable",
+                "itemCostId": "small_placeable_135"
+            }
+        ],
+        "nameJa": "遥かなる真珠の季節の案内人"
+    },
+    {
+        "guid": "YITwEj1MrT",
+        "name": "Wrestling Sailor",
+        "type": "Season",
+        "season": "Season of Pearl",
+        "seasonOrderIndex": 1,
+        "area": "Pearl Village",
+        "imageUrl": "https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/09/Wrestling-Sailor-cutout.png",
+        "treeGuid": "7vpWmQIjTZ",
+        "treeSource": "original",
+        "revisitDate": null,
+        "revisitName": null,
+        "isTiered": true,
+        "nodeCount": 11,
+        "nodes": [
+            {
+                "guid": "ntHpcpPEIF",
+                "tier": 0,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "pjt9rRZ1QV",
+                "itemName": "Arm Wrestle",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "mTTqEGh5ra",
+                "tier": 0,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 4
+                },
+                "itemGuid": "5lauGWwWTT",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "erYlHJk6gt",
+                "tier": 0,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "fr0iLbS4Yy",
+                "itemName": "Accompany Wrestling Sailor",
+                "itemNameJa": null,
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "sEsz6ZJiVx",
+                "tier": 1,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 18
+                },
+                "itemGuid": "_ABbwtDoHh",
+                "itemName": "Wrestling Sailor Cape",
+                "itemNameJa": "腕っぷし自慢の船乗り　ケープ",
+                "itemType": "Cape",
+                "itemCatKey": "cape",
+                "itemCostId": "cape_185"
+            },
+            {
+                "guid": "76v-2bkMzc",
+                "tier": 1,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "x_rKIBtDJK",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "y5O2scI-3u",
+                "tier": 2,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 8
+                },
+                "itemGuid": "aFDwcHRdkI",
+                "itemName": "Blue Dye",
+                "itemNameJa": "青色染料",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "a89yFo9gSG",
+                "tier": 2,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 10
+                },
+                "itemGuid": "wQNjwXXmdl",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "PG-TTNSmWE",
+                "tier": 2,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "lKjvRfO-rs",
+                "itemName": "Wrestling Sailor Outfit",
+                "itemNameJa": "腕っぷし自慢の船乗り　アウトフィット",
+                "itemType": "OutfitShoes",
+                "itemCatKey": "outfit",
+                "itemCostId": "outfit_116"
+            },
+            {
+                "guid": "p1faGcby42",
+                "tier": 3,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 32
+                },
+                "itemGuid": "Rt7sNT1Rb7",
+                "itemName": "Wrestling Sailor Hair",
+                "itemNameJa": "腕っぷし自慢の船乗り　ヘアスタイル",
+                "itemType": "Hair",
+                "itemCatKey": "hairstyle",
+                "itemCostId": "hairstyle_186"
+            },
+            {
+                "guid": "XFNTEqyFAv",
+                "tier": 3,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "WY9Et2pZDG",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "f67uu4C9-S",
+                "tier": 4,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sc": 3
+                },
+                "itemGuid": "sO1nva0YgL",
+                "itemName": "Season Heart",
+                "itemNameJa": "シーズンハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            }
+        ],
+        "nameJa": "腕っぷし自慢の船乗り"
+    },
+    {
+        "guid": "W5o3UBa-ls",
+        "name": "Showy Merchant",
+        "type": "Season",
+        "season": "Season of Pearl",
+        "seasonOrderIndex": 2,
+        "area": "Pearl Village",
+        "imageUrl": "https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/b9/Showy-Merchant-cutout.png",
+        "treeGuid": "eVkjP-MmBT",
+        "treeSource": "original",
+        "revisitDate": null,
+        "revisitName": null,
+        "isTiered": true,
+        "nodeCount": 12,
+        "nodes": [
+            {
+                "guid": "pFBpDttDOu",
+                "tier": 0,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "5C0kNVybSW",
+                "itemName": "Show Off",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "NoShqLH4KS",
+                "tier": 0,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 4
+                },
+                "itemGuid": "rX7mq-FkTV",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "Fss9FYey5b",
+                "tier": 0,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "CggenOZAQC",
+                "itemName": "Accompany Showy Merchant",
+                "itemNameJa": null,
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "4Go4oP1kaV",
+                "tier": 1,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 18
+                },
+                "itemGuid": "nAHlDmdChs",
+                "itemName": "Showy Merchant Hair",
+                "itemNameJa": "見せびらかしの商人　ヘアスタイル",
+                "itemType": "Hair",
+                "itemCatKey": "hairstyle",
+                "itemCostId": "hairstyle_185"
+            },
+            {
+                "guid": "xb1SAsOqbN",
+                "tier": 1,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 7
+                },
+                "itemGuid": "Eco0v2kJCb",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "WjqM7Zu62C",
+                "tier": 1,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "bQ7e8g5GU5",
+                "itemName": "Show Off",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "Xwq3Ol0dfb",
+                "tier": 2,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 28
+                },
+                "itemGuid": "M2Q_2upiIe",
+                "itemName": "Show Off",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "bRlUwXkjAo",
+                "tier": 2,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 8
+                },
+                "itemGuid": "WyPiGNnEj1",
+                "itemName": "Cyan Dye",
+                "itemNameJa": "水色染料",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "ufA3yn41J9",
+                "tier": 2,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "-ihytZpI9V",
+                "itemName": "Showy Merchant Cape",
+                "itemNameJa": "見せびらかしの商人　ケープ",
+                "itemType": "Cape",
+                "itemCatKey": "cape",
+                "itemCostId": "cape_187"
+            },
+            {
+                "guid": "0jQs89jw4v",
+                "tier": 3,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 32
+                },
+                "itemGuid": "7fCfSqQMvl",
+                "itemName": "Showy Merchant Outfit",
+                "itemNameJa": "見せびらかしの商人　アウトフィット",
+                "itemType": "OutfitShoes",
+                "itemCatKey": "outfit",
+                "itemCostId": "outfit_115"
+            },
+            {
+                "guid": "SE8KrwyKIc",
+                "tier": 3,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "yFCmXodzt4",
+                "itemName": "Show Off",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "odpnshEj2y",
+                "tier": 4,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sc": 3
+                },
+                "itemGuid": "Gi_UkXco7k",
+                "itemName": "Season Heart",
+                "itemNameJa": "シーズンハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            }
+        ],
+        "nameJa": "見せびらかしの商人"
+    },
+    {
+        "guid": "HB7xbMAPKZ",
+        "name": "Old Angler",
+        "type": "Season",
+        "season": "Season of Pearl",
+        "seasonOrderIndex": 3,
+        "area": "Pearl Village",
+        "imageUrl": "https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/68/Old-Angler-cutout.png",
+        "treeGuid": "2W0huRxb20",
+        "treeSource": "original",
+        "revisitDate": null,
+        "revisitName": null,
+        "isTiered": true,
+        "nodeCount": 13,
+        "nodes": [
+            {
+                "guid": "wrjmIC52bT",
+                "tier": 0,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "hY0rd2pgh9",
+                "itemName": "Hesitate",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "dmI29cY24o",
+                "tier": 0,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 4
+                },
+                "itemGuid": "pP-lerGEGi",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "BbOMYsD2lv",
+                "tier": 0,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "m4l9-GUlqS",
+                "itemName": "Accompany Old Angler",
+                "itemNameJa": null,
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "88ZRykeLVQ",
+                "tier": 1,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 18
+                },
+                "itemGuid": "NBXXbR5994",
+                "itemName": "The Old Angler",
+                "itemNameJa": null,
+                "itemType": "Music",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "pFQN9ZdGwX",
+                "tier": 1,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 7
+                },
+                "itemGuid": "u59leAJQtg",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "jBlobqdaU4",
+                "tier": 1,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "ObrO1bQkXI",
+                "itemName": "Hesitate",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "xi34Z8MXLd",
+                "tier": 2,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 28
+                },
+                "itemGuid": "2OPdGex5nD",
+                "itemName": "Hesitate",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "IX37b2ufll",
+                "tier": 2,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 8
+                },
+                "itemGuid": "3anJYzgA2C",
+                "itemName": "White Dye",
+                "itemNameJa": "白色染料",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "faUfVCY5rQ",
+                "tier": 2,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "jkv_YpntXU",
+                "itemName": "Old Angler Mask",
+                "itemNameJa": "老いた漁師　マスク",
+                "itemType": "Mask",
+                "itemCatKey": "mask",
+                "itemCostId": "mask_117"
+            },
+            {
+                "guid": "PJ6QcTGfWt",
+                "tier": 3,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 32
+                },
+                "itemGuid": "eRIkfWcaci",
+                "itemName": "Old Angler Outfit",
+                "itemNameJa": "老いた漁師　アウトフィット",
+                "itemType": "Outfit",
+                "itemCatKey": "outfit",
+                "itemCostId": "outfit_113"
+            },
+            {
+                "guid": "CaMEAohZOB",
+                "tier": 3,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "PhTtOn84_x",
+                "itemName": "Hesitate",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "SHb_PVo8Ty",
+                "tier": 3,
+                "row": 1,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "L9YStRMV5D",
+                "itemName": "Old Angler Hair Accessory",
+                "itemNameJa": "老いた漁師　ヘアアクセサリー",
+                "itemType": "HairAccessory",
+                "itemCatKey": "hair_accessory",
+                "itemCostId": "hair_accessory_083"
+            },
+            {
+                "guid": "ZWMviVa5DS",
+                "tier": 4,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sc": 3
+                },
+                "itemGuid": "_dxwikUrtX",
+                "itemName": "Season Heart",
+                "itemNameJa": "シーズンハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            }
+        ],
+        "nameJa": "老いた漁師"
+    },
+    {
+        "guid": "9aSW6TswEZ",
+        "name": "Cuddly Rolling Child",
+        "type": "Season",
+        "season": "Season of Pearl",
+        "seasonOrderIndex": 4,
+        "area": "Pearl Village",
+        "imageUrl": "https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d3/Cuddly-Rolling-Child-cutout.png",
+        "treeGuid": "IFe1v_npTL",
+        "treeSource": "original",
+        "revisitDate": null,
+        "revisitName": null,
+        "isTiered": true,
+        "nodeCount": 13,
+        "nodes": [
+            {
+                "guid": "YYAU5xYK-3",
+                "tier": 0,
+                "row": 0,
+                "col": 0,
+                "cost": {},
+                "itemGuid": "TjM2punhhG",
+                "itemName": "Wallow",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "-iVAbtd_8-",
+                "tier": 0,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 4
+                },
+                "itemGuid": "hPLzOPc1gB",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "I_yf9Ds3ZP",
+                "tier": 0,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "cKStgisXLV",
+                "itemName": "Accompany Cuddly Rolling Child",
+                "itemNameJa": null,
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "5VTdNvpa1c",
+                "tier": 1,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 18
+                },
+                "itemGuid": "f_yzg-Aqc0",
+                "itemName": "Cuddly Rolling Child Mask",
+                "itemNameJa": "転げまわる幼子　マスク",
+                "itemType": "Mask",
+                "itemCatKey": "mask",
+                "itemCostId": "mask_118"
+            },
+            {
+                "guid": "0E6Y1Mu5ni",
+                "tier": 1,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 7
+                },
+                "itemGuid": "2EL-ZjxaZ3",
+                "itemName": "Blessing",
+                "itemNameJa": "祝福",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "BePPWWJ1IC",
+                "tier": 1,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "oGuKnxgnHM",
+                "itemName": "Wallow",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "M-3lq41Pc6",
+                "tier": 2,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 28
+                },
+                "itemGuid": "O3e0ty7h8o",
+                "itemName": "Wallow",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "HIIK0NaKTR",
+                "tier": 2,
+                "row": 0,
+                "col": 1,
+                "cost": {
+                    "sc": 24
+                },
+                "itemGuid": "bwbHoHtBzW",
+                "itemName": "Cuddly Rolling Child Outfit",
+                "itemNameJa": "転げまわる幼子　アウトフィット",
+                "itemType": "Outfit",
+                "itemCatKey": "outfit",
+                "itemCostId": "outfit_114"
+            },
+            {
+                "guid": "MbGwJHU287",
+                "tier": 2,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "0PnKbBcfkg",
+                "itemName": "Cuddly Rolling Child Hair",
+                "itemNameJa": "転げまわる幼子　ヘアスタイル",
+                "itemType": "Hair",
+                "itemCatKey": "hairstyle",
+                "itemCostId": "hairstyle_187"
+            },
+            {
+                "guid": "HnTg_LpzGk",
+                "tier": 3,
+                "row": 0,
+                "col": 0,
+                "cost": {
+                    "sc": 12
+                },
+                "itemGuid": "KVX8YSAz-h",
+                "itemName": "Blue Dye",
+                "itemNameJa": "青色染料",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "KEBOltroVk",
+                "tier": 3,
+                "row": 0,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "NgLp5MDwoF",
+                "itemName": "Wallow",
+                "itemNameJa": null,
+                "itemType": "Emote",
+                "itemCatKey": null,
+                "itemCostId": null
+            },
+            {
+                "guid": "RRp_VIXqZb",
+                "tier": 3,
+                "row": 1,
+                "col": 2,
+                "cost": {},
+                "itemGuid": "IVJnEy1u4E",
+                "itemName": "Cuddly Rolling Child Cape",
+                "itemNameJa": "転げまわる幼子　ケープ",
+                "itemType": "Cape",
+                "itemCatKey": "cape",
+                "itemCostId": "cape_186"
+            },
+            {
+                "guid": "lUMSYMuFLs",
+                "tier": 4,
+                "row": 0,
+                "col": 2,
+                "cost": {
+                    "sc": 3
+                },
+                "itemGuid": "PcLjvKUazW",
+                "itemName": "Season Heart",
+                "itemNameJa": "シーズンハート",
+                "itemType": "Special",
+                "itemCatKey": null,
+                "itemCostId": null
+            }
+        ],
+        "nameJa": "転げまわる幼子"
     }
 ];
 

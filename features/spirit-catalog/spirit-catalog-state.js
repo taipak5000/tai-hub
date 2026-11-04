@@ -64,6 +64,7 @@ export const SEASON_JA_MAP = {
   'Season of the Blue Bird': '青い鳥の季節', 'Season of The Two Embers - Part 1': 'ふたつの灯火の季節　前編',
   'Season of Migration': '渡りの季節', 'Season of Lightmending': '光の修繕者の季節',
   'Season of Carnival': 'カーニバルの季節', 'Dear Van Gogh': 'ゴッホの季節',
+  'Season of Pearl': '遥かなる真珠の季節',
 };
 export function seasonLabel(seasonKey) {
   if (!seasonKey) return seasonKey;
