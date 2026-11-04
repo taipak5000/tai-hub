@@ -41585,7 +41585,8 @@ export const SPIRIT_TREE_DATA = [
         "nameJa":  "寄り添うお友だち",
         "rootNodeGuid":  "ataTovLcTn"
     },
-    // 遥かなる真珠の季節（2026-10-16〜）: SkyGame-Data 1.4.12 のツリー（tier形式）から追加。日本語名はアイテム所持管理の名前に合わせた
+    // 遥かなる真珠の季節（2026-10-16〜）: SkyGame-Data 1.4.12 のツリー（tier形式）から追加。日本語名はアイテム所持管理の名前に合わせた。
+    // 段の中の行は、画面で上から並べる向き（row 0＝段のいちばん上）にそろえてある（SkyGame-Dataは row 0＝いちばん下なので反転した）
     {
         "guid": "HTcOmszhIP",
         "name": "Angler's Lantern",
@@ -41604,7 +41605,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "5Cs7xdYkyT",
                 "tier": 0,
-                "row": 0,
+                "row": 1,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "butrbd8g_m",
@@ -41617,7 +41618,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "ijvs77GnHT",
                 "tier": 0,
-                "row": 0,
+                "row": 1,
                 "col": 1,
                 "cost": {},
                 "itemGuid": "apFaWB-Mji",
@@ -41630,7 +41631,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "dZT3lcfiBX",
                 "tier": 0,
-                "row": 0,
+                "row": 1,
                 "col": 2,
                 "cost": {},
                 "itemGuid": "_bdueAJEDx",
@@ -41643,7 +41644,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "nLhMlqv2Nn",
                 "tier": 0,
-                "row": 1,
+                "row": 0,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "rZ-0R6DX_0",
@@ -41656,7 +41657,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "5COKdSwPjH",
                 "tier": 0,
-                "row": 1,
+                "row": 0,
                 "col": 2,
                 "cost": {
                     "sh": 1
@@ -41671,7 +41672,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "JVfSTZCtCx",
                 "tier": 1,
-                "row": 0,
+                "row": 1,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "sTr3UijKgQ",
@@ -41684,7 +41685,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "AojrqNQLDb",
                 "tier": 1,
-                "row": 0,
+                "row": 1,
                 "col": 1,
                 "cost": {},
                 "itemGuid": "ADs0mBOXnN",
@@ -41697,7 +41698,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "5ny38lgRPX",
                 "tier": 1,
-                "row": 0,
+                "row": 1,
                 "col": 2,
                 "cost": {
                     "sh": 1
@@ -41712,7 +41713,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "EJTaLxBQ27",
                 "tier": 1,
-                "row": 1,
+                "row": 0,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "091OOns7k9",
@@ -41725,7 +41726,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "C3UgAtTVBT",
                 "tier": 2,
-                "row": 0,
+                "row": 1,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "vbGplcah0R",
@@ -41738,7 +41739,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "U6l6oLD3YB",
                 "tier": 2,
-                "row": 0,
+                "row": 1,
                 "col": 1,
                 "cost": {},
                 "itemGuid": "LPutMRQZ6h",
@@ -41751,7 +41752,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "OWRIU44btr",
                 "tier": 2,
-                "row": 0,
+                "row": 1,
                 "col": 2,
                 "cost": {
                     "sh": 2
@@ -41766,7 +41767,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "KUPXLonQNH",
                 "tier": 2,
-                "row": 1,
+                "row": 0,
                 "col": 0,
                 "cost": {},
                 "itemGuid": "JA4u5ePnT1",
@@ -42314,7 +42315,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "PJ6QcTGfWt",
                 "tier": 3,
-                "row": 0,
+                "row": 1,
                 "col": 0,
                 "cost": {
                     "sc": 32
@@ -42329,7 +42330,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "CaMEAohZOB",
                 "tier": 3,
-                "row": 0,
+                "row": 1,
                 "col": 2,
                 "cost": {},
                 "itemGuid": "PhTtOn84_x",
@@ -42344,7 +42345,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "SHb_PVo8Ty",
                 "tier": 3,
-                "row": 1,
+                "row": 0,
                 "col": 2,
                 "cost": {},
                 "itemGuid": "L9YStRMV5D",
@@ -42523,7 +42524,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "HnTg_LpzGk",
                 "tier": 3,
-                "row": 0,
+                "row": 1,
                 "col": 0,
                 "cost": {
                     "sc": 12
@@ -42538,7 +42539,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "KEBOltroVk",
                 "tier": 3,
-                "row": 0,
+                "row": 1,
                 "col": 2,
                 "cost": {},
                 "itemGuid": "NgLp5MDwoF",
@@ -42553,7 +42554,7 @@ export const SPIRIT_TREE_DATA = [
             {
                 "guid": "RRp_VIXqZb",
                 "tier": 3,
-                "row": 1,
+                "row": 0,
                 "col": 2,
                 "cost": {},
                 "itemGuid": "IVJnEy1u4E",
