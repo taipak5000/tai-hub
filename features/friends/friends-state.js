@@ -4,6 +4,7 @@
 
    friendsDoc_v1: {
      friends: [{ id, name, since: 'YYYY-MM-DD'（フレンドになった日。空でもよい）, memo, color: '#RRGGBB',
+                 birthday: 'MM-DD' または 'YYYY-MM-DD'（誕生日。空でもよい）,
                  avatar: アイコンの文字・絵文字（空なら名前の1文字目）, avatarPhotoId: アイコンの写真のID（IndexedDB。空なら文字） }],
      days:    [{ id, name, date: 'MM-DD' または 'YYYY-MM-DD'（毎年の記念日。誕生日など）, friendId? }],
      diary:   [{ id, date: 'YYYY-MM-DD', text, friendIds: [id], photoId? }]
@@ -29,6 +30,7 @@ export function normalizeFriendsDoc(raw) {
     since: DATE_RE.test(f.since || '') ? f.since : '',
     memo: str(f.memo, 400),
     color: COLOR_RE.test(f.color || '') ? f.color : '#E8679A',
+    birthday: MD_RE.test(f.birthday || '') ? f.birthday : '', // 誕生日 'MM-DD' または 'YYYY-MM-DD'（年は任意）
     avatar: str(f.avatar, 16).trim(),          // アイコンに出す文字・絵文字（空なら名前の1文字目）
     avatarPhotoId: typeof f.avatarPhotoId === 'string' ? f.avatarPhotoId.slice(0, 60) : '', // アイコンの写真（IndexedDB）
   }));
@@ -105,6 +107,17 @@ export function upcomingAnniversaries(doc, withinDays = 7, now = new Date()) {
         out.push({ key: `milestone:${f.id}:${n}`, kind: 'milestone', friend: f, inDays: left, date, count: n });
       }
     });
+  });
+  // フレンドの誕生日（年が入っていれば、その日に何歳になるかも出す）
+  doc.friends.forEach(f => {
+    if (!f.birthday) return;
+    const parts = f.birthday.split('-').map(Number);
+    const [m, d] = parts.length === 3 ? [parts[1], parts[2]] : parts;
+    const occ = nextOccurrence(m, d, now);
+    if (occ && occ.inDays <= withinDays) {
+      const age = parts.length === 3 ? occ.date.getFullYear() - parts[0] : null;
+      out.push({ key: `birthday:${f.id}:${occ.date.getFullYear()}`, kind: 'birthday', friend: f, inDays: occ.inDays, date: occ.date, years: age && age > 0 ? age : null });
+    }
   });
   doc.days.forEach(x => {
     const parts = x.date.split('-').map(Number);

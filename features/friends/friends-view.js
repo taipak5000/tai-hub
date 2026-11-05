@@ -102,6 +102,7 @@ function soonHtml(a) {
   let title;
   if (a.kind === 'friend') title = t(`${who}さんとフレンドになって${a.years}周年`, `${a.years} year(s) with ${who}`);
   else if (a.kind === 'milestone') title = t(`${who}さんとフレンドになって${a.count}日`, `${a.count} days with ${who}`);
+  else if (a.kind === 'birthday') title = a.years ? t(`${who}さんの${a.years}歳の誕生日`, `${who}'s ${a.years}th birthday`) : t(`${who}さんの誕生日`, `${who}'s birthday`);
   else title = a.years ? t(`${a.title}（${a.years}年目）`, `${a.title} (year ${a.years})`) : a.title;
   const when = a.inDays === 0 ? t('今日', 'Today') : a.inDays === 1 ? t('明日', 'Tomorrow') : t(`${a.inDays}日後`, `in ${a.inDays} days`);
   const color = a.friend ? a.friend.color : 'var(--hub-accent)';
@@ -139,6 +140,7 @@ function friendRowHtml(f) {
     <div class="fr-main">
       <div class="fr-name">${escapeHtml(f.name || t('（名前なし）', '(no name)'))}</div>
       <div class="fr-sub">${f.since ? `${t('フレンドになった日', 'Friends since')} ${fmtDate(f.since)}${days != null && days >= 0 ? `<b>${t(`${days.toLocaleString()}日`, `${days.toLocaleString()} days`)}</b>` : ''}` : t('フレンドになった日は未設定', 'No date set')}</div>
+      ${f.birthday ? `<div class="fr-sub fr-birthday"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-gift"/></svg>${t('誕生日', 'Birthday')} ${fmtDate(f.birthday)}</div>` : ''}
       ${f.memo ? `<div class="fr-memo">${escapeHtml(f.memo)}</div>` : ''}
       ${photos ? `<button type="button" class="fr-link" data-act="diary-of" data-id="${f.id}">${t(`日記 ${photos}件`, `${photos} diary entries`)}</button>` : ''}
     </div>
@@ -170,6 +172,10 @@ function friendFormHtml(f) {
     </div>`}
     <label class="fun-field"><span class="fun-label">${t('名前', 'Name')}</span><input class="fun-input" name="name" maxlength="40" required value="${escapeHtml(f ? f.name : '')}" placeholder="${t('ゲーム内で付けた名前など', 'The name you gave them')}"></label>
     <label class="fun-field"><span class="fun-label">${t('フレンドになった日', 'Friends since')}</span><input class="fun-input" type="date" name="since" max="${todayStr()}" value="${f ? f.since : ''}"></label>
+    <div class="fun-field-row">
+      <label class="fun-field"><span class="fun-label">${t('誕生日（あれば）', 'Birthday (optional)')}</span><input class="fun-input" name="bdMd" value="${f && f.birthday ? f.birthday.slice(-5).replace('-', '/').replace(/^0/, '').replace(/\/0/, '/') : ''}" placeholder="${t('例: 7/6', 'e.g. 7/6')}" inputmode="numeric" autocomplete="off"></label>
+      <label class="fun-field"><span class="fun-label">${t('生まれた年（あれば）', 'Year (optional)')}</span><input class="fun-input" name="bdYear" inputmode="numeric" maxlength="4" value="${f && f.birthday && f.birthday.length === 10 ? f.birthday.slice(0, 4) : ''}" placeholder="2000"></label>
+    </div>
     <div class="fun-field"><span class="fun-label">${t('色', 'Color')}</span><div class="fun-swatches">${COLORS.map(c => `<label class="fun-swatch" style="--sw:${c}"><input type="radio" name="color" value="${c}"${c === color ? ' checked' : ''}><span></span></label>`).join('')}</div></div>
     <label class="fun-field"><span class="fun-label">${t('メモ', 'Note')}</span><textarea class="fun-textarea" name="memo" rows="2" maxlength="400" placeholder="${t('出会った場所、好きなもの など', 'Where you met, what they like…')}">${escapeHtml(f ? f.memo : '')}</textarea></label>
     <div class="fun-form-actions">
@@ -187,7 +193,7 @@ function daysHtml() {
   const list = [...doc.days].sort((a, b) => a.date.slice(-5).localeCompare(b.date.slice(-5)));
   return `
     ${editing ? dayFormHtml(form.id ? doc.days.find(d => d.id === form.id) : null) : `<button type="button" class="fun-add" data-act="new-day"><svg class="inline-icon" width="16" height="16"><use href="#i-plus"/></svg>${t('記念日を追加', 'Add a day')}</button>`}
-    <p class="fun-hint">${t('フレンドになった日の「◯周年」と「100日・1000日」などは、フレンドに日付を入れるだけで自動で数えます。ここには誕生日やSkyを始めた日など、それ以外の日を足せます。', 'Friend anniversaries and 100/1000-day milestones are counted automatically. Add other days here — birthdays, the day you started Sky…')}</p>
+    <p class="fun-hint">${t('フレンドになった日の「◯周年」・「100日・1000日」などの節目と、フレンドの誕生日は、フレンドの編集で日付を入れるだけで自動でお知らせします。ここにはSkyを始めた日など、それ以外の日を足せます。', 'Friend anniversaries, 100/1000-day milestones and friends’ birthdays are counted automatically from each friend. Add other days here — like the day you started Sky.')}</p>
     ${list.length ? `<ul class="fr-list">${list.map(d => {
       const f = d.friendId ? friendById(d.friendId) : null;
       return `<li class="fr-row">${f
@@ -421,7 +427,7 @@ function currentFormData() {
 function restoreForm(fd) {
   const formEl = root() && root().querySelector('.fun-form');
   if (!formEl || !fd) return;
-  ['date', 'text', 'name', 'since', 'memo', 'avatar'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null && input.type !== 'file') input.value = v; });
+  ['date', 'text', 'name', 'since', 'memo', 'avatar', 'bdMd', 'bdYear'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null && input.type !== 'file') input.value = v; });
   const color = fd.get('color');
   if (color) formEl.querySelectorAll('input[name=color]').forEach(r => { r.checked = r.value === color; });
   const ids = new Set(fd.getAll('friendIds'));
@@ -451,6 +457,17 @@ function updateAvatarPreview() {
   }
 }
 
+// 「7/6」「07-06」＋任意の年 → 'MM-DD' か 'YYYY-MM-DD'。空なら''、形がおかしければfalse
+function parseMonthDay(mdRaw, yearRaw) {
+  const mdStr = String(mdRaw || '').trim().replace(/[／－]/g, '/').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  if (!mdStr) return '';
+  const m = /^(\d{1,2})[-/](\d{1,2})$/.exec(mdStr);
+  if (!m || +m[1] < 1 || +m[1] > 12 || +m[2] < 1 || +m[2] > 31) return false;
+  const md = `${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  const year = String(yearRaw || '').trim().replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  return /^\d{4}$/.test(year) ? `${year}-${md}` : md;
+}
+
 async function onSubmit(e) {
   e.preventDefault();
   const formEl = e.target;
@@ -459,6 +476,9 @@ async function onSubmit(e) {
   if (kind === 'friend') {
     const data = { name: String(fd.get('name') || '').trim().slice(0, 40), since: String(fd.get('since') || ''), memo: String(fd.get('memo') || '').slice(0, 400), color: String(fd.get('color') || COLORS[0]) };
     if (!data.name) return;
+    const bd = parseMonthDay(fd.get('bdMd'), fd.get('bdYear'));
+    if (bd === false) { toast(t('誕生日は「7/6」のように入れてください', 'Enter the birthday like 7/6')); return; }
+    data.birthday = bd;
     // アイコンの文字は2文字（絵文字は1つ＝合成された絵文字も1つ）まで
     if (fd.has('avatar')) data.avatar = graphemes(String(fd.get('avatar') || '').trim()).slice(0, 2).join('').slice(0, 16);
     const target = form.id ? friendById(form.id) : { id: genId(), avatar: '', avatarPhotoId: '' };
@@ -478,11 +498,8 @@ async function onSubmit(e) {
     if (!form.id) doc.friends.push(target);
     clearPendingPhoto();
   } else if (kind === 'day') {
-    const m = /^(\d{1,2})[-/](\d{1,2})$/.exec(String(fd.get('md') || '').trim());
-    const year = String(fd.get('year') || '').trim();
-    if (!m || +m[1] < 1 || +m[1] > 12 || +m[2] < 1 || +m[2] > 31) { toast(t('月日は「7/6」のように入れてください', 'Enter the date like 7/6')); return; }
-    const md = `${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
-    const date = /^\d{4}$/.test(year) ? `${year}-${md}` : md;
+    const date = parseMonthDay(fd.get('md'), fd.get('year'));
+    if (!date) { toast(t('月日は「7/6」のように入れてください', 'Enter the date like 7/6')); return; }
     const data = { name: String(fd.get('name') || '').trim().slice(0, 40), date, friendId: String(fd.get('friendId') || '') };
     if (!data.name) return;
     if (form.id) Object.assign(doc.days.find(d => d.id === form.id), data);

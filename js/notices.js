@@ -159,6 +159,7 @@ export function collectNotices(nowDate = new Date()) {
     let title;
     if (a.kind === 'friend') title = t(`${who}さんとフレンドになって${a.years}周年`, `${a.years} year(s) with ${who}`);
     else if (a.kind === 'milestone') title = t(`${who}さんとフレンドになって${a.count}日`, `${a.count} days with ${who}`);
+    else if (a.kind === 'birthday') title = a.years ? t(`${who}さんの${a.years}歳の誕生日`, `${who}'s ${a.years}th birthday`) : t(`${who}さんの誕生日`, `${who}'s birthday`);
     else title = a.years ? t(`${a.title}（${a.years}年目）`, `${a.title} (year ${a.years})`) : a.title;
     out.push({ id: `anniv:${a.key}`, icon: 'i-heart', tone: 'pink', priority: a.inDays === 0 ? 0 : 1, sortAt: a.date, title, body: whenTxt, route: 'friends', routeLabel: t('フレンド記念日', 'Friend anniversaries') });
   });
