@@ -2,7 +2,7 @@
    「今日やること」（features/today）のデータ（プロフィールごと＝nsKey）。
    日付はゲームのデイリーと同じ太平洋時間0時区切り（キーは 'YYYY-M-D'。デイリーチェックシートと同じ形）。
 
-   todayTodo_v1:  { items: [{ id, label }], dayKey, done: { [id]: 1 } }   // 自分で決める「今日やること」。日付が変わると外れる
+   todayTodo_v1:  { items: [{ id, label }], dayKey, done: { [id]: 1 } }   // 以前の「今日のチェック」（今はデイリーチェックシートへ移した。下のmergeTodoIntoDailyCheck）
    omikujiLog_v1: { days: { [dayKey]: { f: 0..4（運勢）, realm, emoteId, color, msg } } }   // 1日1回のおみくじ（最大400日）
    ================================================================ */
 import { nsKey } from '../../js/state.js';
@@ -113,4 +113,37 @@ export function drawOmikuji(emotes, profileSalt = '') {
   log.days[key] = result;
   try { localStorage.setItem(nsKey(OMIKUJI_KEY), JSON.stringify(log)); } catch (e) { /* noop */ }
   return { result, fresh: true };
+}
+
+/* 🔀 「今日のチェック」はデイリーチェックシートと合体した（2026-11-06）。以前の「今日のチェック」（todayTodo_v1）を
+   自分で編集・チェックしていた人の分だけ、1回だけデイリーチェックシートの1枚「今日やること」として移す（今日のチェックの状態も）。
+   デイリーチェックシートをまだ使っていない人は、そのシートが最初の1枚になる。元のtodayTodo_v1は消さない（読み込みだけ）。 */
+const MERGED_FLAG = 'todayTodoMerged_v1';
+export function mergeTodoIntoDailyCheck(lang) {
+  try {
+    if (localStorage.getItem(nsKey(MERGED_FLAG))) return;
+    const raw = readJson(TODO_KEY);
+    if (raw && Array.isArray(raw.items)) {
+      const todo = loadTodo(lang);
+      const items = todo.items.filter(i => i.label.trim());
+      if (items.length) {
+        const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        const rows = items.map(i => ({ id: gid(), label: i.label, opts: [{ t: 'box', label: lang === 'en' ? 'Done' : '完了' }], from: i.id }));
+        const sheet = { id: gid(), title: lang === 'en' ? 'Today' : '今日やること', autoReset: true, style: {}, sections: [{ id: gid(), title: '', rows: rows.map(({ from, ...r }) => r) }] };
+        const docRaw = readJson('dailyCheckSheets_v1');
+        const sheets = docRaw && Array.isArray(docRaw.sheets) ? docRaw.sheets : [];
+        const doc = { activeId: sheets.length ? (docRaw.activeId || sheets[0].id) : sheet.id, sheets: [...sheets, sheet] };
+        localStorage.setItem(nsKey('dailyCheckSheets_v1'), JSON.stringify(doc));
+        // 今日つけていたチェックも移す（デイリーチェックシートの日付の形は同じ 'YYYY-M-D'）
+        const doneRows = rows.filter(r => todo.done[r.from]);
+        if (doneRows.length) {
+          const st = readJson('dailyCheckState_v1') || {};
+          const state = st.dayKey === todo.dayKey && st.sheets ? st : { dayKey: todo.dayKey, sheets: {} };
+          state.sheets[sheet.id] = Object.fromEntries(doneRows.map(r => [r.id, { 0: true }]));
+          localStorage.setItem(nsKey('dailyCheckState_v1'), JSON.stringify(state));
+        }
+      }
+    }
+    localStorage.setItem(nsKey(MERGED_FLAG), '1');
+  } catch (e) { /* 移せなくても画面は出す（次に開いた時にもう一度試す） */ }
 }

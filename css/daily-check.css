@@ -8,6 +8,9 @@
 .daily-check-view { color: var(--hub-text); background: var(--hub-bg); min-height: 100%; }
 :where(.daily-check-view *, .daily-check-view *::before, .daily-check-view *::after) { box-sizing: border-box; }
 .daily-check-view .dc-wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 24px; }
+/* 「今日やること」（features/today）の中に埋め込んだ時: 外側のページが余白と見出しを持つ */
+.daily-check-view.is-embedded { background: none; min-height: 0; }
+.daily-check-view.is-embedded .dc-wrap { max-width: none; padding: 0; }
 
 .daily-check-view .dc-head { margin-bottom: 12px; }
 .daily-check-view { --dc-ease-out: cubic-bezier(0.23, 1, 0.32, 1); --dc-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -198,6 +201,8 @@
 .daily-check-view .dc-print-area { display: none; }
 @media print {
   html.dc-printing body > *:not(#app-root) { display: none !important; }
+  html.dc-printing .today-view .td-top, html.dc-printing .today-view .td-after { display: none !important; }
+  html.dc-printing .today-view .fun-wrap { padding: 0 !important; max-width: none !important; }
   html.dc-printing body { margin: 0 !important; }
   html.dc-printing #app-root { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
   html.dc-printing body, html.dc-printing .daily-check-view { background: #fff !important; }

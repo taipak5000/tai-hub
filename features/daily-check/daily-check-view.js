@@ -133,16 +133,19 @@ let onAfterPrint = null;
 /* ================================================================
    公開API
    ================================================================ */
-export function mount(container) {
+// opts.embedded: 「今日やること」（features/today）の中に埋め込む時。見出し・説明・フッターを出さない
+let embedded = false;
+export function mount(container, opts) {
   injectStylesheet();
   containerEl = container;
+  embedded = !!(opts && typeof opts === 'object' && opts.embedded);
   editing = false;
   styling = false;
   goaling = false;
   doc = loadDoc();
   chk = loadChecks();
   rollOverIfNeeded();
-  container.innerHTML = '<div class="daily-check-view"></div>';
+  container.innerHTML = `<div class="daily-check-view${embedded ? ' is-embedded' : ''}"></div>`;
   render();
   const root = viewRoot();
   root.addEventListener('click', onClick);
@@ -443,20 +446,20 @@ function render() {
   const sheet = activeSheet();
   root.innerHTML = `
     <div class="dc-wrap">
-      <header class="dc-head">
+      ${embedded ? '' : `<header class="dc-head">
         <h1 class="dc-h1"><svg class="inline-icon dc-h1-ic" width="20" height="20" aria-hidden="true"><use href="#i-sparkle"/></svg>${escapeHtml(t('デイリーチェックシート', 'Daily Checklist'))}<span class="dc-beta">${escapeHtml(t('試作', 'Preview'))}</span></h1>
         <p class="dc-lead">${escapeHtml(t('毎日の予定をチェックできるシートです。印刷して紙で記録することもできます。', 'A checklist for your daily routine. You can also print it and keep a paper log.'))}</p>
-      </header>
+      </header>`}
       ${tabsHtml(sheet)}
       ${toolbarHtml(sheet)}
       ${styling ? stylePanelHtml(sheet) : ''}
       ${paperHtml(sheet, { mode: editing ? 'edit' : 'screen' })}
       ${editing ? sheetAdminHtml() : ''}
-      <footer class="dc-footer">
+      ${embedded ? '' : `<footer class="dc-footer">
         <span>${escapeHtml(t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</span><br>
         <span>${escapeHtml(t('作成・ご意見:', 'Created by / feedback:'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(t('リクエストフォーム', 'Request form'))}</a><br>
         <a class="dc-footer-sub" href="#/tai-info">${escapeHtml(t('設定・クレジット・プライバシーポリシー', 'Settings, Credits & Privacy Policy'))}</a>
-      </footer>
+      </footer>`}
     </div>
     <div class="dc-print-area" aria-hidden="true"></div>`;
 }

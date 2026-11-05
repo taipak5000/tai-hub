@@ -2,28 +2,28 @@
    ☀️ 今日やること（#/today）。開いた時に、その日の要点を1か所にまとめて見せる。
    - デイリーリセット（太平洋時間0時）までの時間・大キャンドル・クエストキャンドル・闇の破片・ウニ焼きなど
      （計算は features/shared/event-dashboard.js の getTodayBrief() に任せる）
-   - 自分で決める「今日やること」チェック（リセットで外れる。today-state.js）
+   - デイリーチェックシート（features/daily-check）をそのまま埋め込む（シートの切替・編集・着せ替え・印刷もここでできる。
+     デイリーチェックシートの単独ページ #/daily-check は非公開のまま＝関連ツールの一覧には出さない）
    - 今日・明日のフレンドの記念日／今週のビンゴ／デイリーチェックシートの進み具合
    - 1日1回のおみくじ（今日のラッキーエリア・エモート・色・ひとこと）
    「表示設定 > 起動時に開くツール」でこの画面を選べば、開くたびに最初に出る。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { nsKey, getActiveProfileId } from '../../js/state.js';
+import { getActiveProfileId } from '../../js/state.js';
 import { navigate } from '../../js/router.js';
 import { ptParts } from '../../js/pacific-time.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
 import { loadBingo, hasBingoData, weekKeyAt, countLines, FREE } from '../bingo/bingo-state.js';
 import { loadFriendsDoc, upcomingAnniversaries } from '../friends/friends-state.js';
-import { loadTodo, saveTodo, loadOmikuji, drawOmikuji, gameDayKey, FORTUNES, LUCKY_REALMS, LUCKY_COLORS, MESSAGES } from './today-state.js';
+import { loadOmikuji, drawOmikuji, gameDayKey, mergeTodoIntoDailyCheck, FORTUNES, LUCKY_REALMS, LUCKY_COLORS, MESSAGES } from './today-state.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const L = o => (CURRENT_LANG === 'en' ? o.en : o.ja);
 
 let containerEl = null;
 let brief = null;
-let todo = null;
-let editingTodo = false;
 let emotes = null;
+let dc = null; // 埋め込んだデイリーチェックシートのモジュール
 let tickTimer = null;
 let lastDayKey = '';
 let token = 0;
@@ -31,22 +31,29 @@ let token = 0;
 export function mount(container) {
   injectStylesheet();
   containerEl = container;
-  editingTodo = false;
-  todo = loadTodo(CURRENT_LANG);
   lastDayKey = gameDayKey();
-  container.innerHTML = `<div class="today-view fun-view"><div class="fun-wrap"><div class="rc-loading"><span class="rt-spinner"></span></div></div></div>`;
+  mergeTodoIntoDailyCheck(CURRENT_LANG);
+  // 上（要点・おみくじ）と下（ほかのツールから）だけを描き直し、間のチェックシートは一度だけ組み込む
+  // （チェックシートは自分で描き直すので、ここで innerHTML ごと消すと入力中の内容が消えてしまう）
+  container.innerHTML = `<div class="today-view fun-view"><div class="fun-wrap">
+    <div class="td-top"><div class="rc-loading"><span class="rt-spinner"></span></div></div>
+    <section class="fun-section td-sheet-sec"><h2 class="fun-h2">${t('チェックシート', 'Checklist')}</h2><div class="td-sheet"></div></section>
+    <div class="td-after"></div>
+  </div></div>`;
   const my = ++token;
   Promise.all([
     import('../shared/event-dashboard.js'),
     import('../emote/data/emotes.js').catch(() => ({ EMOTES: [] })),
-  ]).then(([ed, em]) => {
+    import('../daily-check/daily-check-view.js'),
+  ]).then(([ed, em, dcMod]) => {
     if (my !== token || !containerEl) return;
     brief = ed.getTodayBrief;
     emotes = em.EMOTES || [];
+    dc = dcMod;
+    dc.mount(root().querySelector('.td-sheet'), { embedded: true });
     render();
-    root().addEventListener('click', onClick);
-    root().addEventListener('change', onChange);
-    root().addEventListener('input', onInput);
+    root().querySelector('.td-top').addEventListener('click', onClick);
+    root().querySelector('.td-after').addEventListener('click', onClick);
     tickTimer = setInterval(onTick, 1000);
   });
 }
@@ -54,6 +61,7 @@ export function mount(container) {
 export function unmount() {
   token++;
   clearInterval(tickTimer); tickTimer = null;
+  if (dc) { dc.unmount(); dc = null; }
   containerEl = null;
 }
 
@@ -70,7 +78,7 @@ function hm(d) { return `${String(d.getHours()).padStart(2, '0')}:${String(d.get
 
 function onTick() {
   if (!containerEl) return;
-  if (gameDayKey() !== lastDayKey) { lastDayKey = gameDayKey(); todo = loadTodo(CURRENT_LANG); render(); return; }
+  if (gameDayKey() !== lastDayKey) { lastDayKey = gameDayKey(); render(); return; }
   // 数字だけ差し替える（入力中の欄を描き直さない）
   const b = brief();
   root().querySelectorAll('[data-cd]').forEach(el => {
@@ -87,8 +95,7 @@ function render() {
   if (!r) return;
   const b = brief();
   const p = ptParts(Date.now());
-  const done = todo.items.filter(i => todo.done[i.id]).length;
-  r.innerHTML = `<div class="fun-wrap">
+  r.querySelector('.td-top').innerHTML = `
     <header class="fun-head">
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-sun"/></svg>${t('今日やること', 'Today')}</h1>
       <p class="fun-lead">${t(`ゲームの日付で${p.month}月${p.day}日。デイリーリセットまで`, `Game day ${p.month}/${p.day}. Daily reset in`)} <b class="td-reset" data-cd="reset">${cd(b.nextReset)}</b></p>
@@ -106,19 +113,8 @@ function render() {
       </div>
     </section>
 
-    ${omikujiHtml()}
-
-    <section class="fun-section">
-      <div class="td-sec-head">
-        <h2 class="fun-h2">${t('今日のチェック', 'Today’s checklist')} <span class="td-count">${done} / ${todo.items.length}</span></h2>
-        <button type="button" class="fun-btn small" data-act="edit-todo" aria-pressed="${editingTodo}">${editingTodo ? t('終える', 'Done') : t('項目を編集', 'Edit')}</button>
-      </div>
-      ${editingTodo ? todoEditHtml() : todoHtml()}
-      <p class="fun-hint">${t('デイリーリセットで自動で外れます。', 'Checks clear at the daily reset.')}</p>
-    </section>
-
-    ${extrasHtml()}
-  </div>`;
+    ${omikujiHtml()}`;
+  r.querySelector('.td-after').innerHTML = extrasHtml();
 }
 
 function shardHtml(s) {
@@ -130,14 +126,6 @@ function shardHtml(s) {
   }).join('');
   return `<span class="td-tile-label">${t('闇の破片', 'Shard eruption')}<span class="td-shard-dot${s.isRed ? ' red' : ''}"></span>${s.isRed ? t('赤闇', 'Red') : t('黒闇', 'Black')}</span>
     <span class="td-tile-value">${escapeHtml(L(s.realm))}・${escapeHtml(L(s.location))}</span><span class="td-shard-times">${times}</span>`;
-}
-
-function todoHtml() {
-  return `<ul class="td-todo">${todo.items.map(i => `<li><label class="td-todo-row${todo.done[i.id] ? ' on' : ''}"><input type="checkbox" data-todo="${escapeHtml(i.id)}"${todo.done[i.id] ? ' checked' : ''}><span class="td-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${escapeHtml(i.label)}</span></label></li>`).join('')}</ul>`;
-}
-function todoEditHtml() {
-  return `<ul class="td-todo is-edit">${todo.items.map(i => `<li class="td-todo-edit"><input class="fun-input" data-todo-label="${escapeHtml(i.id)}" maxlength="40" value="${escapeHtml(i.label)}"><button type="button" class="fun-icon-btn" data-act="del-todo" data-id="${escapeHtml(i.id)}" aria-label="${t('削除', 'Delete')}"><svg class="inline-icon" width="14" height="14"><use href="#i-trash"/></svg></button></li>`).join('')}</ul>
-    <button type="button" class="fun-add" data-act="add-todo"><svg class="inline-icon" width="16" height="16"><use href="#i-plus"/></svg>${t('項目を足す', 'Add an item')}</button>`;
 }
 
 function omikujiHtml() {
@@ -178,8 +166,6 @@ function extrasHtml() {
     const lines = cur ? countLines(bg.week.size, bg.week.marks) : 0;
     parts.push(`<button type="button" class="td-link" data-go="bingo"><svg class="inline-icon" width="18" height="18"><use href="#i-grid"/></svg><span>${cur ? t(`今週のビンゴ ${lines}ビンゴ・${filled}/${total}マス`, `Bingo: ${lines} lines · ${filled}/${total}`) : t('今週のビンゴが始まっています', 'A new bingo week has started')}</span><svg class="inline-icon td-link-chev" width="14" height="14"><use href="#i-chevron-right"/></svg></button>`);
   }
-  const dc = dailyCheckProgress();
-  if (dc) parts.push(`<button type="button" class="td-link" data-go="daily-check"><svg class="inline-icon" width="18" height="18"><use href="#i-check"/></svg><span>${escapeHtml(dc.title)} ${dc.done} / ${dc.total}</span><svg class="inline-icon td-link-chev" width="14" height="14"><use href="#i-chevron-right"/></svg></button>`);
   if (!parts.length) return '';
   return `<section class="fun-section"><h2 class="fun-h2">${t('ほかのツールから', 'From other tools')}</h2><div class="td-links">${parts.join('')}</div></section>`;
 }
@@ -190,21 +176,6 @@ function annivTitle(a) {
   if (a.kind === 'birthday') return a.years ? t(`${who}さんの${a.years}歳の誕生日`, `${who}'s ${a.years}th birthday`) : t(`${who}さんの誕生日`, `${who}'s birthday`);
   return a.title;
 }
-// デイリーチェックシート（使っている人だけ）。選んでいるシートの、今日そろった行の数
-function dailyCheckProgress() {
-  try {
-    const doc = JSON.parse(localStorage.getItem(nsKey('dailyCheckSheets_v1')));
-    if (!doc || !Array.isArray(doc.sheets) || !doc.sheets.length) return null;
-    const sheet = doc.sheets.find(s => s.id === doc.activeId) || doc.sheets[0];
-    const st = JSON.parse(localStorage.getItem(nsKey('dailyCheckState_v1'))) || {};
-    const checks = st.dayKey === gameDayKey() && st.sheets ? (st.sheets[sheet.id] || {}) : {};
-    const rows = (sheet.sections || []).flatMap(sec => sec.rows || []).filter(r => r.opts && r.opts.length);
-    const done = rows.filter(r => r.opts.every((o, i) => checks[r.id] && checks[r.id][i])).length;
-    return { title: sheet.title || t('チェックシート', 'Checklist'), done, total: rows.length };
-  } catch (e) { return null; }
-}
-
-function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function onClick(e) {
   const go = e.target.closest('[data-go]');
@@ -218,41 +189,4 @@ function onClick(e) {
     root().querySelector('.td-omikuji')?.classList.add('just-drawn');
     return;
   }
-  if (act === 'edit-todo') {
-    if (editingTodo) { // 編集を終える時、空の項目は消す
-      clearTimeout(saveTimer);
-      todo.items = todo.items.filter(i => i.label.trim());
-      saveTodo(todo);
-    }
-    editingTodo = !editingTodo; render(); return;
-  }
-  if (act === 'add-todo') {
-    todo.items.push({ id: genId(), label: '' });
-    saveTodo(todo); render();
-    const inputs = root().querySelectorAll('[data-todo-label]');
-    inputs[inputs.length - 1]?.focus();
-    return;
-  }
-  if (act === 'del-todo') {
-    todo.items = todo.items.filter(i => i.id !== btn.dataset.id);
-    delete todo.done[btn.dataset.id];
-    saveTodo(todo); render();
-  }
-}
-function onChange(e) {
-  const id = e.target.dataset.todo;
-  if (id == null) return;
-  if (e.target.checked) todo.done[id] = 1; else delete todo.done[id];
-  saveTodo(todo);
-  e.target.closest('.td-todo-row')?.classList.toggle('on', e.target.checked);
-  const count = root().querySelector('.td-count');
-  if (count) count.textContent = `${todo.items.filter(i => todo.done[i.id]).length} / ${todo.items.length}`;
-}
-let saveTimer = null;
-function onInput(e) {
-  const id = e.target.dataset.todoLabel;
-  if (id == null) return;
-  const item = todo.items.find(i => i.id === id);
-  if (item) item.label = e.target.value.slice(0, 40);
-  clearTimeout(saveTimer); saveTimer = setTimeout(() => saveTodo(todo), 300);
 }

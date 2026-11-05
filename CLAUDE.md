@@ -241,7 +241,8 @@ const landingPoint = currentY + project(v);
   データは開いた時に読み込む（精霊ツリーのデータは1.8MBあるので起動時には読まない）。
 - **週替わりビンゴ**（`features/bingo/`）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
   **一年のふりかえり**（`features/recap/`）。CSSは3つ共通で`css/fun-tools.css`、色は`--hub-*`トークンだけを使う（着せ替えに追従）。
-- **第2弾（2026-11-06）**: 今日やること＋おみくじ（`features/today/`。大キャンドル等の計算は`event-dashboard.js`の`getTodayBrief()`）・
+- **第2弾（2026-11-06）**: 今日やること＋おみくじ（`features/today/`。大キャンドル等の計算は`event-dashboard.js`の`getTodayBrief()`。
+  チェックはデイリーチェックシートを`mount(el, { embedded: true })`で埋め込む。**デイリーチェックシート単体（`#/daily-check`）はまだ非公開＝関連ツールの一覧に載せない**）・
   ほしいもの計画（`features/wish-plan/`。欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通）・
   コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・スタンプ帳（`features/stamps/`。判定は各ツールの記録を読むだけで軽い＝お知らせからも呼ぶ）・
   思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。

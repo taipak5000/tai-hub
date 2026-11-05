@@ -321,6 +321,7 @@
 /* ================================================================
    ☀️ 今日やること・おみくじ（features/today）
    ================================================================ */
+.today-view .td-sheet-sec { margin-top: 22px; }
 .today-view .td-reset { font-variant-numeric: tabular-nums; color: var(--hub-accent-ink); }
 .today-view .td-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .today-view .td-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 18px; background: var(--hub-card); box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05); min-width: 0; }
@@ -339,21 +340,6 @@
 .today-view .td-events span { display: flex; flex-direction: column; gap: 1px; min-width: 70px; }
 .today-view .td-events small { font-size: 11px; font-weight: 700; color: var(--hub-text-2); letter-spacing: 0.02em; }
 .today-view .td-events b { font-size: 14px; font-variant-numeric: tabular-nums; }
-.today-view .td-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.today-view .td-sec-head .fun-h2 { margin: 0; }
-.today-view .td-count { margin-left: 6px; font-variant-numeric: tabular-nums; color: var(--hub-accent-ink); }
-.today-view .td-todo { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: var(--hub-card); overflow: hidden; }
-.today-view .td-todo li + li { border-top: 0.5px solid var(--hub-sep); }
-.today-view .td-todo-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 13px 14px; font-size: 15px; cursor: pointer; }
-.today-view .td-todo-row input { position: absolute; opacity: 0; pointer-events: none; }
-.today-view .td-check { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--hub-text-3); display: flex; align-items: center; justify-content: center; color: transparent; transition: background-color 0.2s, border-color 0.2s; }
-.today-view .td-todo-row.on .td-check { background: var(--hub-accent); border-color: var(--hub-accent); color: #fff; animation: tdPop 0.35s var(--fun-pop); }
-.today-view .td-todo-row.on > span:last-child { color: var(--hub-text-2); text-decoration: line-through; text-decoration-color: var(--hub-text-3); }
-.today-view .td-todo-row:has(input:focus-visible) { outline: 2px solid var(--hub-accent); outline-offset: -2px; }
-@keyframes tdPop { from { transform: scale(0.6); } to { transform: none; } }
-.today-view .td-todo.is-edit { background: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.today-view .td-todo.is-edit li + li { border-top: 0; }
-.today-view .td-todo-edit { display: flex; align-items: center; gap: 8px; }
 .today-view .td-links { display: flex; flex-direction: column; gap: 8px; }
 .today-view .td-link {
   display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px; border: 0; border-radius: 16px;
@@ -536,7 +522,7 @@
 .recap-view .rc-months.is-days .rc-month span { max-width: 8px; border-radius: 3px 3px 1px 1px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .today-view .td-omikuji .td-omi-box, .today-view .td-omikuji.just-drawn .td-omi-paper, .today-view .td-todo-row.on .td-check { animation: none; }
+  .today-view .td-omikuji .td-omi-box, .today-view .td-omikuji.just-drawn .td-omi-paper { animation: none; }
   .stamps-view .st-item.is-new .st-stamp { animation: iosFade 300ms ease; }
   .today-view .td-link:active, .friends-view .fr-place-card:active, .coord-diary-view .cd-item.is-pick:active { transform: none; opacity: 0.7; }
 }
