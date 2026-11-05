@@ -461,3 +461,19 @@
 @media (prefers-reduced-motion: reduce) {
   .hub-search-open:active { transform: none; opacity: 0.7; }
 }
+
+/* ── 🏆 各ツールに置く「称号一覧で見る」の案内（js/titles.js の titlesLinkHtml）。どのツールの中でも同じ見た目 ── */
+.hub-titles-slot { margin: 12px 0; }
+.hub-titles-link {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 14px;
+  background: var(--hub-card); border: 0.5px solid var(--hub-sep); color: var(--hub-text); text-decoration: none;
+  font-family: inherit; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+.hub-titles-link .inline-icon { flex: none; stroke: currentColor; color: var(--hub-accent-ink); }
+.hub-titles-link-text { font-weight: 700; white-space: nowrap; }
+.hub-titles-link-text b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.hub-titles-link-icons { display: inline-flex; gap: 1px; min-width: 0; overflow: hidden; font-size: 15px; line-height: 1; }
+.hub-titles-link-go { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; flex: none; font-size: 12px; font-weight: 700; color: var(--hub-accent-ink); white-space: nowrap; }
+.hub-titles-link:active { transform: scale(0.98); }
+@media (prefers-reduced-motion: reduce) { .hub-titles-link:active { transform: none; opacity: 0.7; } }
+@media (prefers-contrast: more) { .hub-titles-link { border-color: var(--hub-text-2); } }

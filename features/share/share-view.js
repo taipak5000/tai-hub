@@ -75,6 +75,7 @@
      （共有icon-sprite.jsは他エージェントが並行して触っているため、
      衝突を避けて編集しない）。
    ================================================================ */
+import { titlesLinkHtml } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
 
@@ -460,18 +461,8 @@ const TEMPLATE = `
     </template>
   </div>
 
-  <div class="sv-card">
-    <div class="sv-card-header sv-card-header-row">
-      <span>{{ t('titles.header') }}</span>
-      <span class="sv-titles-count">{{ t('titles.countTemplate', { earned: earnedTitleList.length, total: titleChipList.length }) }}</span>
-    </div>
-    <div class="sv-title-chip-row">
-      <span v-for="ti in titleChipList" :key="ti.id" class="sv-title-chip" :class="{ locked: !ti.earned }"
-            :title="ti.earned ? t('titles.' + ti.id + '.desc') : t('titles.lockedHint')">
-        <span v-html="ti.earned ? ti.icon : '<svg class=inline-icon width=13 height=13><use href=#sv-i-lock /></svg>'"></span> {{ ti.earned ? t('titles.' + ti.id + '.name') : t('titles.lockedName') }}
-      </span>
-    </div>
-  </div>
+  <!-- 称号の一覧は称号一覧（#/titles）へ移した（2026-11-06）。ここには獲得数の案内だけを出す -->
+  <div class="sv-titles-link" v-html="titlesLinkMarkup"></div>
 
   <div class="sv-card" ref="listSectionRef">
     <div class="sv-card-header">{{ t('list.header') }}</div>
@@ -782,6 +773,8 @@ function buildSetup(Vue) {
       const earnedIds = new Set(titlesData.value.earned.map((e) => e.id));
       return TITLES.filter((ti) => earnedIds.has(ti.id));
     });
+    // 称号一覧への案内（獲得した称号が増えると描き直す）
+    const titlesLinkMarkup = computed(() => { void earnedTitleList.value.length; return titlesLinkHtml('share', 'in-share'); });
     const titleChipList = computed(() => {
       const earnedIds = new Set(titlesData.value.earned.map((e) => e.id));
       return TITLES.map((ti) => ({ ...ti, earned: earnedIds.has(ti.id) }));
@@ -1130,7 +1123,7 @@ function buildSetup(Vue) {
       expiringSoonOnly, focusExpiringSoon, listSectionRef,
       exportItemIcs, exportListText, exportAllIcs, activeItemsForIcs,
       handlePhotoFile, removePhoto,
-      earnedTitleList, titleChipList, titleToasts,
+      earnedTitleList, titleChipList, titleToasts, titlesLinkMarkup,
       hasAnyCalendarEvents, calendarMonthLabel, calendarWeekdayLabels, calendarCells, calendarSeverityColor,
       isCurrentMonthShown, goToPrevMonth, goToNextMonth, goToCurrentMonth,
       selectedCalendarDate, selectCalendarDay, selectedDayItems, selectedCalendarDateLabel,

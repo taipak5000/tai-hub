@@ -246,9 +246,13 @@ const landingPoint = currentY + project(v);
   `today-view.js`が要点を出し、その下にデイリーチェックシートを`mount(el, { embedded: true, labLinks: true })`で埋め込む。
   **デイリーチェックシートはまだ非公開＝関連ツールの一覧に載せない**・
   ほしいもの計画（`features/wish-plan/`。欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通）・
-  コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・スタンプ帳（`features/stamps/`。判定は各ツールの記録を読むだけで軽い＝お知らせからも呼ぶ）・
+  コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・
   思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。
-  **新しいツールに記録を足したら、スタンプ帳（`stamps-state.js`の`collectStats`/`STAMPS`）とふりかえり（`recap-view.js`）にも数を足せるか考えること。**
+  **新しいツールに記録を足したら、ふりかえり（`recap-view.js`）にも数を足せるか考えること。**
+- **称号一覧**（`#/titles`、`features/titles/titles-view.js`。旧スタンプ帳`#/stamps`を置き換え、2026-11-06）: 全ツールの称号をここに集める。
+  **各ツールの画面には称号の一覧を置かず、`js/titles.js`の`titlesLinkHtml(ツール)`の小さな案内（獲得数＋「称号一覧で見る」）だけを出す。**
+  獲得の判定・記録・獲得時のトーストは今まで通り各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`
+  （ツールに称号を足したら、ここにも足すこと）。新しく獲得した称号はお知らせで知らせる（`titlesSeen_v1`）。
 - **シーズンアルバム**: コーデ日記の「シーズンアルバム」タブ（`features/coord-diary/season-album.js`。季節の期間は`features/shared/season-dates.js`）。
 - **撮影お題ガチャ**: コーデ日記の折りたたみ「撮影ポーズに困ったら」（`features/coord-diary/photo-gacha.js`）。
 - **試作中の機能（2026-11-06〜。`features/lab/`）**: 今は無し（気分カレンダー・タイムカプセル・推し精霊・シール帳・キャンドル貯金箱は11/6に削除、シーズンアルバム・撮影お題ガチャはコーデ日記へ移動）。

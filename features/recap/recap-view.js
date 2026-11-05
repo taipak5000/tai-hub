@@ -8,7 +8,7 @@
      羽         wingTracker_v1（受け取った日時）・wingsCompletionHistory_v1
      精霊ツリー spiritCatalogStats_v1（解放したマスの数）
      キャンドル skyNomacanCalc_history_v1（記録した本数）・skyNomacanStreak_v1（記録した日）
-     デイリーチェックシート dailyCheckLog_v1 ／ 週替わりビンゴ weeklyBingo_v1 ／ フレンド friendsDoc_v1
+     デイリーチェックシート dailyCheckLog_v1 ／ 週替わりビンゴ weeklyBingo_v1 ／ フレンド friendsDoc_v1 ／ 称号（各ツールの獲得記録）
    記録した日時が残っていない古いデータ（日時を記録する前に所持にした分）は、その年の数に入らない。
    その旨はカードの下に小さく書いておく。
    ================================================================ */
@@ -20,6 +20,7 @@ import { bingoYearSummary } from '../bingo/bingo-state.js';
 import { loadFriendsDoc } from '../friends/friends-state.js';
 import { saveElementImage, toast } from '../shared/share-image.js';
 import { HUB_BASE_URL } from '../../js/site-config.js';
+import { TITLE_TOOLS, toolTitles } from '../../js/titles.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const THEME_KEY = 'sky_recap_style';
@@ -141,18 +142,18 @@ async function compute() {
   const diaryYear = fdoc.diary.filter(d => keyIn(d.date, y));
   const photosYear = diaryYear.filter(d => d.photoId).length;
 
-  // コーデ日記・おみくじ・スタンプ
+  // コーデ日記・おみくじ・称号（獲得日が残っている分だけ。js/titles.js）
   const coord = readJson('coordDiary_v1', {});
   const coordCount = (Array.isArray(coord.entries) ? coord.entries : []).filter(e => e && keyIn(e.date, y)).length;
   const omi = Object.entries((readJson('omikujiLog_v1', {}) || {}).days || {}).filter(([k]) => keyIn(k, y)).map(([, r]) => r);
-  const stampsEarned = Object.values(readJson('stampsEarned_v1', {}) || {}).filter(d => keyIn(d, y)).length;
+  const titlesEarned = TITLE_TOOLS.flatMap(x => toolTitles(x.key)).filter(i => i.earned && i.earnedAt && inYear(i.earnedAt, y)).length;
 
   const topMonth = months.some(v => v > 0) ? months.indexOf(Math.max(...months)) : -1;
   stats = {
     y, months, topMonth, itemsYear, ownedNow, totalNow, topCat, topCatCount: topCatKey ? catCount[topCatKey] : 0,
     emotesYear, emPct: emLast ? emLast.pct : null, wingsYear, wgPct: wgLast ? wgLast.pct : null,
     tree, candles, candleDays, longest, dcDays, bingo, newFriends, diaryCount: diaryYear.length, photosYear,
-    coordCount, omikuji: omi.length, daikichi: omi.filter(r => r && r.f === 0).length, stampsEarned, month,
+    coordCount, omikuji: omi.length, daikichi: omi.filter(r => r && r.f === 0).length, titlesEarned, month,
   };
   render();
 }
@@ -213,7 +214,7 @@ function cardHtml(s) {
   if (s.bingo.weeks) tiles.push(tile('i-grid', fmt(s.bingo.lines), t('ビンゴ', 'Bingos'), t(`${s.bingo.weeks}週・${fmt(s.bingo.filled)}マス`, `${s.bingo.weeks} weeks · ${fmt(s.bingo.filled)} squares`)));
   if (s.coordCount) tiles.push(tile('i-hanger', fmt(s.coordCount), t('コーデ日記', 'Outfit logs'), ''));
   if (s.omikuji) tiles.push(tile('i-sparkle', fmt(s.omikuji), t('おみくじ', 'Fortunes drawn'), s.daikichi ? t(`大吉 ${s.daikichi}回`, `${s.daikichi} great blessings`) : ''));
-  if (s.stampsEarned) tiles.push(tile('i-crown', fmt(s.stampsEarned), t('押されたスタンプ', 'Stamps earned'), ''));
+  if (s.titlesEarned) tiles.push(tile('i-trophy', fmt(s.titlesEarned), t('獲得した称号', 'Titles earned'), ''));
   if (s.newFriends || s.diaryCount) tiles.push(tile('i-heart', fmt(s.newFriends), t('新しいフレンド', 'New friends'), s.diaryCount ? t(`思い出 ${s.diaryCount}件・写真 ${s.photosYear}枚`, `${s.diaryCount} memories · ${s.photosYear} photos`) : ''));
 
   const max = Math.max(1, ...s.months);

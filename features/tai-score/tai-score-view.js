@@ -35,6 +35,7 @@
      イベントを配線している（フレームストリップ・ライブラリ一覧など
      再描画されるDOMにも同じ委譲だけで対応できる）。
    ================================================================ */
+import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { t } from './data/i18n-score.js';
 import { PITCHES, INSTRUMENT_LABELS } from './data/constants.js';
@@ -176,13 +177,7 @@ function renderShell() {
 
         <div class="card" style="margin-top:14px;"><p>${t('introText')}</p></div>
 
-        <div class="card titles-card">
-          <div class="titles-card-head-row">
-            <span class="titles-card-head">${escapeHtml(t('titlesSectionTitle'))}</span>
-            <span class="titles-count" id="titlesCount">0 / 0</span>
-          </div>
-          <div class="titles-chip-row" id="titlesChipRow"></div>
-        </div>
+        ${titlesSlotHtml('score', 'in-score')}
 
         <div class="view-tabs">
           <button type="button" class="view-tab active" id="tabLibraryBtn" data-act="switch-view" data-view="library">${escapeHtml(t('tabLibrary'))}</button>
@@ -549,19 +544,10 @@ function renderComposeToolsModal() {
 /* ================================================================
    称号（実績）の描画・ヒーローバナー更新
    ================================================================ */
+// 称号の一覧は称号一覧（#/titles）へ移した。ここでは獲得数の案内だけを最新にする（ヒーローの数字は今まで通り）
 function renderTitles() {
-  const row = document.getElementById('titlesChipRow');
-  const countEl = document.getElementById('titlesCount');
-  if (!row) return;
   const d = S.loadTitlesData();
-  const earnedIds = new Set(d.earned.map(e => e.id));
-  if (countEl) countEl.textContent = t('titlesCountTemplate', { earned: earnedIds.size, total: S.TITLES.length });
-  row.innerHTML = S.TITLES.map(ti => {
-    if (!earnedIds.has(ti.id)) {
-      return `<span class="title-chip locked" title="${escapeHtml(t('titleLockedHint'))}"><span class="title-chip-icon"><svg class="inline-icon" width="13" height="13"><use href="#ts-i-lock"/></svg></span>${escapeHtml(t('titleLockedName'))}</span>`;
-    }
-    return `<span class="title-chip" title="${escapeHtml(t(ti.descKey))}"><span class="title-chip-icon"><svg class="inline-icon" width="15" height="15"><use href="#${ti.icon}"/></svg></span>${escapeHtml(t(ti.nameKey))}</span>`;
-  }).join('');
+  refreshTitleLinks(document.querySelector('.tai-score-view') || document);
   const songsValEl = document.getElementById('heroSongsVal');
   const practiceValEl = document.getElementById('heroPracticeVal');
   if (songsValEl) songsValEl.textContent = d.songsCreatedTotal;

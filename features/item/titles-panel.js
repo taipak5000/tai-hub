@@ -36,6 +36,7 @@
      conditionは一切変更していない）。
    ================================================================ */
 
+import { titlesSlotHtml } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { getCategoryState, loadTitleStore, saveTitleStore, nsKey, isCountableItem } from '../../js/state.js';
 import * as conditionRates from './condition-rates.js';
@@ -266,9 +267,9 @@ async function renderPanel(container) {
 
     <div id="titpCondRates"></div>
 
-    <p class="sec-label">${en ? 'Titles' : '称号'}<span class="titp-titles-count">${en ? `${earnedCount} / ${TITLES.length} unlocked` : `${earnedCount} / ${TITLES.length} 個解除`}</span></p>
-    <div class="titp-panel">${TITLES.map(t => chipHtml(t, store)).join('')}</div>
+    ${titlesSlotHtml('item', 'in-item')}
   `;
+  void earnedCount; void chipHtml; // 称号の一覧は称号一覧（#/titles）へ移した（2026-11-06）。ここには獲得数の案内だけを出す
 
   // 条件別の達成率（無課金・限定など）。ゲージと称号チップ列の間に差し込む
   conditionRates.mount(container.querySelector('#titpCondRates'));

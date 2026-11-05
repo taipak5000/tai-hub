@@ -31,6 +31,7 @@
    ロジック・同じ見た目のまま移植している。
    ================================================================ */
 
+import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { EMOTES } from './data/emotes.js';
 import { TITLES } from './data/titles.js';
@@ -197,13 +198,7 @@ function buildShell() {
           <div class="em-header-pct" id="emGuideHdrPct">--%</div>
         </div>
 
-        <div class="em-titles-panel">
-          <div class="em-titles-panel-head">
-            <span class="em-sec-label">${t('称号', 'Titles')}</span>
-            <span class="em-titles-count" id="emTitlesCount">0 / 0</span>
-          </div>
-          <div class="em-titles-chip-row" id="emTitlesChipRow"></div>
-        </div>
+        ${titlesSlotHtml('emote', 'in-emote')}
 
         <div class="em-control-panel">
           <div class="em-control-row">
@@ -583,23 +578,8 @@ function renderTitlesPanel(stats) {
     const names = newly.map(L).join(CURRENT_LANG === 'en' ? ', ' : '、');
     showEmToast(tpl(t('称号を{n}個獲得！ {names}', '{n} titles unlocked! {names}'), { n: newly.length, names }));
   }
-  const countEl = containerEl.querySelector('#emTitlesCount');
-  const row = containerEl.querySelector('#emTitlesChipRow');
-  if (!countEl || !row) return;
-  const earnedCount = TITLES.filter(x => earned[x.id]).length;
-  countEl.innerHTML = tpl(
-    t('<b class="em-stat-num">{earned}</b> / <b class="em-stat-num">{total}</b> 個解除', '<b class="em-stat-num">{earned}</b> / <b class="em-stat-num">{total}</b> unlocked'),
-    { earned: earnedCount, total: TITLES.length }
-  );
-  row.innerHTML = TITLES.map(title => {
-    const got = earned[title.id];
-    if (!got) {
-      return `<span class="em-title-chip locked" title="${escapeHtml(t('称号は条件を満たすと明らかになります', 'Unlocks when you meet its condition'))}"><span class="em-title-chip-icon">${ICON_LOCK}</span>？？？</span>`;
-    }
-    const name = escapeHtml(L(title));
-    const desc = escapeHtml(t(title.desc, title.descEn));
-    return `<span class="em-title-chip" title="${desc}"><span class="em-title-chip-icon">${title.icon}</span>${name}</span>`;
-  }).join('');
+  // 称号の一覧は称号一覧（#/titles）へ移した。ここでは獲得数の案内だけを最新にする
+  refreshTitleLinks(containerEl);
 }
 
 /* ================================================================

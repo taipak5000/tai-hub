@@ -418,29 +418,36 @@
 .wish-plan-view .fun-empty .fun-btn { margin-top: 12px; }
 
 /* ================================================================
-   🏅 スタンプ帳（features/stamps）
+   🏆 称号一覧（features/titles）
    ================================================================ */
-.stamps-view .st-total { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 6px; padding: 16px; border-radius: 18px; background: var(--hub-card); }
-.stamps-view .st-total b { font-size: 36px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; color: var(--hub-accent-ink); }
-.stamps-view .st-total span { font-size: 15px; font-weight: 700; color: var(--hub-text-2); }
-.stamps-view .st-total small { font-size: 12.5px; color: var(--hub-text-2); }
-.stamps-view .st-bar { flex-basis: 100%; height: 7px; margin-top: 8px; border-radius: 4px; background: var(--hub-sep); overflow: hidden; }
-.stamps-view .st-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--hub-accent); }
-.stamps-view .st-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 10px; }
-.stamps-view .st-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px; border-radius: 16px; background: var(--hub-card); text-align: center; }
-.stamps-view .st-stamp {
-  width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  border: 2px dashed var(--hub-text-3); transform: rotate(var(--tilt));
-}
-.stamps-view .st-mark { font-size: 28px; line-height: 1; filter: grayscale(1); opacity: 0.25; }
-.stamps-view .st-item.on .st-stamp { border: 3px double #d6455d; background: rgba(214, 69, 93, 0.08); box-shadow: inset 0 0 0 3px rgba(214, 69, 93, 0.18); }
-[data-theme="dark"] .stamps-view .st-item.on .st-stamp { border-color: #ff7a8f; background: rgba(255, 122, 143, 0.12); }
-.stamps-view .st-item.on .st-mark { filter: none; opacity: 1; }
-.stamps-view .st-item.is-new .st-stamp { animation: stPress 0.6s var(--fun-pop); }
-@keyframes stPress { 0% { transform: scale(1.8) rotate(-20deg); opacity: 0; } 60% { transform: scale(0.92) rotate(var(--tilt)); opacity: 1; } 100% { transform: rotate(var(--tilt)); } }
-.stamps-view .st-name { font-size: 12px; font-weight: 700; line-height: 1.35; }
-.stamps-view .st-item:not(.on) .st-name { color: var(--hub-text-2); }
-.stamps-view .st-sub { font-size: 10.5px; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.titles-view .tl-total { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 6px; padding: 16px; border-radius: 18px; background: var(--hub-card); }
+.titles-view .tl-total b { font-size: 36px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; color: var(--hub-accent-ink); font-variant-numeric: tabular-nums; }
+.titles-view .tl-total span { font-size: 15px; font-weight: 700; color: var(--hub-text-2); }
+.titles-view .tl-total small { font-size: 12.5px; color: var(--hub-text-2); }
+.titles-view .tl-bar { flex-basis: 100%; height: 7px; margin-top: 8px; border-radius: 4px; background: var(--hub-sep); overflow: hidden; }
+.titles-view .tl-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--hub-accent); }
+.titles-view .tl-recent { display: flex; flex-direction: column; gap: 6px; }
+.titles-view .tl-recent-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--hub-accent-bg); }
+.titles-view .tl-recent-ic { font-size: 24px; line-height: 1; }
+.titles-view .tl-recent-item span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.titles-view .tl-recent-item b { font-size: 14px; }
+.titles-view .tl-recent-item small { font-size: 11.5px; color: var(--hub-text-2); }
+.titles-view .tl-filter { margin: 16px 0 4px; }
+.titles-view .tl-chip-n { margin-left: 2px; font-size: 10.5px; font-weight: 600; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.titles-view .tl-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.titles-view .tl-sec-title { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 15px; font-weight: 800; }
+.titles-view .tl-sec-title .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); }
+.titles-view .tl-sec-title span { font-size: 12px; font-weight: 700; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.titles-view .tl-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 8px; }
+.titles-view .tl-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 16px; background: var(--hub-card); }
+.titles-view .tl-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; background: var(--hub-bg); color: var(--hub-text-3); }
+.titles-view .tl-ic .inline-icon { stroke: currentColor; }
+.titles-view .tl-item.on .tl-ic { background: var(--hub-accent-bg); }
+.titles-view .tl-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.titles-view .tl-text b { font-size: 14px; line-height: 1.4; }
+.titles-view .tl-item:not(.on) .tl-text b { color: var(--hub-text-2); letter-spacing: 0.1em; }
+.titles-view .tl-text small { font-size: 12px; line-height: 1.55; color: var(--hub-text-2); }
+.titles-view .tl-text em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--hub-accent-ink); }
 
 /* ================================================================
    🪞 コーデ日記（features/coord-diary）
@@ -536,15 +543,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .today-view .td-omikuji .td-omi-box, .today-view .td-omikuji.just-drawn .td-omi-paper { animation: none; }
-  .stamps-view .st-item.is-new .st-stamp { animation: iosFade 300ms ease; }
   .today-view .td-link:active, .friends-view .fr-place-card:active, .coord-diary-view .cd-item.is-pick:active { transform: none; opacity: 0.7; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .coord-diary-view .fr-entry-edit { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
-  .today-view .td-tile, .wish-plan-view .wp-row, .stamps-view .st-item, .coord-diary-view .cd-entry, .friends-view .fr-place { border: 1px solid var(--hub-text-2); }
-  .stamps-view .st-mark { opacity: 0.5; }
+  .today-view .td-tile, .wish-plan-view .wp-row, .titles-view .tl-item, .coord-diary-view .cd-entry, .friends-view .fr-place { border: 1px solid var(--hub-text-2); }
   .coord-diary-view .fr-entry-edit { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 

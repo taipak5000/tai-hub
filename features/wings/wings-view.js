@@ -39,6 +39,7 @@
      （光の子の「全リセット」「全エリア取得済みにする」の2箇所のみ対象）。
    ================================================================ */
 
+import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { getActiveProfileId, ensureProfilesInit, pfDisplayName } from '../../js/state.js';
 import { SEASON_SPIRITS } from './data/season-spirits.js';
@@ -174,13 +175,7 @@ function renderShell() {
       <div class="cape-pips" id="wgCapePips"></div>
     </div>
 
-    <div class="titles-card">
-      <div class="titles-card-head">
-        <div class="titles-card-title">${t('称号', 'Titles')}</div>
-        <span class="titles-count" id="wgTitlesCount">0 / 0</span>
-      </div>
-      <div class="titles-chips" id="wgTitlesChips"></div>
-    </div>
+    ${titlesSlotHtml('wings')}
 
     <div class="share-btn-row">
       <button type="button" class="share-btn customize" id="wgCompareBtn">${t('プロフィールを比較', 'Compare Profiles')}</button>
@@ -808,16 +803,9 @@ function checkAndUnlockTitles() {
     ), { html: true });
   });
 }
-function renderTitles(owned) {
-  owned = owned || S.loadTitles();
-  const earnedCount = TITLES.filter(ti => owned[ti.id]).length;
-  containerEl.querySelector('#wgTitlesCount').textContent = t(`${earnedCount} / ${TITLES.length} 個解除`, `${earnedCount} / ${TITLES.length} unlocked`);
-  containerEl.querySelector('#wgTitlesChips').innerHTML = TITLES.map(ti => {
-    if (owned[ti.id]) {
-      return `<span class="title-chip" title="${escapeAttr(L(ti.desc))}">${ti.icon} ${escapeHtml(L(ti.name))}</span>`;
-    }
-    return `<span class="title-chip locked" title="${escapeAttr(t('称号は条件を満たすと明らかになります', 'Unlocks when you meet its condition'))}">${ti.icon} ${escapeHtml(t('？？？', '???'))}</span>`;
-  }).join('');
+// 称号の一覧は称号一覧（#/titles）へ移した。ここでは獲得数の案内だけを最新にする
+function renderTitles() {
+  refreshTitleLinks(containerEl);
 }
 
 /* ================================================================

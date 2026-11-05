@@ -33,6 +33,7 @@
    - 今日/今週/今月ダッシュボードはwings-view.jsと同じパターンで
      features/shared/event-dashboard.js を自前のモーダルにmountする。
    ================================================================ */
+import { titlesLinkHtml } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { t, tt } from './data/i18n-catalog.js';
 import * as S from './spirit-catalog-state.js';
@@ -726,18 +727,9 @@ function renderStats() {
 
   renderGrandRemainingCost();
 }
-function renderTitlesPanel(earnedMap) {
-  const earned = earnedMap || S.loadEarnedTitles();
-  const earnedCount = S.TITLES.filter((def) => earned[def.id]).length;
-  const chips = S.TITLES.map((def) => earned[def.id]
-    ? `<span class="title-chip" title="${escapeHtml(t('titles.' + def.id + '.desc'))}">${icon(def.icon, 13)} ${escapeHtml(t('titles.' + def.id + '.name'))}</span>`
-    : `<span class="title-chip locked" title="${escapeHtml(t('titles.lockedHint'))}">${icon('sc-i-lock', 10)} ${escapeHtml(t('titles.lockedName'))}</span>`).join('');
-  els.titlesPanel.innerHTML = `
-    <div class="titles-panel-head">
-      <div class="titles-label">${escapeHtml(t('titles.sectionLabel'))}</div>
-      <div class="titles-count">${escapeHtml(t('titles.countTemplate', { earned: earnedCount, total: S.TITLES.length }))}</div>
-    </div>
-    <div class="titles-chip-row">${chips}</div>`;
+// 称号の一覧は称号一覧（#/titles）へ移した（2026-11-06）。ここには獲得数の案内だけを出す
+function renderTitlesPanel() {
+  els.titlesPanel.innerHTML = titlesLinkHtml('spirit', 'in-spirit');
 }
 
 /* ================================================================

@@ -8,6 +8,7 @@
      - 季節の終了・開始が近い（7日以内）／イベントの終了・開始が近い（3日以内）／次回アップデート（7日以内）
      - フレンドの記念日（7日以内。features/friends）
      - 週替わりビンゴの新しい週（ビンゴを使ったことがある人だけ）
+     - 新しく獲得した称号（前に称号一覧を開いた時より増えていたら。js/titles.js）
      - 年末年始の「一年のふりかえり」
    既読はプロフィールごと（nsKey('noticesSeen_v1')＝お知らせのidの配列）。お知らせのidは
    「何の・いつの回か」まで含むので、次の来訪・翌年の記念日はまた未読として出る。
@@ -18,7 +19,7 @@ import { cycleIndexAt, cycleBounds } from './pacific-time.js';
 import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES } from '../features/item/data/season-data.js';
 import { loadFriendsDoc, upcomingAnniversaries } from '../features/friends/friends-state.js';
 import { hasBingoData, loadBingo, weekKeyAt } from '../features/bingo/bingo-state.js';
-import { evaluateStamps, seenCount } from '../features/stamps/stamps-state.js';
+import { titleTotals, titlesSeenCount } from './titles.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const DAY = 86400000;
@@ -174,13 +175,12 @@ export function collectNotices(nowDate = new Date()) {
     }
   }
 
-  // スタンプ帳: 前に開いた時より押されたスタンプが増えていたら
+  // 称号: 前に称号一覧を開いた時より獲得数が増えていたら（各ツールが獲得した称号をまとめて知らせる）
   try {
-    const { earned } = evaluateStamps();
-    const n = Object.keys(earned).length;
-    const diff = n - seenCount();
-    if (diff > 0) out.push({ id: `stamps:${n}`, icon: 'i-crown', tone: 'pink', priority: 2, sortAt: now, title: t(`新しいスタンプが${diff}こ押されました`, `${diff} new stamp(s)!`), body: t(`スタンプ帳で確かめてみましょう（全部で${n}こ）`, `Check your stamp book (${n} total)`), route: 'stamps', routeLabel: t('スタンプ帳', 'Stamp book') });
-  } catch (e) { /* 判定に失敗してもほかのお知らせは出す */ }
+    const { earned } = titleTotals();
+    const diff = earned - titlesSeenCount();
+    if (diff > 0) out.push({ id: `titles:${earned}`, icon: 'i-trophy', tone: 'pink', priority: 2, sortAt: now, title: t(`新しい称号を${diff}つ獲得しました`, `${diff} new title(s) earned!`), body: t(`称号一覧で確かめてみましょう（全部で${earned}個）`, `See them in Titles (${earned} total)`), route: 'titles', routeLabel: t('称号一覧', 'Titles') });
+  } catch (e) { /* 読めなくてもほかのお知らせは出す */ }
 
   // 先月のふりかえり（毎月1日〜7日。1月は一年のふりかえりと並べて出す）
   {

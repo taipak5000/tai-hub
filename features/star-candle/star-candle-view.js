@@ -42,6 +42,7 @@
      （data/titles.js参照）。
    ================================================================ */
 import { nsKey } from '../../js/state.js';
+import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { t } from './data/i18n-star-candle.js';
 import { TITLES } from './data/titles.js';
@@ -303,13 +304,7 @@ function renderShell() {
           <div id="scResultContent"></div>
         </section>
 
-        <section class="sc-card" id="scTitlesCard">
-          <div class="sc-titles-head">
-            <h2>${t('titles.heading')}</h2>
-            <span class="sc-titles-count" id="scTitlesCount">0 / ${TITLES.length}</span>
-          </div>
-          <div class="sc-titles-chips" id="scTitlesChips"></div>
-        </section>
+        ${titlesSlotHtml('starcandle', 'in-star-candle')}
 
         <section class="sc-card">
           <h2>${t('notify.heading')}</h2>
@@ -845,22 +840,9 @@ function checkAndUnlockTitles() {
   } catch (e) { /* no-op */ }
 }
 
-function renderTitles(store) {
-  store = store || loadTitleStore();
-  const chips = containerEl.querySelector('#scTitlesChips');
-  const countEl = containerEl.querySelector('#scTitlesCount');
-  if (!chips) return;
-  const earnedCount = TITLES.filter((ti) => !!store[ti.id]).length;
-  if (countEl) countEl.textContent = t('titles.countTemplate', { earned: earnedCount, total: TITLES.length });
-  // 未獲得も含め全件を常に描画する。未獲得は名前・条件文を「？？？」で隠す。
-  chips.innerHTML = TITLES.map((ti) => {
-    const name = ti.name[CURRENT_LANG] !== undefined ? ti.name[CURRENT_LANG] : ti.name.ja;
-    const desc = ti.desc[CURRENT_LANG] !== undefined ? ti.desc[CURRENT_LANG] : ti.desc.ja;
-    if (store[ti.id]) {
-      return `<span class="sc-title-chip" title="${desc}">${ti.icon} ${name}</span>`;
-    }
-    return `<span class="sc-title-chip locked" title="${t('titles.lockedTooltip')}">${ti.icon} ？？？</span>`;
-  }).join('');
+// 称号の一覧は称号一覧（#/titles）へ移した。ここでは獲得数の案内だけを最新にする
+function renderTitles() {
+  if (containerEl) refreshTitleLinks(containerEl);
 }
 
 /* ================================================================

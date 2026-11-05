@@ -148,7 +148,9 @@ export const ROUTES = {
   today: { ...lazyToolEntry(() => import('../features/today/today-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
   'wish-plan': lazyToolEntry(() => import('../features/wish-plan/wish-plan-view.js'), 'ほしいもの計画', 'Wishlist Plan'),
   'coord-diary': lazyToolEntry(() => import('../features/coord-diary/coord-diary-view.js'), 'コーデ日記', 'Outfit Diary'),
-  stamps: lazyToolEntry(() => import('../features/stamps/stamps-view.js'), 'スタンプ帳', 'Stamp Book'),
+  titles: lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'),
+  // 旧スタンプ帳（2026-11-06に称号一覧へ置き換えた）。古いリンク用に称号一覧を開く
+  stamps: { ...lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'), hidden: true },
   // 🧪 試作中（非公開）。URL（#/daily-check）を知っている人だけが開ける。関連ツールの一覧（site-links）には
   // 載せておらず、hidden: true で「起動時に開くツール」の選択肢からも外す。公開する時はhiddenを外してsite-linksへ足す
   // 画面は features/today/today-view.js（今日の要点＋チェックシート＋試作中の機能への入口）

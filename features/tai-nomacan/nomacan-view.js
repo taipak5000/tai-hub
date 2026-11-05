@@ -42,6 +42,7 @@
      既存モーダル(pf/dash/settings)がいずれもEscキー対応を実装していない
      のに合わせ、同じ水準（背景タップでの閉じるのみ）にしている。
    ================================================================ */
+import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml, trEvent } from '../../js/i18n.js';
 import { t, L } from './data/i18n-nomacan.js';
 import { TITLES } from './data/titles.js';
@@ -309,13 +310,7 @@ function renderShell() {
           <div id="nmResultContent"></div>
         </section>
 
-        <section class="card titles-card" id="nmTitlesPanel">
-          <h2 style="justify-content:space-between;">
-            <span>${t('titles.heading')}</span>
-            <span class="titles-count" id="nmTitlesCount">0 / ${TITLES.length}</span>
-          </h2>
-          <div class="titles-chips" id="nmTitlesChips"></div>
-        </section>
+        ${titlesSlotHtml('nomacan', 'in-nomacan')}
 
         <section class="card">
           <h2>${t('history.heading')}</h2>
@@ -399,8 +394,6 @@ function cacheEls() {
     datePickerNextBtn: q('nmDatePickerNext'),
     datePickerClearBtn: q('nmDatePickerClear'),
     dateQuickPresetsEl: q('nmDateQuickPresets'),
-    titlesChips: q('nmTitlesChips'),
-    titlesCount: q('nmTitlesCount'),
     oneYearAgoBanner: q('oneYearAgoBanner'),
     nomaToast: q('nmNomaToast'),
   };
@@ -842,16 +835,9 @@ function goalSwitch(id) {
 /* ================================================================
    🏆 称号
    ================================================================ */
-function renderTitles(store) {
-  store = store || S.loadTitleStore();
-  const earnedCount = TITLES.filter((ti) => store.earned[ti.id]).length;
-  if (els.titlesCount) els.titlesCount.textContent = t('titles.countTemplate', { earned: earnedCount, total: TITLES.length });
-  els.titlesChips.innerHTML = TITLES.map((ti) => {
-    if (store.earned[ti.id]) {
-      return '<span class="title-chip" title="' + escapeHtml(L(ti.desc)) + '">' + ti.icon + ' ' + escapeHtml(L(ti.name)) + '</span>';
-    }
-    return '<span class="title-chip locked" title="' + escapeHtml(t('titles.lockedHint')) + '"><svg class="inline-icon" width="13" height="13"><use href="#nm-i-lock"/></svg> ' + escapeHtml(t('titles.lockedName')) + '</span>';
-  }).join('');
+// 称号の一覧は称号一覧（#/titles）へ移した。ここでは獲得数の案内だけを最新にする
+function renderTitles() {
+  refreshTitleLinks(containerEl);
 }
 function refreshTitlesUI() {
   const current = Math.max(0, parseFloat(els.current.value) || 0);
