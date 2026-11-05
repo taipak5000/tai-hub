@@ -602,6 +602,8 @@
 .coord-diary-view .cd-gacha-list div { padding: 7px 9px; border-radius: 10px; background: var(--hub-bg); }
 .coord-diary-view .cd-gacha-list dt { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-text-2); }
 .coord-diary-view .cd-gacha-list dd { margin: 1px 0 0; font-size: 13.5px; font-weight: 800; line-height: 1.35; }
+.coord-diary-view .cd-gacha-emote { display: inline-flex; width: 40px; height: 40px; margin-top: 2px; border-radius: 10px; background: var(--hub-card); align-items: center; justify-content: center; }
+.coord-diary-view .cd-gacha-emote img { width: 34px; height: 34px; object-fit: contain; }
 .coord-diary-view .cd-gacha-body .fun-hint { margin: 0 0 10px; }
 .coord-diary-view .cd-gacha-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) {

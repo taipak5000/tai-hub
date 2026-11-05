@@ -1,6 +1,6 @@
 /* ================================================================
    📸 撮影お題ガチャ（コーデ日記の中の折りたたみ「撮影ポーズに困ったら」。coord-diary-view.js が表示する）。
-   場所・時間帯・ポーズ（エモート）・構図・人数をくじで決める。2026-11-06に試作（#/lab-photo-gacha）から移した。
+   場所・時間帯・エモート（名前ではなくアイコンで出す）・構図・人数をくじで決める。2026-11-06に試作（#/lab-photo-gacha）から移した。
    photoGacha_v1: { log: [{ id, date, place, time, emoteId, comp, people, done }] }（新しい順・最大100件。試作の頃と同じ）
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -32,24 +32,32 @@ function load() {
 function save() { try { localStorage.setItem(nsKey(KEY), JSON.stringify(doc)); } catch (e) { /* noop */ } }
 /** プロフィールを切り替えた時などに読み直す（コーデ日記を開くたびに呼ぶ） */
 export function resetGacha() { doc = null; current = null; gachaOpen = false; }
-/** ポーズの候補（エモート）を読み込む。読み終わったら onReady を呼ぶ */
+/** エモートの候補を読み込む。読み終わったら onReady を呼ぶ */
 export function ensureEmotes(onReady) {
   if (emotes) return;
   if (!emotesLoading) emotesLoading = import('../emote/data/emotes.js').then(m => { emotes = (m.EMOTES || []).filter(e => e.id !== 'emote_001'); }).catch(() => { emotes = []; });
   emotesLoading.then(() => onReady && onReady());
 }
 function emoteName(id) { const e = (emotes || []).find(x => x.id === id); return e ? (CURRENT_LANG === 'en' ? e.nameEn : e.name) : t('好きなエモート', 'Any emote'); }
+// エモートはアイコンで出す（名前は読み上げ用とホバー表示に回す。画像が読めない・データが無い時は名前を文字で出す）
+function emoteIconHtml(id) {
+  const e = (emotes || []).find(x => x.id === id);
+  const name = escapeHtml(emoteName(id));
+  if (!e || !e.img) return `<span class="cd-gacha-emote-name">${name}</span>`;
+  return `<span class="cd-gacha-emote" title="${name}"><img src="${escapeHtml(e.img)}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true;this.parentNode.nextElementSibling.hidden=false"></span><span class="cd-gacha-emote-name" hidden>${name}</span>`;
+}
 
 export function gachaHtml() {
   load();
   const done = doc.log.filter(x => x.done).length;
   const c = current;
   const rows = [
-    [t('場所', 'Place'), c ? L(PLACE_POOL.find(p => p.id === c.place)) : ''],
-    [t('時間帯', 'Time'), c ? L(TIMES[c.time]) : ''],
-    [t('ポーズ', 'Pose'), c ? emoteName(c.emoteId) : ''],
-    [t('構図', 'Framing'), c ? L(COMPS[c.comp]) : ''],
-    [t('人数', 'Who'), c ? L(PEOPLE[c.people]) : ''],
+    // [見出し, 中身のHTML]（エモートだけアイコンのHTML、ほかは文字）
+    [t('場所', 'Place'), c ? escapeHtml(L(PLACE_POOL.find(p => p.id === c.place))) : ''],
+    [t('時間帯', 'Time'), c ? escapeHtml(L(TIMES[c.time])) : ''],
+    [t('エモート', 'Emote'), c ? emoteIconHtml(c.emoteId) : ''],
+    [t('構図', 'Framing'), c ? escapeHtml(L(COMPS[c.comp])) : ''],
+    [t('人数', 'Who'), c ? escapeHtml(L(PEOPLE[c.people])) : ''],
   ];
   return `<section class="cd-gacha${gachaOpen ? ' is-open' : ''}">
     <button type="button" class="cd-gacha-head" data-act="gacha-toggle" aria-expanded="${gachaOpen}">
@@ -59,8 +67,8 @@ export function gachaHtml() {
       <svg class="inline-icon cd-gacha-chev" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg>
     </button>
     ${gachaOpen ? `<div class="cd-gacha-body">
-      ${c ? `<dl class="cd-gacha-list">${rows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('')}</dl>`
-        : `<p class="fun-hint">${t('場所・時間帯・ポーズ・構図・人数をくじで決めます。いつもと違う1枚が撮れるかもしれません。', 'Draw a random place, time, pose, framing and company for your next photo.')}</p>`}
+      ${c ? `<dl class="cd-gacha-list">${rows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`
+        : `<p class="fun-hint">${t('場所・時間帯・エモート・構図・人数をくじで決めます。いつもと違う1枚が撮れるかもしれません。', 'Draw a random place, time, emote, framing and company for your next photo.')}</p>`}
       <div class="cd-gacha-actions">
         <button type="button" class="fun-btn small primary" data-act="gacha-roll"><svg class="inline-icon" width="13" height="13"><use href="#i-dice"/></svg>${c ? t('引きなおす', 'Draw again') : t('お題を引く', 'Draw')}</button>
         ${c ? `<button type="button" class="fun-btn small" data-act="gacha-done"><svg class="inline-icon" width="13" height="13"><use href="#i-check"/></svg>${t('撮れた！', 'Got it!')}</button>` : ''}
