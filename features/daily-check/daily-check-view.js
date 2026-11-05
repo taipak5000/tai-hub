@@ -21,6 +21,7 @@ import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
 import { ptParts, ptToReal } from '../../js/pacific-time.js';
 import { shareSheetImage, savePrintPdf } from './daily-check-share.js';
+import { LAB_TOOLS, labRoute } from '../lab/lab-common.js';
 
 const STYLE_LINK_ID = 'daily-check-view-styles';
 const SHEETS_KEY = 'dailyCheckSheets_v1';
@@ -455,6 +456,7 @@ function render() {
       ${styling ? stylePanelHtml(sheet) : ''}
       ${paperHtml(sheet, { mode: editing ? 'edit' : 'screen' })}
       ${editing ? sheetAdminHtml() : ''}
+      ${embedded ? '' : labLinksHtml()}
       ${embedded ? '' : `<footer class="dc-footer">
         <span>${escapeHtml(t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</span><br>
         <span>${escapeHtml(t('作成・ご意見:', 'Created by / feedback:'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(t('リクエストフォーム', 'Request form'))}</a><br>
@@ -462,6 +464,14 @@ function render() {
       </footer>`}
     </div>
     <div class="dc-print-area" aria-hidden="true"></div>`;
+}
+
+// 🧪 試作中の機能への入口（非公開の機能はここからだけ開ける。「今日やること」に埋め込んだ時は出さない）
+function labLinksHtml() {
+  return `<section class="dc-lab">
+    <h2 class="dc-lab-title">${escapeHtml(t('試作中の機能', 'Lab'))}</h2>
+    <div class="dc-lab-grid">${LAB_TOOLS.map(x => `<a class="dc-lab-link" href="#/${labRoute(x.id)}"><svg class="inline-icon" width="18" height="18" aria-hidden="true"><use href="#${x.icon}"/></svg><span><b>${escapeHtml(t(x.ja, x.en))}</b><small>${escapeHtml(t(x.desc.ja, x.desc.en))}</small></span></a>`).join('')}</div>
+  </section>`;
 }
 
 function tabsHtml(sheet) {

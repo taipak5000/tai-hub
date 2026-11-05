@@ -1,0 +1,37 @@
+/* ================================================================
+   季節の期間（シーズンアルバム用。features/lab/season-album）。出典: SkyGame-Data（Silverfeelin氏, MIT License）の seasons。
+   日付は太平洋時間の暦日（開始日〜終了日）。新しい季節が始まったら末尾に足す。
+   ================================================================ */
+export const SEASON_DATES = [
+  { en: "Season of Gratitude", ja: "感謝の季節", start: '2019-07-19', end: '2019-09-02' },
+  { en: "Season of Lightseekers", ja: "光の探求者の季節", start: '2019-09-23', end: '2019-11-10' },
+  { en: "Season of Belonging", ja: "想いを編む季節", start: '2019-11-18', end: '2020-01-12' },
+  { en: "Season of Rhythm", ja: "リズムが弾ける季節", start: '2020-01-24', end: '2020-04-05' },
+  { en: "Season of Enchantment", ja: "魔法の季節", start: '2020-04-20', end: '2020-06-21' },
+  { en: "Season of Sanctuary", ja: "楽園の季節", start: '2020-07-13', end: '2020-09-20' },
+  { en: "Season of Prophecy", ja: "預言者の季節", start: '2020-10-05', end: '2020-12-13' },
+  { en: "Season of Dreams", ja: "夢かなう季節", start: '2021-01-04', end: '2021-03-14' },
+  { en: "Season of Assembly", ja: "大樹に集う季節", start: '2021-04-05', end: '2021-06-13' },
+  { en: "Season of The Little Prince", ja: "星の王子さまの季節", start: '2021-07-06', end: '2021-09-19' },
+  { en: "Season of Flight", ja: "羽ばたく季節", start: '2021-10-04', end: '2021-12-19' },
+  { en: "Season of Abyss", ja: "深淵の季節", start: '2022-01-17', end: '2022-03-27' },
+  { en: "Season of Performance", ja: "表現者たちの季節", start: '2022-04-11', end: '2022-06-26' },
+  { en: "Season of Shattering", ja: "砕ケル闇ノ季節", start: '2022-07-11', end: '2022-09-26' },
+  { en: "Season of AURORA", ja: "AURORAの季節", start: '2022-10-17', end: '2023-01-02' },
+  { en: "Season of Remembrance", ja: "追慕の季節", start: '2023-01-16', end: '2023-04-02' },
+  { en: "Season of Passage", ja: "ならいの季節", start: '2023-04-17', end: '2023-07-02' },
+  { en: "Season of Moments", ja: "瞬きの季節", start: '2023-07-17', end: '2023-10-01' },
+  { en: "Season of Revival", ja: "復古の季節", start: '2023-10-16', end: '2023-12-31' },
+  { en: "Season of the Nine-Colored Deer", ja: "九色の鹿の季節", start: '2024-01-15', end: '2024-03-31' },
+  { en: "Season of Nesting", ja: "巣づくりの季節", start: '2024-04-15', end: '2024-06-30' },
+  { en: "Season of Duets", ja: "重なる音色の季節", start: '2024-07-15', end: '2024-09-29' },
+  { en: "Season of Moomin", ja: "ムーミンの季節", start: '2024-10-14', end: '2024-12-29' },
+  { en: "Season of Radiance", ja: "光に染まる季節", start: '2025-01-20', end: '2025-04-06' },
+  { en: "Season of the Blue Bird", ja: "青い鳥の季節", start: '2025-04-21', end: '2025-07-06' },
+  { en: "Season of The Two Embers - Part 1", ja: "ふたつの灯火の季節　前編", start: '2025-07-21', end: '2025-10-05' },
+  { en: "Season of Migration", ja: "渡りの季節", start: '2025-10-20', end: '2026-01-04' },
+  { en: "Season of Lightmending", ja: "光の修繕者の季節", start: '2026-01-16', end: '2026-04-02' },
+  { en: "Season of Carnival", ja: "カーニバルの季節", start: '2026-04-17', end: '2026-07-02' },
+  { en: "Dear Van Gogh", ja: "親愛なるファン・ゴッホへ", start: '2026-07-17', end: '2026-10-01' },
+  { en: "Season of Pearl", ja: "遥かなる真珠の季節", start: '2026-10-16', end: '2026-12-31' },
+];

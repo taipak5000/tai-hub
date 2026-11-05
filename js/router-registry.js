@@ -148,6 +148,14 @@ export const ROUTES = {
   'wish-plan': lazyToolEntry(() => import('../features/wish-plan/wish-plan-view.js'), 'ほしいもの計画', 'Wishlist Plan'),
   'coord-diary': lazyToolEntry(() => import('../features/coord-diary/coord-diary-view.js'), 'コーデ日記', 'Outfit Diary'),
   stamps: lazyToolEntry(() => import('../features/stamps/stamps-view.js'), 'スタンプ帳', 'Stamp Book'),
+  // 🧪 試作中の機能（非公開。features/lab/）。入口はデイリーチェックシート単体のページ（#/daily-check）の「試作中の機能」だけ
+  'lab-mood': { ...lazyToolEntry(() => import('../features/lab/mood-view.js'), '気分カレンダー', 'Mood Calendar'), hidden: true },
+  'lab-capsule': { ...lazyToolEntry(() => import('../features/lab/capsule-view.js'), 'タイムカプセル', 'Time Capsule'), hidden: true },
+  'lab-piggy': { ...lazyToolEntry(() => import('../features/lab/piggy-view.js'), 'キャンドル貯金箱', 'Candle Jar'), hidden: true },
+  'lab-oshi': { ...lazyToolEntry(() => import('../features/lab/oshi-view.js'), '推し精霊', 'Favorite Spirits'), hidden: true },
+  'lab-stickers': { ...lazyToolEntry(() => import('../features/lab/stickers-view.js'), 'シール帳', 'Sticker Book'), hidden: true },
+  'lab-photo-gacha': { ...lazyToolEntry(() => import('../features/lab/photo-gacha-view.js'), '撮影お題ガチャ', 'Photo Prompt Gacha'), hidden: true },
+  'lab-season-album': { ...lazyToolEntry(() => import('../features/lab/season-album-view.js'), 'シーズンアルバム', 'Season Album'), hidden: true },
   // 🧪 試作中（非公開）。URL（#/daily-check）を知っている人だけが開ける。関連ツールの一覧（site-links）には
   // 載せておらず、hidden: true で「起動時に開くツール」の選択肢からも外す。公開する時はhiddenを外してsite-linksへ足す
   'daily-check': { ...lazyToolEntry(() => import('../features/daily-check/daily-check-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
