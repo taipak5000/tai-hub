@@ -13,14 +13,14 @@ import { SITE_LINK_TOOLS } from './site-links-data.js';
 // afterId の直後に差し込む。
 const HUB_ONLY_TOOLS = [
   { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', badgeTest: true },
-  // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）
-  { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', badgeTest: true },
-  { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: 'ふりかえり', en: 'Recap', badgeTest: true },
+  // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）。星紡ぎカードの兄弟機能として、その下に並べる（2026-11-06〜）
+  { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', child: true },
+  { id: 'recap', afterId: 'friends', icon: 'i-calendar', ja: 'ふりかえり', en: 'Recap', child: true },
+  { id: 'titles', afterId: 'recap', icon: 'i-trophy', ja: '称号一覧', en: 'Titles', child: true },
   // 第2弾（2026-11-06）
   // child: true＝親（afterIdのツール）の兄弟機能として、親のすぐ下に少し字下げして並べる（testの印があっても最後へ回さない）
   { id: 'coord-diary', afterId: 'item', icon: 'i-hanger', ja: 'コーデ日記', en: 'Outfit Diary', child: true },
   { id: 'wish-plan', afterId: 'coord-diary', icon: 'i-cart', ja: 'ほしいもの計画', en: 'Wishlist Plan', child: true },
-  { id: 'titles', afterId: 'tai-card', icon: 'i-trophy', ja: '称号一覧', en: 'Titles', badgeTest: true },
 ];
 
 let tools = null;
