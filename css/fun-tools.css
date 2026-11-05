@@ -612,3 +612,26 @@
   .coord-diary-view .cd-gacha { border-color: var(--hub-text-2); }
   .coord-diary-view .cd-gacha-head { color: var(--hub-text); }
 }
+
+/* 📣 Xに添付するコーデの画像（画面の外で組み立てて画像にする。coord-diary-view.js の coordCardHtml） */
+.coord-diary-view .cd-share-stage { position: fixed; left: -10000px; top: 0; pointer-events: none; }
+.coord-diary-view .cd-share-card {
+  width: 520px; padding: 22px; border-radius: 0; background: linear-gradient(160deg, #fff7fb, #f1ecff); color: #3b3560;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+.coord-diary-view .cd-share-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.coord-diary-view .cd-share-head b { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.coord-diary-view .cd-share-head span { padding: 2px 10px; border-radius: 999px; background: rgba(133, 116, 219, 0.14); font-size: 13px; font-weight: 700; }
+.coord-diary-view .cd-share-photo { margin-bottom: 14px; border-radius: 16px; overflow: hidden; background: #e9e4f7; }
+.coord-diary-view .cd-share-photo img { display: block; width: 100%; max-height: 380px; object-fit: cover; }
+.coord-diary-view .cd-share-icons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.coord-diary-view .cd-share-icons.is-few { grid-template-columns: repeat(4, 1fr); }
+.coord-diary-view .cd-share-icon {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 53, 96, 0.08);
+}
+.coord-diary-view .cd-share-icon img { width: 78%; height: 78%; object-fit: contain; }
+.coord-diary-view .cd-share-icon b { padding: 4px; font-size: 11px; line-height: 1.3; text-align: center; color: #6c63d8; }
+.coord-diary-view .cd-share-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
+.coord-diary-view .cd-share-foot span { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: #8574db; }
+.coord-diary-view .cd-share-foot small { font-size: 8.5px; color: rgba(59, 53, 96, 0.55); }

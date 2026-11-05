@@ -26,8 +26,15 @@ function isMobileDevice() {
 }
 export function safeFilename(str) { return String(str).replace(/[\\/:*?"<>|]/g, '_').trim() || 'tai-hub'; }
 
+/** el を画像（PNGのBlob）にするだけ（保存・共有は呼び出し側）。外部の画像（アイテムのアイコン）はCORSで読む */
+export async function renderElementBlob(el, bg = '#ffffff') {
+  await ensureHtml2Canvas();
+  const canvas = await window.html2canvas(el, { backgroundColor: bg, scale: 2, useCORS: true, logging: false });
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
 /**
- * el を画像にする。bg は背景色（透明な所を埋める）。
+ * el を画像にして保存・共有する。bg は背景色（透明な所を埋める）。
  * 戻り値: 'shared'（共有シートで送った）| 'saved'（保存した）| 'cancelled'
  */
 export async function saveElementImage(el, { filename, text, bg = '#ffffff' } = {}) {

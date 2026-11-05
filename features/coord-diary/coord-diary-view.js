@@ -16,7 +16,7 @@ import { nsKey } from '../../js/state.js';
 import { notifyChanged } from '../../js/notices.js';
 import { CATEGORY_REGISTRY } from '../item/data/categories.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
-import { toast } from '../shared/share-image.js';
+import { toast, renderElementBlob } from '../shared/share-image.js';
 import { PLACES, PLACE_IDS, placeName } from '../shared/places.js';
 import { putPhoto, getPhoto, deletePhoto, todayStr } from '../friends/friends-state.js';
 import { albumsHtml } from './season-album.js';
@@ -239,25 +239,20 @@ function entryHtml(e) {
 }
 
 /* ── 📣 Xでポスト ─────────────────────────────────────────────
-   日記の中身（日付・場所・アイテム・メモ）から投稿文を作る。Xの文字数（全角は2として280まで）に収まるよう、
-   アイテムとメモを後ろから短くする。写真がある時、スマホでは共有シートで写真ごと渡し（Xを選べば写真付きで投稿できる）、
-   それ以外は投稿画面を開いて写真を端末に保存する（Xの投稿画面へ写真は自動で付けられないため、手で添付する）。 */
+   投稿文は日付・場所・メモとハッシュタグ・URL（Xの文字数＝全角は2として280まで。メモを後ろから短くする）。
+   着ているアイテムは名前を並べず、アイコンをまとめた1枚の画像にして添付する（写真があれば画像の上に入れる）。
+   スマホは共有シートで画像ごと渡し（Xを選べば画像付きで投稿できる）、それ以外は投稿画面を開いて画像を端末に保存する
+   （Xの投稿画面へ画像は自動で付けられないため、手で添付してもらう）。 */
 const X_ICON = '<svg class="cd-x-ic" width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.32l4.37 5.78zm-1.08 16.18h1.7L7.4 4.73H5.58z"/></svg>';
 const POST_TAGS = '#Skyコーデ日記 #Sky星を紡ぐ子どもたち';
 function xLength(str) { return [...str].reduce((n, ch) => n + (ch.codePointAt(0) > 0x10FF ? 2 : 1), 0); }
 function buildPostText(e) {
   const [, m, d] = e.date.split('-').map(Number);
   const head = t(`${m}月${d}日のコーデ`, `My outfit on ${m}/${d}`) + (e.place ? t(`（${placeName(e.place, CURRENT_LANG)}）`, ` (${placeName(e.place, CURRENT_LANG)})`) : '');
-  const allItems = e.items.map(x => itemInfo(x).name);
-  let shown = allItems.length;
   let memo = e.memo.trim();
-  const compose = () => {
-    const list = allItems.slice(0, shown).join(t('・', ', ')) + (shown < allItems.length ? t(' ほか', ' and more') : '');
-    return [head, shown ? t('着ているもの: ', 'Wearing: ') + list : '', memo, POST_TAGS].filter(Boolean).join('\n');
-  };
+  const compose = () => [head, memo, POST_TAGS].filter(Boolean).join('\n');
   const budget = 280 - 24; // URLは23文字として数えられる（＋改行）
   while (xLength(compose()) > budget && memo) memo = memo.length > 12 ? memo.slice(0, -8).trimEnd() + '…' : '';
-  while (xLength(compose()) > budget && shown > 1) shown--;
   return `${compose()}\n${HUB_BASE_URL}`;
 }
 function isMobileDevice() {
@@ -265,12 +260,46 @@ function isMobileDevice() {
   const ua = navigator.userAgent || '';
   return /Android|iPhone|iPod|iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
 }
+// 投稿に添付する画像（写真＋着ているアイテムのアイコン）。画面の外に組み立てて画像にする
+function coordCardHtml(e, photoUrl) {
+  const [y, m, d] = e.date.split('-').map(Number);
+  const items = e.items.map(itemInfo);
+  return `<div class="cd-share-card">
+    <div class="cd-share-head"><b>${t(`${m}月${d}日のコーデ`, `Outfit · ${m}/${d}/${y}`)}</b>${e.place ? `<span>${escapeHtml(placeName(e.place, CURRENT_LANG))}</span>` : ''}</div>
+    ${photoUrl ? `<div class="cd-share-photo"><img src="${photoUrl}" alt=""></div>` : ''}
+    ${items.length ? `<div class="cd-share-icons${items.length <= 4 ? ' is-few' : ''}">${items.map(it => `<span class="cd-share-icon">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" crossorigin="anonymous" referrerpolicy="no-referrer">` : `<b>${escapeHtml(it.name.slice(0, 6))}</b>`}</span>`).join('')}</div>` : ''}
+    <div class="cd-share-foot"><span>tai-hub ${t('コーデ日記', 'Outfit Diary')}</span><small>© Sky: Children of the Light Icons by contributors of the Sky: Children of the Light wiki</small></div>
+  </div>`;
+}
+async function buildCoordImage(e) {
+  if (!e.items.length && !e.photoId) return null;
+  let photoUrl = '';
+  if (e.photoId) { try { const b = await getPhoto(e.photoId); if (b) photoUrl = URL.createObjectURL(b); } catch (err) { photoUrl = ''; } }
+  const stage = document.createElement('div');
+  stage.className = 'cd-share-stage';
+  stage.innerHTML = coordCardHtml(e, photoUrl);
+  root().appendChild(stage);
+  try {
+    // 画像を読み終えてから写す（読めないアイコンは消して、空のマスにする）
+    await Promise.all([...stage.querySelectorAll('img')].map(img => (img.complete && img.naturalWidth ? null : new Promise(res => { img.onload = res; img.onerror = () => { img.remove(); res(); }; setTimeout(res, 6000); }))));
+    const bg = getComputedStyle(stage.querySelector('.cd-share-card')).backgroundColor || '#ffffff';
+    return await renderElementBlob(stage.querySelector('.cd-share-card'), bg);
+  } finally {
+    stage.remove();
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+  }
+}
 async function postEntry(e) {
   const text = buildPostText(e);
   let blob = null;
-  if (e.photoId) { try { blob = await getPhoto(e.photoId); } catch (err) { blob = null; } }
+  if (e.items.length || e.photoId) {
+    toast(t('画像を作っています…', 'Creating the image…'), 8000);
+    try { blob = await buildCoordImage(e); } catch (err) { blob = null; }
+    toast(null);
+  }
+  const filename = `coord-${e.date}.png`;
   if (blob && isMobileDevice() && navigator.share && navigator.canShare) {
-    const file = new File([blob], `coord-${e.date}.jpg`, { type: blob.type || 'image/jpeg' });
+    const file = new File([blob], filename, { type: 'image/png' });
     if (navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], text }); return; } catch (err) { if (err && err.name === 'AbortError') return; }
     }
@@ -279,10 +308,12 @@ async function postEntry(e) {
   if (blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `coord-${e.date}.jpg`;
+    a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    toast(t('写真を端末に保存しました。Xの投稿画面で添付してください', 'Photo saved — attach it in the X post'), 4200);
+    toast(t('コーデの画像を端末に保存しました。Xの投稿画面で添付してください', 'Outfit image saved — attach it in the X post'), 4500);
+  } else if (e.items.length || e.photoId) {
+    toast(t('画像を作れませんでした。文章だけで投稿画面を開きました', 'Could not create the image; opened the post with text only'), 4000);
   }
 }
 
