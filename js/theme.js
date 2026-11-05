@@ -326,6 +326,7 @@ const VIEW_ROOTS = [
   '.item-view', '.emote-view', '.share-view', '.nomacan-view', '.nomacan-pro-view', '.star-candle-view',
   '.wings-view', '.companion-view', '.spirit-catalog-view', '.tai-revisit-view', '.tai-score-view',
   '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view', '.daily-check-view',
+  '.bingo-view', '.friends-view', '.recap-view',
 ];
 
 // 面（背景・カード・区切り・文字）の共通トークンを、ツールごとの変数名へ割り当てる
@@ -443,7 +444,7 @@ function surfaceRules(p) {
   out.push(rule(R, {
     // モーダル・引き出しなどハブ共通の面は、質感に関わらず常に不透明にして文字を読みやすく保つ
     '--hub-bg': p.bg, '--hub-card': p.card, '--hub-card-glass': p.glass, '--hub-sep': p.sep,
-    '--hub-accent': p.accentFill, '--hub-accent-bg': p.accentBg,
+    '--hub-accent': p.accentFill, '--hub-accent-bg': p.accentBg, '--hub-accent-ink': p.accentInk,
     '--hub-text': p.text, '--hub-text-2': p.text2, '--hub-text-3': p.text3,
     '--hub-r': p.r + 'px', '--hub-r-sm': p.rs + 'px',
   }));

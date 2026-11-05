@@ -231,6 +231,21 @@ const landingPoint = currentY + project(v);
 タイルや一覧の行のように**数が多い要素には掛けない**（重くなる）。モーダル/引き出しは常に不透明
 （読みやすさ優先）。`prefers-reduced-transparency`/`prefers-contrast`向けの上書きは`buildCss`が自動で出力する。
 
+## 🔔 お知らせ・まとめてさがす・楽しむためのツール（2026-11-05追加）
+
+- **お知らせ**（ドックの「お知らせ」。`js/notices.js`が集め、`js/chrome/notice-modal.js`が表示）: 旅の精霊の来訪・季節やイベントの終了/開始・
+  次回アップデート・フレンドの記念日・ビンゴの新しい週・年末の「一年のふりかえり」をまとめて出す。既読はプロフィールごと（`noticesSeen_v1`）。
+  **旅の精霊を更新する時は、`features/item/data/season-data.js`の`REVISIT_SPIRIT_SCHEDULES`に`spiritJa`/`spiritEn`も一緒に書き換えること**
+  （再訪精霊データベースの「待っている」印＝`revisitWaitlist_v1`と英語名で照らし合わせる。`items`は「欲しいもの」との照合に使う）。
+- **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: アイテム・楽譜・エモート・精霊・ツール名を横断検索する。
+  データは開いた時に読み込む（精霊ツリーのデータは1.8MBあるので起動時には読まない）。
+- **週替わりビンゴ**（`features/bingo/`）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
+  **一年のふりかえり**（`features/recap/`）。CSSは3つ共通で`css/fun-tools.css`、色は`--hub-*`トークンだけを使う（着せ替えに追従）。
+- アクセント色を**文字**に使う時は`--hub-accent`ではなく`--hub-accent-ink`を使う（着せ替え中は`theme.js`が背景に対して4.5:1を保証した色を入れる。
+  `--hub-accent`は塗り用で、淡い黄色などのテーマでは文字にすると読めなくなる）。
+- 精霊ツリーの楽譜ノードは、`spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける（52件すべて）。
+  楽譜だけ旧キー`musicSheets`にしかデータが無い人がいるので、読み書きは`readMusicOwnedRaw()`を通す。
+
 ## 🩹 コメント内でクラス名を`/`区切りで列挙すると、CSSコメントが途中で終わる
 
 **日本語のdocコメント内で「このクラス群は使われなくなった」のような説明を

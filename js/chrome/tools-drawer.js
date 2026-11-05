@@ -54,7 +54,10 @@ function renderNavInto(nav) {
     nav.innerHTML = `<p style="font-size:12px;color:var(--hub-text-2);padding:4px 12px;">${t('ツール一覧を読み込めませんでした', 'Could not load the tool list')}</p>`;
     return;
   }
-  nav.innerHTML = links.map(s => {
+  nav.innerHTML = `
+    <button type="button" class="hub-search-open js-hub-search">
+      <svg class="inline-icon" width="17" height="17"><use href="#i-search"/></svg><span>${t('まとめてさがす', 'Search everything')}</span>
+    </button>` + links.map(s => {
     const { href, hubRoute } = siteLinkHref(s);
     return `<a class="pf-drawer-link" href="${href}" data-hub-route="${hubRoute}">
       <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
@@ -67,6 +70,10 @@ function renderNavInto(nav) {
       </button>
       <p class="hub-refresh-hint">${t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
     </div>`;
+  nav.querySelector('.js-hub-search').addEventListener('click', () => {
+    close();
+    import('./search-modal.js').then(m => m.open());
+  });
   nav.querySelector('.js-hub-refresh').addEventListener('click', e => {
     const btn = e.currentTarget;
     btn.disabled = true;

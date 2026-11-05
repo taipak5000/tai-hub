@@ -13,6 +13,7 @@
   --hub-card-glass: rgba(255, 255, 255, 0.72);
   --hub-sep: rgba(60, 60, 67, 0.12);
   --hub-accent: #6C63D8;
+  --hub-accent-ink: #5B52C9; /* アクセント色の文字（淡い背景の上でも読める濃さ。着せ替え中はjs/theme.jsが計算して入れる） */
   --hub-accent-bg: rgba(108, 99, 216, 0.10);
   --hub-text: #1C1C1E;
   --hub-text-2: #8E8E93;
@@ -27,6 +28,7 @@
   --hub-card-glass: rgba(28, 27, 34, 0.68);
   --hub-sep: rgba(255, 255, 255, 0.14);
   --hub-accent: #9B93FF;
+  --hub-accent-ink: #A9A2FF;
   --hub-accent-bg: rgba(155, 147, 255, 0.16);
   --hub-text: #F2F2F7;
   --hub-text-2: #98989D;

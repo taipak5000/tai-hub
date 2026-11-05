@@ -70,6 +70,9 @@ export const REVISIT_SPIRIT_SCHEDULES = [
     // 入れ替わるたびにitemsとanchorStart/anchorEndを直近の実際の来訪に合わせて更新する
     // （intervalDaysは周期そのものなので変更不要）。
     // 直近の来訪(2026-11-05〜11-09)は「ぽんぽんする若者」(head_accessory_001＝イヤーマフ, portable_item_012＝ウクレレ)。
+    // spiritJa/spiritEn はお知らせ（js/notices.js）が「待っている精霊」と照らし合わせるのに使う。精霊が入れ替わったら一緒に更新する
+    spiritJa: 'ぽんぽんする若者',
+    spiritEn: 'Hairtousle Teen',
     items: [
       { catKey: 'head_accessory', id: 'head_accessory_001' },
       { catKey: 'portable_item', id: 'portable_item_012' },

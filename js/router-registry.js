@@ -139,6 +139,10 @@ export const ROUTES = {
   'data-transfer': lazyToolEntry(() => import('../features/data-transfer/data-transfer-view.js'), 'データ引継ぎ', 'Data Transfer'),
   'tai-info': lazyToolEntry(() => import('../features/tai-info/tai-info-view.js'), '設定・クレジット', 'Settings & Credits'),
   profile: lazyToolEntry(() => import('../features/profile/profile-view.js'), '作者プロフィール', 'Creator Profile'),
+  // 🎈 ゲームの記録とは別の「楽しむための」ツール（2026-11-05追加）
+  bingo: lazyToolEntry(() => import('../features/bingo/bingo-view.js'), '週替わりビンゴ', 'Weekly Bingo'),
+  friends: lazyToolEntry(() => import('../features/friends/friends-view.js'), 'フレンド記念日', 'Friend Anniversaries'),
+  recap: lazyToolEntry(() => import('../features/recap/recap-view.js'), '一年のふりかえり', 'Year in Review'),
   // 🧪 試作中（非公開）。URL（#/daily-check）を知っている人だけが開ける。関連ツールの一覧（site-links）には
   // 載せておらず、hidden: true で「起動時に開くツール」の選択肢からも外す。公開する時はhiddenを外してsite-linksへ足す
   'daily-check': { ...lazyToolEntry(() => import('../features/daily-check/daily-check-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },

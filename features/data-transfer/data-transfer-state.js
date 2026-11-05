@@ -91,6 +91,11 @@ export const SITE_CATALOG = [
     'emoteCompletionHistory_v1', 'emoteCompletion_v1', 'emoteCompletion_history_v1', 'completionHistory_v1',
   ] },
   // 🩹 2026-11-05に追加: デイリーチェックシート（まだ一般公開していないため hidden:true。データは常に引き継ぐ）
+  { id: 'bingo', label: '週替わりビンゴ', labelEn: 'Weekly Bingo', namespaced: true, keys: ['weeklyBingo_v1'] },
+  // 写真はIndexedDBにあり、バックアップ（このJSON）には含めない（記録と一言・フレンドの情報だけ移る）
+  { id: 'friends', label: 'フレンド記念日・フォト日記', labelEn: 'Friend Anniversaries & Photo Diary', namespaced: true, keys: ['friendsDoc_v1'] },
+  // お知らせ（js/notices.js）: 再訪精霊データベースの「待っている」精霊と、既読にしたお知らせ
+  { id: 'notices', label: 'お知らせ・待っている精霊', labelEn: 'Notices & Waitlist', namespaced: true, hidden: true, keys: ['revisitWaitlist_v1', 'noticesSeen_v1'] },
   { id: 'daily-check', label: 'デイリーチェックシート', labelEn: 'Daily Checklist', namespaced: true, hidden: true, keys: [
     'dailyCheckSheets_v1', 'dailyCheckState_v1', 'dailyCheckLog_v1',
   ] },

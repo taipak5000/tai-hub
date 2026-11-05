@@ -11,6 +11,7 @@
    - Escape: 最前面の開いているオーバーレイを1つ閉じる（常に有効）
    - ?      : 表示設定モーダルを開く（sky_shortcuts_enabled有効時のみ）
    - d/D    : テーマを切り替える（同上）
+   - /      : ツール横断検索を開く（同上）
    ================================================================ */
 import { getShortcutsEnabled, toggleTheme } from './state.js';
 
@@ -48,6 +49,12 @@ async function handleGlobalKeydown(e) {
     e.preventDefault();
     const settingsModal = await import('./chrome/settings-modal.js');
     settingsModal.open();
+    return;
+  }
+  if (e.key === '/') {
+    e.preventDefault();
+    const searchModal = await import('./chrome/search-modal.js');
+    searchModal.open();
     return;
   }
   if (e.key === 'd' || e.key === 'D') {

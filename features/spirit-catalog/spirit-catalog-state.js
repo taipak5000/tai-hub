@@ -43,6 +43,7 @@ import { REVISIT_SPIRIT_SCHEDULES } from '../item/data/season-data.js';
 import { ITEM_COST_DATA } from '../item/data/cost-data.js';
 import { GENERIC_ITEM_IMG } from './data/node-image-map.js';
 import { EMOTES } from '../emote/data/emotes.js';
+import { MUSIC_SHEETS } from '../item/data/music-sheets-data.js';
 import { cycleIndexAt, cycleBounds } from '../../js/pacific-time.js';
 
 /* ================================================================
@@ -139,6 +140,41 @@ const TYPE_GROUP_ORDER = { Guide: 0, Special: 1, Elder: 2, Regular: 3, Season: 4
 })();
 
 export { SPIRIT_TREE_DATA };
+
+/* 🎼 楽譜ノードとアイテム所持管理の楽譜（gameItems_music_sheet）の紐づけ（2026-11-05）。
+   ツリーデータ（SkyGame-Data由来）の楽譜ノードにはitemCatKeyが無かったため、ここで実行時に付ける。
+   照合は「精霊の英語名＋曲名」→「曲名」→「楽譜46」のような番号表記→「奏N」（奏の音楽堂）の順。
+   楽譜は他のカテゴリと違い items/<cat>.js の画像データを持たないので、ITEM_CATS_FOR_TREE には入れず
+   getExternalOwnCache()・syncItemOwned() で個別に扱う */
+export const MUSIC_CAT_KEY = 'music_sheet';
+(function linkMusicNodes() {
+  const norm = (str) => String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const byName = {};
+  MUSIC_SHEETS.forEach((m) => { (byName[norm(m.name)] = byName[norm(m.name)] || []).push(m); });
+  const byNum = {};
+  MUSIC_SHEETS.forEach((m) => { byNum[m.num] = m; });
+  SPIRIT_TREE_DATA.forEach((sp) => {
+    (sp.nodes || []).forEach((n) => {
+      if (n.itemType !== 'Music' || n.itemCatKey) return;
+      const cand = byName[norm(n.itemName)] || [];
+      let hit = cand.find((m) => m.spiritEn === sp.name) || cand[0];
+      if (!hit) hit = MUSIC_SHEETS.find((m) => m.spiritEn === sp.name && m.method === 'S');
+      if (!hit) {
+        const num = /Music Sheet (\d+)$/.exec(n.itemName || '');
+        const duet = /^Duet Sheet Music (\d+)$/.exec(n.itemName || '');
+        if (num) hit = byNum[num[1]];
+        else if (duet) hit = byNum['奏' + duet[1]];
+      }
+      if (hit) { n.itemCatKey = MUSIC_CAT_KEY; n.itemCostId = hit.id; }
+    });
+  });
+})();
+function readMusicOwnedRaw() {
+  try {
+    const raw = localStorage.getItem(nsKey('gameItems_' + MUSIC_CAT_KEY)) || localStorage.getItem(nsKey('musicSheets'));
+    return raw ? JSON.parse(raw) || {} : null;
+  } catch (_) { return null; }
+}
 export const spiritByGuid = {};
 SPIRIT_TREE_DATA.forEach((s) => { spiritByGuid[s.guid] = s; });
 
@@ -234,6 +270,7 @@ export function getExternalOwnCache() {
       itemOwnedByCat[catKey] = (d && d.itemOwned) || {};
     } catch (_) { itemOwnedByCat[catKey] = {}; }
   });
+  itemOwnedByCat[MUSIC_CAT_KEY] = (readMusicOwnedRaw() || {}).itemOwned || {};
   let emoteOwned = {};
   try { emoteOwned = JSON.parse(localStorage.getItem(nsKey('emoteOwned_v1'))) || {}; } catch (_) { /* noop */ }
 
@@ -453,7 +490,9 @@ export function syncItemOwned(node, nowUnlocked) {
   if (!node.itemCatKey || !node.itemCostId) return;
   const key = nsKey('gameItems_' + node.itemCatKey);
   let data;
-  try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch (_) { data = {}; }
+  // 楽譜は旧キー（musicSheets）にしかデータが無い人がいる。新キーを1件だけで作ると旧データが読まれなくなるので、旧キーから引き継ぐ
+  if (node.itemCatKey === MUSIC_CAT_KEY) data = readMusicOwnedRaw() || {};
+  else { try { data = JSON.parse(localStorage.getItem(key)) || {}; } catch (_) { data = {}; } }
   if (!data.itemOwned) data.itemOwned = {};
   if (nowUnlocked) { data.itemOwned[node.itemCostId] = true; } else { delete data.itemOwned[node.itemCostId]; }
   localStorage.setItem(key, JSON.stringify(data));
@@ -509,6 +548,20 @@ export function migrateNodeItemLinks20261105() {
   SPIRIT_TREE_DATA.forEach((s) => {
     s.nodes.forEach((n) => {
       if (n.itemCatKey && n.itemCostId && unlocked[n.guid]) syncItemOwned(n, true);
+    });
+  });
+  try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
+}
+
+/* 🎼 楽譜ノードの紐づけ（上のlinkMusicNodes）より前に、このツールで解放していた楽譜ノードの分を
+   1回だけアイテム所持管理の楽譜へ所持として反映する（追加のみ） */
+export function migrateMusicNodeLinks20261105() {
+  const flagKey = nsKey('musicNodeLinksMigrated_20261105');
+  try { if (localStorage.getItem(flagKey)) return; } catch (_) { return; }
+  const unlocked = getUnlockedMap();
+  SPIRIT_TREE_DATA.forEach((s) => {
+    s.nodes.forEach((n) => {
+      if (n.itemCatKey === MUSIC_CAT_KEY && n.itemCostId && unlocked[n.guid]) syncItemOwned(n, true);
     });
   });
   try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }

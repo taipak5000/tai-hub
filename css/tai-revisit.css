@@ -197,6 +197,17 @@
 .tai-revisit-view .tr-quick-btn:active { transform: scale(0.94); }
 
 /* 🌳 精霊ツリー管理との連携: 各カードのツリー進行度と「ツリーを管理」 */
+/* 🔔「待っている」印（js/notices.js。旅の精霊として来るとドックの「お知らせ」で知らせる） */
+.tai-revisit-view .tr-wait-btn {
+  margin-top: 8px; display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px;
+  border: 1px solid var(--sep); background: none; color: var(--text-2); font: inherit; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.02em; cursor: pointer;
+}
+.tai-revisit-view .tr-wait-btn .inline-icon { stroke: currentColor; vertical-align: 0; }
+.tai-revisit-view .tr-wait-btn.on { border-color: transparent; background: var(--cyan-bg); color: var(--cyan-d); }
+.tai-revisit-view .tr-wait-btn:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .tai-revisit-view .tr-wait-btn:active { transform: none; opacity: 0.7; } }
+@media (prefers-contrast: more) { .tai-revisit-view .tr-wait-btn { border-color: var(--text-2); color: var(--text); } }
 .tai-revisit-view .tr-tree { margin-top: 8px; min-height: 32px; }
 .tai-revisit-view .tr-tree-loading { display: block; font-size: 11px; line-height: 32px; color: var(--text-2); }
 .tai-revisit-view .tr-tree-btn {

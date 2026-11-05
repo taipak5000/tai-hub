@@ -46,6 +46,7 @@ import { REVISIT_DATA, NEVER_REVISITED_DATA } from './data/revisit-data.js';
 import { SPIRIT_ITEMS_MAP } from './data/spirit-items-map.js';
 import { SPIRIT_YOMI } from './data/spirit-yomi.js';
 import { AREA_JA, areaJa, SEASON_ORDER } from './data/revisit-meta.js';
+import { isWaiting, toggleWaiting } from '../../js/notices.js';
 
 const STYLE_LINK_ID = 'tai-revisit-view-styles';
 const ROUTE_BASE = '#/tai-revisit';
@@ -206,6 +207,13 @@ function isOngoingVisit(v) {
   return v.date <= todayStr && v.endDate >= todayStr;
 }
 function hasOngoingVisit(s) { return s.visits.some(isOngoingVisit); }
+
+// 🔔「待っている」印。付けた精霊が旅の精霊として来ると、ドックの「お知らせ」で知らせる（js/notices.js）
+function waitBtnHtml(nameEn) {
+  const on = isWaiting(nameEn);
+  const label = on ? (CURRENT_LANG === 'en' ? 'Waiting' : '待っています') : (CURRENT_LANG === 'en' ? 'Wait for this spirit' : '待っている');
+  return `<button type="button" class="tr-wait-btn${on ? ' on' : ''}" data-wait-en="${escapeHtml(nameEn)}" aria-pressed="${on}"><svg class="inline-icon" width="14" height="14"><use href="#i-bell"/></svg>${label}</button>`;
+}
 
 function spiritItemCount(nameEn) {
   const items = SPIRIT_ITEMS_MAP[nameEn];
@@ -557,7 +565,7 @@ function render() {
           ${spiritItemsHtml(s.nameEn)}
           <div class="visit-list">${chips}</div>
           <div class="visit-count">${rankBadge}${t('visitCountLine', { count: s.visits.length, days: daysSince(lastVisitEndDate(s)) })}</div>
-          ${treeSlotHtml(s.nameJa)}
+          <div class="tr-card-actions">${waitBtnHtml(s.nameEn)}${treeSlotHtml(s.nameJa)}</div>
         </div>
       </div>`;
   }).join('');
@@ -608,7 +616,7 @@ function renderNeverRevisited() {
           <span class="spirit-badge area">${escapeHtml(areaLabel(s.area))}</span>
         </div>
         ${spiritItemsHtml(s.nameEn)}
-        ${treeSlotHtml(s.nameJa)}
+        <div class="tr-card-actions">${waitBtnHtml(s.nameEn)}${treeSlotHtml(s.nameJa)}</div>
       </div>
     </div>`).join('');
   fillTreeSlots();
@@ -751,6 +759,11 @@ function wireEvents() {
   containerEl.addEventListener('click', (e) => {
     const btn = e.target.closest('.tr-tree-btn');
     if (btn) openTreeManager(btn);
+    const wait = e.target.closest('.tr-wait-btn');
+    if (wait) {
+      toggleWaiting(wait.dataset.waitEn);
+      wait.outerHTML = waitBtnHtml(wait.dataset.waitEn);
+    }
   });
   els.neverRevisitedSearchInput.addEventListener('input', renderNeverRevisited);
   els.neverRevisitedSeasonFilter.addEventListener('change', renderNeverRevisited);

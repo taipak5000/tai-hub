@@ -9,10 +9,14 @@
 import { ROUTES } from './router-registry.js';
 import { SITE_LINK_TOOLS } from './site-links-data.js';
 
-// 非公開のため一覧データ(site-links-data.js)には載せていない、tai-hub内でだけ使うツール。
+// 一覧データ(site-links-data.js。独立サイトのサイドバーと共有)には載せていない、tai-hub内でだけ使うツール。
 // afterId の直後に差し込む。
 const HUB_ONLY_TOOLS = [
   { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', badgeTest: true },
+  // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）
+  { id: 'bingo', afterId: 'tai-card', icon: 'i-grid', ja: '週替わりビンゴ', en: 'Weekly Bingo', badgeTest: true },
+  { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', badgeTest: true },
+  { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: '一年のふりかえり', en: 'Year in Review', badgeTest: true },
 ];
 
 let tools = null;

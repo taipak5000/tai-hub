@@ -153,6 +153,8 @@ function renderMain() {
     if (confirm(t('すべてのデータを削除します。この操作は取り消せません。よろしいですか？', 'This will erase ALL locally stored data. This cannot be undone. Continue?'))) {
       wipeAllData();
       wipeWallpapers();
+      // フォト日記の写真（features/friends/friends-state.js。IndexedDB）も一緒に消す
+      try { if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase('tai-hub-photos'); } catch (e) { /* noop */ }
       location.reload();
     }
   });
