@@ -555,120 +555,6 @@
 .fun-view .lab-back .inline-icon { stroke: currentColor; }
 .fun-view .lab-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-accent-ink); background: var(--hub-accent-bg); border-radius: 999px; padding: 2px 8px; }
 
-/* 気分カレンダー */
-.lab-mood-view .md-today { padding: 16px; border-radius: 20px; background: var(--hub-card); }
-.lab-mood-view .md-date { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 15px; font-weight: 800; margin-bottom: 12px; }
-.lab-mood-view .md-moods { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.lab-mood-view .md-mood {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 2px; border: 2px solid transparent; border-radius: 14px;
-  background: color-mix(in srgb, var(--mc) 18%, transparent); color: var(--hub-text); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
-}
-.lab-mood-view .md-face { font-size: 26px; line-height: 1; transition: transform 0.25s var(--fun-pop); }
-.lab-mood-view .md-mood.on { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 34%, transparent); }
-.lab-mood-view .md-mood.on .md-face { transform: scale(1.18); }
-.lab-mood-view .md-note { margin-top: 10px; }
-.lab-mood-view .md-year-head { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; font-size: 15px; }
-.lab-mood-view .md-year-head .fun-icon-btn:disabled { opacity: 0.3; }
-.lab-mood-view .md-grid { display: grid; grid-template-columns: 18px repeat(12, 1fr); gap: 2px; padding: 12px; border-radius: 16px; background: var(--hub-card); }
-.lab-mood-view .md-mh { font-size: 9.5px; font-weight: 700; text-align: center; color: var(--hub-text-2); }
-.lab-mood-view .md-dh { font-size: 8.5px; color: var(--hub-text-3); text-align: right; padding-right: 3px; line-height: 12px; }
-.lab-mood-view .md-px { height: 12px; padding: 0; border: 0; border-radius: 3px; background: var(--hub-sep); cursor: pointer; }
-.lab-mood-view .md-px.is-none { background: none; }
-.lab-mood-view .md-px.is-future { opacity: 0.35; cursor: default; }
-.lab-mood-view .md-px.sel { outline: 2px solid var(--hub-text); outline-offset: 1px; }
-.lab-mood-view .md-stats { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--hub-text-2); }
-.lab-mood-view .md-stats i, .lab-season-album-view .md-stats i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
-.fun-view .md-bar { display: flex; height: 10px; margin-top: 8px; border-radius: 5px; overflow: hidden; background: var(--hub-sep); }
-
-/* タイムカプセル */
-.lab-capsule-view .cp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
-.lab-capsule-view .cp-env {
-  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 130px; padding: 52px 16px 14px;
-  border: 0; border-radius: 14px; background: #fbf3e4; color: #5b4630; font: inherit; text-align: left; cursor: pointer; overflow: hidden;
-  box-shadow: 0 4px 14px rgba(91, 70, 48, 0.12);
-}
-[data-theme="dark"] .lab-capsule-view .cp-env { background: #3b3127; color: #f3e6d2; }
-.lab-capsule-view .cp-flap { position: absolute; left: 0; right: 0; top: 0; height: 44px; background: linear-gradient(to bottom right, transparent 49.5%, rgba(0, 0, 0, 0.06) 50%), linear-gradient(to bottom left, transparent 49.5%, rgba(0, 0, 0, 0.06) 50%); background-size: 50% 100%; background-position: left, right; background-repeat: no-repeat; }
-.lab-capsule-view .cp-seal { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #c8402f; font-size: 18px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
-.lab-capsule-view .cp-env.is-ready .cp-seal { animation: cpGlow 1.8s ease-in-out infinite; }
-.lab-capsule-view .cp-env.is-opened { opacity: 0.85; }
-.lab-capsule-view .cp-env.is-opened .cp-seal { background: #8e8e93; }
-@keyframes cpGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(200, 64, 47, 0.5); } 50% { box-shadow: 0 0 0 10px rgba(200, 64, 47, 0); } }
-.lab-capsule-view .cp-env.shake { animation: cpShake 0.4s ease; }
-@keyframes cpShake { 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
-.lab-capsule-view .cp-title { margin-top: 6px; font-size: 15px; font-weight: 800; line-height: 1.4; }
-.lab-capsule-view .cp-when { font-size: 12px; opacity: 0.8; }
-.lab-capsule-view .cp-letter { margin-bottom: 16px; padding: 20px; border-radius: 16px; background: #fffaf0 repeating-linear-gradient(to bottom, transparent 0 31px, rgba(91, 70, 48, 0.12) 31px 32px); color: #4a3a28; animation: funRise 0.4s var(--fun-ease); }
-[data-theme="dark"] .lab-capsule-view .cp-letter { background-color: #2f2820; color: #f3e6d2; }
-.lab-capsule-view .cp-letter-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.lab-capsule-view .cp-letter-head b { font-size: 17px; }
-.lab-capsule-view .cp-letter-head small { font-size: 12px; opacity: 0.75; }
-.lab-capsule-view .cp-letter-text { margin: 0 0 14px; font-size: 15px; line-height: 32px; white-space: normal; overflow-wrap: anywhere; }
-
-  position: relative; flex: none; width: 128px; height: 168px; border-radius: 26px 26px 34px 34px; overflow: hidden;
-  background: color-mix(in srgb, var(--hub-accent) 6%, transparent); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--hub-text) 18%, transparent);
-}
-
-/* 推し精霊 */
-.lab-oshi-view .os-list { display: flex; flex-direction: column; gap: 12px; }
-.lab-oshi-view .os-card { padding: 16px; border-radius: 20px; background: var(--hub-card); border-top: 5px solid var(--oc); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); }
-.lab-oshi-view .os-top { display: flex; align-items: center; gap: 12px; }
-.lab-oshi-view .os-img { position: relative; flex: none; width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--oc, var(--hub-accent)) 16%, transparent); overflow: hidden; color: var(--hub-text-3); }
-.lab-oshi-view .os-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.lab-oshi-view .os-img .inline-icon { stroke: currentColor; }
-.lab-oshi-view .os-img.is-small { width: 36px; height: 36px; }
-.lab-oshi-view .os-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.lab-oshi-view .os-name b { font-size: 17px; line-height: 1.3; }
-.lab-oshi-view .os-name small { font-size: 12px; color: var(--hub-text-2); }
-.lab-oshi-view .os-rank { flex: none; padding: 3px 10px; border-radius: 999px; background: var(--oc); color: #fff; font-size: 11px; font-weight: 800; }
-.lab-oshi-view .os-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 10px; }
-.lab-oshi-view .os-stats div { display: flex; flex-direction: column; align-items: center; padding: 10px 4px; border-radius: 14px; background: var(--hub-bg); }
-.lab-oshi-view .os-stats b { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.lab-oshi-view .os-stats small { font-size: 10.5px; color: var(--hub-text-2); text-align: center; }
-.lab-oshi-view .os-visits { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-.lab-oshi-view .os-visits span { padding: 2px 9px; border-radius: 999px; background: var(--hub-bg); font-size: 11.5px; font-variant-numeric: tabular-nums; }
-.lab-oshi-view .os-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.lab-oshi-view .os-color { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--sw); cursor: pointer; }
-.lab-oshi-view .os-color.on { box-shadow: 0 0 0 2px var(--hub-card), 0 0 0 4px var(--sw); }
-.lab-oshi-view .fun-btn.is-on { border-color: var(--hub-accent); background: var(--hub-accent-bg); color: var(--hub-accent-ink); }
-.lab-oshi-view .fun-icon-btn:disabled { opacity: 0.3; }
-.lab-oshi-view .os-pick { display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
-.lab-oshi-view .os-pick-item { display: flex; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: 12px; background: var(--hub-bg); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer; }
-.lab-oshi-view .os-pick-item span:last-child { display: flex; flex-direction: column; }
-.lab-oshi-view .os-pick-item small { font-size: 11px; color: var(--hub-text-2); }
-
-/* シール帳 */
-.lab-stickers-view .sk-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; }
-.lab-stickers-view .sk-tabs .fun-chip { flex: none; }
-.lab-stickers-view .sk-page { position: relative; aspect-ratio: 3 / 4; max-height: 70vh; margin: 0 auto; border-radius: 18px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1); }
-.lab-stickers-view .sk-page.bg-dot { background: #fffaf6 radial-gradient(rgba(232, 103, 154, 0.25) 1.6px, transparent 1.8px) 0 0 / 18px 18px; }
-.lab-stickers-view .sk-page.bg-grid { background: #fdfdfb linear-gradient(rgba(52, 137, 214, 0.12) 1px, transparent 1px) 0 0 / 20px 20px, linear-gradient(90deg, rgba(52, 137, 214, 0.12) 1px, transparent 1px) 0 0 / 20px 20px; }
-.lab-stickers-view .sk-page.bg-pink { background: linear-gradient(160deg, #ffe6ef, #ffd3e3); }
-.lab-stickers-view .sk-page.bg-sky { background: linear-gradient(180deg, #cfe8ff, #fef6e7); }
-.lab-stickers-view .sk-page.bg-night { background: radial-gradient(circle at 70% 20%, #3b3f86, #141633); }
-.lab-stickers-view .sk-page.bg-kraft { background: #d9c4a2 repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.02) 0 4px, transparent 4px 8px); }
-.lab-stickers-view .sk-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; font-size: 13px; font-weight: 600; color: rgba(0, 0, 0, 0.35); text-align: center; pointer-events: none; }
-.lab-stickers-view .sk-page.bg-night .sk-empty { color: rgba(255, 255, 255, 0.5); }
-.lab-stickers-view .sk-item {
-  position: absolute; transform: translate(-50%, -50%) rotate(var(--r)) scale(var(--s)); font-size: 40px; line-height: 1; cursor: grab;
-  filter: drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18));
-  touch-action: none;
-}
-.lab-stickers-view .sk-item.is-word { padding: 6px 12px; border-radius: 999px; background: #fff; color: #d6455d; font-size: 18px; font-weight: 900; white-space: nowrap; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18)); }
-.lab-stickers-view .sk-item.sel { outline: 2px dashed #3489d6; outline-offset: 4px; border-radius: 6px; }
-.lab-stickers-view .sk-item.is-dragging { cursor: grabbing; }
-.lab-stickers-view .sk-item.just-placed { animation: skPlace 0.4s var(--fun-pop); }
-@keyframes skPlace { from { transform: translate(-50%, -50%) rotate(var(--r)) scale(calc(var(--s) * 1.6)); opacity: 0; } }
-.lab-stickers-view .sk-edit { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; background: var(--hub-card); }
-.lab-stickers-view .sk-edit label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); }
-.lab-stickers-view .sk-edit .fun-chips { grid-column: 1 / -1; }
-.lab-stickers-view .sk-palette { margin-top: 12px; padding: 12px; border-radius: 16px; background: var(--hub-card); }
-.lab-stickers-view .sk-stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; margin-top: 10px; }
-.lab-stickers-view .sk-pick { height: 48px; border: 0; border-radius: 12px; background: var(--hub-bg); font-size: 26px; cursor: pointer; color: var(--hub-text); }
-.lab-stickers-view .sk-pick.is-word { grid-column: span 2; font-size: 13px; font-weight: 800; color: #d6455d; }
-.lab-stickers-view .sk-pick:active { transform: scale(0.9); }
-.lab-stickers-view .sk-settings { margin-top: 12px; }
-
 /* 撮影お題ガチャ */
 .lab-photo-gacha-view .pgc-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .lab-photo-gacha-view .pgc-card { display: flex; flex-direction: column; gap: 3px; padding: 14px; border-radius: 18px; background: var(--hub-card); box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05); animation: pgcIn 0.4s var(--fun-pop) both; }
@@ -705,10 +591,9 @@
 .lab-season-album-view .sa-memo span { display: block; font-size: 11px; font-weight: 700; color: var(--hub-text-2); }
 
 @media (prefers-reduced-motion: reduce) {
-  .lab-capsule-view .cp-env.is-ready .cp-seal, .lab-capsule-view .cp-env.shake, .lab-stickers-view .sk-item.just-placed, .lab-photo-gacha-view .pgc-card, .lab-photo-gacha-view .pgc-cards.is-spinning .pgc-card { animation: none; }
-  .lab-mood-view .md-face { transition: none; }
+  .lab-photo-gacha-view .pgc-card, .lab-photo-gacha-view .pgc-cards.is-spinning .pgc-card { animation: none; }
   .lab-photo-gacha-view .pgc-cards.is-spinning { opacity: 0.6; }
 }
 @media (prefers-contrast: more) {
-  .lab-mood-view .md-mood, .lab-oshi-view .os-card, .lab-season-album-view .sa-album, .lab-photo-gacha-view .pgc-card { border: 1px solid var(--hub-text-2); }
+  .lab-season-album-view .sa-album, .lab-photo-gacha-view .pgc-card { border: 1px solid var(--hub-text-2); }
 }

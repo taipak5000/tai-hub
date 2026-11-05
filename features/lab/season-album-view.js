@@ -2,7 +2,7 @@
    📚 シーズンアルバム（#/lab-season-album・試作）。季節ごとに、その期間に集めたもの・残した思い出を1冊のアルバムにまとめる。
    数えるもの（どれも記録の日付で季節の期間に振り分ける。記録がない季節は出さない）:
      アイテム（itemAcquireLog_v1）・エモート（emoteAcquireLog_v1）・羽（wingTracker_v1 の日時）・
-     フォト日記（friendsDoc_v1）・コーデ日記（coordDiary_v1）・気分カレンダー（moodLog_v1）
+     フォト日記（friendsDoc_v1）・コーデ日記（coordDiary_v1）
    季節の期間は features/shared/season-dates.js。季節と季節のあいだの日の記録は、どのアルバムにも入れない。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -10,7 +10,6 @@ import { injectStylesheet } from '../bingo/bingo-view.js';
 import { getPhoto } from '../friends/friends-state.js';
 import { SEASON_DATES } from '../shared/season-dates.js';
 import { t, readJson, localDateStr, labHeadHtml } from './lab-common.js';
-import { MOODS } from './mood-view.js';
 
 let containerEl = null;
 let openKey = null;
@@ -37,20 +36,17 @@ function collect() {
   const fr = readJson('friendsDoc_v1', {}) || {};
   const diary = (Array.isArray(fr.diary) ? fr.diary : []).filter(d => d && d.date);
   const coord = ((readJson('coordDiary_v1', {}) || {}).entries || []).filter(d => d && d.date);
-  const moods = (readJson('moodLog_v1', {}) || {}).days || {};
   const today = localDateStr();
   return [...SEASON_DATES].reverse().filter(s => s.start <= today).map(s => {
     const inS = d => d >= s.start && d <= s.end;
     const photos = [...diary, ...coord].filter(d => inS(d.date) && d.photoId).sort((a, b) => a.date.localeCompare(b.date));
-    const moodKeys = Object.keys(moods).filter(inS);
-    const moodCounts = MOODS.map((_, i) => moodKeys.filter(k => moods[k] && moods[k].m === i).length);
     return {
       key: s.start, s,
       items: itemLog.filter(inS).length, emotes: emoteLog.filter(inS).length, wings: wings.filter(inS).length,
-      diary: diary.filter(d => inS(d.date)), coords: coord.filter(d => inS(d.date)), photos, moodCounts, moodTotal: moodKeys.length,
+      diary: diary.filter(d => inS(d.date)), coords: coord.filter(d => inS(d.date)), photos,
       ongoing: today <= s.end,
     };
-  }).filter(x => x.items || x.emotes || x.wings || x.diary.length || x.coords.length || x.moodTotal);
+  }).filter(x => x.items || x.emotes || x.wings || x.diary.length || x.coords.length);
 }
 
 function fmt(d) { const [y, m, dd] = d.split('-').map(Number); return t(`${y}/${m}/${dd}`, `${m}/${dd}/${y}`); }
@@ -86,7 +82,6 @@ function albumHtml(a) {
       </span>
     </button>
     ${open ? `<div class="sa-inner">
-      ${a.moodTotal ? `<div class="sa-mood"><small>${t('この季節の気分', 'Mood this season')}</small><div class="md-bar">${MOODS.map((m, i) => a.moodCounts[i] ? `<span style="background:${m.color};flex:${a.moodCounts[i]}"></span>` : '').join('')}</div></div>` : ''}
       ${a.photos.length ? `<div class="sa-photos">${a.photos.map(p => `<span class="sa-photo" data-photo="${escapeHtml(p.photoId)}"><small>${fmt(p.date)}</small></span>`).join('')}</div>` : ''}
       ${a.diary.filter(d => d.text).slice(0, 12).map(d => `<p class="sa-memo"><span>${fmt(d.date)}</span>${escapeHtml(d.text.slice(0, 140))}</p>`).join('')}
     </div>` : ''}
