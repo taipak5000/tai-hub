@@ -21,6 +21,7 @@ import { PLACES, PLACE_IDS, placeName } from '../shared/places.js';
 import { putPhoto, getPhoto, deletePhoto, todayStr } from '../friends/friends-state.js';
 import { albumsHtml } from './season-album.js';
 import { gachaHtml, handleGacha, ensureEmotes, resetGacha, gachaOpen } from './photo-gacha.js';
+import { HUB_BASE_URL } from '../../js/site-config.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const KEY = 'coordDiary_v1';
@@ -231,9 +232,58 @@ function entryHtml(e) {
       <div class="fr-entry-date">${fmtDate(e.date)}${e.place ? `<span class="cd-place">${escapeHtml(placeName(e.place, CURRENT_LANG))}</span>` : ''}</div>
       ${items.length ? `<div class="cd-items">${items.map(it => `<span class="cd-item">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</span>`).join('')}</div>` : ''}
       ${e.memo ? `<p class="fr-entry-text">${escapeHtml(e.memo).replace(/\n/g, '<br>')}</p>` : ''}
+      <div class="cd-entry-actions"><button type="button" class="fun-btn small cd-post-btn" data-act="post" data-id="${e.id}">${X_ICON}${t('Xでポスト', 'Post on X')}</button></div>
     </div>
     <button type="button" class="fun-icon-btn fr-entry-edit" data-act="edit" data-id="${e.id}" aria-label="${t('編集', 'Edit')}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button>
   </article>`;
+}
+
+/* ── 📣 Xでポスト ─────────────────────────────────────────────
+   日記の中身（日付・場所・アイテム・メモ）から投稿文を作る。Xの文字数（全角は2として280まで）に収まるよう、
+   アイテムとメモを後ろから短くする。写真がある時、スマホでは共有シートで写真ごと渡し（Xを選べば写真付きで投稿できる）、
+   それ以外は投稿画面を開いて写真を端末に保存する（Xの投稿画面へ写真は自動で付けられないため、手で添付する）。 */
+const X_ICON = '<svg class="cd-x-ic" width="13" height="13" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.32l4.37 5.78zm-1.08 16.18h1.7L7.4 4.73H5.58z"/></svg>';
+const POST_TAGS = '#Skyコーデ日記 #Sky星を紡ぐ子どもたち';
+function xLength(str) { return [...str].reduce((n, ch) => n + (ch.codePointAt(0) > 0x10FF ? 2 : 1), 0); }
+function buildPostText(e) {
+  const [, m, d] = e.date.split('-').map(Number);
+  const head = t(`${m}月${d}日のコーデ`, `My outfit on ${m}/${d}`) + (e.place ? t(`（${placeName(e.place, CURRENT_LANG)}）`, ` (${placeName(e.place, CURRENT_LANG)})`) : '');
+  const allItems = e.items.map(x => itemInfo(x).name);
+  let shown = allItems.length;
+  let memo = e.memo.trim();
+  const compose = () => {
+    const list = allItems.slice(0, shown).join(t('・', ', ')) + (shown < allItems.length ? t(' ほか', ' and more') : '');
+    return [head, shown ? t('着ているもの: ', 'Wearing: ') + list : '', memo, POST_TAGS].filter(Boolean).join('\n');
+  };
+  const budget = 280 - 24; // URLは23文字として数えられる（＋改行）
+  while (xLength(compose()) > budget && memo) memo = memo.length > 12 ? memo.slice(0, -8).trimEnd() + '…' : '';
+  while (xLength(compose()) > budget && shown > 1) shown--;
+  return `${compose()}\n${HUB_BASE_URL}`;
+}
+function isMobileDevice() {
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') return navigator.userAgentData.mobile;
+  const ua = navigator.userAgent || '';
+  return /Android|iPhone|iPod|iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+}
+async function postEntry(e) {
+  const text = buildPostText(e);
+  let blob = null;
+  if (e.photoId) { try { blob = await getPhoto(e.photoId); } catch (err) { blob = null; } }
+  if (blob && isMobileDevice() && navigator.share && navigator.canShare) {
+    const file = new File([blob], `coord-${e.date}.jpg`, { type: blob.type || 'image/jpeg' });
+    if (navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], text }); return; } catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+  }
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  if (blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `coord-${e.date}.jpg`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(t('写真を端末に保存しました。Xの投稿画面で添付してください', 'Photo saved — attach it in the X post'), 4200);
+  }
 }
 
 // よく着ているアイテム（全期間で3回以上）
@@ -378,6 +428,7 @@ function onClick(e) {
     if (list.length) { document.getElementById(`cd-${list[0].id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
     openForm(null, btn.dataset.date); return;
   }
+  if (act === 'post') { const entry = doc.entries.find(x => x.id === btn.dataset.id); if (entry) postEntry(entry); return; }
   if (act === 'edit') { openForm(doc.entries.find(x => x.id === btn.dataset.id)); return; }
   if (act === 'cancel') { form = null; clearPending(); render(); return; }
   if (act === 'pick' || act === 'unpick') {

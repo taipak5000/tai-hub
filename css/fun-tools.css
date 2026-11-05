@@ -487,6 +487,9 @@
 .coord-diary-view .cd-entry-body { padding: 12px 14px 14px; }
 .coord-diary-view .fr-entry-date { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); }
 .coord-diary-view .fr-entry-text { margin: 6px 0 0; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
+.coord-diary-view .cd-entry-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+.coord-diary-view .cd-post-btn { gap: 5px; }
+.coord-diary-view .cd-x-ic { flex: none; }
 .coord-diary-view .cd-place { padding: 1px 8px; border-radius: 999px; background: var(--hub-bg); font-size: 11px; }
 .coord-diary-view .fr-entry-edit { position: absolute; top: 8px; right: 8px; background: var(--hub-card-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .coord-diary-view .cd-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
