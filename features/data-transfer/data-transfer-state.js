@@ -77,7 +77,6 @@ export const SITE_CATALOG = [
   ] },
   // 🩹 2026-11-05に追加: ノマキャン計算機プロ。以前は下の旧版（skyzztai）の項目に「プロフィール別でない」キーとして
   // 入っていたため、既定以外のプロフィールのエリア・ルートのデータが引き継がれていなかった
-  { id: 'candle-jar', label: 'キャンドル貯金箱', labelEn: 'Candle Jar', namespaced: true, keys: ['candlePiggy_v1'] },
   { id: 'nomacan-pro', label: 'ノマキャン計算機プロ', labelEn: 'Nomacan Calculator Pro', namespaced: true, keys: [
     'sky_tracker_storage_v3',
   ] },
