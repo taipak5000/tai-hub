@@ -253,7 +253,8 @@ const landingPoint = currentY + project(v);
   **各ツールの画面には称号の一覧を置かず、`js/titles.js`の`titlesLinkHtml(ツール)`の小さな案内（獲得数＋「称号一覧で見る」）だけを出す。**
   獲得の判定・記録・獲得時のトーストは今まで通り各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`
   （ツールに称号を足したら、ここにも足すこと）。新しく獲得した称号はお知らせで知らせる（`titlesSeen_v1`）。
-- **シーズンアルバム**: コーデ日記の「シーズンアルバム」タブ（`features/coord-diary/season-album.js`。季節の期間は`features/shared/season-dates.js`）。
+- **シーズンアルバム**: コーデ日記の「シーズンアルバム」タブ（`features/coord-diary/season-album.js`）。季節（`features/shared/season-dates.js`）と
+  「日々」のイベント（`features/shared/event-dates.js`）ごとに並べる。**新しい季節・日々が始まったら、この2つのファイルの末尾に足す**。
 - **撮影お題ガチャ**: コーデ日記の折りたたみ「撮影ポーズに困ったら」（`features/coord-diary/photo-gacha.js`）。
 - **試作中の機能（2026-11-06〜。`features/lab/`）**: 今は無し（気分カレンダー・タイムカプセル・推し精霊・シール帳・キャンドル貯金箱は11/6に削除、シーズンアルバム・撮影お題ガチャはコーデ日記へ移動）。
   `LAB_TOOLS`が空の間は、デイリーチェックシートの「試作中の機能」の枠ごと出さない。
