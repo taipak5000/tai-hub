@@ -69,7 +69,9 @@ export const REVISIT_SPIRIT_SCHEDULES = [
     // 2週間おきに4日間だけ来る旅の精霊の再訪周期。来訪ごとに違う精霊が来るため、
     // 入れ替わるたびにitemsとanchorStart/anchorEndを直近の実際の来訪に合わせて更新する
     // （intervalDaysは周期そのものなので変更不要）。
-    // 直近の来訪(2026-11-05〜11-09)は「ぽんぽんする若者」(head_accessory_001＝イヤーマフ, portable_item_012＝ウクレレ)。
+    // 直近の来訪(日本時間 2026-11-05 17:00〜11-09 16:59)は「ぽんぽんする若者」(head_accessory_001＝イヤーマフ, portable_item_012＝ウクレレ)。
+    // 🕐 夏時間が11/1に終わったので、日本時間では17:00始まり・16:59終わり。太平洋時間（-08:00）の0:00〜23:59:59で書いておくと、
+    //    3月に夏時間へ戻った後の周期も自動で16:00始まりに戻る（周期は太平洋時間の壁時計で数えるため）。
     // spiritJa/spiritEn はお知らせ（js/notices.js）が「待っている精霊」と照らし合わせるのに使う。精霊が入れ替わったら一緒に更新する
     spiritJa: 'ぽんぽんする若者',
     spiritEn: 'Hairtousle Teen',
@@ -77,8 +79,8 @@ export const REVISIT_SPIRIT_SCHEDULES = [
       { catKey: 'head_accessory', id: 'head_accessory_001' },
       { catKey: 'portable_item', id: 'portable_item_012' },
     ],
-    anchorStart: '2026-11-05T16:00:00+09:00',
-    anchorEnd: '2026-11-09T15:59:59+09:00',
+    anchorStart: '2026-11-05T00:00:00-08:00', // 日本時間 2026/11/5 17:00
+    anchorEnd: '2026-11-08T23:59:59-08:00',   // 日本時間 2026/11/9 16:59:59
     intervalDays: 14,
   },
   {
