@@ -145,7 +145,8 @@ export const ROUTES = {
   friends: lazyToolEntry(() => import('../features/friends/friends-view.js'), 'フレンド記念日', 'Friend Anniversaries'),
   recap: lazyToolEntry(() => import('../features/recap/recap-view.js'), 'ふりかえり', 'Recap'),
   // 第2弾（2026-11-06追加）
-  today: lazyToolEntry(() => import('../features/today/today-view.js'), '今日やること', 'Today'),
+  // 「今日やること」はデイリーチェックシートの画面へまとめた（2026-11-06）。古いリンク用に同じ画面を開く（非公開）
+  today: { ...lazyToolEntry(() => import('../features/today/today-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
   'wish-plan': lazyToolEntry(() => import('../features/wish-plan/wish-plan-view.js'), 'ほしいもの計画', 'Wishlist Plan'),
   'coord-diary': lazyToolEntry(() => import('../features/coord-diary/coord-diary-view.js'), 'コーデ日記', 'Outfit Diary'),
   stamps: lazyToolEntry(() => import('../features/stamps/stamps-view.js'), 'スタンプ帳', 'Stamp Book'),
@@ -154,5 +155,6 @@ export const ROUTES = {
   'lab-season-album': { ...lazyToolEntry(() => import('../features/lab/season-album-view.js'), 'シーズンアルバム', 'Season Album'), hidden: true },
   // 🧪 試作中（非公開）。URL（#/daily-check）を知っている人だけが開ける。関連ツールの一覧（site-links）には
   // 載せておらず、hidden: true で「起動時に開くツール」の選択肢からも外す。公開する時はhiddenを外してsite-linksへ足す
-  'daily-check': { ...lazyToolEntry(() => import('../features/daily-check/daily-check-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
+  // 画面は features/today/today-view.js（今日の要点＋チェックシート＋試作中の機能への入口）
+  'daily-check': { ...lazyToolEntry(() => import('../features/today/today-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
 };

@@ -1,12 +1,13 @@
 /* ================================================================
-   ☀️ 今日やること（#/today）。開いた時に、その日の要点を1か所にまとめて見せる。
+   ☀️ デイリーチェックシートの画面（#/daily-check。以前の「今日やること」#/today も同じ画面）。
+   チェックシートの上に、その日の要点をまとめて見せる（2026-11-06に「今日やること」をチェックシート側へまとめ、
+   関連ツールの一覧からは外した。デイリーチェックシートはまだ非公開なので、どちらのルートも hidden）。
    - デイリーリセット（太平洋時間0時）までの時間・大キャンドル・クエストキャンドル・闇の破片・ウニ焼きなど
      （計算は features/shared/event-dashboard.js の getTodayBrief() に任せる）
    - デイリーチェックシート（features/daily-check）をそのまま埋め込む（シートの切替・編集・着せ替え・印刷もここでできる。
-     デイリーチェックシートの単独ページ #/daily-check は非公開のまま＝関連ツールの一覧には出さない）
+     シートの下には「試作中の機能」への入口も出す＝ labLinks: true）
    - 今日・明日のフレンドの記念日／今週のビンゴ／デイリーチェックシートの進み具合
    - 1日1回のおみくじ（今日のラッキーエリア・エモート・色・ひとこと）
-   「表示設定 > 起動時に開くツール」でこの画面を選べば、開くたびに最初に出る。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { getActiveProfileId } from '../../js/state.js';
@@ -50,7 +51,7 @@ export function mount(container) {
     brief = ed.getTodayBrief;
     emotes = em.EMOTES || [];
     dc = dcMod;
-    dc.mount(root().querySelector('.td-sheet'), { embedded: true });
+    dc.mount(root().querySelector('.td-sheet'), { embedded: true, labLinks: true });
     render();
     root().querySelector('.td-top').addEventListener('click', onClick);
     root().querySelector('.td-after').addEventListener('click', onClick);
@@ -97,7 +98,7 @@ function render() {
   const p = ptParts(Date.now());
   r.querySelector('.td-top').innerHTML = `
     <header class="fun-head">
-      <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-sun"/></svg>${t('今日やること', 'Today')}</h1>
+      <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-sparkle"/></svg>${t('デイリーチェックシート', 'Daily Checklist')}<span class="lab-badge">${t('試作', 'Preview')}</span></h1>
       <p class="fun-lead">${t(`ゲームの日付で${p.month}月${p.day}日。デイリーリセットまで`, `Game day ${p.month}/${p.day}. Daily reset in`)} <b class="td-reset" data-cd="reset">${cd(b.nextReset)}</b></p>
     </header>
 

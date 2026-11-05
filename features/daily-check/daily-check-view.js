@@ -134,12 +134,15 @@ let onAfterPrint = null;
 /* ================================================================
    公開API
    ================================================================ */
-// opts.embedded: 「今日やること」（features/today）の中に埋め込む時。見出し・説明・フッターを出さない
+// opts.embedded: 「今日の要点」の画面（features/today）の中に埋め込む時。見出し・説明・フッターを出さない
+// opts.labLinks: 埋め込んだ時も「試作中の機能」への入口を出す（#/daily-check の画面で使う）
 let embedded = false;
+let showLabLinks = false;
 export function mount(container, opts) {
   injectStylesheet();
   containerEl = container;
   embedded = !!(opts && typeof opts === 'object' && opts.embedded);
+  showLabLinks = !embedded || !!(opts && opts.labLinks);
   editing = false;
   styling = false;
   goaling = false;
@@ -456,7 +459,7 @@ function render() {
       ${styling ? stylePanelHtml(sheet) : ''}
       ${paperHtml(sheet, { mode: editing ? 'edit' : 'screen' })}
       ${editing ? sheetAdminHtml() : ''}
-      ${embedded ? '' : labLinksHtml()}
+      ${showLabLinks ? labLinksHtml() : ''}
       ${embedded ? '' : `<footer class="dc-footer">
         <span>${escapeHtml(t('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</span><br>
         <span>${escapeHtml(t('作成・ご意見:', 'Created by / feedback:'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／　<a href="https://odaibako.net/u/Skyzztai" target="_blank" rel="noopener noreferrer">${escapeHtml(t('リクエストフォーム', 'Request form'))}</a><br>
