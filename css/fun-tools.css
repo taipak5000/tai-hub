@@ -193,6 +193,13 @@
 .friends-view .fr-avatar.is-long { font-size: 13px; letter-spacing: -0.02em; }
 .friends-view .fr-avatar.is-small { width: 24px; height: 24px; font-size: 12px; }
 .friends-view .fr-avatar.is-small.is-long { font-size: 9px; }
+.friends-view .fr-avatar-wrap { position: relative; flex: none; }
+.friends-view .fr-avatar-badge {
+  position: absolute; right: -3px; bottom: -3px; width: 19px; height: 19px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--hub-accent); color: #fff;
+  box-shadow: 0 0 0 2px var(--hub-card);
+}
+.friends-view .fr-avatar-badge .inline-icon { stroke: #fff; }
 /* フォト日記のフレンドの印・絞り込み・「一緒にいたフレンド」の選択に出す小さなアイコン */
 .friends-view .fr-avatar.is-tiny { width: 20px; height: 20px; font-size: 11px; margin-left: -4px; }
 .friends-view .fr-avatar.is-tiny.is-long { font-size: 8px; letter-spacing: -0.04em; }

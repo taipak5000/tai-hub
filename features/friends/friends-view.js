@@ -190,7 +190,10 @@ function daysHtml() {
     <p class="fun-hint">${t('フレンドになった日の「◯周年」と「100日・1000日」などは、フレンドに日付を入れるだけで自動で数えます。ここには誕生日やSkyを始めた日など、それ以外の日を足せます。', 'Friend anniversaries and 100/1000-day milestones are counted automatically. Add other days here — birthdays, the day you started Sky…')}</p>
     ${list.length ? `<ul class="fr-list">${list.map(d => {
       const f = d.friendId ? friendById(d.friendId) : null;
-      return `<li class="fr-row"><span class="fr-avatar is-icon" style="background:${f ? f.color : 'var(--hub-accent)'}"><svg class="inline-icon" width="16" height="16"><use href="#i-gift"/></svg></span>
+      return `<li class="fr-row">${f
+        // フレンドに結びついた記念日は、そのフレンドのアイコンに小さなプレゼントの印を重ねる
+        ? `<span class="fr-avatar-wrap">${avatarHtml(f)}<span class="fr-avatar-badge"><svg class="inline-icon" width="11" height="11"><use href="#i-gift"/></svg></span></span>`
+        : `<span class="fr-avatar is-icon" style="background:var(--hub-accent)"><svg class="inline-icon" width="16" height="16"><use href="#i-gift"/></svg></span>`}
         <div class="fr-main"><div class="fr-name">${escapeHtml(d.name)}</div><div class="fr-sub">${fmtDate(d.date)}${f ? `・${escapeHtml(f.name)}` : ''}</div></div>
         <div class="fr-row-actions"><button type="button" class="fun-icon-btn" data-act="edit-day" data-id="${d.id}" aria-label="${t('編集', 'Edit')}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button></div></li>`;
     }).join('')}</ul>` : ''}`;
