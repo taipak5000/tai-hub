@@ -421,3 +421,44 @@
 .goal-row-pace-badge { color: var(--hub-accent); font-weight: 700; }
 .goal-row-confirm-text { flex: 1; font-size: 12.5px; color: var(--hub-text); line-height: 1.6; }
 .pf-move-btn { padding: 5px 7px; font-size: 11px; line-height: 1; }
+
+/* ── 🫙 キャンドル貯金箱（features/tai-nomacan/candle-jar-view.js。ノマキャン計算機と同じ色・書体・カード） ── */
+.nomacan-view .cj-stage { display: flex; align-items: center; gap: 20px; }
+.nomacan-view .cj-jar {
+  position: relative; flex: none; width: 132px; height: 172px; border-radius: 26px 26px 36px 36px; overflow: hidden;
+  background: var(--cream); box-shadow: inset 0 0 0 3px var(--border), inset 0 -8px 18px rgba(232,133,10,0.08);
+}
+.nomacan-view .cj-lid { position: absolute; top: 0; left: 18%; right: 18%; height: 14px; border-radius: 0 0 8px 8px; background: var(--amber-solid); z-index: 2; }
+.nomacan-view .cj-fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(255,193,104,0.6), rgba(255,193,104,0.18)); transition: height 0.8s cubic-bezier(0.23, 1, 0.32, 1); }
+.nomacan-view .cj-stick {
+  position: absolute; width: 6px; height: 18px; border-radius: 2px; background: linear-gradient(180deg, #FFF9EC, #F5EEDB);
+  box-shadow: 0 -5px 0 -2px var(--amber), 0 1px 2px rgba(58,46,34,0.15); animation: cj-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes cj-drop { from { transform: translateY(-150px); opacity: 0; } to { transform: none; opacity: 1; } }
+.nomacan-view .cj-pct { position: absolute; left: 0; right: 0; top: 40%; z-index: 1; text-align: center; font-family: 'Kaisei Decol', serif; font-size: 25px; color: var(--text); text-shadow: 0 1px 0 var(--card-bg); }
+.nomacan-view .cj-jar.is-full { box-shadow: inset 0 0 0 3px var(--amber-light), 0 0 26px rgba(232,133,10,0.4); }
+.nomacan-view .cj-info { min-width: 0; }
+.nomacan-view .cj-label { font-size: 13px; color: var(--text-dim); }
+.nomacan-view .cj-num b { font-family: 'Kaisei Decol', serif; font-size: 36px; font-weight: 400; color: var(--amber-deep); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.nomacan-view .cj-num span { margin-left: 4px; font-size: 14px; color: var(--text-dim); }
+.nomacan-view .cj-left { margin-top: 2px; font-size: 15px; font-weight: 700; color: var(--text); }
+.nomacan-view .cj-left.is-done { color: var(--green); }
+.nomacan-view .cj-gain { margin-top: 4px; font-size: 12.5px; color: var(--text-dim); }
+.nomacan-view .cj-minus { color: var(--red); border-color: rgba(184,68,37,0.3); }
+.nomacan-view .cj-text {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: #FCFAF5; color: var(--text);
+  font-family: 'Zen Maru Gothic', sans-serif; font-size: 16px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.nomacan-view .cj-text:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,133,10,0.16); }
+[data-theme="dark"] .nomacan-view .cj-text { background: var(--cream-deep); }
+.nomacan-view .cj-chart { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 120px; padding: 10px; border-radius: 12px; background: var(--cream); }
+.nomacan-view .cj-chart span { flex: 1; border-radius: 3px 3px 1px 1px; background: linear-gradient(to top, var(--amber), var(--amber-light)); }
+.nomacan-view .cj-goal-line { position: absolute; left: 10px; right: 10px; border-top: 1.5px dashed var(--amber-solid); }
+@media (prefers-reduced-motion: reduce) {
+  .nomacan-view .cj-stick { animation: none; }
+  .nomacan-view .cj-fill { transition: none; }
+}
+@media (prefers-contrast: more) {
+  .nomacan-view .cj-jar { box-shadow: inset 0 0 0 3px var(--text-dim); }
+  .nomacan-view .cj-gain, .nomacan-view .cj-label { color: var(--text); }
+}

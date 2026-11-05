@@ -328,7 +328,7 @@ const VIEW_ROOTS = [
   '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view', '.daily-check-view',
   '.bingo-view', '.friends-view', '.recap-view',
   '.today-view', '.wish-plan-view', '.coord-diary-view', '.stamps-view',
-  '.lab-mood-view', '.lab-capsule-view', '.lab-piggy-view', '.lab-oshi-view', '.lab-stickers-view', '.lab-photo-gacha-view', '.lab-season-album-view',
+  '.lab-mood-view', '.lab-capsule-view', '.lab-oshi-view', '.lab-stickers-view', '.lab-photo-gacha-view', '.lab-season-album-view',
 ];
 
 // 面（背景・カード・区切り・文字）の共通トークンを、ツールごとの変数名へ割り当てる

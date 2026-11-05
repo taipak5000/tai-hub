@@ -77,6 +77,7 @@ export const SITE_CATALOG = [
   ] },
   // 🩹 2026-11-05に追加: ノマキャン計算機プロ。以前は下の旧版（skyzztai）の項目に「プロフィール別でない」キーとして
   // 入っていたため、既定以外のプロフィールのエリア・ルートのデータが引き継がれていなかった
+  { id: 'candle-jar', label: 'キャンドル貯金箱', labelEn: 'Candle Jar', namespaced: true, keys: ['candlePiggy_v1'] },
   { id: 'nomacan-pro', label: 'ノマキャン計算機プロ', labelEn: 'Nomacan Calculator Pro', namespaced: true, keys: [
     'sky_tracker_storage_v3',
   ] },
@@ -99,7 +100,7 @@ export const SITE_CATALOG = [
   // コーデ日記の写真もIndexedDB（バックアップには含めない）
   { id: 'coord-diary', label: 'コーデ日記', labelEn: 'Outfit Diary', namespaced: true, keys: ['coordDiary_v1'] },
   // 🧪 試作中の機能（非公開のため hidden。データは静かに引き継ぐ）
-  { id: 'lab', label: '試作中の機能', labelEn: 'Lab features', namespaced: true, hidden: true, keys: ['moodLog_v1', 'timeCapsules_v1', 'candlePiggy_v1', 'oshiSpirits_v1', 'stickerBook_v1', 'photoGacha_v1'] },
+  { id: 'lab', label: '試作中の機能', labelEn: 'Lab features', namespaced: true, hidden: true, keys: ['moodLog_v1', 'timeCapsules_v1', 'oshiSpirits_v1', 'stickerBook_v1', 'photoGacha_v1'] },
   { id: 'stamps', label: 'スタンプ帳', labelEn: 'Stamp Book', namespaced: true, keys: ['stampsEarned_v1', 'stampsSeen_v1'] },
   // お知らせ（js/notices.js）: 再訪精霊データベースの「待っている」精霊と、既読にしたお知らせ
   { id: 'notices', label: 'お知らせ・待っている精霊', labelEn: 'Notices & Waitlist', namespaced: true, hidden: true, keys: ['revisitWaitlist_v1', 'noticesSeen_v1'] },

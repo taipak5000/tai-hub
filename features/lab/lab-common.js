@@ -17,7 +17,6 @@ export function localDateStr(d = new Date()) { return `${d.getFullYear()}-${Stri
 export const LAB_TOOLS = [
   { id: 'mood', icon: 'i-palette', ja: '気分カレンダー', en: 'Mood Calendar', desc: { ja: '1日1色で気分を塗って、1年を色のマスで見返す', en: 'One color a day — your year in pixels' } },
   { id: 'capsule', icon: 'i-gift', ja: 'タイムカプセル', en: 'Time Capsule', desc: { ja: '未来の自分へ手紙を書いて、決めた日まで封をする', en: 'Write to your future self and seal it' } },
-  { id: 'piggy', icon: 'i-candle', ja: 'キャンドル貯金箱', en: 'Candle Jar', desc: { ja: '目標の本数まで、たまっていく様子を瓶で見る', en: 'Watch your candles fill a jar toward a goal' } },
   { id: 'oshi', icon: 'i-heart', ja: '推し精霊', en: 'Favorite Spirits', desc: { ja: '推しの精霊の来訪歴と「推し歴」をまとめる', en: 'Your favorite spirits and their visits' } },
   { id: 'stickers', icon: 'i-star', ja: 'シール帳', en: 'Sticker Book', desc: { ja: 'ページにシールを貼って、自由に飾る', en: 'Decorate pages with stickers' } },
   { id: 'photo-gacha', icon: 'i-camera', ja: '撮影お題ガチャ', en: 'Photo Prompt Gacha', desc: { ja: '場所・時間・ポーズのお題で写真を撮る', en: 'Random photo prompts: place, time, pose' } },
