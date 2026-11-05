@@ -102,7 +102,7 @@ import {
 
 const STYLE_LINK_ID = 'companion-view-styles';
 const ICON_SPRITE_ID = 'companion-icon-sprite';
-const VUE_CDN_URL = 'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js';
+const VUE_CDN_URL = 'https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js';
 const DATA_KEY = 'sky_companion_v4_data';
 const ONEYEAR_BANNER_DISMISS_KEY = 'sky_companion_oneyear_banner_dismissed_date';
 
@@ -419,9 +419,13 @@ function t(key, vars) {
    🌐 精霊名・アイテム名・季節名の英語訳（元のSPIRIT_NAME_EN/NAME_EN/
    TYPE_LABELS_EN/SEASON_NAME_EN/FIRST_UNLOCK_SUFFIX_I18Nをja/en版だけ移植）
    ================================================================ */
-// 精霊名の英語訳。遥かなる真珠の季節の精霊の英語名は未収録（日本語名のまま表示）。
-// 精霊名が決まったら「日本語名: 英語名」の形で追加する（未収録の名前はそのまま表示される）。
-const SPIRIT_NAME_EN = {};
+// 精霊名の英語訳（Sky Wiki・SkyGame-Dataの表記。未収録の名前は日本語のまま表示される）
+const SPIRIT_NAME_EN = {
+  '腕っぷし自慢の船乗り': 'Wrestling Sailor',
+  '見せびらかしの商人': 'Showy Merchant',
+  '老いた漁師': 'Old Angler',
+  '転げまわる幼子': 'Cuddly Rolling Child',
+};
 const NAME_EN = {
   'エモートLv3': 'Emote Lv3',
   '魔法③': 'Spell ③',
@@ -440,9 +444,8 @@ const NAME_EN = {
 };
 const TYPE_LABELS_JA = { walk: 'エモート', magic: '魔法', seasonal: '季節アイテム', dye: '染料' };
 const TYPE_LABELS_EN = { walk: 'Emote', magic: 'Spell', seasonal: 'Seasonal Item', dye: 'Dye' };
-// 「遥かなる真珠の季節」の公式の英語名は未確認のため、判明するまでは日本語名をそのまま表示する
-// （判明したら、ここを英語名に差し替える）。
-const SEASON_NAME_EN = CURRENT_SEASON_NAME;
+// 季節の英語名（Sky Wiki・SkyGame-Dataの表記）
+const SEASON_NAME_EN = CURRENT_SEASON_NAME === '遥かなる真珠の季節' ? 'Season of Pearl' : CURRENT_SEASON_NAME;
 const FIRST_UNLOCK_SUFFIX = FIRST_UNLOCK_SUFFIX_I18N[LANG] || ' (初回解放)';
 function spiritNameOf(spirit) { return CURRENT_LANG === 'en' ? (SPIRIT_NAME_EN[spirit.name] || spirit.name) : spirit.name; }
 const NAME_I18N = { en: NAME_EN, 'zh-TW': NAME_ZH_TW, ko: NAME_KO };

@@ -95,6 +95,7 @@ export function mount(container, sub) {
 
   S.migrateRegularCapeTier2Link(); // 🩹 恒常精霊ティア2ケープのitem紐づけ修正に伴う、既存の解放済みデータの移行（1回のみ）
   S.migrateNodeItemLinks20261027(); // 🩹 紐づけを足したノードについて、既存の解放済みデータをitemへ反映（1回のみ）
+  S.migrateNodeItemLinks20261105(); // 🩹 11/5に紐づけを足した18件と、峡谷の長老のヘアの入れ違いの分（1回のみ）
   renderGrid();
   renderRevisitBadge();
   startRevisitBadgeTimer();

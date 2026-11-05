@@ -217,12 +217,18 @@ export function checkTitles(stats) {
    1日1件・冪等。最大MAX_COMPLETION_HISTORY件でキャップ（古い方から捨てる）。
    ================================================================ */
 const MAX_COMPLETION_HISTORY = 180;
-function completionHistoryKey() { return nsKey('completionHistory_v1'); } // [{date,pct,owned,total}]（古い→新しい順）
+// 🩹 以前は羽トラッカーと同じ completionHistory_v1 に書いていた（独立サイトの頃は保存先が別々だったが、
+// ハブでは同じ保存先を共有するため、互いの記録を上書きしていた）。今はエモート専用のキーに書き、
+// 新しいキーがまだ無い時だけ、古いキーからエモートの形（owned・totalを持つ）の記録だけを拾って引き継ぐ。
+function completionHistoryKey() { return nsKey('emoteCompletionHistory_v1'); } // [{date,pct,owned,total}]（古い→新しい順）
+const LEGACY_SHARED_HISTORY_KEY = () => nsKey('completionHistory_v1');
 
 export function loadCompletionHistory() {
   try {
-    const arr = JSON.parse(localStorage.getItem(completionHistoryKey()));
-    return Array.isArray(arr) ? arr : [];
+    const raw = localStorage.getItem(completionHistoryKey());
+    if (raw !== null) { const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; }
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_SHARED_HISTORY_KEY()));
+    return Array.isArray(legacy) ? legacy.filter((e) => e && typeof e.owned === 'number' && typeof e.total === 'number') : [];
   } catch (_) { return []; }
 }
 export function saveCompletionHistory(arr) {

@@ -45,7 +45,7 @@ export const REFERENCE_SOURCES = [
     group: '精霊同行ツール',
     groupEn: 'Spirit Companion Tool',
     items: [
-      { title: 'Dear Van Gogh | Sky Wiki', url: 'https://sky-children-of-the-light.fandom.com/wiki/Dear_Van_Gogh', note: '現行シーズンのツリー・コストデータ', noteEn: `Tree and cost data for the current season` },
+      { title: 'Season of Pearl | Sky Wiki', url: 'https://sky-children-of-the-light.fandom.com/wiki/Season_of_Pearl', note: '現行シーズンのツリー・コストデータ', noteEn: `Tree and cost data for the current season` },
       { title: '季節精霊（精霊友情システム） | Sky Wiki 日本語版', url: 'https://sky-children-of-the-light.fandom.com/ja/wiki/%E5%AD%A3%E7%AF%80%E7%B2%BE%E9%9C%8A#%E7%B2%BE%E9%9C%8A%E5%8F%8B%E6%83%85%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0', note: '精霊友情システムの仕様確認', noteEn: `Confirming the specifications of the Spirit Friendship system` },
     ]
   },

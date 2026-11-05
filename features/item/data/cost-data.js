@@ -227,6 +227,12 @@ export const ITEM_COST_DATA = {
     { id: 'large_placeable_122', name: '跳躍パッド（高）', nameEn: "Jump Pad (High)", source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 8 }, dye: false },
     { id: 'large_placeable_117', name: 'チャレンジの台座', nameEn: "Challenge Platform Prop", source: 'カーニバルの季節（ガイドアイテム）', cost: { type: 'candle', value: 0, note: '最初の5個はガイドのクエストツリーで無料。追加10個は1個あたり4キャンドルで購入可（追加分合計40キャンドル）', noteEn: "The first 5 are free from the Guide's quest tree. The next 10 can be bought for 4 Candles each (40 Candles total for the additional ones)." }, dye: false },
     { id: 'large_placeable_118', name: '宝探しの旗', nameEn: "Treasure Seeker's Banner", source: '宝探しの日々（デイズ限定・過去開催）', cost: { type: 'candle', value: 19, note: '1個目19キャンドル、追加3個は1個あたり13キャンドル（4個フルコンプで合計58キャンドル）', noteEn: "19 Candles for the first one; each of the next 3 costs 13 Candles (58 Candles total to collect all 4)." }, dye: true },
+    // 2026-11-05: itemには有るのに値段表に無く、ウィッシュリストの合計・所持アイテムの合計から漏れていた分
+    { id: 'large_placeable_124', name: '黄色テントの壁', nameEn: "Tent Wall", source: '夏のキャンプ', cost: { type: 'unknown' }, dye: false },
+    { id: 'large_placeable_125', name: '黄色テントの入り口', nameEn: "Tent Wall Entrance", source: '夏のキャンプ', cost: { type: 'unknown' }, dye: false },
+    { id: 'large_placeable_126', name: '窓付き黄色テントの壁', nameEn: "Windowed Tent Wall", source: '夏のキャンプ', cost: { type: 'unknown' }, dye: false },
+    { id: 'large_placeable_127', name: '黄色テントのキャノピー', nameEn: "Tent Cover", source: '夏のキャンプ', cost: { type: 'unknown' }, dye: false },
+    { id: 'large_placeable_128', name: 'イーゼル', nameEn: "Easel Prop", source: '親愛なるファン・ゴッホへ（季節の案内人）', cost: { type: 'candle', value: 120 }, dye: false },
   ],
   outfit: [
     { id: 'outfit_001', name: 'デフォルト　服', nameEn: "Default Outfit", source: '初期装備', cost: { type: 'na', note: '初期から所持している基本アイテムのため、コストはかかりません。', noteEn: "This is a basic item owned from the start, so it costs nothing." }, dye: false },
@@ -763,6 +769,8 @@ export const ITEM_COST_DATA = {
     { id: 'portable_item_062', name: 'アニバーサリーポップコーン', nameEn: "Anniversary Popcorn Prop", source: 'Skyアニバーサリー', cost: { type: 'money', value: 650, setId: 'set_anniv_cinema', note: '「アニバーサリーシネマセット」（3Dメガネ＋ポップコーンバケツ）とのセット価格です（単品の価格ではありません）。', noteEn: "This is the bundle price with the \"Anniversary Cinema Set\" (3D Glasses + Popcorn Bucket) -- not the price of this item alone." }, dye: false },
     { id: 'portable_item_063', name: '聖なるスノーボード', nameEn: "Winter Feast Snowboard", source: '聖なる星の日々', cost: { type: 'ticket', note: 'イベント限定の通貨「チケット」での交換アイテムです（キャンドル等の通常価格はありません）。', noteEn: "This item is exchanged with the event-limited \"Ticket\" currency (there is no regular Candle price or similar)." }, revisitCost: { type: 'candle', value: 145 }, dye: false },
     { id: 'portable_item_065', name: '月灯りリュート', nameEn: "Moonlight Lute", source: '月灯りの日々', cost: { type: 'money', value: 1950 }, dye: false },
+    // 2026-11-05: itemには有るのに値段表に無く、ウィッシュリストの合計・所持アイテムの合計から漏れていた分
+    { id: 'portable_item_064', name: '星月夜の傘', nameEn: "Starry Night's Canopy", source: '親愛なるファン・ゴッホへ', cost: { type: 'unknown' }, dye: false },
   ],
   mask: [
     { id: 'mask_001', name: 'デフォルト　マスク', nameEn: "Default Mask", source: '初期装備', cost: { type: 'na', note: '初期から所持している基本アイテムのため、コストはかかりません。', noteEn: "This is a basic item owned from the start, so it costs nothing." }, dye: true },
@@ -883,6 +891,8 @@ export const ITEM_COST_DATA = {
     { id: 'mask_117', name: '老いた漁師　マスク', nameEn: "Old Angler Mask", source: '遥かなる真珠の季節（アドベンチャーパス）', cost: { type: 'na', note: 'アドベンチャーパス（ペンダント）を購入していれば、ハート等で無料交換できるアイテムのため、追加の価格は設定されていません。', noteEn: "If you've bought the Adventure Pass (Pendant), this item can be exchanged for free with Hearts, so no additional price is set." }, dye: true },
     { id: 'mask_118', name: '転げまわる幼子　マスク', nameEn: "Cuddly Rolling Child Mask", source: '遥かなる真珠の季節（季節精霊）', cost: { type: 'candle', value: 18 }, dye: false },
     { id: 'mask_116', name: '月灯りベール', nameEn: "Moonlight Veil", source: '月灯りの日々', cost: { type: 'money', value: 400 }, dye: false },
+    // 2026-11-05: itemには有るのに値段表に無く、ウィッシュリストの合計・所持アイテムの合計から漏れていた分
+    { id: 'mask_115', name: '羽まつげのマスク', nameEn: "Feathery Lash Mask", source: '夏のキャンプ', cost: { type: 'unknown' }, dye: false },
   ],
   small_placeable: [
     { id: 'small_placeable_001', name: '祖たる賢者 設置アイテム', nameEn: "Memory Lantern Prop", source: '想いを編む季節（季節精霊・過去）', cost: { type: 'candle', value: 10 }, dye: false },

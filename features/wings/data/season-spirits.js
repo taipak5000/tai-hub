@@ -206,4 +206,10 @@ export const SEASON_SPIRITS = [
     { ja: '喜びの思い出', en: 'Joyful Memory' },
     { ja: '素朴な思い出', en: 'Rustic Memory' }, // 未確認: 文脈からの推定訳
   ] },
+  { season: { ja: '遥かなる真珠の季節', en: 'Season of Pearl' }, spirits: [
+    { ja: '腕っぷし自慢の船乗り', en: 'Wrestling Sailor' },
+    { ja: '見せびらかしの商人', en: 'Showy Merchant' },
+    { ja: '老いた漁師', en: 'Old Angler' },
+    { ja: '転げまわる幼子', en: 'Cuddly Rolling Child' },
+  ] },
 ];

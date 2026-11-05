@@ -190,6 +190,7 @@
   background: var(--sc-card); border-radius: var(--sc-r-sm); padding: 10px; text-align: center;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06); position: relative; border: 1.5px solid transparent; cursor: pointer;
   font-family: inherit;
+  color: var(--sc-text); /* 🩹 <button>は文字色を親から受け継がない（既定は黒）。ダークモードで精霊名が黒く沈んでいた */
 }
 .spirit-catalog-view .spirit-card:active { opacity: 0.75; }
 .spirit-catalog-view .spirit-card.complete { background: var(--sc-blue-bg); border-color: var(--sc-blue); }

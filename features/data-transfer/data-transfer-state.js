@@ -49,11 +49,15 @@ export const SITE_CATALOG = [
     'coordShareStyle_v1', 'shareUserId_v1',
     'sky_dash_reminder_enabled', 'sky_dash_reminder_minutes', 'sky_dash_reminder_notified_v1',
     'itemTitles_v1', 'itemCostMoneySum_v1',
+    // 🩹 2026-11-05に追加: 楽譜の所持・お気に入り（旧キー musicSheets も）・ウィッシュリスト、コスト集計の個数
+    'gameItems_music_sheet', 'musicSheets', 'wish_music_sheet', 'itemQuantity_v1',
   ] },
   { id: 'wings', label: '羽トラッカー', labelEn: 'Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1',
     'wingsShareCustomize_v1',
     'wingsTitles_v1',
+    // 🩹 2026-11-05に追加: 達成率の推移（エモートと共有していた completionHistory_v1 から分けた）
+    'wingsCompletionHistory_v1', 'wingsCompletion_v1', 'wingsCompletion_history_v1',
   ] },
   { id: 'companion', label: '精霊同行ツール', labelEn: 'Spirit Companion Tool', namespaced: true, keys: [
     'sky_companion_v4_data', 'sky_companion_records_meta_v1',
@@ -68,6 +72,13 @@ export const SITE_CATALOG = [
   { id: 'nomacan', label: 'ノマキャン計算機', labelEn: 'Nomacan Calculator', namespaced: true, keys: [
     'skyNomacanCalc_v1', 'skyNomacanCalc_history_v1', 'skyNomacanGoals_v1',
     'skyNomacanStreak_v1', 'skyNomacanTitles_v1',
+    // 🩹 2026-11-05に追加: デイリークエストの記録・連続日数
+    'skyNomacanStreakGameDay_v1', 'dailyQuestLog_v1', 'dailyQuestStreak_v1', 'dailyQuestStreakGameDay_v1',
+  ] },
+  // 🩹 2026-11-05に追加: ノマキャン計算機プロ。以前は下の旧版（skyzztai）の項目に「プロフィール別でない」キーとして
+  // 入っていたため、既定以外のプロフィールのエリア・ルートのデータが引き継がれていなかった
+  { id: 'nomacan-pro', label: 'ノマキャン計算機プロ', labelEn: 'Nomacan Calculator Pro', namespaced: true, keys: [
+    'sky_tracker_storage_v3',
   ] },
   { id: 'share', label: '創作物管理ツール', labelEn: 'Creation Manager', namespaced: true, keys: [
     'sky_tracker_storage',
@@ -76,6 +87,12 @@ export const SITE_CATALOG = [
   { id: 'emote', label: 'エモート所持率管理', labelEn: 'Emote Collection', namespaced: true, keys: [
     'emoteOwned_v1', 'emoteShareCustomize_v1', 'emoteViewMode_v1',
     'emoteAcquireLog_v1', 'emoteTitles_v1',
+    // 🩹 2026-11-05に追加: 達成率の推移（羽トラッカーと共有していた completionHistory_v1 から分けた。旧キーも引き継ぐ）
+    'emoteCompletionHistory_v1', 'emoteCompletion_v1', 'emoteCompletion_history_v1', 'completionHistory_v1',
+  ] },
+  // 🩹 2026-11-05に追加: デイリーチェックシート（まだ一般公開していないため hidden:true。データは常に引き継ぐ）
+  { id: 'daily-check', label: 'デイリーチェックシート', labelEn: 'Daily Checklist', namespaced: true, hidden: true, keys: [
+    'dailyCheckSheets_v1', 'dailyCheckState_v1', 'dailyCheckLog_v1',
   ] },
   // 🌳 精霊ツリー管理はまだ一般公開していないため hidden:true（チェックリストには
   // 出さないが、既存データを静かに落とさないよう対象キーとしては常に処理する）
@@ -96,7 +113,7 @@ export const SITE_CATALOG = [
     'wishOwnCurrency', 'skyCurrencyExtra_v1',
   ] },
   { id: 'skyzztai', label: 'ノーマルキャンドル計算機（旧版・リアルム/エリア情報）', labelEn: 'Normal Candle Calculator (Legacy · Realm/Area Info)', namespaced: false, hidden: true, keys: [
-    'sky_tracker_storage_v3', 'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
+    'sky_shard_sync_date', 'sky_skill_answered', 'sky_skill_level_key',
     'sky_current_time_mult', 'sky_area_view_mode', 'sky_atlas_bg_opacity',
   ] },
   { id: 'homeIcon', label: 'ホーム画面アイコン設定（サイト別）', labelEn: 'Home Screen Icon (Per Site)', namespaced: false, keys: [

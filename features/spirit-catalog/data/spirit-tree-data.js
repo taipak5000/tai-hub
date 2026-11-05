@@ -6097,7 +6097,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  "5jxMyDhBtf",
                           "ne":  null,
                           "itemCatKey":  "hairstyle",
-                          "itemCostId":  "hairstyle_035"
+                          "itemCostId":  "hairstyle_034"
                       },
                       {
                           "guid":  "5jxMyDhBtf",
@@ -6142,7 +6142,7 @@ export const SPIRIT_TREE_DATA = [
                           "n":  "0FImNOUHCt",
                           "ne":  null,
                           "itemCatKey":  "hairstyle",
-                          "itemCostId":  "hairstyle_034"
+                          "itemCostId":  "hairstyle_035"
                       },
                       {
                           "guid":  "0FImNOUHCt",
@@ -6456,13 +6456,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "EdxE5UGZsa",
                           "itemName":  "Meditating Monastic Table Prop",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "チャットテーブル",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_002"
                       },
                       {
                           "guid":  "tP7zEEseeb",
@@ -10967,13 +10967,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "LtrFT8BOI9",
                           "itemName":  "Belonging Ultimate Fireplace",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "ぬくもりの焚火",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_006"
                       }
                   ],
         "nameJa":  "想いを編む季節の案内人",
@@ -17018,13 +17018,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "GNR4Or83IO",
                           "itemName":  "The Cellist\u0027s Beginnings Poster",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "チェリストの巻貝ポスター",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_103"
                       },
                       {
                           "guid":  "ni_Zpp_oim",
@@ -17187,13 +17187,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "pLAgUoGFQ8",
                           "itemName":  "The Pianist\u0027s Beginnings Poster",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "ピアノ鍵盤ポスター",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_104"
                       }
                   ],
         "nameJa":  "駆けだしのピアニスト",
@@ -17256,8 +17256,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  "5NI0hRi9iv",
                           "n":  "aj5_tFeGeX",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "portable_item",
+                          "itemCostId":  "portable_item_026"
                       },
                       {
                           "guid":  "aj5_tFeGeX",
@@ -17296,13 +17296,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "WuZeLoUATs",
                           "itemName":  "The Musicians\u0027 Legacy Piano",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "グランドピアノ",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_099b"
                       },
                       {
                           "guid":  "I2eU0keULV",
@@ -17450,13 +17450,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "a_Fa3yhrQg",
                           "itemName":  "The Cellist\u0027s Flourishing Poster",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "チェロポスター",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_102"
                       },
                       {
                           "guid":  "ApzfWYIqEh",
@@ -17589,13 +17589,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "RCByalU9Om",
                           "itemName":  "The Pianist\u0027s Flourishing Poster",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "ピアノポスター",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_101"
                       }
                   ],
         "nameJa":  "栄光のピアニスト",
@@ -26549,13 +26549,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "f3kWHEYu3f",
                           "itemName":  "Comfort of Kindness Painting",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "橋の絵画",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_114"
                       }
                   ],
         "nameJa":  "慈愛の安らぎ",
@@ -26827,13 +26827,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "Ykrq48VQQU",
                           "itemName":  "Spirit Of Adventure Prop",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "スナフキンテント",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_021"
                       },
                       {
                           "guid":  "lDAHhqfMW7",
@@ -26921,13 +26921,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "6bG5dv3UqV",
                           "itemName":  "Inspiration Of Inclusion Painting",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "ムーミンやしきの絵画",
                           "itemType":  "Prop",
                           "nw":  "z7JOqOxaWq",
                           "n":  "DRuuMPRTX-",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_113"
                       },
                       {
                           "guid":  "DRuuMPRTX-",
@@ -27135,13 +27135,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "j419c2Vg0Y",
                           "itemName":  "Nesting Ultimate Prop",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "フィギュア",
                           "itemType":  "Prop",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "small_placeable",
+                          "itemCostId":  "small_placeable_115"
                       },
                       {
                           "guid":  "OP5PNWoCRE",
@@ -32704,8 +32704,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_023"
                       },
                       {
                           "guid":  "Fd0D4EM66Q",
@@ -33039,13 +33039,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "vtWiyuyUdz",
                           "itemName":  "Radiance Leaping Dancer Prop",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "カーテンウォール",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_022"
                       },
                       {
                           "guid":  "D6T-Bq3vyt",
@@ -35022,8 +35022,8 @@ export const SPIRIT_TREE_DATA = [
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "hairstyle",
+                          "itemCostId":  "hairstyle_117"
                       },
                       {
                           "guid":  "NuB6nNH_xB",
@@ -38397,13 +38397,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "FjxHIvszIu",
                           "itemName":  "Shattering Ultimate Manta Cape",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "砕ケル闇の究極のマンタケープ",
                           "itemType":  "Cape",
                           "nw":  null,
                           "n":  "jBcre0EABI",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "cape",
+                          "itemCostId":  "cape_071"
                       },
                       {
                           "guid":  "jBcre0EABI",
@@ -41220,13 +41220,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "F44lamMQJN",
                           "itemName":  "Resourceful Recluse Tea Table",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "茶店",
                           "itemType":  "Furniture",
                           "nw":  "vsCBxAmReg",
                           "n":  "HGQQh3bpz1",
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_025"
                       },
                       {
                           "guid":  "HGQQh3bpz1",
@@ -41265,13 +41265,13 @@ export const SPIRIT_TREE_DATA = [
                                    },
                           "itemGuid":  "87cF1DR1mN",
                           "itemName":  "Resourceful Recluse Tree Prop",
-                          "itemNameJa":  null,
+                          "itemNameJa":  "蔓植物",
                           "itemType":  "Furniture",
                           "nw":  null,
                           "n":  null,
                           "ne":  null,
-                          "itemCatKey":  null,
-                          "itemCostId":  null
+                          "itemCatKey":  "large_placeable",
+                          "itemCostId":  "large_placeable_024"
                       },
                       {
                           "guid":  "vsCBxAmReg",

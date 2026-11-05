@@ -80,7 +80,7 @@ import { nsKey } from '../../js/state.js';
 
 const STYLE_LINK_ID = 'share-view-styles';
 const ICON_SPRITE_ID = 'share-icon-sprite';
-const VUE_CDN_URL = 'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js';
+const VUE_CDN_URL = 'https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js';
 
 /* ================================================================
    翻訳辞書（このツール固有の文言のみ。共有chrome側の文言は含めない）

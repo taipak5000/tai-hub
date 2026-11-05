@@ -497,6 +497,23 @@ export function migrateNodeItemLinks20261027() {
   try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
 }
 
+/* 🩹 2026-11-05に、さらに紐づけが無かった18件（重なる音色のポスター・ピアノ・チェロ、ムーミンの絵画、
+   光に染まる星のケープ、希望の番人のヘア、砕ケル闇の究極マンタケープ、ふたつの灯火の茶店・蔓植物など）を
+   アイコン画像で照合して紐づけ、峡谷の長老のヘア1・2の入れ違いを直した。同じ方法で、解放済みノードの分を
+   1回だけitemへ所持として反映する（追加のみ。入れ違いで付いていた方の所持は、item側で直接付けた所持と
+   区別できないため外さない） */
+export function migrateNodeItemLinks20261105() {
+  const flagKey = nsKey('nodeItemLinksMigrated_20261105');
+  try { if (localStorage.getItem(flagKey)) return; } catch (_) { return; }
+  const unlocked = getUnlockedMap();
+  SPIRIT_TREE_DATA.forEach((s) => {
+    s.nodes.forEach((n) => {
+      if (n.itemCatKey && n.itemCostId && unlocked[n.guid]) syncItemOwned(n, true);
+    });
+  });
+  try { localStorage.setItem(flagKey, '1'); } catch (_) { /* ストレージ不可時は次回に再試行 */ }
+}
+
 /* ================================================================
    emote（エモート所持率管理）の所持データと自動同期
    emoteOwned_v1 = { [emoteId]: [所持レベル番号の配列] }
