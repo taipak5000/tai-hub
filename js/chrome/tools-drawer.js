@@ -48,6 +48,29 @@ export function renderNav() {
   document.querySelectorAll('.js-tools-nav').forEach(renderNavInto);
 }
 
+function linkHtml(s) {
+  const { href, hubRoute } = siteLinkHref(s);
+  return `<a class="pf-drawer-link" href="${href}" data-hub-route="${hubRoute}">
+      <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
+      ${s.badgeTest ? `<span class="pf-drawer-badge-test">${t('test', 'test')}</span>` : ''} ${escapeHtml(siteLinkName(s, CURRENT_LANG))}
+    </a>`;
+}
+
+// 🧪 test印のツールは一覧の最後にまとめ、見出しを押すと折りたためる（引き出しと左パネルで共通の設定。端末ごと）
+const TEST_COLLAPSED_KEY = 'sky_tools_test_collapsed';
+function testCollapsed() { try { return localStorage.getItem(TEST_COLLAPSED_KEY) === '1'; } catch (e) { return false; } }
+function testGroupHtml(list) {
+  if (!list.length) return '';
+  const collapsed = testCollapsed();
+  return `<div class="pf-drawer-test${collapsed ? ' is-collapsed' : ''}">
+      <button type="button" class="pf-drawer-test-toggle js-test-toggle" aria-expanded="${!collapsed}">
+        <span>${t('テスト中のツール', 'Tools in testing')}</span><span class="pf-drawer-test-count">${list.length}</span>
+        <svg class="inline-icon pf-drawer-test-chev" width="15" height="15" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </button>
+      <div class="pf-drawer-test-list">${list.map(linkHtml).join('')}</div>
+    </div>`;
+}
+
 function renderNavInto(nav) {
   const links = getSiteLinks();
   if (!links) {
@@ -57,19 +80,22 @@ function renderNavInto(nav) {
   nav.innerHTML = `
     <button type="button" class="hub-search-open js-hub-search">
       <svg class="inline-icon" width="17" height="17"><use href="#i-search"/></svg><span>${t('まとめてさがす', 'Search everything')}</span>
-    </button>` + links.map(s => {
-    const { href, hubRoute } = siteLinkHref(s);
-    return `<a class="pf-drawer-link" href="${href}" data-hub-route="${hubRoute}">
-      <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
-      ${s.badgeTest ? `<span class="pf-drawer-badge-test">${t('test', 'test')}</span>` : ''} ${escapeHtml(siteLinkName(s, CURRENT_LANG))}
-    </a>`;
-  }).join('') + `
+    </button>` + links.filter(s => !s.badgeTest).map(linkHtml).join('') + testGroupHtml(links.filter(s => s.badgeTest)) + `
     <div class="hub-refresh">
       <button type="button" class="hub-refresh-btn js-hub-refresh">
         <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${t('最新の状態に更新', 'Update to the latest version')}
       </button>
       <p class="hub-refresh-hint">${t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
     </div>`;
+  nav.querySelector('.js-test-toggle')?.addEventListener('click', () => {
+    const next = !testCollapsed();
+    try { localStorage.setItem(TEST_COLLAPSED_KEY, next ? '1' : '0'); } catch (e) { /* noop */ }
+    // 引き出しと左パネルの両方へ同じ状態を反映する（描き直さずにクラスだけ切り替える）
+    document.querySelectorAll('.pf-drawer-test').forEach(g => {
+      g.classList.toggle('is-collapsed', next);
+      g.querySelector('.js-test-toggle')?.setAttribute('aria-expanded', String(!next));
+    });
+  });
   nav.querySelector('.js-hub-search').addEventListener('click', () => {
     close();
     import('./search-modal.js').then(m => m.open());

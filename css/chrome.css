@@ -251,6 +251,31 @@
   font-size: 9px; font-weight: 800; background: #ff9500; color: #fff; padding: 1px 5px; border-radius: 5px;
 }
 
+/* 🧪 test印のツールのまとまり（見出しで折りたためる。js/chrome/tools-drawer.js） */
+.pf-drawer-test { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--hub-sep); }
+.pf-drawer-test-toggle {
+  display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px; border: 0; border-radius: 10px;
+  background: none; color: var(--hub-text-2); font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  text-align: left; cursor: pointer;
+}
+.pf-drawer-test-toggle:hover { background: var(--hub-sep); }
+.pf-drawer-test-count {
+  min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--hub-sep); color: var(--hub-text-2);
+  font-size: 11px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.pf-drawer-test-chev { margin-left: auto; stroke: currentColor; transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1); }
+.pf-drawer-test.is-collapsed .pf-drawer-test-chev { transform: rotate(-90deg); }
+.pf-drawer-test-list { display: flex; flex-direction: column; gap: 2px; animation: testListIn 0.28s cubic-bezier(0.25, 1, 0.5, 1); }
+.pf-drawer-test.is-collapsed .pf-drawer-test-list { display: none; }
+@keyframes testListIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .pf-drawer-test-list { animation: iosFade 200ms ease; }
+  .pf-drawer-test-chev { transition: none; }
+}
+@media (prefers-contrast: more) {
+  .pf-drawer-test-toggle { color: var(--hub-text); }
+}
+
 /* 🔄 関連ツール一覧の下の「最新の状態に更新」（js/refresh.js） */
 .hub-refresh { margin-top: 10px; padding-top: 12px; border-top: 0.5px solid var(--hub-sep); }
 .hub-refresh-btn {
