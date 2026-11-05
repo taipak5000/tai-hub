@@ -188,6 +188,21 @@
   color: #fff; font-size: 17px; font-weight: 800;
 }
 .friends-view .fr-avatar .inline-icon { stroke: #fff; }
+.friends-view .fr-avatar { overflow: hidden; line-height: 1; }
+.friends-view .fr-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.friends-view .fr-avatar.is-long { font-size: 13px; letter-spacing: -0.02em; }
+.friends-view .fr-avatar.is-small { width: 24px; height: 24px; font-size: 12px; }
+.friends-view .fr-avatar.is-small.is-long { font-size: 9px; }
+.friends-view .fr-avatar.is-large { width: 72px; height: 72px; font-size: 32px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
+.friends-view .fr-avatar.is-large.is-long { font-size: 24px; }
+.friends-view .fr-avatar-edit { display: flex; align-items: center; gap: 14px; }
+.friends-view .fr-avatar-tools { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.friends-view .fr-avatar-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.friends-view .fr-file-btn { position: relative; overflow: hidden; }
+.friends-view .fr-file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.friends-view .fr-file-btn:focus-within { outline: 2px solid var(--hub-accent); outline-offset: 2px; }
+.friends-view .fr-avatar-presets { margin-top: 4px; }
+.friends-view .fr-avatar-presets .fun-chip { min-width: 38px; justify-content: center; font-size: 16px; padding: 4px 8px; }
 .friends-view .fr-main { flex: 1; min-width: 0; }
 .friends-view .fr-name { font-size: 15.5px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .friends-view .fr-sub { margin-top: 2px; font-size: 12.5px; line-height: 1.6; color: var(--hub-text-2); }

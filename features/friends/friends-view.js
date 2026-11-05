@@ -15,6 +15,8 @@ import {
 } from './friends-state.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
+// アイコンにすぐ選べる文字（Skyらしいもの）。自分で好きな文字・絵文字も入れられる
+const AVATAR_PRESETS = ['⭐', '🌙', '☁️', '🕯️', '🦋', '🐳', '🦀', '🌸', '🎵', '💖', '🍵', '🌈'];
 const COLORS = ['#E8679A', '#F59E0B', '#22A06B', '#3489D6', '#8574DB', '#A8646F', '#5F7F63', '#64748B'];
 const TAB_KEY = 'sky_friends_tab';
 
@@ -42,6 +44,7 @@ export function mount(container) {
   r.addEventListener('click', onClick);
   r.addEventListener('change', onChange);
   r.addEventListener('submit', onSubmit);
+  r.addEventListener('input', onInput);
 }
 
 export function unmount() {
@@ -87,7 +90,7 @@ function render() {
       </div>
       <div class="fr-panel" role="tabpanel">${tab === 'friends' ? friendsHtml() : tab === 'days' ? daysHtml() : diaryHtml()}</div>
     </div>`;
-  if (tab === 'diary') loadVisiblePhotos();
+  loadVisiblePhotos();
 }
 
 function tabBtn(key, label, n) {
@@ -102,7 +105,22 @@ function soonHtml(a) {
   else title = a.years ? t(`${a.title}（${a.years}年目）`, `${a.title} (year ${a.years})`) : a.title;
   const when = a.inDays === 0 ? t('今日', 'Today') : a.inDays === 1 ? t('明日', 'Tomorrow') : t(`${a.inDays}日後`, `in ${a.inDays} days`);
   const color = a.friend ? a.friend.color : 'var(--hub-accent)';
-  return `<li class="${a.inDays === 0 ? 'is-today' : ''}"><span class="fr-dot" style="background:${color}"></span><span class="fr-soon-title">${escapeHtml(title)}</span><span class="fr-soon-when">${when}<small>${a.date.getMonth() + 1}/${a.date.getDate()}</small></span></li>`;
+  const mark = a.friend ? avatarHtml(a.friend, 'is-small') : `<span class="fr-dot" style="background:${color}"></span>`;
+  return `<li class="${a.inDays === 0 ? 'is-today' : ''}">${mark}<span class="fr-soon-title">${escapeHtml(title)}</span><span class="fr-soon-when">${when}<small>${a.date.getMonth() + 1}/${a.date.getDate()}</small></span></li>`;
+}
+
+/* ── アイコン（写真 → 文字・絵文字 → 名前の1文字目 の順に使う） ── */
+// 見た目の1文字ずつに分ける（「👨‍👩‍👧」や「☁️」のような合成された絵文字も1文字として数える）
+const segmenter = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('ja', { granularity: 'grapheme' }) : null;
+function graphemes(str) { return segmenter ? [...segmenter.segment(String(str || ''))].map(x => x.segment) : Array.from(String(str || '')); }
+function firstChar(str) { return graphemes(str)[0] || '?'; }
+function avatarText(f) { return f.avatar || firstChar(f.name); }
+function avatarHtml(f, extraClass = '') {
+  if (f.avatarPhotoId) {
+    const url = photoUrls.get(f.avatarPhotoId);
+    return `<span class="fr-avatar has-photo ${extraClass}" style="background:${f.color}" data-avatar-photo="${escapeHtml(f.avatarPhotoId)}">${url ? `<img src="${url}" alt="">` : escapeHtml(avatarText(f))}</span>`;
+  }
+  return `<span class="fr-avatar ${extraClass}${graphemes(avatarText(f)).length > 1 ? ' is-long' : ''}" style="background:${f.color}">${escapeHtml(avatarText(f))}</span>`;
 }
 
 /* ── フレンド ── */
@@ -117,7 +135,7 @@ function friendRowHtml(f) {
   const days = daysSince(f.since);
   const photos = doc.diary.filter(d => d.friendIds.includes(f.id)).length;
   return `<li class="fr-row">
-    <span class="fr-avatar" style="background:${f.color}">${escapeHtml((f.name || '?').slice(0, 1))}</span>
+    ${avatarHtml(f)}
     <div class="fr-main">
       <div class="fr-name">${escapeHtml(f.name || t('（名前なし）', '(no name)'))}</div>
       <div class="fr-sub">${f.since ? `${t('フレンドになった日', 'Friends since')} ${fmtDate(f.since)}${days != null && days >= 0 ? `<b>${t(`${days.toLocaleString()}日`, `${days.toLocaleString()} days`)}</b>` : ''}` : t('フレンドになった日は未設定', 'No date set')}</div>
@@ -131,7 +149,25 @@ function friendRowHtml(f) {
 }
 function friendFormHtml(f) {
   const color = f ? f.color : COLORS[doc.friends.length % COLORS.length];
+  const hasPhoto = !!pendingPhotoUrl || (!!(f && f.avatarPhotoId) && !form.removePhoto);
+  const photoUrl = pendingPhotoUrl || (f && f.avatarPhotoId && !form.removePhoto ? photoUrls.get(f.avatarPhotoId) : '');
+  const txt = f ? f.avatar : '';
   return `<form class="fun-form" data-form="friend">
+    <div class="fr-avatar-edit">
+      <span class="fr-avatar is-large${hasPhoto ? ' has-photo' : ''}" id="frAvatarPreview" style="background:${color}"${hasPhoto && !photoUrl && f ? ` data-avatar-photo="${escapeHtml(f.avatarPhotoId)}"` : ''}>${photoUrl ? `<img src="${photoUrl}" alt="">` : escapeHtml(txt || firstChar(f ? f.name : '') )}</span>
+      <div class="fr-avatar-tools">
+        <span class="fun-label">${t('アイコン', 'Icon')}</span>
+        <div class="fr-avatar-btns">
+          <label class="fun-btn small fr-file-btn"><svg class="inline-icon" width="14" height="14"><use href="#i-camera"/></svg>${hasPhoto ? t('写真を変える', 'Change photo') : t('写真にする', 'Use a photo')}<input type="file" accept="image/*" name="avatarPhoto"></label>
+          ${hasPhoto ? `<button type="button" class="fun-btn small" data-act="clear-photo">${t('写真をやめる', 'Remove photo')}</button>` : ''}
+        </div>
+      </div>
+    </div>
+    ${hasPhoto ? '' : `<div class="fun-field">
+      <span class="fun-label">${t('アイコンの文字（2文字まで・絵文字もOK）', 'Icon text (up to 2 characters or an emoji)')}</span>
+      <input class="fun-input" name="avatar" maxlength="16" value="${escapeHtml(txt)}" placeholder="${escapeHtml(firstChar(f ? f.name : '') === '?' ? '' : firstChar(f ? f.name : ''))}" autocomplete="off">
+      <div class="fun-chips fr-avatar-presets">${AVATAR_PRESETS.map(ch => `<button type="button" class="fun-chip${txt === ch ? ' on' : ''}" data-act="avatar-preset" data-ch="${ch}">${ch}</button>`).join('')}</div>
+    </div>`}
     <label class="fun-field"><span class="fun-label">${t('名前', 'Name')}</span><input class="fun-input" name="name" maxlength="40" required value="${escapeHtml(f ? f.name : '')}" placeholder="${t('ゲーム内で付けた名前など', 'The name you gave them')}"></label>
     <label class="fun-field"><span class="fun-label">${t('フレンドになった日', 'Friends since')}</span><input class="fun-input" type="date" name="since" max="${todayStr()}" value="${f ? f.since : ''}"></label>
     <div class="fun-field"><span class="fun-label">${t('色', 'Color')}</span><div class="fun-swatches">${COLORS.map(c => `<label class="fun-swatch" style="--sw:${c}"><input type="radio" name="color" value="${c}"${c === color ? ' checked' : ''}><span></span></label>`).join('')}</div></div>
@@ -233,9 +269,9 @@ function diaryFormHtml(d) {
 function emptyHtml(msg) { return `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-heart"/></svg><p>${escapeHtml(msg)}</p></div>`; }
 
 async function loadVisiblePhotos() {
-  const slots = root() ? root().querySelectorAll('.fr-photo[data-photo]') : [];
+  const slots = root() ? root().querySelectorAll('.fr-photo[data-photo], .fr-avatar[data-avatar-photo]') : [];
   for (const slot of slots) {
-    const id = slot.dataset.photo;
+    const id = slot.dataset.photo || slot.dataset.avatarPhoto;
     let url = photoUrls.get(id);
     if (!url) {
       try {
@@ -246,6 +282,7 @@ async function loadVisiblePhotos() {
       } catch (e) { continue; }
     }
     if (!slot.isConnected) continue;
+    if (slot.dataset.avatarPhoto && slot.querySelector('img')) continue;
     slot.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
   }
 }
@@ -262,6 +299,19 @@ async function shrinkImage(file) {
     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
     return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
   } finally { URL.revokeObjectURL(bitmapUrl); }
+}
+// アイコン用: 真ん中を正方形に切り抜いて256px四方にする
+async function squareImage(file) {
+  const srcUrl = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = srcUrl; });
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 256;
+    canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, 256, 256);
+    return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+  } finally { URL.revokeObjectURL(srcUrl); }
 }
 function clearPendingPhoto() {
   if (pendingPhotoUrl) URL.revokeObjectURL(pendingPhotoUrl);
@@ -305,14 +355,26 @@ function onClick(e) {
     case 'cancel': form = null; clearPendingPhoto(); setConfirm(null); render(); break;
     case 'filter': diaryFilter = id || ''; render(); break;
     case 'diary-of': tab = 'diary'; diaryFilter = id; form = null; render(); break;
-    case 'clear-photo': clearPendingPhoto(); if (form) form.removePhoto = true; render(); break;
-    case 'del-friend':
+    case 'clear-photo': {
+      const keep = currentFormData();
+      clearPendingPhoto(); if (form) form.removePhoto = true; render(); restoreForm(keep);
+      break;
+    }
+    case 'avatar-preset': {
+      const input = root().querySelector('.fun-form input[name=avatar]');
+      if (input) { input.value = input.value === btn.dataset.ch ? '' : btn.dataset.ch; updateAvatarPreview(); }
+      break;
+    }
+    case 'del-friend': {
       if (confirmId !== id) { setConfirm(id); render(); break; }
+      const gone = friendById(id);
+      if (gone && gone.avatarPhotoId) deletePhoto(gone.avatarPhotoId).catch(() => {});
       doc.friends = doc.friends.filter(f => f.id !== id);
       doc.days.forEach(d => { if (d.friendId === id) d.friendId = ''; });
       doc.diary.forEach(d => { d.friendIds = d.friendIds.filter(x => x !== id); });
       form = null; setConfirm(null); save(); render();
       break;
+    }
     case 'del-day':
       if (confirmId !== id) { setConfirm(id); render(); break; }
       doc.days = doc.days.filter(d => d.id !== id);
@@ -332,9 +394,10 @@ function onClick(e) {
 
 async function onChange(e) {
   const el = e.target;
-  if (el.name === 'photo' && el.files && el.files[0]) {
+  if (el.name === 'color') { updateAvatarPreview(); return; }
+  if ((el.name === 'photo' || el.name === 'avatarPhoto') && el.files && el.files[0]) {
     try {
-      const blob = await shrinkImage(el.files[0]);
+      const blob = el.name === 'avatarPhoto' ? await squareImage(el.files[0]) : await shrinkImage(el.files[0]);
       if (!blob) throw new Error('no blob');
       // 入力中の文字を残したまま、写真の見本だけ差し替える
       const formEl = el.closest('form');
@@ -347,12 +410,42 @@ async function onChange(e) {
     } catch (err) { toast(t('この写真は読み込めませんでした', 'Could not read this photo')); }
   }
 }
+function currentFormData() {
+  const formEl = root() && root().querySelector('.fun-form');
+  return formEl ? new FormData(formEl) : null;
+}
+// 描き直した後のフォームへ、入力途中の値を戻す（写真を選んだ・外した時）
 function restoreForm(fd) {
   const formEl = root() && root().querySelector('.fun-form');
   if (!formEl || !fd) return;
-  ['date', 'text'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null) input.value = v; });
+  ['date', 'text', 'name', 'since', 'memo', 'avatar'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null && input.type !== 'file') input.value = v; });
+  const color = fd.get('color');
+  if (color) formEl.querySelectorAll('input[name=color]').forEach(r => { r.checked = r.value === color; });
   const ids = new Set(fd.getAll('friendIds'));
   formEl.querySelectorAll('input[name=friendIds]').forEach(cb => { cb.checked = ids.has(cb.value); });
+  updateAvatarPreview();
+}
+
+function onInput(e) {
+  const n = e.target.name;
+  if (n === 'avatar' || n === 'name') updateAvatarPreview();
+}
+// フレンドの入力中、アイコンの見本だけを差し替える（入力欄は描き直さない＝フォーカスが外れない）
+function updateAvatarPreview() {
+  const formEl = root() && root().querySelector('.fun-form[data-form=friend]');
+  const pv = formEl && formEl.querySelector('#frAvatarPreview');
+  if (!pv) return;
+  const color = (formEl.querySelector('input[name=color]:checked') || {}).value;
+  if (color) pv.style.background = color;
+  const avatarInput = formEl.elements.avatar;
+  if (avatarInput) {
+    const v = avatarInput.value.trim();
+    const shown = v || firstChar(formEl.elements.name.value);
+    pv.textContent = shown;
+    pv.classList.toggle('is-long', graphemes(shown).length > 1);
+    avatarInput.placeholder = firstChar(formEl.elements.name.value) === '?' ? '' : firstChar(formEl.elements.name.value);
+    formEl.querySelectorAll('[data-act=avatar-preset]').forEach(b => b.classList.toggle('on', b.dataset.ch === v));
+  }
 }
 
 async function onSubmit(e) {
@@ -363,8 +456,24 @@ async function onSubmit(e) {
   if (kind === 'friend') {
     const data = { name: String(fd.get('name') || '').trim().slice(0, 40), since: String(fd.get('since') || ''), memo: String(fd.get('memo') || '').slice(0, 400), color: String(fd.get('color') || COLORS[0]) };
     if (!data.name) return;
-    if (form.id) Object.assign(friendById(form.id), data);
-    else doc.friends.push({ id: genId(), ...data });
+    // アイコンの文字は2文字（絵文字は1つ＝合成された絵文字も1つ）まで
+    if (fd.has('avatar')) data.avatar = graphemes(String(fd.get('avatar') || '').trim()).slice(0, 2).join('').slice(0, 16);
+    const target = form.id ? friendById(form.id) : { id: genId(), avatar: '', avatarPhotoId: '' };
+    const oldPhoto = target.avatarPhotoId;
+    if (pendingPhoto) {
+      const pid = 'a_' + genId();
+      try {
+        await putPhoto(pid, pendingPhoto);
+        data.avatarPhotoId = pid;
+        if (oldPhoto) deletePhoto(oldPhoto).catch(() => {});
+      } catch (err) { toast(t('写真を保存できませんでした', 'Could not save the photo')); }
+    } else if (form.removePhoto && oldPhoto) {
+      data.avatarPhotoId = '';
+      deletePhoto(oldPhoto).catch(() => {});
+    }
+    Object.assign(target, data);
+    if (!form.id) doc.friends.push(target);
+    clearPendingPhoto();
   } else if (kind === 'day') {
     const m = /^(\d{1,2})[-/](\d{1,2})$/.exec(String(fd.get('md') || '').trim());
     const year = String(fd.get('year') || '').trim();

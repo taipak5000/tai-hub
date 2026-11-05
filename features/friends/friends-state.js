@@ -3,7 +3,8 @@
    画面（friends-view.js）と、お知らせ（js/notices.js）・一年のふりかえり（features/recap）が読む。
 
    friendsDoc_v1: {
-     friends: [{ id, name, since: 'YYYY-MM-DD'（フレンドになった日。空でもよい）, memo, color: '#RRGGBB' }],
+     friends: [{ id, name, since: 'YYYY-MM-DD'（フレンドになった日。空でもよい）, memo, color: '#RRGGBB',
+                 avatar: アイコンの文字・絵文字（空なら名前の1文字目）, avatarPhotoId: アイコンの写真のID（IndexedDB。空なら文字） }],
      days:    [{ id, name, date: 'MM-DD' または 'YYYY-MM-DD'（毎年の記念日。誕生日など）, friendId? }],
      diary:   [{ id, date: 'YYYY-MM-DD', text, friendIds: [id], photoId? }]
    }
@@ -28,6 +29,8 @@ export function normalizeFriendsDoc(raw) {
     since: DATE_RE.test(f.since || '') ? f.since : '',
     memo: str(f.memo, 400),
     color: COLOR_RE.test(f.color || '') ? f.color : '#E8679A',
+    avatar: str(f.avatar, 16).trim(),          // アイコンに出す文字・絵文字（空なら名前の1文字目）
+    avatarPhotoId: typeof f.avatarPhotoId === 'string' ? f.avatarPhotoId.slice(0, 60) : '', // アイコンの写真（IndexedDB）
   }));
   const ids = new Set(friends.map(f => f.id));
   const days = (Array.isArray(d.days) ? d.days : []).filter(x => x && x.id && MD_RE.test(x.date || '')).slice(0, 500).map(x => ({
