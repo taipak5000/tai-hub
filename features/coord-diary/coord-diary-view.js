@@ -8,6 +8,7 @@
    🪄 アイテム所持管理にあった「コーデ機能」（ランダムコーデ・マイコーデ・クローゼットコラージュ）もここから開く
    （2026-11-06に引っ越し。中身は features/item/coord/ のまま＝保存データも共通。使う時だけ読み込む）。
    コーデの共有リンク（#/item/coord=…）の受け取りは、従来どおりアイテム所持管理が担当する。
+   📚 「シーズンアルバム」タブ（season-album.js）: 季節ごとの記録と写真のアルバム（2026-11-06に試作から移した）。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
@@ -17,6 +18,7 @@ import { injectStylesheet } from '../bingo/bingo-view.js';
 import { toast } from '../shared/share-image.js';
 import { PLACES, PLACE_IDS, placeName } from '../shared/places.js';
 import { putPhoto, getPhoto, deletePhoto, todayStr } from '../friends/friends-state.js';
+import { albumsHtml } from './season-album.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const KEY = 'coordDiary_v1';
@@ -28,6 +30,9 @@ const COORD_TOOLS = {
   collage: () => import('../item/coord/closet-collage.js'),
 };
 const openedTools = new Set();
+const TAB_KEY = 'sky_coord_tab'; // 'diary'＝コーデ日記 ／ 'album'＝シーズンアルバム
+let tab = 'diary';
+let albumOpen = null;
 
 let containerEl = null;
 let doc = null;
@@ -127,7 +132,8 @@ export function mount(container) {
   }).catch(() => {});
   const now = new Date();
   month = { y: now.getFullYear(), m: now.getMonth() };
-  form = null; confirmId = null;
+  form = null; confirmId = null; albumOpen = null;
+  try { tab = localStorage.getItem(TAB_KEY) === 'album' ? 'album' : 'diary'; } catch (e) { tab = 'diary'; }
   container.innerHTML = '<div class="coord-diary-view fun-view"></div>';
   render();
   const r = root();
@@ -167,6 +173,17 @@ function render() {
       ${toolBtn('my', 'i-hanger', t('マイコーデ', 'My Coord'), t('お気に入りのコーデを保存', 'Save favorite outfits'))}
       ${toolBtn('collage', 'i-image', t('クローゼットコラージュ', 'Closet Collage'), t('アイテムや写真でコラージュ', 'Make a collage image'))}
     </div>
+    <div class="fun-tabs" role="tablist">
+      <button type="button" class="fun-tab${tab === 'diary' ? ' on' : ''}" role="tab" aria-selected="${tab === 'diary'}" data-act="tab" data-tab="diary">${t('コーデ日記', 'Outfit diary')}</button>
+      <button type="button" class="fun-tab${tab === 'album' ? ' on' : ''}" role="tab" aria-selected="${tab === 'album'}" data-act="tab" data-tab="album">${t('シーズンアルバム', 'Season album')}</button>
+    </div>
+    ${tab === 'album' ? albumsHtml(albumOpen) : diaryTabHtml(inMonth)}
+  </div>`;
+  loadPhotos();
+}
+
+function diaryTabHtml(inMonth) {
+  return `
     ${form ? formHtml() : `<button type="button" class="fun-add" data-act="new"><svg class="inline-icon" width="16" height="16"><use href="#i-plus"/></svg>${t('今日のコーデを残す', 'Log today’s outfit')}</button>`}
     <section class="cd-cal">
       <div class="cd-cal-head">
@@ -177,9 +194,7 @@ function render() {
       ${calendarHtml()}
     </section>
     ${inMonth.length ? `<div class="cd-list">${inMonth.map(entryHtml).join('')}</div>` : `<p class="fun-hint cd-empty-month">${t('この月の記録はまだありません。カレンダーの日付を押しても残せます。', 'No outfits this month yet. Tap a day to add one.')}</p>`}
-    ${favoritesHtml()}
-  </div>`;
-  loadPhotos();
+    ${favoritesHtml()}`;
 }
 
 function toolBtn(key, icon, label, desc) {
@@ -286,7 +301,10 @@ async function loadPhotos() {
     if (!url) {
       try { const blob = await getPhoto(id); if (!blob) continue; url = URL.createObjectURL(blob); urls.set(id, url); } catch (e) { continue; }
     }
-    if (slot.isConnected) slot.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+    if (!slot.isConnected || slot.querySelector('img')) continue;
+    // アルバムの枠は日付などの文字を持っているので、その前に写真を差し込む
+    if (slot.classList.contains('sa-photo') || slot.classList.contains('sa-cover-photo')) slot.insertAdjacentHTML('afterbegin', `<img src="${url}" alt="" loading="lazy">`);
+    else slot.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
   }
 }
 
@@ -324,6 +342,13 @@ function onClick(e) {
   if (!btn || btn.disabled) return;
   const { act } = btn.dataset;
   if (act === 'new') { openForm(null); return; }
+  if (act === 'tab') {
+    if (form) syncForm();
+    tab = btn.dataset.tab === 'album' ? 'album' : 'diary';
+    try { localStorage.setItem(TAB_KEY, tab); } catch (err) { /* noop */ }
+    render(); return;
+  }
+  if (act === 'album-toggle') { albumOpen = albumOpen === btn.dataset.key ? null : btn.dataset.key; render(); return; }
   if (act === 'tool') {
     const key = btn.dataset.tool;
     if (!COORD_TOOLS[key]) return;

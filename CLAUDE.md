@@ -251,7 +251,8 @@ const landingPoint = currentY + project(v);
   **新しいツールに記録を足したら、スタンプ帳（`stamps-state.js`の`collectStats`/`STAMPS`）とふりかえり（`recap-view.js`）にも数を足せるか考えること。**
 - **キャンドル貯金箱**（`#/candle-jar`、`features/tai-nomacan/candle-jar-view.js`）: 試作から公開へ（2026-11-06）。ノマキャン計算機の兄弟機能として
   一覧ではその下に字下げして並べ、ルート要素に`.nomacan-view`を付けて`css/tai-nomacan.css`の見た目・着せ替えの対応をそのまま使う。
-- **試作中の機能（2026-11-06〜。`features/lab/`）**: 撮影お題ガチャ・シーズンアルバム（気分カレンダー・タイムカプセル・推し精霊・シール帳は11/6に削除）。
+- **シーズンアルバム**: コーデ日記の「シーズンアルバム」タブ（`features/coord-diary/season-album.js`。季節の期間は`features/shared/season-dates.js`）。
+- **試作中の機能（2026-11-06〜。`features/lab/`）**: 撮影お題ガチャ（気分カレンダー・タイムカプセル・推し精霊・シール帳は11/6に削除、シーズンアルバムはコーデ日記へ移動）。
   ルートは`lab-*`で**すべて`hidden: true`**。関連ツールの一覧・検索・お知らせ・起動時に開くツールには出さず、
   **入口はデイリーチェックシート単体のページ（`#/daily-check`、埋め込み時は出さない）の「試作中の機能」だけ**（作者が一人で試すため）。
   公開する時は`hidden`を外して`site-links.js`へ足し、`LAB_TOOLS`（`lab-common.js`）から外す。

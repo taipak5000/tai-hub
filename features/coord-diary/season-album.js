@@ -1,34 +1,22 @@
 /* ================================================================
-   📚 シーズンアルバム（#/lab-season-album・試作）。季節ごとに、その期間に集めたもの・残した思い出を1冊のアルバムにまとめる。
-   数えるもの（どれも記録の日付で季節の期間に振り分ける。記録がない季節は出さない）:
+   📚 シーズンアルバム（コーデ日記の「シーズンアルバム」タブ。features/coord-diary/coord-diary-view.js が表示する）。
+   季節ごとに、その期間に手に入れたもの・残した思い出を1冊のアルバムにまとめる（2026-11-06に試作からコーデ日記へ移した）。
+   数えるもの（記録の日付で季節の期間に振り分ける。記録がない季節は出さない）:
      アイテム（itemAcquireLog_v1）・エモート（emoteAcquireLog_v1）・羽（wingTracker_v1 の日時）・
      フォト日記（friendsDoc_v1）・コーデ日記（coordDiary_v1）
    季節の期間は features/shared/season-dates.js。季節と季節のあいだの日の記録は、どのアルバムにも入れない。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { injectStylesheet } from '../bingo/bingo-view.js';
-import { getPhoto } from '../friends/friends-state.js';
+import { nsKey } from '../../js/state.js';
 import { SEASON_DATES } from '../shared/season-dates.js';
-import { t, readJson, localDateStr, labHeadHtml } from './lab-common.js';
 
-let containerEl = null;
-let openKey = null;
-const urls = new Map();
-
-export function mount(container) {
-  injectStylesheet();
-  containerEl = container;
-  openKey = null;
-  container.innerHTML = '<div class="lab-season-album-view fun-view"></div>';
-  render();
-  root().addEventListener('click', onClick);
-}
-export function unmount() { urls.forEach(u => URL.revokeObjectURL(u)); urls.clear(); containerEl = null; }
-function root() { return containerEl && containerEl.querySelector('.lab-season-album-view'); }
+const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
+function readJson(key, fb) { try { const v = JSON.parse(localStorage.getItem(nsKey(key))); return v == null ? fb : v; } catch (e) { return fb; } }
+function localDateStr(d = new Date()) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 
 function dayStr(iso) { const d = new Date(iso); return isNaN(d) ? '' : localDateStr(d); }
 
-function collect() {
+export function collectAlbums() {
   const itemLog = Object.values(readJson('itemAcquireLog_v1', {}) || {}).map(e => e && dayStr(e.at)).filter(Boolean);
   const emoteLog = Object.values(readJson('emoteAcquireLog_v1', {}) || {}).map(e => e && dayStr(e.at)).filter(Boolean);
   const wings = [];
@@ -51,19 +39,16 @@ function collect() {
 
 function fmt(d) { const [y, m, dd] = d.split('-').map(Number); return t(`${y}/${m}/${dd}`, `${m}/${dd}/${y}`); }
 
-function render() {
-  const r = root();
-  if (!r) return;
-  const list = collect();
-  r.innerHTML = `<div class="fun-wrap">
-    ${labHeadHtml('season-album', t('季節ごとに、その期間に集めたものと残した思い出をまとめました。表紙を押すと中身が開きます。', 'Your finds and memories, grouped by season. Tap a cover to open it.'))}
-    ${list.length ? `<div class="sa-list">${list.map(albumHtml).join('')}</div>`
-      : `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-image"/></svg><p>${t('アイテムの所持やフォト日記・コーデ日記を記録すると、季節ごとのアルバムができていきます。', 'Log items, photos and outfits to start building your season albums.')}</p></div>`}
-  </div>`;
-  loadPhotos();
+
+/** アルバムの一覧。openKey は開いている季節（開始日）。写真の枠は data-photo を持つ（呼び出し側が読み込む） */
+export function albumsHtml(openKey) {
+  const list = collectAlbums();
+  if (!list.length) return `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-image"/></svg><p>${t('アイテムの所持やフォト日記・コーデ日記を記録すると、季節ごとのアルバムができていきます。', 'Log items, photos and outfits to start building your season albums.')}</p></div>`;
+  return `<p class="fun-hint sa-lead">${t('季節ごとに、その期間に集めたものと残した思い出をまとめました。表紙を押すと中身が開きます。', 'Your finds and memories, grouped by season. Tap a cover to open it.')}</p>
+    <div class="sa-list">${list.map(a => albumHtml(a, openKey)).join('')}</div>`;
 }
 
-function albumHtml(a) {
+function albumHtml(a, openKey) {
   const name = CURRENT_LANG === 'en' ? a.s.en : a.s.ja;
   const open = openKey === a.key;
   const cover = a.photos[0];
@@ -73,7 +58,7 @@ function albumHtml(a) {
     a.coords.length && t(`コーデ ${a.coords.length}`, `${a.coords.length} outfits`),
   ].filter(Boolean);
   return `<article class="sa-album${open ? ' is-open' : ''}">
-    <button type="button" class="sa-cover" data-act="toggle" data-key="${a.key}" aria-expanded="${open}">
+    <button type="button" class="sa-cover" data-act="album-toggle" data-key="${a.key}" aria-expanded="${open}">
       <span class="sa-cover-photo"${cover ? ` data-photo="${escapeHtml(cover.photoId)}"` : ''}></span>
       <span class="sa-cover-text">
         <b>${escapeHtml(name)}</b>
@@ -88,19 +73,3 @@ function albumHtml(a) {
   </article>`;
 }
 
-async function loadPhotos() {
-  const slots = root() ? root().querySelectorAll('[data-photo]') : [];
-  for (const slot of slots) {
-    const id = slot.dataset.photo;
-    let url = urls.get(id);
-    if (!url) { try { const b = await getPhoto(id); if (!b) continue; url = URL.createObjectURL(b); urls.set(id, url); } catch (e) { continue; } }
-    if (slot.isConnected && !slot.querySelector('img')) slot.insertAdjacentHTML('afterbegin', `<img src="${url}" alt="" loading="lazy">`);
-  }
-}
-
-function onClick(e) {
-  const b = e.target.closest('[data-act=toggle]');
-  if (!b) return;
-  openKey = openKey === b.dataset.key ? null : b.dataset.key;
-  render();
-}
