@@ -241,6 +241,11 @@ const landingPoint = currentY + project(v);
   データは開いた時に読み込む（精霊ツリーのデータは1.8MBあるので起動時には読まない）。
 - **週替わりビンゴ**（`features/bingo/`）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
   **一年のふりかえり**（`features/recap/`）。CSSは3つ共通で`css/fun-tools.css`、色は`--hub-*`トークンだけを使う（着せ替えに追従）。
+- **第2弾（2026-11-06）**: 今日やること＋おみくじ（`features/today/`。大キャンドル等の計算は`event-dashboard.js`の`getTodayBrief()`）・
+  ほしいもの計画（`features/wish-plan/`。欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通）・
+  コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・スタンプ帳（`features/stamps/`。判定は各ツールの記録を読むだけで軽い＝お知らせからも呼ぶ）・
+  思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。
+  **新しいツールに記録を足したら、スタンプ帳（`stamps-state.js`の`collectStats`/`STAMPS`）とふりかえり（`recap-view.js`）にも数を足せるか考えること。**
 - アクセント色を**文字**に使う時は`--hub-accent`ではなく`--hub-accent-ink`を使う（着せ替え中は`theme.js`が背景に対して4.5:1を保証した色を入れる。
   `--hub-accent`は塗り用で、淡い黄色などのテーマでは文字にすると読めなくなる）。
 - 精霊ツリーの楽譜ノードは、`spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける（52件すべて）。

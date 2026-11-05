@@ -7,12 +7,13 @@
                  birthday: 'MM-DD' または 'YYYY-MM-DD'（誕生日。空でもよい）,
                  avatar: アイコンの文字・絵文字（空なら名前の1文字目）, avatarPhotoId: アイコンの写真のID（IndexedDB。空なら文字） }],
      days:    [{ id, name, date: 'MM-DD' または 'YYYY-MM-DD'（毎年の記念日。誕生日など）, friendId? }],
-     diary:   [{ id, date: 'YYYY-MM-DD', text, friendIds: [id], photoId? }]
+     diary:   [{ id, date: 'YYYY-MM-DD', text, friendIds: [id], photoId?, place?（思い出の場所のid） }]
    }
    写真は localStorage の容量を圧迫しないよう IndexedDB（tai-hub-photos / photos）に保存する
    （着せ替えの壁紙と同じ考え方。データ引継ぎのバックアップには写真そのものは含めない）。
    ================================================================ */
 import { nsKey } from '../../js/state.js';
+import { PLACE_IDS } from '../shared/places.js';
 
 export const FRIENDS_KEY = 'friendsDoc_v1';
 
@@ -47,6 +48,7 @@ export function normalizeFriendsDoc(raw) {
     text: str(x.text, 2000),
     friendIds: (Array.isArray(x.friendIds) ? x.friendIds : []).filter(id => ids.has(id)),
     photoId: typeof x.photoId === 'string' ? x.photoId.slice(0, 60) : '',
+    place: PLACE_IDS.has(x.place) ? x.place : '', // 思い出の場所（features/shared/places.js のid）
   }));
   return { friends, days, diary };
 }

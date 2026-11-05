@@ -16,7 +16,12 @@ const HUB_ONLY_TOOLS = [
   // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）
   { id: 'bingo', afterId: 'tai-card', icon: 'i-grid', ja: '週替わりビンゴ', en: 'Weekly Bingo', badgeTest: true },
   { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', badgeTest: true },
-  { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: '一年のふりかえり', en: 'Year in Review', badgeTest: true },
+  { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: 'ふりかえり', en: 'Recap', badgeTest: true },
+  // 第2弾（2026-11-06）
+  { id: 'today', afterId: 'tai-card', icon: 'i-sun', ja: '今日やること', en: 'Today', badgeTest: true },
+  { id: 'wish-plan', afterId: 'tai-card', icon: 'i-cart', ja: 'ほしいもの計画', en: 'Wishlist Plan', badgeTest: true },
+  { id: 'coord-diary', afterId: 'tai-card', icon: 'i-hanger', ja: 'コーデ日記', en: 'Outfit Diary', badgeTest: true },
+  { id: 'stamps', afterId: 'tai-card', icon: 'i-crown', ja: 'スタンプ帳', en: 'Stamp Book', badgeTest: true },
 ];
 
 let tools = null;

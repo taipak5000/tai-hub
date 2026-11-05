@@ -52,7 +52,7 @@ function itemHtml(n, isNew) {
       <div class="notice-title">${isNew ? `<span class="notice-dot" aria-label="${t('新着', 'New')}"></span>` : ''}${escapeHtml(n.title)}</div>
       <div class="notice-body">${lines}</div>
       ${n.wishItems && n.wishItems.length ? `<div class="notice-wish" data-wish='${escapeHtml(JSON.stringify(n.wishItems))}'></div>` : ''}
-      ${n.route ? `<button type="button" class="notice-go" data-notice-route="${escapeHtml(n.route)}">${escapeHtml(n.routeLabel || t('開く', 'Open'))}<svg class="inline-icon" width="13" height="13"><use href="#i-chevron-right"/></svg></button>` : ''}
+      ${n.route ? `<button type="button" class="notice-go" data-notice-route="${escapeHtml(n.route)}"${n.sub ? ` data-notice-sub="${escapeHtml(n.sub)}"` : ''}>${escapeHtml(n.routeLabel || t('開く', 'Open'))}<svg class="inline-icon" width="13" height="13"><use href="#i-chevron-right"/></svg></button>` : ''}
     </div>
   </li>`;
 }

@@ -1174,3 +1174,27 @@ export function getEndingSoonSeason() {
   if (daysLeft > SEASON_ENDING_SOON_DAYS) return null;
   return { seasonJa: season.name, seasonEn: DASH_EVENT_NAME_EN[season.name] || season.name, daysLeft };
 }
+
+/**
+ * 「今日やること」（features/today）用の、今日の要点だけをまとめた値。表示はしない（呼び出し側が組み立てる）。
+ * { nextReset: Date, nextEden: Date, grand: {ja,en}, quest: {ja,en},
+ *   shard: { has, isRed, realm: {ja,en}, location: {ja,en}, occurrences: [{start, end}] },
+ *   nextGeyser: Date（ウニ焼き）, nextGrandma: Date（パン焼き）, nextTurtle: Date（亀闇） }
+ */
+export function getTodayBrief() {
+  const s = shardInfo();
+  const label = k => ({ ja: REALM_LABEL[k].ja, en: REALM_LABEL[k].en });
+  return {
+    nextReset: nextPacificMidnight(),
+    nextEden: nextEdenResetTarget(),
+    grand: label(grandCandleRealm()),
+    quest: label(grandCandleRealm(-2, QUEST_CANDLE_ANCHOR_DATE, QUEST_CANDLE_ANCHOR_REALM_IDX)),
+    shard: {
+      has: s.hasShard, isRed: s.isRed, realm: label(s.realm), location: s.location,
+      occurrences: s.occurrences.map(start => ({ start, end: shardEnd(start) })),
+    },
+    nextGeyser: nextEvenHourEvent(5),
+    nextGrandma: nextEvenHourEvent(35),
+    nextTurtle: nextEvenHourEvent(50),
+  };
+}

@@ -10,6 +10,7 @@ import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { notifyChanged } from '../../js/notices.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
 import { toast } from '../shared/share-image.js';
+import { PLACES, placeById, placeName } from '../shared/places.js';
 import {
   loadFriendsDoc, saveFriendsDoc, upcomingAnniversaries, daysSince, todayStr, putPhoto, getPhoto, deletePhoto,
 } from './friends-state.js';
@@ -227,6 +228,7 @@ function dayFormHtml(d) {
 
 /* ── フォト日記 ── */
 let diaryFilter = '';
+let diaryMode = 'date'; // 'date'＝日付順 ／ 'place'＝思い出の場所ごと
 function diaryHtml() {
   const editing = form && form.kind === 'diary';
   const list = [...doc.diary].filter(d => !diaryFilter || d.friendIds.includes(diaryFilter)).sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
@@ -239,7 +241,22 @@ function diaryHtml() {
       <button type="button" class="fun-chip${!diaryFilter ? ' on' : ''}" data-act="filter" data-id="">${t('すべて', 'All')}</button>
       ${doc.friends.filter(f => doc.diary.some(d => d.friendIds.includes(f.id))).map(f => `<button type="button" class="fun-chip${diaryFilter === f.id ? ' on' : ''}" data-act="filter" data-id="${f.id}">${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</button>`).join('')}
     </div>` : ''}
-    ${list.length ? `<div class="fr-diary">${list.map(d => entryHtml(d, false)).join('')}</div>` : (editing ? '' : emptyHtml(t('写真や一言で、Skyでの思い出を残しましょう。写真はこの端末の中だけに保存されます', 'Save your Sky memories with a photo and a few words. Photos stay on this device.')))}`;
+    ${doc.diary.length ? `<div class="fun-chips fr-mode" role="group" aria-label="${t('並べ方', 'View')}">
+      <button type="button" class="fun-chip${diaryMode === 'date' ? ' on' : ''}" data-act="mode" data-id="date">${t('日付順', 'By date')}</button>
+      <button type="button" class="fun-chip${diaryMode === 'place' ? ' on' : ''}" data-act="mode" data-id="place"><svg class="inline-icon" width="13" height="13"><use href="#i-map"/></svg>${t('思い出の場所', 'By place')}</button>
+    </div>` : ''}
+    ${list.length && diaryMode === 'place' ? placeMapHtml(list) : ''}
+    ${list.length && diaryMode === 'date' ? `<div class="fr-diary">${list.map(d => entryHtml(d, false)).join('')}</div>` : (list.length ? '' : editing ? '' : emptyHtml(t('写真や一言で、Skyでの思い出を残しましょう。写真はこの端末の中だけに保存されます', 'Save your Sky memories with a photo and a few words. Photos stay on this device.')))}`;
+}
+// 🗺️ 思い出の場所: エリアごとに、思い出の数と写真を並べる（場所を選んでいない思い出は「場所なし」）
+function placeMapHtml(list) {
+  const groups = [...PLACES.map(p => ({ p, items: list.filter(d => d.place === p.id) })), { p: null, items: list.filter(d => !d.place) }].filter(g => g.items.length);
+  return `<div class="fr-places">${groups.map(g => `<section class="fr-place" style="--pc:${g.p ? g.p.color : 'var(--hub-text-3)'}">
+    <h3 class="fr-place-head"><span class="fr-place-pin"><svg class="inline-icon" width="14" height="14"><use href="#i-map"/></svg></span>${escapeHtml(g.p ? (CURRENT_LANG === 'en' ? g.p.en : g.p.ja) : t('場所なし', 'No place'))}<span>${t(`${g.items.length}件`, `${g.items.length}`)}</span></h3>
+    <div class="fr-place-strip">${g.items.map(d => `<button type="button" class="fr-place-card" data-act="edit-diary" data-id="${d.id}">
+      ${d.photoId ? `<span class="fr-photo" data-photo="${escapeHtml(d.photoId)}"></span>` : `<span class="fr-place-text">${escapeHtml((d.text || '').slice(0, 40))}</span>`}
+      <small>${fmtDate(d.date)}</small></button>`).join('')}</div>
+  </section>`).join('')}</div>`;
 }
 function entryHtml(d, compact) {
   const names = d.friendIds.map(friendById).filter(Boolean);
@@ -247,7 +264,7 @@ function entryHtml(d, compact) {
   return `<article class="fr-entry${compact ? ' is-otd' : ''}">
     ${d.photoId ? `<div class="fr-photo" data-photo="${escapeHtml(d.photoId)}"><span class="fr-photo-ph"><svg class="inline-icon" width="22" height="22"><use href="#i-image"/></svg></span></div>` : ''}
     <div class="fr-entry-body">
-      <div class="fr-entry-date">${fmtDate(d.date)}${compact && years > 0 ? `<span>${t(`${years}年前`, `${years} year(s) ago`)}</span>` : ''}</div>
+      <div class="fr-entry-date">${fmtDate(d.date)}${compact && years > 0 ? `<span>${t(`${years}年前`, `${years} year(s) ago`)}</span>` : ''}${d.place && placeById(d.place) ? `<em class="fr-entry-place" style="--pc:${placeById(d.place).color}">${escapeHtml(placeName(d.place, CURRENT_LANG))}</em>` : ''}</div>
       ${d.text ? `<p class="fr-entry-text">${escapeHtml(d.text).replace(/\n/g, '<br>')}</p>` : ''}
       ${names.length ? `<div class="fr-tags">${names.map(f => `<span class="fr-tag">${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</span>`).join('')}</div>` : ''}
     </div>
@@ -263,7 +280,10 @@ function diaryFormHtml(d) {
       <input type="file" accept="image/*" name="photo" aria-label="${t('写真を選ぶ', 'Choose a photo')}">
     </div>
     ${preview ? `<button type="button" class="fun-btn small" data-act="clear-photo">${t('写真を外す', 'Remove photo')}</button>` : ''}
-    <label class="fun-field"><span class="fun-label">${t('日付', 'Date')}</span><input class="fun-input" type="date" name="date" required max="${todayStr()}" value="${d ? d.date : todayStr()}"></label>
+    <div class="fun-field-row">
+      <label class="fun-field"><span class="fun-label">${t('日付', 'Date')}</span><input class="fun-input" type="date" name="date" required max="${todayStr()}" value="${d ? d.date : todayStr()}"></label>
+      <label class="fun-field"><span class="fun-label">${t('場所（あれば）', 'Place (optional)')}</span><select class="fun-input" name="place"><option value="">${t('なし', 'None')}</option>${PLACES.map(p => `<option value="${p.id}"${d && d.place === p.id ? ' selected' : ''}>${escapeHtml(CURRENT_LANG === 'en' ? p.en : p.ja)}</option>`).join('')}</select></label>
+    </div>
     <label class="fun-field"><span class="fun-label">${t('ひとこと', 'A few words')}</span><textarea class="fun-textarea" name="text" rows="3" maxlength="2000" placeholder="${t('今日あったこと、うれしかったこと', 'What happened today?')}">${escapeHtml(d ? d.text : '')}</textarea></label>
     ${doc.friends.length ? `<div class="fun-field"><span class="fun-label">${t('一緒にいたフレンド', 'With')}</span><div class="fun-chips">${doc.friends.map(f => `<label class="fun-chip fun-chip-check"><input type="checkbox" name="friendIds" value="${f.id}"${ids.has(f.id) ? ' checked' : ''}>${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</label>`).join('')}</div></div>` : ''}
     <div class="fun-form-actions">
@@ -363,6 +383,7 @@ function onClick(e) {
     case 'edit-diary': openForm('diary', id); break;
     case 'cancel': form = null; clearPendingPhoto(); setConfirm(null); render(); break;
     case 'filter': diaryFilter = id || ''; render(); break;
+    case 'mode': diaryMode = id === 'place' ? 'place' : 'date'; render(); break;
     case 'diary-of': tab = 'diary'; diaryFilter = id; form = null; render(); break;
     case 'clear-photo': {
       const keep = currentFormData();
@@ -427,7 +448,7 @@ function currentFormData() {
 function restoreForm(fd) {
   const formEl = root() && root().querySelector('.fun-form');
   if (!formEl || !fd) return;
-  ['date', 'text', 'name', 'since', 'memo', 'avatar', 'bdMd', 'bdYear'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null && input.type !== 'file') input.value = v; });
+  ['date', 'text', 'name', 'since', 'memo', 'avatar', 'bdMd', 'bdYear', 'place'].forEach(k => { const v = fd.get(k); const input = formEl.elements[k]; if (input && v != null && input.type !== 'file') input.value = v; });
   const color = fd.get('color');
   if (color) formEl.querySelectorAll('input[name=color]').forEach(r => { r.checked = r.value === color; });
   const ids = new Set(fd.getAll('friendIds'));
@@ -509,6 +530,7 @@ async function onSubmit(e) {
     entry.date = String(fd.get('date') || todayStr());
     entry.text = String(fd.get('text') || '').slice(0, 2000);
     entry.friendIds = fd.getAll('friendIds').map(String).filter(id => friendById(id));
+    entry.place = PLACES.some(p => p.id === fd.get('place')) ? String(fd.get('place')) : '';
     const oldPhoto = entry.photoId;
     if (pendingPhoto) {
       const pid = 'p_' + genId();

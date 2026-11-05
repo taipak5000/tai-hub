@@ -18,6 +18,7 @@ import { cycleIndexAt, cycleBounds } from './pacific-time.js';
 import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES } from '../features/item/data/season-data.js';
 import { loadFriendsDoc, upcomingAnniversaries } from '../features/friends/friends-state.js';
 import { hasBingoData, loadBingo, weekKeyAt } from '../features/bingo/bingo-state.js';
+import { evaluateStamps, seenCount } from '../features/stamps/stamps-state.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const DAY = 86400000;
@@ -173,11 +174,28 @@ export function collectNotices(nowDate = new Date()) {
     }
   }
 
+  // スタンプ帳: 前に開いた時より押されたスタンプが増えていたら
+  try {
+    const { earned } = evaluateStamps();
+    const n = Object.keys(earned).length;
+    const diff = n - seenCount();
+    if (diff > 0) out.push({ id: `stamps:${n}`, icon: 'i-crown', tone: 'pink', priority: 2, sortAt: now, title: t(`新しいスタンプが${diff}こ押されました`, `${diff} new stamp(s)!`), body: t(`スタンプ帳で確かめてみましょう（全部で${n}こ）`, `Check your stamp book (${n} total)`), route: 'stamps', routeLabel: t('スタンプ帳', 'Stamp book') });
+  } catch (e) { /* 判定に失敗してもほかのお知らせは出す */ }
+
+  // 先月のふりかえり（毎月1日〜7日。1月は一年のふりかえりと並べて出す）
+  {
+    const dd = now.getDate();
+    if (dd <= 7) {
+      const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      out.push({ id: `recap-month:${prev.getFullYear()}-${prev.getMonth() + 1}`, icon: 'i-trophy', tone: 'plain', priority: 3, sortAt: now, title: t(`${prev.getMonth() + 1}月のふりかえりができました`, `Your ${prev.toLocaleString('en', { month: 'long' })} recap is ready`), body: t('先月に集めたものと続けたことをまとめました', 'What you collected and kept up last month'), route: 'recap', sub: 'month', routeLabel: t('ふりかえり', 'Recap') });
+    }
+  }
+
   // 一年のふりかえり（12/1〜1/7）
   const m = now.getMonth() + 1, d = now.getDate();
   if (m === 12 || (m === 1 && d <= 7)) {
     const year = m === 12 ? now.getFullYear() : now.getFullYear() - 1;
-    out.push({ id: `recap:${year}`, icon: 'i-trophy', tone: 'accent', priority: 3, sortAt: now, title: t(`${year}年のふりかえりができました`, `Your ${year} in review is ready`), body: t('集めたアイテムや続けた記録を1枚のカードにまとめました', 'Your collection and streaks on one card'), route: 'recap', routeLabel: t('一年のふりかえり', 'Year in review') });
+    out.push({ id: `recap:${year}`, icon: 'i-trophy', tone: 'accent', priority: 3, sortAt: now, title: t(`${year}年のふりかえりができました`, `Your ${year} in review is ready`), body: t('集めたアイテムや続けた記録を1枚のカードにまとめました', 'Your collection and streaks on one card'), route: 'recap', routeLabel: t('ふりかえり', 'Recap') });
   }
 
   return out.sort((a, b) => (a.priority - b.priority) || (a.sortAt - b.sortAt));

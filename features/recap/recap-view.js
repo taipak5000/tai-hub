@@ -32,6 +32,7 @@ const STYLES = {
 
 let containerEl = null;
 let year = 0;
+let month = null; // null＝一年のふりかえり ／ 0〜11＝その月のふりかえり
 let style = 'dusk';
 let stats = null;
 let token = 0;
@@ -42,14 +43,27 @@ function readJson(key, fallback) {
 function inYear(iso, y) {
   if (!iso) return false;
   const d = new Date(iso);
-  return !isNaN(d) && d.getFullYear() === y;
+  return !isNaN(d) && d.getFullYear() === y && (month === null || d.getMonth() === month);
 }
+// 'YYYY-MM-DD' や 'YYYY-M-D' の日付キーが、選んでいる期間に入るか
+function keyIn(k, y) {
+  const [ky, km] = String(k).split('-').map(Number);
+  return ky === y && (month === null || km - 1 === month);
+}
+function bucketOf(dateObj) { return month === null ? dateObj.getMonth() : dateObj.getDate() - 1; }
 
-export function mount(container) {
+export function mount(container, sub) {
   injectStylesheet();
   containerEl = container;
   const now = new Date();
-  year = now.getMonth() === 0 && now.getDate() <= 7 ? now.getFullYear() - 1 : now.getFullYear();
+  if (sub === 'month') {
+    // 月の初めの1週間は先月の分、それ以降は今月の分を出す（お知らせの「先月のふりかえり」から開いた時も同じ）
+    const base = now.getDate() <= 7 ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now;
+    year = base.getFullYear(); month = base.getMonth();
+  } else {
+    year = now.getMonth() === 0 && now.getDate() <= 7 ? now.getFullYear() - 1 : now.getFullYear();
+    month = null;
+  }
   try { style = STYLES[localStorage.getItem(THEME_KEY)] ? localStorage.getItem(THEME_KEY) : 'dusk'; } catch (e) { style = 'dusk'; }
   container.innerHTML = '<div class="recap-view fun-view"></div>';
   root().addEventListener('click', onClick);
@@ -69,7 +83,7 @@ async function compute() {
   const mods = await Promise.all(cats.map(c => import(`../item/data/items/${c.key}.js`).catch(() => ({ ITEMS: [] }))));
   if (my !== token || !containerEl) return;
 
-  const months = Array(12).fill(0);
+  const months = Array(month === null ? 12 : new Date(y, month + 1, 0).getDate()).fill(0); // 年＝月ごと／月＝日ごと
   // アイテム
   let ownedNow = 0, totalNow = 0;
   const catCount = {};
@@ -84,7 +98,7 @@ async function compute() {
   Object.values(itemLog).forEach(e => {
     if (e && inYear(e.at, y)) {
       itemsYear++;
-      months[new Date(e.at).getMonth()]++;
+      months[bucketOf(new Date(e.at))]++;
       catCount[e.catKey] = (catCount[e.catKey] || 0) + 1;
     }
   });
@@ -94,7 +108,7 @@ async function compute() {
   // エモート
   const emoteLog = readJson('emoteAcquireLog_v1', {});
   let emotesYear = 0;
-  Object.values(emoteLog).forEach(e => { if (e && inYear(e.at, y)) { emotesYear++; months[new Date(e.at).getMonth()]++; } });
+  Object.values(emoteLog).forEach(e => { if (e && inYear(e.at, y)) { emotesYear++; months[bucketOf(new Date(e.at))]++; } });
   const emHist = readJson('emoteCompletionHistory_v1', []);
   const emLast = Array.isArray(emHist) && emHist.length ? emHist[emHist.length - 1] : null;
 
@@ -111,27 +125,34 @@ async function compute() {
   // キャンドル
   const hist = readJson('skyNomacanCalc_history_v1', []);
   let candles = 0;
-  (Array.isArray(hist) ? hist : []).forEach(e => { if (e && e.amount > 0 && new Date(e.time).getFullYear() === y) candles += e.amount; });
+  (Array.isArray(hist) ? hist : []).forEach(e => { if (e && e.amount > 0 && inYear(e.time, y)) candles += e.amount; });
   const streak = readJson('skyNomacanStreak_v1', { days: {} });
-  const candleDays = Object.keys(streak.days || {}).filter(k => k.startsWith(String(y))).length;
-  const longest = longestRun(Object.keys(streak.days || {}).filter(k => k.startsWith(String(y))));
+  const candleDays = Object.keys(streak.days || {}).filter(k => keyIn(k, y)).length;
+  const longest = longestRun(Object.keys(streak.days || {}).filter(k => keyIn(k, y)));
 
   // デイリーチェックシート（キーは 'YYYY-M-D'）
   const dc = readJson('dailyCheckLog_v1', { days: {} });
-  const dcDays = Object.keys((dc && dc.days) || {}).filter(k => k.startsWith(`${y}-`)).length;
+  const dcDays = Object.keys((dc && dc.days) || {}).filter(k => keyIn(k, y)).length;
 
   // ビンゴ・フレンド
-  const bingo = bingoYearSummary(y);
+  const bingo = bingoYearSummary(y, month);
   const fdoc = loadFriendsDoc();
-  const newFriends = fdoc.friends.filter(f => f.since && f.since.startsWith(String(y))).length;
-  const diaryYear = fdoc.diary.filter(d => d.date.startsWith(String(y)));
+  const newFriends = fdoc.friends.filter(f => f.since && keyIn(f.since, y)).length;
+  const diaryYear = fdoc.diary.filter(d => keyIn(d.date, y));
   const photosYear = diaryYear.filter(d => d.photoId).length;
+
+  // コーデ日記・おみくじ・スタンプ
+  const coord = readJson('coordDiary_v1', {});
+  const coordCount = (Array.isArray(coord.entries) ? coord.entries : []).filter(e => e && keyIn(e.date, y)).length;
+  const omi = Object.entries((readJson('omikujiLog_v1', {}) || {}).days || {}).filter(([k]) => keyIn(k, y)).map(([, r]) => r);
+  const stampsEarned = Object.values(readJson('stampsEarned_v1', {}) || {}).filter(d => keyIn(d, y)).length;
 
   const topMonth = months.some(v => v > 0) ? months.indexOf(Math.max(...months)) : -1;
   stats = {
     y, months, topMonth, itemsYear, ownedNow, totalNow, topCat, topCatCount: topCatKey ? catCount[topCatKey] : 0,
     emotesYear, emPct: emLast ? emLast.pct : null, wingsYear, wgPct: wgLast ? wgLast.pct : null,
     tree, candles, candleDays, longest, dcDays, bingo, newFriends, diaryCount: diaryYear.length, photosYear,
+    coordCount, omikuji: omi.length, daikichi: omi.filter(r => r && r.f === 0).length, stampsEarned, month,
   };
   render();
 }
@@ -151,20 +172,28 @@ function render() {
   r.innerHTML = `
     <div class="fun-wrap">
       <header class="fun-head">
-        <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-trophy"/></svg>${t('一年のふりかえり', 'Year in Review')}</h1>
-        <p class="fun-lead">${t('tai-hubに残っている記録から、この一年に集めたものと続けたことをまとめました。画像にして保存・共有できます。', 'A look back at what you collected and kept up this year, from your tai-hub records. Save it as an image to share.')}</p>
+        <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-trophy"/></svg>${t('ふりかえり', 'Recap')}</h1>
+        <p class="fun-lead">${t('tai-hubに残っている記録から、その年・その月に集めたものと続けたことをまとめました。画像にして保存・共有できます。', 'A look back at what you collected and kept up, by year or by month. Save it as an image to share.')}</p>
       </header>
+      <div class="fun-tabs" role="tablist">
+        <button type="button" class="fun-tab${month === null ? ' on' : ''}" role="tab" aria-selected="${month === null}" data-act="period" data-p="year">${t('一年', 'Year')}</button>
+        <button type="button" class="fun-tab${month !== null ? ' on' : ''}" role="tab" aria-selected="${month !== null}" data-act="period" data-p="month">${t('月ごと', 'Month')}</button>
+      </div>
       <div class="fun-actions">
-        <div class="fun-chips" role="group" aria-label="${t('年', 'Year')}">
+        ${month === null ? `<div class="fun-chips" role="group" aria-label="${t('年', 'Year')}">
           ${[nowY - 1, nowY].map(v => `<button type="button" class="fun-chip${v === year ? ' on' : ''}" data-act="year" data-year="${v}">${t(`${v}年`, String(v))}</button>`).join('')}
-        </div>
+        </div>` : `<div class="rc-month-pick">
+          <button type="button" class="fun-icon-btn" data-act="mprev" aria-label="${t('前の月', 'Previous month')}"><svg class="inline-icon" width="15" height="15"><use href="#i-chevron-left"/></svg></button>
+          <b>${t(`${year}年${month + 1}月`, `${month + 1}/${year}`)}</b>
+          <button type="button" class="fun-icon-btn" data-act="mnext" aria-label="${t('次の月', 'Next month')}"${year === nowY && month >= new Date().getMonth() ? ' disabled' : ''}><svg class="inline-icon" width="15" height="15"><use href="#i-chevron-right"/></svg></button>
+        </div>`}
         <div class="fun-chips" role="group" aria-label="${t('カードの色', 'Card style')}">
           ${Object.keys(STYLES).map(k => `<button type="button" class="fun-chip rc-style-chip rc-${k}${k === style ? ' on' : ''}" data-act="style" data-style="${k}"><span></span>${t(STYLES[k].ja, STYLES[k].en)}</button>`).join('')}
         </div>
       </div>
       ${stats ? cardHtml(stats) : `<div class="rc-loading"><span class="rt-spinner"></span>${t('記録を集めています…', 'Gathering your records…')}</div>`}
       ${stats ? `<div class="fun-actions"><button type="button" class="fun-btn primary" data-act="image"><svg class="inline-icon" width="15" height="15"><use href="#i-image"/></svg>${t('画像で保存', 'Save image')}</button></div>
-        <p class="fun-hint">${t('数えているのは、この端末で選んでいるプロフィールの記録です。日時を残すようになる前に所持にしたアイテムやエモートは、その年の数には入りません。', 'Counts come from the selected profile on this device. Items marked owned before dates were recorded aren’t counted for the year.')}</p>` : ''}
+        <p class="fun-hint">${t('数えているのは、この端末で選んでいるプロフィールの記録です。日時を残すようになる前に所持にしたアイテムやエモートは、その期間の数には入りません。', 'Counts come from the selected profile on this device. Items marked owned before dates were recorded aren’t counted for the year.')}</p>` : ''}
     </div>`;
 }
 
@@ -182,12 +211,17 @@ function cardHtml(s) {
   if (s.candles) tiles.push(tile('i-candle', fmt(s.candles), t('記録したキャンドル', 'Candles logged'), s.candleDays ? t(`${s.candleDays}日記録・最長${s.longest}日連続`, `${s.candleDays} days · best ${s.longest} in a row`) : ''));
   if (s.dcDays) tiles.push(tile('i-check', fmt(s.dcDays), t('チェックシートの日', 'Checklist days'), ''));
   if (s.bingo.weeks) tiles.push(tile('i-grid', fmt(s.bingo.lines), t('ビンゴ', 'Bingos'), t(`${s.bingo.weeks}週・${fmt(s.bingo.filled)}マス`, `${s.bingo.weeks} weeks · ${fmt(s.bingo.filled)} squares`)));
+  if (s.coordCount) tiles.push(tile('i-hanger', fmt(s.coordCount), t('コーデ日記', 'Outfit logs'), ''));
+  if (s.omikuji) tiles.push(tile('i-sparkle', fmt(s.omikuji), t('おみくじ', 'Fortunes drawn'), s.daikichi ? t(`大吉 ${s.daikichi}回`, `${s.daikichi} great blessings`) : ''));
+  if (s.stampsEarned) tiles.push(tile('i-crown', fmt(s.stampsEarned), t('押されたスタンプ', 'Stamps earned'), ''));
   if (s.newFriends || s.diaryCount) tiles.push(tile('i-heart', fmt(s.newFriends), t('新しいフレンド', 'New friends'), s.diaryCount ? t(`思い出 ${s.diaryCount}件・写真 ${s.photosYear}枚`, `${s.diaryCount} memories · ${s.photosYear} photos`) : ''));
 
   const max = Math.max(1, ...s.months);
   const anyMonth = s.months.some(v => v > 0);
   const highlights = [];
-  if (s.topMonth >= 0) highlights.push(t(`いちばん集めた月は${s.topMonth + 1}月（${s.months[s.topMonth]}個）`, `Busiest month: ${new Date(2000, s.topMonth, 1).toLocaleString('en', { month: 'long' })} (${s.months[s.topMonth]})`));
+  if (s.topMonth >= 0) highlights.push(s.month === null
+    ? t(`いちばん集めた月は${s.topMonth + 1}月（${s.months[s.topMonth]}個）`, `Busiest month: ${new Date(2000, s.topMonth, 1).toLocaleString('en', { month: 'long' })} (${s.months[s.topMonth]})`)
+    : t(`いちばん集めた日は${s.month + 1}月${s.topMonth + 1}日（${s.months[s.topMonth]}個）`, `Busiest day: ${s.month + 1}/${s.topMonth + 1} (${s.months[s.topMonth]})`));
   if (s.topCat && s.topCatCount) highlights.push(t(`よく集めたのは「${s.topCat.name}」（${s.topCatCount}個）`, `Most collected: ${s.topCat.nameEn} (${s.topCatCount})`));
   if (s.longest >= 3) highlights.push(t(`キャンドル集めを${s.longest}日続けました`, `${s.longest}-day candle streak`));
 
@@ -195,12 +229,13 @@ function cardHtml(s) {
   return `<div class="rc-card rc-${style}" id="rcCapture">
     <div class="rc-sparkles" aria-hidden="true">${'<i></i>'.repeat(14)}</div>
     <div class="rc-top">
-      <div class="rc-year">${s.y}</div>
+      <div class="rc-year${s.month !== null ? ' is-month' : ''}">${s.month === null ? s.y : t(`${s.month + 1}月`, new Date(2000, s.month, 1).toLocaleString('en', { month: 'short' }))}</div>
+      ${s.month !== null ? `<div class="rc-sub-year">${s.y}</div>` : ''}
       <div class="rc-title">${t('わたしのSky', 'My Sky')}</div>
       <div class="rc-who">${escapeHtml(profile)}</div>
     </div>
     ${tiles.length ? `<div class="rc-tiles">${tiles.join('')}</div>` : `<p class="rc-none">${t('この年の記録はまだありません。アイテムやキャンドルを記録すると、ここに集まっていきます', 'No records for this year yet. Log items or candles and they’ll gather here.')}</p>`}
-    ${anyMonth ? `<div class="rc-months" aria-label="${t('月ごとに集めた数', 'Collected per month')}">${s.months.map((v, i) => `<div class="rc-month${i === s.topMonth ? ' top' : ''}"><span style="height:${Math.max(4, Math.round(v / max * 100))}%"></span><small>${i + 1}</small></div>`).join('')}</div>` : ''}
+    ${anyMonth ? `<div class="rc-months${s.month !== null ? ' is-days' : ''}" aria-label="${s.month === null ? t('月ごとに集めた数', 'Collected per month') : t('日ごとに集めた数', 'Collected per day')}">${s.months.map((v, i) => `<div class="rc-month${i === s.topMonth ? ' top' : ''}"><span style="height:${Math.max(4, Math.round(v / max * 100))}%"></span><small>${s.month === null || (i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</small></div>`).join('')}</div>` : ''}
     ${highlights.length ? `<ul class="rc-highlights">${highlights.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ul>` : ''}
     <div class="rc-foot">tai-hub ・ ${escapeHtml(HUB_BASE_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</div>
   </div>`;
@@ -211,6 +246,17 @@ function onClick(e) {
   if (!btn) return;
   const act = btn.dataset.act;
   if (act === 'year') { year = Number(btn.dataset.year); stats = null; render(); compute(); return; }
+  if (act === 'period') {
+    const now = new Date();
+    if (btn.dataset.p === 'month') { const b = now.getDate() <= 7 ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now; year = b.getFullYear(); month = b.getMonth(); }
+    else { month = null; year = now.getMonth() === 0 && now.getDate() <= 7 ? now.getFullYear() - 1 : now.getFullYear(); }
+    stats = null; render(); compute(); return;
+  }
+  if (act === 'mprev' || act === 'mnext') {
+    if (btn.disabled) return;
+    const d = new Date(year, month + (act === 'mprev' ? -1 : 1), 1);
+    year = d.getFullYear(); month = d.getMonth(); stats = null; render(); compute(); return;
+  }
   if (act === 'style') {
     style = btn.dataset.style;
     try { localStorage.setItem(THEME_KEY, style); } catch (err) { /* noop */ }
@@ -226,8 +272,8 @@ async function saveImage() {
   toast(t('画像を作っています…', 'Creating the image…'), 6000);
   try {
     const res = await saveElementImage(card, {
-      filename: `sky-${stats.y}-recap`,
-      text: t(`わたしの${stats.y}年のSky\n${HUB_BASE_URL}`, `My ${stats.y} in Sky\n${HUB_BASE_URL}`),
+      filename: stats.month === null ? `sky-${stats.y}-recap` : `sky-${stats.y}-${String(stats.month + 1).padStart(2, '0')}-recap`,
+      text: stats.month === null ? t(`わたしの${stats.y}年のSky\n${HUB_BASE_URL}`, `My ${stats.y} in Sky\n${HUB_BASE_URL}`) : t(`わたしの${stats.y}年${stats.month + 1}月のSky\n${HUB_BASE_URL}`, `My Sky this month\n${HUB_BASE_URL}`),
       bg: '#1c1b22',
     });
     toast(res === 'saved' ? t('画像を保存しました', 'Image saved') : null);

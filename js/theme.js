@@ -327,6 +327,7 @@ const VIEW_ROOTS = [
   '.wings-view', '.companion-view', '.spirit-catalog-view', '.tai-revisit-view', '.tai-score-view',
   '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view', '.daily-check-view',
   '.bingo-view', '.friends-view', '.recap-view',
+  '.today-view', '.wish-plan-view', '.coord-diary-view', '.stamps-view',
 ];
 
 // 面（背景・カード・区切り・文字）の共通トークンを、ツールごとの変数名へ割り当てる

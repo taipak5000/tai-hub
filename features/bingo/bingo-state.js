@@ -172,10 +172,11 @@ export function ensureWeek(doc, lang, now = Date.now()) {
 }
 
 /** 一年のふりかえり用: その年に遊んだ週（1マス以上埋めた週）の数・ビンゴの合計・埋めたマスの合計（今週の分も含む） */
-export function bingoYearSummary(year) {
+export function bingoYearSummary(year, month = null) {
   const d = loadBingo();
   const weeks = { ...d.history };
   if (d.week) weeks[d.week.key] = { size: d.week.size, filled: d.week.marks.filter((m, i) => m && d.week.cells[i] !== FREE).length, lines: countLines(d.week.size, d.week.marks) };
-  const list = Object.keys(weeks).filter(k => k.startsWith(String(year))).map(k => weeks[k]).filter(h => h.filled > 0);
+  // 週は日曜の日付で数える（month＝0〜11を渡すと、その月に始まった週だけ）
+  const list = Object.keys(weeks).filter(k => { const [y, m] = k.split('-').map(Number); return y === year && (month === null || m - 1 === month); }).map(k => weeks[k]).filter(h => h.filled > 0);
   return { weeks: list.length, lines: list.reduce((s, h) => s + h.lines, 0), filled: list.reduce((s, h) => s + h.filled, 0) };
 }
