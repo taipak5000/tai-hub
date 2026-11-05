@@ -27,13 +27,16 @@ let confirmKey = null; // 2回押しで確定する操作（'shuffle' | 'size:N'
 let confirmTimer = null;
 let tickTimer = null;
 
-export function mount(container) {
+// opts.embedded: デイリーチェックシートの画面（features/today/today-view.js）の中に出す時。見出しと説明を出さない
+let embedded = false;
+export function mount(container, opts) {
   injectStylesheet();
   containerEl = container;
+  embedded = !!(opts && typeof opts === 'object' && opts.embedded);
   editing = false; settingsOpen = false; confirmKey = null;
   doc = loadBingo();
   if (ensureWeek(doc, CURRENT_LANG)) { saveBingo(doc); notifyChanged(); }
-  container.innerHTML = '<div class="bingo-view fun-view"></div>';
+  container.innerHTML = `<div class="bingo-view fun-view${embedded ? ' is-embedded' : ''}"></div>`;
   render();
   const root = container.querySelector('.bingo-view');
   root.addEventListener('click', onClick);
@@ -87,10 +90,10 @@ function render() {
   const full = filled === total && total > 0;
   el.innerHTML = `
     <div class="fun-wrap">
-      <header class="fun-head">
+      ${embedded ? `<p class="fun-hint bg-embed-lead">${t('できたマスをタップして、縦・横・斜めをそろえましょう。毎週日曜のウィークリーリセットで新しいお題に変わります。', 'Tap a square when you’ve done it and line them up. New prompts every weekly reset.')}</p>` : `<header class="fun-head">
         <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-grid"/></svg>${t('週替わりビンゴ', 'Weekly Bingo')}</h1>
         <p class="fun-lead">${t('Skyで遊ぶ時の小さなお題です。できたマスをタップして、縦・横・斜めをそろえましょう。毎週日曜のウィークリーリセットで新しいお題に変わります。', 'Little things to do in Sky. Tap a square when you’ve done it and line them up. New prompts every weekly reset.')}</p>
-      </header>
+      </header>`}
 
       <div class="bg-card" id="bgCapture">
         <div class="bg-card-head">

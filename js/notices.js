@@ -171,7 +171,7 @@ export function collectNotices(nowDate = new Date()) {
     const key = weekKeyAt(now.getTime());
     const b = loadBingo();
     if (!b.week || b.week.key !== key) {
-      out.push({ id: `bingo:${key}`, icon: 'i-grid', tone: 'plain', priority: 3, sortAt: now, title: t('今週のビンゴが始まりました', 'A new weekly bingo has started'), body: t('新しいお題がそろっています', 'New prompts are ready'), route: 'bingo', routeLabel: t('週替わりビンゴ', 'Weekly bingo') });
+      out.push({ id: `bingo:${key}`, icon: 'i-grid', tone: 'plain', priority: 3, sortAt: now, title: t('今週のビンゴが始まりました', 'A new weekly bingo has started'), body: t('新しいお題がそろっています', 'New prompts are ready'), route: 'daily-check', sub: 'bingo', routeLabel: t('週替わりビンゴ', 'Weekly bingo') });
     }
   }
 

@@ -239,7 +239,7 @@ const landingPoint = currentY + project(v);
   （再訪精霊データベースの「待っている」印＝`revisitWaitlist_v1`と英語名で照らし合わせる。`items`は「欲しいもの」との照合に使う）。
 - **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: アイテム・楽譜・エモート・精霊・ツール名を横断検索する。
   データは開いた時に読み込む（精霊ツリーのデータは1.8MBあるので起動時には読まない）。
-- **週替わりビンゴ**（`features/bingo/`）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
+- **週替わりビンゴ**（`features/bingo/`。2026-11-06からデイリーチェックシートの画面の中の折りたたみ。`mount(el, { embedded: true })`。旧`#/bingo`は非公開の別名）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
   **一年のふりかえり**（`features/recap/`）。CSSは3つ共通で`css/fun-tools.css`、色は`--hub-*`トークンだけを使う（着せ替えに追従）。
 - **第2弾（2026-11-06）**: 今日の要点＋おみくじ（`features/today/`。大キャンドル等の計算は`event-dashboard.js`の`getTodayBrief()`）。
   **「今日やること」は関連ツールの一覧から外し、デイリーチェックシートの画面（`#/daily-check`。旧`#/today`も同じ画面、どちらもhidden）にまとめた**:

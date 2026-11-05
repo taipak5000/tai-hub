@@ -6,7 +6,8 @@
      （計算は features/shared/event-dashboard.js の getTodayBrief() に任せる）
    - デイリーチェックシート（features/daily-check）をそのまま埋め込む（シートの切替・編集・着せ替え・印刷もここでできる。
      シートの下には「試作中の機能」への入口も出す＝ labLinks: true）
-   - 今日・明日のフレンドの記念日／今週のビンゴ／デイリーチェックシートの進み具合
+   - 週替わりビンゴ（features/bingo。2026-11-06にこの画面の中の折りたたみへ移した。旧 #/bingo もこの画面を開いてビンゴを広げる）
+   - 今日・明日のフレンドの記念日
    - 1日1回のおみくじ（今日のラッキーエリア・エモート・色・ひとこと）
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -14,7 +15,7 @@ import { getActiveProfileId } from '../../js/state.js';
 import { navigate } from '../../js/router.js';
 import { ptParts } from '../../js/pacific-time.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
-import { loadBingo, hasBingoData, weekKeyAt, countLines, FREE } from '../bingo/bingo-state.js';
+import { loadBingo, weekKeyAt, countLines, FREE } from '../bingo/bingo-state.js';
 import { loadFriendsDoc, upcomingAnniversaries } from '../friends/friends-state.js';
 import { loadOmikuji, drawOmikuji, gameDayKey, mergeTodoIntoDailyCheck, FORTUNES, LUCKY_REALMS, LUCKY_COLORS, MESSAGES } from './today-state.js';
 
@@ -29,9 +30,14 @@ let tickTimer = null;
 let lastDayKey = '';
 let token = 0;
 
-export function mount(container) {
+let bingoMod = null;
+const BINGO_OPEN_KEY = 'sky_dc_bingo_open';
+function bingoOpen() { try { return localStorage.getItem(BINGO_OPEN_KEY) === '1'; } catch (e) { return false; } }
+
+export function mount(container, sub) {
   injectStylesheet();
   containerEl = container;
+  if (sub === 'bingo') { try { localStorage.setItem(BINGO_OPEN_KEY, '1'); } catch (e) { /* noop */ } }
   lastDayKey = gameDayKey();
   mergeTodoIntoDailyCheck(CURRENT_LANG);
   // 上（要点・おみくじ）と下（ほかのツールから）だけを描き直し、間のチェックシートは一度だけ組み込む
@@ -39,6 +45,14 @@ export function mount(container) {
   container.innerHTML = `<div class="today-view fun-view"><div class="fun-wrap">
     <div class="td-top"><div class="rc-loading"><span class="rt-spinner"></span></div></div>
     <section class="fun-section td-sheet-sec"><h2 class="fun-h2">${t('チェックシート', 'Checklist')}</h2><div class="td-sheet"></div></section>
+    <section class="fun-section td-bingo-sec">
+      <button type="button" class="td-fold" data-act="bingo-toggle" aria-expanded="false">
+        <svg class="inline-icon" width="17" height="17" aria-hidden="true"><use href="#i-grid"/></svg>
+        <span class="td-fold-title">${t('週替わりビンゴ', 'Weekly bingo')}</span><span class="td-fold-peek"></span>
+        <svg class="inline-icon td-fold-chev" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </button>
+      <div class="td-bingo"></div>
+    </section>
     <div class="td-after"></div>
   </div></div>`;
   const my = ++token;
@@ -55,6 +69,9 @@ export function mount(container) {
     render();
     root().querySelector('.td-top').addEventListener('click', onClick);
     root().querySelector('.td-after').addEventListener('click', onClick);
+    root().querySelector('.td-bingo-sec .td-fold').addEventListener('click', toggleBingo);
+    syncBingo();
+    if (sub === 'bingo') root().querySelector('.td-bingo-sec')?.scrollIntoView({ block: 'start' });
     tickTimer = setInterval(onTick, 1000);
   });
 }
@@ -62,6 +79,7 @@ export function mount(container) {
 export function unmount() {
   token++;
   clearInterval(tickTimer); tickTimer = null;
+  if (bingoMod) { bingoMod.unmount(); }
   if (dc) { dc.unmount(); dc = null; }
   containerEl = null;
 }
@@ -153,19 +171,41 @@ function omikujiHtml() {
   </section>`;
 }
 
+// 週替わりビンゴの折りたたみ。開いている時だけビンゴを組み込む（閉じている間は1行の進み具合だけ）
+function bingoPeek() {
+  const bg = loadBingo();
+  if (!bg.week || bg.week.key !== weekKeyAt()) return t('今週のお題が待っています', 'This week’s card is ready');
+  const filled = bg.week.marks.filter((m, i) => m && bg.week.cells[i] !== FREE).length;
+  const total = bg.week.cells.filter(c => c !== FREE).length;
+  return t(`${countLines(bg.week.size, bg.week.marks)}ビンゴ・${filled}/${total}マス`, `${countLines(bg.week.size, bg.week.marks)} lines · ${filled}/${total}`);
+}
+async function syncBingo() {
+  const sec = root() && root().querySelector('.td-bingo-sec');
+  if (!sec) return;
+  const open = bingoOpen();
+  sec.classList.toggle('is-open', open);
+  sec.querySelector('.td-fold').setAttribute('aria-expanded', String(open));
+  sec.querySelector('.td-fold-peek').textContent = open ? '' : bingoPeek();
+  const host = sec.querySelector('.td-bingo');
+  if (open) {
+    if (!bingoMod) bingoMod = await import('../bingo/bingo-view.js');
+    if (!containerEl) return;
+    bingoMod.mount(host, { embedded: true });
+  } else if (bingoMod) {
+    bingoMod.unmount();
+    host.innerHTML = '';
+  }
+}
+function toggleBingo() {
+  try { localStorage.setItem(BINGO_OPEN_KEY, bingoOpen() ? '0' : '1'); } catch (e) { /* noop */ }
+  syncBingo();
+}
+
 function extrasHtml() {
   const parts = [];
   const soon = upcomingAnniversaries(loadFriendsDoc(), 1);
   if (soon.length) {
     parts.push(`<button type="button" class="td-link" data-go="friends"><svg class="inline-icon" width="18" height="18"><use href="#i-heart"/></svg><span>${soon.map(a => escapeHtml(annivTitle(a)) + (a.inDays === 0 ? t('（今日）', ' (today)') : t('（明日）', ' (tomorrow)'))).join('<br>')}</span><svg class="inline-icon td-link-chev" width="14" height="14"><use href="#i-chevron-right"/></svg></button>`);
-  }
-  if (hasBingoData()) {
-    const bg = loadBingo();
-    const cur = bg.week && bg.week.key === weekKeyAt();
-    const filled = cur ? bg.week.marks.filter((m, i) => m && bg.week.cells[i] !== FREE).length : 0;
-    const total = cur ? bg.week.cells.filter(c => c !== FREE).length : 0;
-    const lines = cur ? countLines(bg.week.size, bg.week.marks) : 0;
-    parts.push(`<button type="button" class="td-link" data-go="bingo"><svg class="inline-icon" width="18" height="18"><use href="#i-grid"/></svg><span>${cur ? t(`今週のビンゴ ${lines}ビンゴ・${filled}/${total}マス`, `Bingo: ${lines} lines · ${filled}/${total}`) : t('今週のビンゴが始まっています', 'A new bingo week has started')}</span><svg class="inline-icon td-link-chev" width="14" height="14"><use href="#i-chevron-right"/></svg></button>`);
   }
   if (!parts.length) return '';
   return `<section class="fun-section"><h2 class="fun-h2">${t('ほかのツールから', 'From other tools')}</h2><div class="td-links">${parts.join('')}</div></section>`;

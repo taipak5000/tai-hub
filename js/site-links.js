@@ -14,7 +14,6 @@ import { SITE_LINK_TOOLS } from './site-links-data.js';
 const HUB_ONLY_TOOLS = [
   { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', badgeTest: true },
   // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）
-  { id: 'bingo', afterId: 'tai-card', icon: 'i-grid', ja: '週替わりビンゴ', en: 'Weekly Bingo', badgeTest: true },
   { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', badgeTest: true },
   { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: 'ふりかえり', en: 'Recap', badgeTest: true },
   // 第2弾（2026-11-06）

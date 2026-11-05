@@ -140,7 +140,8 @@ export const ROUTES = {
   'tai-info': lazyToolEntry(() => import('../features/tai-info/tai-info-view.js'), '設定・クレジット', 'Settings & Credits'),
   profile: lazyToolEntry(() => import('../features/profile/profile-view.js'), '作者プロフィール', 'Creator Profile'),
   // 🎈 ゲームの記録とは別の「楽しむための」ツール（2026-11-05追加）
-  bingo: lazyToolEntry(() => import('../features/bingo/bingo-view.js'), '週替わりビンゴ', 'Weekly Bingo'),
+  // 週替わりビンゴはデイリーチェックシートの画面の中へ移した（2026-11-06）。古いリンク用に、その画面をビンゴを広げて開く
+  bingo: { mount: (c) => ROUTES['daily-check'].mount(c, 'bingo'), unmount: () => ROUTES['daily-check'].unmount(), title: () => ROUTES['daily-check'].title(), hidden: true },
   friends: lazyToolEntry(() => import('../features/friends/friends-view.js'), 'フレンド記念日', 'Friend Anniversaries'),
   recap: lazyToolEntry(() => import('../features/recap/recap-view.js'), 'ふりかえり', 'Recap'),
   // 第2弾（2026-11-06追加）
