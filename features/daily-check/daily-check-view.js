@@ -385,8 +385,9 @@ function resetInfoText() {
   return t(`次の自動リセット ${at}（あと${h}時間${m}分）`, `Next reset ${at} (in ${h}h ${m}m)`);
 }
 function updateResetInfo() {
-  const el = viewRoot() && viewRoot().querySelector('.dc-reset-next');
-  if (el) el.textContent = resetInfoText();
+  const root = viewRoot();
+  if (!root) return;
+  root.querySelectorAll('.dc-reset-next, .dc-bar-peek').forEach(el => { el.textContent = resetInfoText(); });
 }
 
 /* ================================================================
@@ -491,9 +492,17 @@ function toolbarHtml(sheet) {
         <span class="dc-progress-num">${escapeHtml(t('今日の目標', "Today's goals"))} <b>${p.done}</b> / ${p.total}</span>
         <span class="dc-progress-track" aria-hidden="true"><span style="width:${pct}%"></span></span>
       </div>` : '';
+  // 操作ボタン・連続記録・リセットの案内は折りたためる（端末に覚える）。目標決め・編集・着せ替えの最中は、終えるボタンが要るので開いておく
+  const open = barOpen() || goaling || editing || styling;
   const goalHint = goaling ? `<p class="dc-goal-hint">${escapeHtml(t('達成したい項目の「目標」をタップしてください。選んだ項目のうち、チェックした数が上に出ます。', 'Tap "Goal" on the items you want to finish. The count of checked goals appears above.'))}</p>` : '';
   return `
-    <div class="dc-bar">${progressHtml}
+    <div class="dc-bar${open ? '' : ' is-collapsed'}">${progressHtml}
+      <button type="button" class="dc-bar-toggle" data-act="toggle-bar" aria-expanded="${open}" aria-controls="dcBarMore">
+        <span>${escapeHtml(t('シートの操作・記録', 'Sheet tools & streak'))}</span>
+        <span class="dc-bar-peek">${escapeHtml(resetInfoText())}</span>
+        <svg class="inline-icon dc-bar-chev" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+      </button>
+      <div class="dc-bar-more" id="dcBarMore">
       <div class="dc-actions">
         <div class="dc-act-group" role="group" aria-label="${escapeHtml(t('シートを整える', 'Set up'))}">
           <button type="button" class="dc-btn${goaling ? ' on' : ''}" data-act="toggle-goal" aria-pressed="${goaling}">${btnIcon('star')}${escapeHtml(goaling ? t('目標を決め終える', 'Done') : t('目標を決める', 'Set goals'))}</button>
@@ -515,7 +524,19 @@ function toolbarHtml(sheet) {
     : t('このシートは自動リセットしません', 'Auto reset is off for this sheet'))}</span>
         <button type="button" class="dc-link" data-act="clear-today">${escapeHtml(t('今日のチェックを全部外す', 'Clear today'))}</button>
       </div>
+      </div>
     </div>`;
+}
+const BAR_OPEN_KEY = 'sky_dc_bar_open';
+function barOpen() { try { return localStorage.getItem(BAR_OPEN_KEY) !== '0'; } catch (e) { return true; } }
+// 開け閉めは描き直さずにクラスだけ切り替える（チェック中のシートや入力欄に触らない）
+function toggleBar(btn) {
+  const bar = btn.closest('.dc-bar');
+  if (!bar) return;
+  const nowOpen = bar.classList.contains('is-collapsed');
+  bar.classList.toggle('is-collapsed', !nowOpen);
+  btn.setAttribute('aria-expanded', String(nowOpen));
+  try { localStorage.setItem(BAR_OPEN_KEY, nowOpen ? '1' : '0'); } catch (e) { /* noop */ }
 }
 
 // ツールバーのボタンのアイコン（共有スプライト）。印刷はスプライトに無いので線画をその場で描く
@@ -891,6 +912,7 @@ function onClick(ev) {
   const hit = btn.dataset.r ? findRow(sheet, btn.dataset.r) : null;
   const i = Number(btn.dataset.i);
 
+  if (act === 'toggle-bar') { toggleBar(btn); return; }
   if (act === 'check') {
     const c = rowChecks(sheet, btn.dataset.r, true);
     if (c[i]) delete c[i]; else c[i] = true;
