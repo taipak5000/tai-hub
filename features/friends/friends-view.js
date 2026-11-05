@@ -228,7 +228,7 @@ function diaryHtml() {
     ${!editing && onThisDay.length ? `<section class="fr-otd"><h2 class="fun-h2">${t('過去の今日', 'On this day')}</h2>${onThisDay.map(d => entryHtml(d, true)).join('')}</section>` : ''}
     ${doc.friends.length && doc.diary.length ? `<div class="fun-chips fr-filter">
       <button type="button" class="fun-chip${!diaryFilter ? ' on' : ''}" data-act="filter" data-id="">${t('すべて', 'All')}</button>
-      ${doc.friends.filter(f => doc.diary.some(d => d.friendIds.includes(f.id))).map(f => `<button type="button" class="fun-chip${diaryFilter === f.id ? ' on' : ''}" data-act="filter" data-id="${f.id}"><span class="fr-dot" style="background:${f.color}"></span>${escapeHtml(f.name)}</button>`).join('')}
+      ${doc.friends.filter(f => doc.diary.some(d => d.friendIds.includes(f.id))).map(f => `<button type="button" class="fun-chip${diaryFilter === f.id ? ' on' : ''}" data-act="filter" data-id="${f.id}">${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</button>`).join('')}
     </div>` : ''}
     ${list.length ? `<div class="fr-diary">${list.map(d => entryHtml(d, false)).join('')}</div>` : (editing ? '' : emptyHtml(t('写真や一言で、Skyでの思い出を残しましょう。写真はこの端末の中だけに保存されます', 'Save your Sky memories with a photo and a few words. Photos stay on this device.')))}`;
 }
@@ -240,7 +240,7 @@ function entryHtml(d, compact) {
     <div class="fr-entry-body">
       <div class="fr-entry-date">${fmtDate(d.date)}${compact && years > 0 ? `<span>${t(`${years}年前`, `${years} year(s) ago`)}</span>` : ''}</div>
       ${d.text ? `<p class="fr-entry-text">${escapeHtml(d.text).replace(/\n/g, '<br>')}</p>` : ''}
-      ${names.length ? `<div class="fr-tags">${names.map(f => `<span class="fr-tag"><span class="fr-dot" style="background:${f.color}"></span>${escapeHtml(f.name)}</span>`).join('')}</div>` : ''}
+      ${names.length ? `<div class="fr-tags">${names.map(f => `<span class="fr-tag">${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</span>`).join('')}</div>` : ''}
     </div>
     ${compact ? '' : `<button type="button" class="fun-icon-btn fr-entry-edit" data-act="edit-diary" data-id="${d.id}" aria-label="${t('編集', 'Edit')}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button>`}
   </article>`;
@@ -256,7 +256,7 @@ function diaryFormHtml(d) {
     ${preview ? `<button type="button" class="fun-btn small" data-act="clear-photo">${t('写真を外す', 'Remove photo')}</button>` : ''}
     <label class="fun-field"><span class="fun-label">${t('日付', 'Date')}</span><input class="fun-input" type="date" name="date" required max="${todayStr()}" value="${d ? d.date : todayStr()}"></label>
     <label class="fun-field"><span class="fun-label">${t('ひとこと', 'A few words')}</span><textarea class="fun-textarea" name="text" rows="3" maxlength="2000" placeholder="${t('今日あったこと、うれしかったこと', 'What happened today?')}">${escapeHtml(d ? d.text : '')}</textarea></label>
-    ${doc.friends.length ? `<div class="fun-field"><span class="fun-label">${t('一緒にいたフレンド', 'With')}</span><div class="fun-chips">${doc.friends.map(f => `<label class="fun-chip fun-chip-check"><input type="checkbox" name="friendIds" value="${f.id}"${ids.has(f.id) ? ' checked' : ''}><span class="fr-dot" style="background:${f.color}"></span>${escapeHtml(f.name)}</label>`).join('')}</div></div>` : ''}
+    ${doc.friends.length ? `<div class="fun-field"><span class="fun-label">${t('一緒にいたフレンド', 'With')}</span><div class="fun-chips">${doc.friends.map(f => `<label class="fun-chip fun-chip-check"><input type="checkbox" name="friendIds" value="${f.id}"${ids.has(f.id) ? ' checked' : ''}>${avatarHtml(f, 'is-tiny')}${escapeHtml(f.name)}</label>`).join('')}</div></div>` : ''}
     <div class="fun-form-actions">
       ${d ? `<button type="button" class="fun-btn danger${confirmId === d.id ? ' is-confirm' : ''}" data-act="del-diary" data-id="${d.id}">${confirmId === d.id ? t('もう一度押すと削除', 'Tap again to delete') : t('削除', 'Delete')}</button>` : ''}
       <span class="fun-spacer"></span>
