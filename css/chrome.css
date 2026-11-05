@@ -247,6 +247,13 @@
   text-decoration: none; color: var(--hub-text); font-size: 14px;
 }
 .pf-drawer-link:hover { background: var(--hub-sep); }
+/* 兄弟機能（js/site-links.js の child）: 親のすぐ下に少し字下げし、細い線で親とつなぐ */
+.pf-drawer-link.is-child { position: relative; margin-left: 18px; padding-top: 8px; padding-bottom: 8px; font-size: 13.5px; }
+.pf-drawer-link.is-child::before {
+  content: ''; position: absolute; left: -8px; top: 0; bottom: 50%; width: 8px;
+  border-left: 1.5px solid var(--hub-sep); border-bottom: 1.5px solid var(--hub-sep); border-bottom-left-radius: 6px;
+}
+.pf-drawer-link.is-child .inline-icon { width: 17px; height: 17px; }
 .pf-drawer-badge-test {
   font-size: 9px; font-weight: 800; background: #ff9500; color: #fff; padding: 1px 5px; border-radius: 5px;
 }

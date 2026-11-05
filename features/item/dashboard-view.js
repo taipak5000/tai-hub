@@ -22,9 +22,6 @@ import * as titlesPanel from './titles-panel.js';
 import * as searchModal from './search-modal.js';
 import * as wishlistCostModal from './wishlist-cost-modal.js';
 import * as acquireLogModal from './acquire-log-modal.js';
-import * as randomCoord from './coord/random-coord.js';
-import * as myCoord from './coord/my-coord.js';
-import * as closetCollage from './coord/closet-collage.js';
 import * as coordShare from './coord/coord-share.js';
 import { appendItemFooter } from './item-footer.js';
 import * as achievementShare from './share/achievement-share.js';
@@ -279,24 +276,12 @@ function renderShell() {
       })}
 
       <p class="sec-label">${en ? 'Coord Features' : 'コーデ機能'}</p>
-      <div class="dash-feature-row dash-feature-grid">
-        ${featureBtnHtml({
-          id: 'dashOpenRandomCoordBtn', icon: 'i-dice',
-          label: en ? 'Random Coord' : 'ランダムコーデ',
-          desc: en ? 'Suggest a random outfit combination from your owned items' : '所持アイテムからランダムにコーデを提案',
-        })}
-        ${featureBtnHtml({
-          id: 'dashOpenMyCoordBtn', icon: 'i-hanger',
-          label: en ? 'My Coord' : 'マイコーデ',
-          desc: en ? 'Save and manage your favorite outfit sets' : 'お気に入りのコーデセットを保存・管理',
-        })}
-        ${featureBtnHtml({
-          id: 'dashOpenClosetCollageBtn', icon: 'i-image',
-          label: en ? 'Closet Collage' : 'クローゼットコラージュ',
-          desc: en ? 'Arrange owned items and your own photos into a grid to create and share a cute collage image'
-                   : '所持アイテムや自分の写真をマス目に並べて、かわいいコラージュ画像を作成・共有できます',
-        })}
-      </div>
+      ${featureBtnHtml({
+        href: '#/coord-diary', icon: 'i-hanger',
+        label: en ? 'Outfit Diary' : 'コーデ日記',
+        desc: en ? 'Random Coord, My Coord and Closet Collage have moved here, next to your outfit log'
+                 : 'ランダムコーデ・マイコーデ・クローゼットコラージュは、コーデ日記へ引っ越しました',
+      })}
     </div>
     </div>`;
 }
@@ -338,9 +323,6 @@ const FEATURE_TRIGGERS = [
   { btnId: 'dashOpenSearchBtn', mod: searchModal, action: 'open' },
   { btnId: 'dashOpenWishlistBtn', mod: wishlistCostModal, action: 'open' },
   { btnId: 'dashOpenAcquireLogBtn', mod: acquireLogModal, action: 'open' },
-  { btnId: 'dashOpenRandomCoordBtn', mod: randomCoord, action: 'open' },
-  { btnId: 'dashOpenMyCoordBtn', mod: myCoord, action: 'open' },
-  { btnId: 'dashOpenClosetCollageBtn', mod: closetCollage, action: 'open' },
   { btnId: 'dashShareOnXBtn', mod: achievementShare, action: 'shareOnX' },
   { btnId: 'dashCustomizeShareBtn', mod: achievementShare, action: 'open' },
   { btnId: 'dashFavShareBtn', mod: favoritesShare, action: 'open' },
@@ -398,7 +380,7 @@ function teardownFeatureTriggers() {
   triggerListeners = [];
   // 離脱時、開きっぱなしのモーダルがあれば閉じる（close()はどのモーダルも
   // 「開いていなければ何もしない」実装のため、常時呼んでも安全）
-  [searchModal, wishlistCostModal, acquireLogModal, randomCoord, myCoord, closetCollage, achievementShare, favoritesShare]
+  [searchModal, wishlistCostModal, acquireLogModal, achievementShare, favoritesShare]
     .forEach(mod => { try { mod.close(); } catch (e) { /* no-op */ } });
   try { coordShare.closeSharedCoord(); } catch (e) { /* no-op */ }
 }

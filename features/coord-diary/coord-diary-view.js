@@ -4,6 +4,10 @@
    写真はフォト日記と同じ IndexedDB（features/friends/friends-state.js の putPhoto/getPhoto）に保存する。
 
    coordDiary_v1: { entries: [{ id, date: 'YYYY-MM-DD', photoId?, items: [{ cat, id }], memo, place? }] }
+
+   🪄 アイテム所持管理にあった「コーデ機能」（ランダムコーデ・マイコーデ・クローゼットコラージュ）もここから開く
+   （2026-11-06に引っ越し。中身は features/item/coord/ のまま＝保存データも共通。使う時だけ読み込む）。
+   コーデの共有リンク（#/item/coord=…）の受け取りは、従来どおりアイテム所持管理が担当する。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
@@ -18,6 +22,12 @@ const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const KEY = 'coordDiary_v1';
 const CATS = CATEGORY_REGISTRY.filter(c => c.section !== 'special');
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const COORD_TOOLS = {
+  random: () => import('../item/coord/random-coord.js'),
+  my: () => import('../item/coord/my-coord.js'),
+  collage: () => import('../item/coord/closet-collage.js'),
+};
+const openedTools = new Set();
 
 let containerEl = null;
 let doc = null;
@@ -77,6 +87,9 @@ export function mount(container) {
   r.addEventListener('submit', onSubmit);
 }
 export function unmount() {
+  // 開きっぱなしのコーデ機能のモーダルを閉じる（アイテム所持管理のダッシュボードと同じ後片付け）
+  openedTools.forEach(k => COORD_TOOLS[k]().then(m => { try { m.close(); } catch (e) { /* noop */ } }));
+  openedTools.clear();
   urls.forEach(u => URL.revokeObjectURL(u)); urls.clear();
   clearPending();
   containerEl = null;
@@ -99,6 +112,11 @@ function render() {
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-hanger"/></svg>${t('コーデ日記', 'Outfit Diary')}</h1>
       <p class="fun-lead">${t('その日のコーデを、写真と着ていたアイテムで残しておけます。アイテムは「アイテム所持管理」で所持にしたものから選べます。', 'Log your outfit of the day with a photo and the items you wore, picked from your owned items.')}</p>
     </header>
+    <div class="cd-tools" role="group" aria-label="${t('コーデ機能', 'Coord tools')}">
+      ${toolBtn('random', 'i-dice', t('ランダムコーデ', 'Random Coord'), t('所持アイテムからコーデを提案', 'A random outfit from your items'))}
+      ${toolBtn('my', 'i-hanger', t('マイコーデ', 'My Coord'), t('お気に入りのコーデを保存', 'Save favorite outfits'))}
+      ${toolBtn('collage', 'i-image', t('クローゼットコラージュ', 'Closet Collage'), t('アイテムや写真でコラージュ', 'Make a collage image'))}
+    </div>
     ${form ? formHtml() : `<button type="button" class="fun-add" data-act="new"><svg class="inline-icon" width="16" height="16"><use href="#i-plus"/></svg>${t('今日のコーデを残す', 'Log today’s outfit')}</button>`}
     <section class="cd-cal">
       <div class="cd-cal-head">
@@ -112,6 +130,10 @@ function render() {
     ${favoritesHtml()}
   </div>`;
   loadPhotos();
+}
+
+function toolBtn(key, icon, label, desc) {
+  return `<button type="button" class="cd-tool" data-act="tool" data-tool="${key}"><span class="cd-tool-ic"><svg class="inline-icon" width="20" height="20"><use href="#${icon}"/></svg></span><span class="cd-tool-text"><b>${escapeHtml(label)}</b><small>${escapeHtml(desc)}</small></span></button>`;
 }
 
 function calendarHtml() {
@@ -241,6 +263,13 @@ function onClick(e) {
   if (!btn || btn.disabled) return;
   const { act } = btn.dataset;
   if (act === 'new') { openForm(null); return; }
+  if (act === 'tool') {
+    const key = btn.dataset.tool;
+    if (!COORD_TOOLS[key]) return;
+    openedTools.add(key);
+    COORD_TOOLS[key]().then(m => m.open()).catch(() => toast(t('読み込めませんでした。通信状態を確かめてください', 'Could not load. Check your connection.')));
+    return;
+  }
   if (act === 'prev' || act === 'next') {
     if (form) syncForm();
     const d = new Date(month.y, month.m + (act === 'prev' ? -1 : 1), 1);

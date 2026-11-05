@@ -50,7 +50,7 @@ export function renderNav() {
 
 function linkHtml(s) {
   const { href, hubRoute } = siteLinkHref(s);
-  return `<a class="pf-drawer-link" href="${href}" data-hub-route="${hubRoute}">
+  return `<a class="pf-drawer-link${s.child ? ' is-child' : ''}" href="${href}" data-hub-route="${hubRoute}">
       <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
       ${s.badgeTest ? `<span class="pf-drawer-badge-test">${t('test', 'test')}</span>` : ''} ${escapeHtml(siteLinkName(s, CURRENT_LANG))}
     </a>`;
@@ -80,7 +80,7 @@ function renderNavInto(nav) {
   nav.innerHTML = `
     <button type="button" class="hub-search-open js-hub-search">
       <svg class="inline-icon" width="17" height="17"><use href="#i-search"/></svg><span>${t('まとめてさがす', 'Search everything')}</span>
-    </button>` + links.filter(s => !s.badgeTest).map(linkHtml).join('') + testGroupHtml(links.filter(s => s.badgeTest)) + `
+    </button>` + links.filter(s => !s.badgeTest || s.child).map(linkHtml).join('') + testGroupHtml(links.filter(s => s.badgeTest && !s.child)) + `
     <div class="hub-refresh">
       <button type="button" class="hub-refresh-btn js-hub-refresh">
         <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${t('最新の状態に更新', 'Update to the latest version')}

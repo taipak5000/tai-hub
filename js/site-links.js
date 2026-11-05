@@ -19,8 +19,9 @@ const HUB_ONLY_TOOLS = [
   { id: 'recap', afterId: 'tai-card', icon: 'i-trophy', ja: 'ふりかえり', en: 'Recap', badgeTest: true },
   // 第2弾（2026-11-06）
   { id: 'today', afterId: 'tai-card', icon: 'i-sun', ja: '今日やること', en: 'Today', badgeTest: true },
-  { id: 'wish-plan', afterId: 'tai-card', icon: 'i-cart', ja: 'ほしいもの計画', en: 'Wishlist Plan', badgeTest: true },
-  { id: 'coord-diary', afterId: 'tai-card', icon: 'i-hanger', ja: 'コーデ日記', en: 'Outfit Diary', badgeTest: true },
+  // child: true＝親（afterIdのツール）の兄弟機能として、親のすぐ下に少し字下げして並べる（testの印があっても最後へ回さない）
+  { id: 'coord-diary', afterId: 'item', icon: 'i-hanger', ja: 'コーデ日記', en: 'Outfit Diary', badgeTest: true, child: true },
+  { id: 'wish-plan', afterId: 'coord-diary', icon: 'i-cart', ja: 'ほしいもの計画', en: 'Wishlist Plan', badgeTest: true, child: true },
   { id: 'stamps', afterId: 'tai-card', icon: 'i-crown', ja: 'スタンプ帳', en: 'Stamp Book', badgeTest: true },
 ];
 
@@ -37,15 +38,19 @@ export async function refreshSiteLinks() {
 }
 
 /** 描画用の一覧（ハブ専用ツール込み）。未取得ならnull。
-    testの印が付いたツールは、作者プロフィールより下（一覧の最後）にまとめる（元の順番は保つ） */
+    testの印が付いたツールは、作者プロフィールより下（一覧の最後）にまとめる（元の順番は保つ）。
+    ただし child（ほかのツールの兄弟機能）は、testの印があっても親のすぐ下に置く */
 export function getSiteLinks() {
   if (!tools) return null;
   const list = [];
-  tools.forEach(t => {
+  // afterIdで親の直後に差し込む（差し込んだツールの直後にさらに差し込めるよう、再帰的にたどる）
+  const pushWithFollowers = (t) => {
     list.push(t);
-    HUB_ONLY_TOOLS.filter(h => h.afterId === t.id).forEach(h => list.push(h));
-  });
-  return [...list.filter(t => !t.badgeTest), ...list.filter(t => t.badgeTest)];
+    HUB_ONLY_TOOLS.filter(h => h.afterId === t.id).forEach(pushWithFollowers);
+  };
+  tools.forEach(pushWithFollowers);
+  const isTestGroup = t => t.badgeTest && !t.child;
+  return [...list.filter(t => !isTestGroup(t)), ...list.filter(isTestGroup)];
 }
 
 /** リンク先: ハブ内ルートがあれば #/<id>、無ければ外部URL */
