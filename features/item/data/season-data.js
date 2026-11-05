@@ -51,7 +51,7 @@ export function scheduleWithUpcomingSeason(schedule = EVENT_SCHEDULE, season = C
 // 16:59終わりで指定すること（太平洋時間のオフセット-08:00で書くと迷わない。例：'2026-11-12T00:00:00-08:00'）。
 export const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
-  { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-12T17:00:00+09:00' },
+  { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-11T23:59:59-08:00' }, // 終了は日本時間 2026/11/12 16:59:59（夏時間の終了後）
 ];
 
 export const CANDLE_BONUS_SCHEDULE = [
