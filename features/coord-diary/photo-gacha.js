@@ -1,7 +1,7 @@
 /* ================================================================
    📸 撮影お題ガチャ（コーデ日記の中の折りたたみ「撮影ポーズに困ったら」。coord-diary-view.js が表示する）。
-   場所・時間帯・エモート（名前ではなくアイコンで出す）・構図・人数をくじで決める。2026-11-06に試作（#/lab-photo-gacha）から移した。
-   photoGacha_v1: { log: [{ id, date, place, time, emoteId, comp, people, done }] }（新しい順・最大100件。試作の頃と同じ）
+   場所・エモート（名前ではなくアイコンで出す）・構図・人数をくじで決める（時間帯は2026-11-06に外した）。2026-11-06に試作（#/lab-photo-gacha）から移した。
+   photoGacha_v1: { log: [{ id, date, place, emoteId, comp, people, done }] }（新しい順・最大100件。以前の記録に残る time は使わない）
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
@@ -9,7 +9,6 @@ import { PLACES } from '../shared/places.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const KEY = 'photoGacha_v1';
-const TIMES = [{ ja: '朝焼け', en: 'Sunrise' }, { ja: '昼', en: 'Daytime' }, { ja: '夕暮れ', en: 'Sunset' }, { ja: '夜', en: 'Night' }, { ja: '雨・雪の中', en: 'In rain or snow' }, { ja: '雲の上', en: 'Above the clouds' }];
 const COMPS = [{ ja: '顔のアップ', en: 'Close-up' }, { ja: '全身', en: 'Full body' }, { ja: '後ろ姿', en: 'From behind' }, { ja: '見上げる角度', en: 'Low angle' }, { ja: '見下ろす角度', en: 'High angle' }, { ja: 'シルエット', en: 'Silhouette' }, { ja: '景色を大きく', en: 'Wide landscape' }, { ja: '手もとだけ', en: 'Hands only' }];
 const PEOPLE = [{ ja: 'ひとりで', en: 'Solo' }, { ja: 'ふたりで', en: 'With one friend' }, { ja: 'みんなで', en: 'With a group' }, { ja: '精霊と', en: 'With a spirit' }];
 const PLACE_POOL = PLACES.filter(p => p.id !== 'other');
@@ -54,7 +53,6 @@ export function gachaHtml() {
   const rows = [
     // [見出し, 中身のHTML]（エモートだけアイコンのHTML、ほかは文字）
     [t('場所', 'Place'), c ? escapeHtml(L(PLACE_POOL.find(p => p.id === c.place))) : ''],
-    [t('時間帯', 'Time'), c ? escapeHtml(L(TIMES[c.time])) : ''],
     [t('エモート', 'Emote'), c ? emoteIconHtml(c.emoteId) : ''],
     [t('構図', 'Framing'), c ? escapeHtml(L(COMPS[c.comp])) : ''],
     [t('人数', 'Who'), c ? escapeHtml(L(PEOPLE[c.people])) : ''],
@@ -68,7 +66,7 @@ export function gachaHtml() {
     </button>
     ${gachaOpen ? `<div class="cd-gacha-body">
       ${c ? `<dl class="cd-gacha-list">${rows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>`
-        : `<p class="fun-hint">${t('場所・時間帯・エモート・構図・人数をくじで決めます。いつもと違う1枚が撮れるかもしれません。', 'Draw a random place, time, emote, framing and company for your next photo.')}</p>`}
+        : `<p class="fun-hint">${t('場所・エモート・構図・人数をくじで決めます。いつもと違う1枚が撮れるかもしれません。', 'Draw a random place, emote, framing and company for your next photo.')}</p>`}
       <div class="cd-gacha-actions">
         <button type="button" class="fun-btn small primary" data-act="gacha-roll"><svg class="inline-icon" width="13" height="13"><use href="#i-dice"/></svg>${c ? t('引きなおす', 'Draw again') : t('お題を引く', 'Draw')}</button>
         ${c ? `<button type="button" class="fun-btn small" data-act="gacha-done"><svg class="inline-icon" width="13" height="13"><use href="#i-check"/></svg>${t('撮れた！', 'Got it!')}</button>` : ''}
@@ -82,7 +80,7 @@ export function handleGacha(act) {
   load();
   if (act === 'gacha-toggle') { gachaOpen = !gachaOpen; return true; }
   if (act === 'gacha-roll') {
-    const c = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: new Date().toISOString().slice(0, 10), place: PLACE_POOL[pick(PLACE_POOL)].id, time: pick(TIMES), emoteId: emotes && emotes.length ? emotes[pick(emotes)].id : '', comp: pick(COMPS), people: pick(PEOPLE), done: false };
+    const c = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: new Date().toISOString().slice(0, 10), place: PLACE_POOL[pick(PLACE_POOL)].id, emoteId: emotes && emotes.length ? emotes[pick(emotes)].id : '', comp: pick(COMPS), people: pick(PEOPLE), done: false };
     if (current && !current.done) doc.log = doc.log.filter(x => x.id !== current.id);
     doc.log.unshift(c); doc.log = doc.log.slice(0, 100); current = c; save();
     return true;
