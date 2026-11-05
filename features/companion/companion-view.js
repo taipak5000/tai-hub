@@ -831,14 +831,7 @@ const TEMPLATE = `
           <button type="button" class="btn-sm" :title="t('mobile_add_one_title')" @click="ownedCandles = (ownedCandles || 0) + 1">+1</button>
           <button type="button" class="btn-sm" @click="ownedCandles = (ownedCandles || 0) + candlesPerDay">+{{ candlesPerDay }}{{ t('mobile_add_today') }}</button>
         </div>
-        <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
-          <label style="font-size: 11px; color: var(--text-gray); font-weight: bold;">{{ t('opt_daily_label') }}</label>
-          <div style="display:flex; align-items:baseline; gap:6px;">
-            <input type="number" min="0" max="99" v-model.number="estimatedDailyCandles" class="calc-input owned-candle-input">
-            <span style="font-size: 13px; color: var(--text-gray);">{{ t('calc_unit') }}</span>
-          </div>
-        </div>
-        <div style="font-size: 10.5px; color: var(--text-gray); line-height: 1.5; margin-top: 4px;">{{ t('est_daily_hint') }}</div>
+        <!-- 「1日の獲得キャンドル」の入力はここから外した（2026-11-06）。値は下の「交換順の計算」で変えられ、今まで通り共通で使う -->
       </div>
 
       <div class="section-card" style="border: 1px solid var(--accent-blue); background: rgba(0,122,255,0.02);">
