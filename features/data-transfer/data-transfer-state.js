@@ -99,7 +99,7 @@ export const SITE_CATALOG = [
   // コーデ日記の写真もIndexedDB（バックアップには含めない）
   { id: 'coord-diary', label: 'コーデ日記', labelEn: 'Outfit Diary', namespaced: true, keys: ['coordDiary_v1'] },
   // 🧪 試作中の機能（非公開のため hidden。データは静かに引き継ぐ）
-  { id: 'lab', label: '試作中の機能', labelEn: 'Lab features', namespaced: true, hidden: true, keys: ['photoGacha_v1'] },
+  { id: 'photo-gacha', label: '撮影お題ガチャ（コーデ日記）', labelEn: 'Photo prompts (Outfit Diary)', namespaced: true, hidden: true, keys: ['photoGacha_v1'] },
   { id: 'stamps', label: 'スタンプ帳', labelEn: 'Stamp Book', namespaced: true, keys: ['stampsEarned_v1', 'stampsSeen_v1'] },
   // お知らせ（js/notices.js）: 再訪精霊データベースの「待っている」精霊と、既読にしたお知らせ
   { id: 'notices', label: 'お知らせ・待っている精霊', labelEn: 'Notices & Waitlist', namespaced: true, hidden: true, keys: ['revisitWaitlist_v1', 'noticesSeen_v1'] },

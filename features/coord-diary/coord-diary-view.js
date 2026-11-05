@@ -8,6 +8,7 @@
    🪄 アイテム所持管理にあった「コーデ機能」（ランダムコーデ・マイコーデ・クローゼットコラージュ）もここから開く
    （2026-11-06に引っ越し。中身は features/item/coord/ のまま＝保存データも共通。使う時だけ読み込む）。
    コーデの共有リンク（#/item/coord=…）の受け取りは、従来どおりアイテム所持管理が担当する。
+   📸 「撮影ポーズに困ったら」（photo-gacha.js）: 撮影お題ガチャを小さな折りたたみで置く（2026-11-06に試作から移した）。
    📚 「シーズンアルバム」タブ（season-album.js）: 季節ごとの記録と写真のアルバム（2026-11-06に試作から移した）。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -19,6 +20,7 @@ import { toast } from '../shared/share-image.js';
 import { PLACES, PLACE_IDS, placeName } from '../shared/places.js';
 import { putPhoto, getPhoto, deletePhoto, todayStr } from '../friends/friends-state.js';
 import { albumsHtml } from './season-album.js';
+import { gachaHtml, handleGacha, ensureEmotes, resetGacha, gachaOpen } from './photo-gacha.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const KEY = 'coordDiary_v1';
@@ -133,6 +135,7 @@ export function mount(container) {
   const now = new Date();
   month = { y: now.getFullYear(), m: now.getMonth() };
   form = null; confirmId = null; albumOpen = null;
+  resetGacha();
   try { tab = localStorage.getItem(TAB_KEY) === 'album' ? 'album' : 'diary'; } catch (e) { tab = 'diary'; }
   container.innerHTML = '<div class="coord-diary-view fun-view"></div>';
   render();
@@ -173,6 +176,7 @@ function render() {
       ${toolBtn('my', 'i-hanger', t('マイコーデ', 'My Coord'), t('お気に入りのコーデを保存', 'Save favorite outfits'))}
       ${toolBtn('collage', 'i-image', t('クローゼットコラージュ', 'Closet Collage'), t('アイテムや写真でコラージュ', 'Make a collage image'))}
     </div>
+    ${gachaHtml()}
     <div class="fun-tabs" role="tablist">
       <button type="button" class="fun-tab${tab === 'diary' ? ' on' : ''}" role="tab" aria-selected="${tab === 'diary'}" data-act="tab" data-tab="diary">${t('コーデ日記', 'Outfit diary')}</button>
       <button type="button" class="fun-tab${tab === 'album' ? ' on' : ''}" role="tab" aria-selected="${tab === 'album'}" data-act="tab" data-tab="album">${t('シーズンアルバム', 'Season album')}</button>
@@ -347,6 +351,14 @@ function onClick(e) {
     tab = btn.dataset.tab === 'album' ? 'album' : 'diary';
     try { localStorage.setItem(TAB_KEY, tab); } catch (err) { /* noop */ }
     render(); return;
+  }
+  if (act.startsWith('gacha-')) {
+    if (form) syncForm();
+    if (handleGacha(act)) {
+      render();
+      if (gachaOpen) ensureEmotes(() => { if (containerEl) { if (form) syncForm(); render(); } });
+    }
+    return;
   }
   if (act === 'album-toggle') { albumOpen = albumOpen === btn.dataset.key ? null : btn.dataset.key; render(); return; }
   if (act === 'tool') {

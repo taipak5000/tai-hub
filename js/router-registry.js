@@ -149,8 +149,6 @@ export const ROUTES = {
   'wish-plan': lazyToolEntry(() => import('../features/wish-plan/wish-plan-view.js'), 'ほしいもの計画', 'Wishlist Plan'),
   'coord-diary': lazyToolEntry(() => import('../features/coord-diary/coord-diary-view.js'), 'コーデ日記', 'Outfit Diary'),
   stamps: lazyToolEntry(() => import('../features/stamps/stamps-view.js'), 'スタンプ帳', 'Stamp Book'),
-  // 🧪 試作中の機能（非公開。features/lab/）。入口はデイリーチェックシート単体のページ（#/daily-check）の「試作中の機能」だけ
-  'lab-photo-gacha': { ...lazyToolEntry(() => import('../features/lab/photo-gacha-view.js'), '撮影お題ガチャ', 'Photo Prompt Gacha'), hidden: true },
   // 🧪 試作中（非公開）。URL（#/daily-check）を知っている人だけが開ける。関連ツールの一覧（site-links）には
   // 載せておらず、hidden: true で「起動時に開くツール」の選択肢からも外す。公開する時はhiddenを外してsite-linksへ足す
   // 画面は features/today/today-view.js（今日の要点＋チェックシート＋試作中の機能への入口）

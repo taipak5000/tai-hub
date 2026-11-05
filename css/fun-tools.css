@@ -555,21 +555,6 @@
 .fun-view .lab-back .inline-icon { stroke: currentColor; }
 .fun-view .lab-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-accent-ink); background: var(--hub-accent-bg); border-radius: 999px; padding: 2px 8px; }
 
-/* 撮影お題ガチャ */
-.lab-photo-gacha-view .pgc-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.lab-photo-gacha-view .pgc-card { display: flex; flex-direction: column; gap: 3px; padding: 14px; border-radius: 18px; background: var(--hub-card); box-shadow: 0 1px 8px rgba(0, 0, 0, 0.05); animation: pgcIn 0.4s var(--fun-pop) both; }
-.lab-photo-gacha-view .pgc-card:first-child { grid-column: 1 / -1; background: var(--hub-accent-bg); }
-.lab-photo-gacha-view .pgc-card .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); }
-.lab-photo-gacha-view .pgc-card small { font-size: 11px; font-weight: 700; color: var(--hub-text-2); letter-spacing: 0.04em; }
-.lab-photo-gacha-view .pgc-card b { font-size: 18px; font-weight: 800; line-height: 1.35; }
-.lab-photo-gacha-view .pgc-cards.is-spinning .pgc-card { animation: pgcSpin 0.6s ease-in-out infinite; }
-@keyframes pgcIn { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes pgcSpin { 50% { transform: rotateX(90deg); } }
-.lab-photo-gacha-view .pgc-log { list-style: none; margin: 0 0 10px; padding: 0; border-radius: 16px; background: var(--hub-card); overflow: hidden; }
-.lab-photo-gacha-view .pgc-log li { padding: 10px 14px; font-size: 13px; line-height: 1.55; }
-.lab-photo-gacha-view .pgc-log li + li { border-top: 0.5px solid var(--hub-sep); }
-.lab-photo-gacha-view .pgc-log span { display: block; font-size: 11px; color: var(--hub-text-2); }
-
 /* シーズンアルバム（コーデ日記のタブ。features/coord-diary/season-album.js） */
 .fun-view .sa-list { display: flex; flex-direction: column; gap: 12px; }
 .fun-view .sa-album { border-radius: 20px; background: var(--hub-card); overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06); }
@@ -590,10 +575,32 @@
 .fun-view .sa-memo { margin: 10px 0 0; font-size: 13.5px; line-height: 1.7; overflow-wrap: anywhere; }
 .fun-view .sa-memo span { display: block; font-size: 11px; font-weight: 700; color: var(--hub-text-2); }
 
+@media (prefers-contrast: more) {
+  .fun-view .sa-album { border: 1px solid var(--hub-text-2); }
+}
+
+/* 📸 撮影ポーズに困ったら（コーデ日記の折りたたみ。features/coord-diary/photo-gacha.js） */
+.coord-diary-view .cd-gacha { margin: 0 0 12px; border-radius: 14px; background: var(--hub-card); border: 0.5px solid var(--hub-sep); }
+.coord-diary-view .cd-gacha-head {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 0; border-radius: 14px; background: none;
+  color: var(--hub-text-2); font: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer;
+}
+.coord-diary-view .cd-gacha-head .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); flex: none; }
+.coord-diary-view .cd-gacha-head small { font-size: 11px; font-weight: 600; color: var(--hub-text-3); }
+.coord-diary-view .cd-gacha-chev { margin-left: auto; color: var(--hub-text-3) !important; transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1); transform: rotate(-90deg); }
+.coord-diary-view .cd-gacha.is-open .cd-gacha-chev { transform: none; }
+.coord-diary-view .cd-gacha-body { padding: 0 12px 12px; animation: funRise 0.28s var(--fun-ease); }
+.coord-diary-view .cd-gacha-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; margin: 0 0 10px; }
+.coord-diary-view .cd-gacha-list div { padding: 7px 9px; border-radius: 10px; background: var(--hub-bg); }
+.coord-diary-view .cd-gacha-list dt { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-text-2); }
+.coord-diary-view .cd-gacha-list dd { margin: 1px 0 0; font-size: 13.5px; font-weight: 800; line-height: 1.35; }
+.coord-diary-view .cd-gacha-body .fun-hint { margin: 0 0 10px; }
+.coord-diary-view .cd-gacha-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) {
-  .lab-photo-gacha-view .pgc-card, .lab-photo-gacha-view .pgc-cards.is-spinning .pgc-card { animation: none; }
-  .lab-photo-gacha-view .pgc-cards.is-spinning { opacity: 0.6; }
+  .coord-diary-view .cd-gacha-body { animation: iosFade 200ms ease; }
+  .coord-diary-view .cd-gacha-chev { transition: none; }
 }
 @media (prefers-contrast: more) {
-  .fun-view .sa-album, .lab-photo-gacha-view .pgc-card { border: 1px solid var(--hub-text-2); }
+  .coord-diary-view .cd-gacha { border-color: var(--hub-text-2); }
+  .coord-diary-view .cd-gacha-head { color: var(--hub-text); }
 }

@@ -15,7 +15,6 @@ export function localDateStr(d = new Date()) { return `${d.getFullYear()}-${Stri
 
 /** 試作中の機能の一覧（デイリーチェックシートの入口と、各ページの「ほかの試作」に使う） */
 export const LAB_TOOLS = [
-  { id: 'photo-gacha', icon: 'i-camera', ja: '撮影お題ガチャ', en: 'Photo Prompt Gacha', desc: { ja: '場所・時間・ポーズのお題で写真を撮る', en: 'Random photo prompts: place, time, pose' } },
 ];
 export const labRoute = id => `lab-${id}`;
 

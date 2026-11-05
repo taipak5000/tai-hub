@@ -250,7 +250,9 @@ const landingPoint = currentY + project(v);
   思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。
   **新しいツールに記録を足したら、スタンプ帳（`stamps-state.js`の`collectStats`/`STAMPS`）とふりかえり（`recap-view.js`）にも数を足せるか考えること。**
 - **シーズンアルバム**: コーデ日記の「シーズンアルバム」タブ（`features/coord-diary/season-album.js`。季節の期間は`features/shared/season-dates.js`）。
-- **試作中の機能（2026-11-06〜。`features/lab/`）**: 撮影お題ガチャ（気分カレンダー・タイムカプセル・推し精霊・シール帳・キャンドル貯金箱は11/6に削除、シーズンアルバムはコーデ日記へ移動）。
+- **撮影お題ガチャ**: コーデ日記の折りたたみ「撮影ポーズに困ったら」（`features/coord-diary/photo-gacha.js`）。
+- **試作中の機能（2026-11-06〜。`features/lab/`）**: 今は無し（気分カレンダー・タイムカプセル・推し精霊・シール帳・キャンドル貯金箱は11/6に削除、シーズンアルバム・撮影お題ガチャはコーデ日記へ移動）。
+  `LAB_TOOLS`が空の間は、デイリーチェックシートの「試作中の機能」の枠ごと出さない。
   ルートは`lab-*`で**すべて`hidden: true`**。関連ツールの一覧・検索・お知らせ・起動時に開くツールには出さず、
   **入口はデイリーチェックシート単体のページ（`#/daily-check`、埋め込み時は出さない）の「試作中の機能」だけ**（作者が一人で試すため）。
   公開する時は`hidden`を外して`site-links.js`へ足し、`LAB_TOOLS`（`lab-common.js`）から外す。

@@ -471,6 +471,7 @@ function render() {
 
 // 🧪 試作中の機能への入口（非公開の機能はここからだけ開ける。「今日やること」に埋め込んだ時は出さない）
 function labLinksHtml() {
+  if (!LAB_TOOLS.length) return ''; // 試作中の機能が無い時は枠ごと出さない
   return `<section class="dc-lab">
     <h2 class="dc-lab-title">${escapeHtml(t('試作中の機能', 'Lab'))}</h2>
     <div class="dc-lab-grid">${LAB_TOOLS.map(x => `<a class="dc-lab-link" href="#/${labRoute(x.id)}"><svg class="inline-icon" width="18" height="18" aria-hidden="true"><use href="#${x.icon}"/></svg><span><b>${escapeHtml(t(x.ja, x.en))}</b><small>${escapeHtml(t(x.desc.ja, x.desc.en))}</small></span></a>`).join('')}</div>
