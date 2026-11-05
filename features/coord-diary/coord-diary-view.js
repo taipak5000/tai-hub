@@ -31,7 +31,9 @@ const openedTools = new Set();
 
 let containerEl = null;
 let doc = null;
-let owned = null; // { 'cat:id': {cat, id, name, img} }
+let owned = null; // { 'cat:id': {cat, id, name, img, key} }（所持中のアイテム）
+let catalog = null; // { 'cat:id': {cat, id, name, img, key} }（全アイテム。名前・画像・読みがなの元）
+let catalogLoading = null;
 let month = null; // { y, m }（0始まりの月）
 let form = null; // { id?, date, items: Set<'cat:id'>, query, removePhoto }
 let confirmId = null;
@@ -57,17 +59,53 @@ function save() {
   try { localStorage.setItem(nsKey(KEY), JSON.stringify(doc)); } catch (e) { toast(t('保存できませんでした', 'Could not save')); }
   notifyChanged();
 }
-function loadOwned() {
+// 所持の判定は itemOwned（所持の正本）で行う。ownedItems（アイテム所持管理が保存する一覧）は、精霊ツリーとの同期で
+// 所持になった分が入らないことがあり、画像の無い古い形も残っているため、名前と画像はアイテムのデータ（items/<cat>.js）から引く。
+// データを読み終わるまでは ownedItems で仮に表示する
+function ownedMaps() {
   const out = {};
   CATS.forEach(c => {
-    try {
-      const d = JSON.parse(localStorage.getItem(nsKey('gameItems_' + c.key))) || {};
-      (Array.isArray(d.ownedItems) ? d.ownedItems : []).forEach(it => {
-        if (it && it.id && d.itemOwned && d.itemOwned[it.id]) out[`${c.key}:${it.id}`] = { cat: c, id: it.id, name: CURRENT_LANG === 'en' ? (it.nameEn || it.name) : it.name, img: it.img };
-      });
-    } catch (e) { /* noop */ }
+    try { out[c.key] = (JSON.parse(localStorage.getItem(nsKey('gameItems_' + c.key))) || {}); } catch (e) { out[c.key] = {}; }
   });
   return out;
+}
+function loadOwned() {
+  const maps = ownedMaps();
+  const out = {};
+  CATS.forEach(c => {
+    const d = maps[c.key];
+    const ownedIds = d.itemOwned || {};
+    if (catalog) {
+      Object.keys(ownedIds).forEach(id => { const it = catalog[`${c.key}:${id}`]; if (ownedIds[id] && it) out[it.k] = it; });
+    } else {
+      (Array.isArray(d.ownedItems) ? d.ownedItems : []).forEach(it => {
+        if (it && it.id && ownedIds[it.id]) {
+          const name = CURRENT_LANG === 'en' ? (it.nameEn || it.name) : it.name;
+          out[`${c.key}:${it.id}`] = { k: `${c.key}:${it.id}`, cat: c, id: it.id, name, img: it.img, key: norm(`${it.name} ${it.nameEn || ''} ${c.name} ${c.nameEn}`) };
+        }
+      });
+    }
+  });
+  return out;
+}
+function loadCatalog() {
+  if (catalog) return Promise.resolve(catalog);
+  if (catalogLoading) return catalogLoading;
+  catalogLoading = Promise.all([
+    import('../item/data/yomi-data.js').catch(() => ({ ITEM_YOMI: {} })),
+    ...CATS.map(c => import(`../item/data/items/${c.key}.js`).catch(() => ({ ITEMS: [] }))),
+  ]).then(([yomiMod, ...mods]) => {
+    const yomi = yomiMod.ITEM_YOMI || {};
+    const out = {};
+    CATS.forEach((c, i) => (mods[i].ITEMS || []).forEach(it => {
+      const k = `${c.key}:${it.id}`;
+      // 検索はひらがな・カタカナ・英語名・読みがな・カテゴリ名のどれでも当たるようにする
+      out[k] = { k, cat: c, id: it.id, name: CURRENT_LANG === 'en' ? (it.nameEn || it.name) : it.name, img: it.img || '', key: norm(`${it.name} ${it.nameEn || ''} ${yomi[it.id] || ''} ${c.name} ${c.nameEn} ${it.event || ''}`) };
+    }));
+    catalog = out;
+    return out;
+  }).catch(e => { catalogLoading = null; throw e; });
+  return catalogLoading;
 }
 
 export function mount(container) {
@@ -75,6 +113,18 @@ export function mount(container) {
   containerEl = container;
   doc = load();
   owned = loadOwned();
+  loadCatalog().then(() => {
+    if (!containerEl) return;
+    owned = loadOwned();
+    // 入力中の検索欄・フォームを消さないよう、候補とアイテム表示の部分だけ差し替える（フォームが無ければ全体を描き直す）
+    if (form) {
+      syncForm();
+      const box = root().querySelector('.cd-pick'); if (box) box.innerHTML = pickHtml();
+      const sel = root().querySelector('.cd-selected'); if (sel) sel.innerHTML = selectedHtml();
+      const list = root().querySelector('.cd-list'); if (list) list.innerHTML = monthEntries().map(entryHtml).join('');
+      loadPhotos();
+    } else render();
+  }).catch(() => {});
   const now = new Date();
   month = { y: now.getFullYear(), m: now.getMonth() };
   form = null; confirmId = null;
@@ -98,15 +148,15 @@ function root() { return containerEl && containerEl.querySelector('.coord-diary-
 function clearPending() { if (pendingUrl) URL.revokeObjectURL(pendingUrl); pendingPhoto = null; pendingUrl = null; }
 
 function itemInfo(x) {
-  return owned[`${x.cat}:${x.id}`] || { cat: CATS.find(c => c.key === x.cat), id: x.id, name: x.id, img: '' };
+  const k = `${x.cat}:${x.id}`;
+  return (catalog && catalog[k]) || owned[k] || { cat: CATS.find(c => c.key === x.cat), id: x.id, name: x.id, img: '' };
 }
 function fmtDate(str) { const [y, m, d] = str.split('-').map(Number); return t(`${m}月${d}日`, `${m}/${d}`) + (y !== new Date().getFullYear() ? t(`（${y}年）`, ` ${y}`) : ''); }
 
 function render() {
   const r = root();
   if (!r) return;
-  const mKey = `${month.y}-${String(month.m + 1).padStart(2, '0')}`;
-  const inMonth = doc.entries.filter(e => e.date.startsWith(mKey)).sort((a, b) => b.date.localeCompare(a.date));
+  const inMonth = monthEntries();
   r.innerHTML = `<div class="fun-wrap">
     <header class="fun-head">
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-hanger"/></svg>${t('コーデ日記', 'Outfit Diary')}</h1>
@@ -181,7 +231,7 @@ function formHtml() {
   const e = form.id ? doc.entries.find(x => x.id === form.id) : null;
   const preview = pendingUrl || (e && e.photoId && !form.removePhoto ? urls.get(e.photoId) : '');
   const hasPhoto = !!pendingUrl || (!!(e && e.photoId) && !form.removePhoto);
-  const selected = [...form.items].map(k => { const [cat, id] = k.split(':'); return { key: k, ...itemInfo({ cat, id }) }; });
+  const selectedCount = form.items.size;
   const ownedCount = Object.keys(owned).length;
   return `<form class="fun-form" data-form="coord">
     <div class="fr-photo-pick${hasPhoto ? ' has' : ''}">
@@ -194,8 +244,8 @@ function formHtml() {
       <label class="fun-field"><span class="fun-label">${t('場所（あれば）', 'Place (optional)')}</span><select class="fun-input" name="place"><option value="">${t('なし', 'None')}</option>${PLACES.map(p => `<option value="${p.id}"${(form.place || '') === p.id ? ' selected' : ''}>${escapeHtml(CURRENT_LANG === 'en' ? p.en : p.ja)}</option>`).join('')}</select></label>
     </div>
     <div class="fun-field">
-      <span class="fun-label">${t('着ていたアイテム', 'Items worn')} <span class="cd-sel-count">${selected.length}</span></span>
-      <div class="cd-items cd-selected">${selected.map(it => `<button type="button" class="cd-item is-chip" data-act="unpick" data-key="${escapeHtml(it.key)}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}<svg class="inline-icon" width="11" height="11"><use href="#i-close"/></svg></button>`).join('')}</div>
+      <span class="fun-label">${t('着ていたアイテム', 'Items worn')} <span class="cd-sel-count">${selectedCount}</span></span>
+      <div class="cd-items cd-selected">${selectedHtml()}</div>
       ${ownedCount ? `<input class="fun-input" type="search" name="q" value="${escapeHtml(form.query || '')}" placeholder="${t('所持アイテムから探す（例: ケープ）', 'Search your items (e.g. cape)')}" autocomplete="off">
         <div class="cd-pick">${pickHtml()}</div>`
         : `<p class="fun-hint">${t('アイテム所持管理で所持にしたアイテムが、ここで選べるようになります。', 'Items you mark as owned in the item tracker can be picked here.')}</p>`}
@@ -209,10 +259,21 @@ function formHtml() {
     </div>
   </form>`;
 }
+function selectedHtml() {
+  return [...form.items].map(k => {
+    const [cat, id] = k.split(':');
+    const it = itemInfo({ cat, id });
+    return `<button type="button" class="cd-item is-chip" data-act="unpick" data-key="${escapeHtml(k)}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}<svg class="inline-icon" width="11" height="11"><use href="#i-close"/></svg></button>`;
+  }).join('');
+}
+function monthEntries() {
+  const mKey = `${month.y}-${String(month.m + 1).padStart(2, '0')}`;
+  return doc.entries.filter(e => e.date.startsWith(mKey)).sort((a, b) => b.date.localeCompare(a.date));
+}
 function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s/g, ''); }
 function pickHtml() {
   const q = norm(form.query);
-  const list = Object.entries(owned).filter(([k, it]) => !form.items.has(k) && (!q || norm(it.name).includes(q) || norm(CURRENT_LANG === 'en' ? it.cat.nameEn : it.cat.name).includes(q))).slice(0, q ? 40 : 12);
+  const list = Object.entries(owned).filter(([k, it]) => !form.items.has(k) && (!q || it.key.includes(q))).slice(0, q ? 40 : 12);
   if (!list.length) return `<p class="fun-hint">${t('見つかりません', 'No matches')}</p>`;
   return list.map(([k, it]) => `<button type="button" class="cd-item is-pick" data-act="pick" data-key="${escapeHtml(k)}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</button>`).join('');
 }
