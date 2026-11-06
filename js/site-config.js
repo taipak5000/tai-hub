@@ -12,7 +12,8 @@ export const USE_HUB_SHARE_URLS = false;
 
 // ツールID（ルート名）→ 旧サイトのURL
 const LEGACY_URLS = {
-  item: 'https://taipak5000.github.io/tai-item/',
+  // item（tai-item）は2026-11-06にリポジトリを削除したので、ハブのURLを出す
+  item: 'https://taipak5000.github.io/tai-hub/#/item',
   emote: 'https://taipak5000.github.io/tai-emote/',
   share: 'https://taipak5000.github.io/share/',
   'tai-nomacan': 'https://taipak5000.github.io/tai-nomacan/',
