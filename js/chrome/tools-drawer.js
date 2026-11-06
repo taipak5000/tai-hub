@@ -90,9 +90,9 @@ function refreshHtml() {
         <button type="button" class="hub-ver-btn${pending.length ? ' is-primary' : ''} js-hub-refresh">
           <svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${pending.length ? t('今すぐ更新', 'Update now') : t('最新に更新', 'Refresh')}
         </button>
-        <a class="hub-ver-btn" href="#/changelog" data-hub-route="#/changelog">
+        <button type="button" class="hub-ver-btn js-hub-changelog" data-open-changelog aria-haspopup="dialog">
           <svg class="inline-icon" width="14" height="14"><use href="#i-edit"/></svg>${t('更新履歴', 'Changelog')}
-        </a>
+        </button>
       </div>
       <p class="hub-refresh-hint">${t('画面が古いままのときは「最新に更新」を押してください。保存したデータは消えません。', 'If the page looks out of date, tap Refresh. Your saved data is kept.')}</p>
     </div>`;
@@ -129,6 +129,7 @@ function renderNavInto(nav) {
     refreshToLatest();
   });
   nav.querySelector('.js-hub-recheck')?.addEventListener('click', () => checkForUpdate(true));
+  nav.querySelector('.js-hub-changelog')?.addEventListener('click', close); // 引き出しは閉じてからポップアップを開く（開くのは app-update.js）
   nav.querySelectorAll('a[data-hub-route]').forEach(a => {
     const route = a.dataset.hubRoute;
     if (!route) return;

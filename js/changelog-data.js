@@ -14,7 +14,7 @@ export const CHANGELOG = [
     title: { ja: '更新履歴と新しいバージョンのお知らせを追加', en: 'Changelog and update notices' },
     date: '2026-11-06',
     items: [
-      { type: 'new', ja: '更新履歴のページを追加しました。これまでの変更をバージョンごとに見られます。', en: 'Added this changelog. You can browse every change by version.', route: 'changelog' },
+      { type: 'new', ja: '更新履歴を追加しました。関連ツールの一覧のいちばん下の「更新履歴」から、これまでの変更をバージョンごとに見られます。', en: 'Added this changelog. Open it from “Changelog” at the bottom of the tool list.' },
       { type: 'new', ja: '新しいバージョンが公開されると、画面の上端にお知らせの帯が出るようになりました。「最新に更新」を押すとその場で新しい版に切り替わります（保存したデータは消えません）。関連ツールの一覧のいちばん下でも、今のバージョンと最新かどうかを確かめられます。', en: 'When a new version is published, a bar now appears at the top of the screen. Tap “Update” to switch right away (your saved data is kept).' },
     ],
   },

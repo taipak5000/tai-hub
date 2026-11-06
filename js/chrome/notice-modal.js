@@ -6,6 +6,7 @@
 import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import { navigate } from '../router.js';
 import { collectNotices, markSeen, isSeen } from '../notices.js';
+import { openChangelog } from '../app-update.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 let overlayEl = null;
@@ -33,6 +34,8 @@ export function open() {
     const btn = e.target.closest('[data-notice-route]');
     if (!btn) return;
     close();
+    // 更新履歴はポップアップなので、画面は移らずに開く
+    if (btn.dataset.noticeRoute === 'changelog') { openChangelog(); return; }
     navigate(btn.dataset.noticeRoute, btn.dataset.noticeSub || '');
   });
   requestAnimationFrame(() => overlayEl && overlayEl.classList.add('open'));

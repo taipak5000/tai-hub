@@ -662,7 +662,10 @@
 @media (prefers-contrast: more) { .today-view .td-fold { border: 1px solid var(--hub-text-2); } }
 @media print { .today-view .td-bingo-sec { display: none !important; } }
 
-/* ── 📝 更新履歴（#/changelog、features/changelog/changelog-view.js） ── */
+/* ── 📝 更新履歴のポップアップ（features/changelog/changelog-view.js。.modal-card の中に置く） ── */
+.changelog-card .changelog-view { background: none; min-height: 0; margin-top: 4px; }
+.changelog-view .cl-wrap { padding-bottom: 8px; }
+.changelog-view .cl-lead { margin: 0 0 12px; }
 .changelog-view { --cl-new: #5B52C9; --cl-new-bg: rgba(108, 99, 216, 0.12); --cl-improve: #0A6F8F; --cl-improve-bg: rgba(10, 132, 170, 0.12);
   --cl-fix: #A34A00; --cl-fix-bg: rgba(255, 149, 0, 0.16); --cl-remove: #5E5E66; --cl-remove-bg: rgba(120, 120, 128, 0.14); }
 [data-theme="dark"] .changelog-view { --cl-new: #B7B1FF; --cl-new-bg: rgba(155, 147, 255, 0.18); --cl-improve: #6FD3F0; --cl-improve-bg: rgba(100, 210, 255, 0.14);

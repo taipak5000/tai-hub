@@ -489,7 +489,7 @@
 .hub-update-ic { display: inline-flex; }
 .hub-update-ic .inline-icon, .hub-update-close .inline-icon { stroke: currentColor; }
 .hub-update-msg { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-.hub-update-ver { color: #fff; font-size: 12px; font-weight: 700; opacity: 0.92; text-decoration: underline; text-underline-offset: 2px; font-variant-numeric: tabular-nums; }
+.hub-update-ver { padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; color: #fff; font-size: 12px; font-weight: 700; opacity: 0.92; text-decoration: underline; text-underline-offset: 2px; font-variant-numeric: tabular-nums; }
 .hub-update-btn {
   padding: 5px 14px; border: 0; border-radius: 999px; background: #fff; color: #3a2f9e;
   font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
@@ -506,7 +506,7 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15); animation: hubToastIn 0.25s ease-out;
 }
 .hub-updated-toast .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); flex-shrink: 0; }
-.hub-updated-toast a { color: var(--hub-accent-ink); font-weight: 800; white-space: nowrap; }
+.hub-updated-toast button { padding: 0; border: 0; background: none; font: inherit; color: var(--hub-accent-ink); font-weight: 800; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .hub-updated-toast.out { animation: hubToastOut 0.25s ease-in forwards; }
 /* 関連ツール一覧の下のバージョン欄 */
 .hub-ver-line { margin: 0 2px 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; letter-spacing: 0.02em; color: var(--hub-text-2); }

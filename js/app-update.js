@@ -77,7 +77,7 @@ function dismissedVersion() { try { return sessionStorage.getItem(DISMISS_KEY) |
 /** 画面の上端の帯（新しい版があるとき）。inacro-note.com と同じく「新しいバージョンがあります。［最新に更新］✕」の1行 */
 function bannerHtml(list) {
   return `<span class="hub-update-ic" aria-hidden="true"><svg class="inline-icon" width="16" height="16"><use href="#i-sparkle"/></svg></span>
-    <span class="hub-update-msg">${t('新しいバージョンがあります。', 'A new version is available.')}<a class="hub-update-ver" href="#/changelog">Ver.${escapeHtml(list[0].version)}<span>${t('の内容', ' notes')}</span></a></span>
+    <span class="hub-update-msg">${t('新しいバージョンがあります。', 'A new version is available.')}<button type="button" class="hub-update-ver" data-open-changelog>Ver.${escapeHtml(list[0].version)}<span>${t('の内容', ' notes')}</span></button></span>
     <button type="button" class="hub-update-btn" data-act="update">${t('最新に更新', 'Update')}</button>
     <button type="button" class="hub-update-close" data-act="later" aria-label="${t('閉じる', 'Close')}"><svg class="inline-icon" width="13" height="13"><use href="#i-close"/></svg></button>`;
 }
@@ -127,6 +127,11 @@ function onBannerClick(e) {
   }
 }
 
+/** 更新履歴のポップアップを開く（features/changelog/changelog-view.js は開く時に読み込む） */
+export function openChangelog() {
+  import('../features/changelog/changelog-view.js').then(m => m.open()).catch(() => {});
+}
+
 /** 新しい版へ切り替える（読み込み直し） */
 export function startUpdate() { refreshToLatest(); }
 
@@ -142,6 +147,10 @@ export function initAppUpdate() {
   setInterval(() => checkForUpdate(), CHECK_EVERY);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
   window.addEventListener('online', () => checkForUpdate(true));
+  // data-open-changelog の付いたボタン（上端の帯・関連ツール一覧の下・更新直後のトースト）で更新履歴を開く
+  document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('[data-open-changelog]')) openChangelog();
+  });
   return shown;
 }
 
@@ -151,9 +160,9 @@ function showUpdatedToast() {
   el.setAttribute('role', 'status');
   el.innerHTML = `<svg class="inline-icon" width="16" height="16" aria-hidden="true"><use href="#i-check"/></svg>
     <span>${t(`Ver.${escapeHtml(APP_VERSION)} に更新しました`, `Updated to Ver.${escapeHtml(APP_VERSION)}`)}</span>
-    <a href="#/changelog">${t('更新内容', 'What’s new')}</a>`;
+    <button type="button" data-open-changelog>${t('更新内容', 'What’s new')}</button>`;
   document.body.appendChild(el);
   const hide = () => { el.classList.add('out'); setTimeout(() => el.remove(), 260); };
-  el.querySelector('a').addEventListener('click', hide);
+  el.querySelector('button').addEventListener('click', hide);
   setTimeout(hide, 6500);
 }

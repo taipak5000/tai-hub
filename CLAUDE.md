@@ -271,7 +271,8 @@ const landingPoint = currentY + project(v);
 - **利用者に届く変更を公開したら、`js/changelog-data.js`の先頭に1件足すこと**（`version`は`年.月.日`のゼロ埋め。同じ日の2回目は`2026.11.06.2`）。
   先頭の`version`が「今のバージョン」で、これが変わらないと新しい版のお知らせは出ない。非公開のツール（デイリーチェックシート・試作中の機能）のことは書かない。
   `type`は`new`/`improve`/`fix`/`remove`、`route`を書くと「開く」ボタンが付く。
-- 画面は`#/changelog`（`features/changelog/changelog-view.js`。関連ツールの一覧には載せず、一覧の下の「更新履歴」から開く）。
+- 更新履歴は**ポップアップ**（`features/changelog/changelog-view.js`の`open()`。inacro-note.comにそろえた）。`data-open-changelog`の付いたボタンで開く（`app-update.js`が拾う）。
+  入口は関連ツール一覧の下の「更新履歴」・上端の帯・更新直後のトースト・お知らせ。古いリンク`#/changelog`は起動時のツールへ移ってから開く。
 - 判定は`js/app-update.js`: 同じファイルを`?fresh=…`付きで読み直し、先頭の版が新しければ画面の上端いっぱいに帯（新しいバージョンがあります。［最新に更新］✕）を出す
   （inacro-note.com の見せ方にならった。`body`の先頭に差し込み`position:sticky`）。お知らせと、関連ツール一覧の下のバージョン欄（最新版です／新版あり＋今すぐ更新／最新に更新／更新履歴）にも出る。
   各版には`title`（見出し）を付ける。`service-worker.js`は`?fresh`付きの要求を素通しにする（保存分を返さない）。
