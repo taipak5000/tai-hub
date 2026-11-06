@@ -8,7 +8,7 @@
      （例: https://taipak5000.github.io/tai-hub/#/emote）に切り替わる。
    ================================================================ */
 export const HUB_BASE_URL = 'https://taipak5000.github.io/tai-hub/';
-export const USE_HUB_SHARE_URLS = false;
+export const USE_HUB_SHARE_URLS = true; // 2026-11-06に切り替え（旧サイトは11/1に終了し、リポジトリの削除も始まったため）
 
 // ツールID（ルート名）→ 旧サイトのURL
 const LEGACY_URLS = {
