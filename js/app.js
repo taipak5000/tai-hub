@@ -12,6 +12,7 @@ import { initTheme } from './theme.js';
 import { initSheetEngine } from './sheet-engine.js';
 import { showRefreshedToastIfNeeded } from './refresh.js';
 import { initAppUpdate } from './app-update.js';
+import { applyHomeIconFromStorage } from './chrome/home-icon.js';
 import { CURRENT_LANG } from './i18n.js';
 
 // 🩹 applyThemeToDOM(isDark)は真偽値を受け取る（'light'/'dark'の文字列をそのまま
@@ -20,6 +21,7 @@ import { CURRENT_LANG } from './i18n.js';
 // ——state.jsのtoggleTheme()と同じ規約）
 applyThemeToDOM(resolveSkyTheme(getSkyThemeMode() === 'system' ? null : getSkyThemeMode()) === 'dark');
 injectIconSprite();
+applyHomeIconFromStorage(); // 📱 表示設定で選んだホーム画面のアイコン（「ホーム画面に追加」の前に差し替えておく）
 initTheme(); // 🎨 着せ替え（保存済みなら配色・壁紙・きらめきを反映。ライト/ダーク切替にも追従）
 initShortcuts();
 initSheetEngine(); // ボトムシートのドラッグ/フリックで閉じる＋モーダルのフォーカストラップ

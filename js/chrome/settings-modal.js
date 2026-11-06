@@ -17,6 +17,7 @@ import {
 import * as sidePanels from './side-panels.js';
 import { getActiveTheme, wipeWallpapers, PRESETS, sameLook } from '../theme.js';
 import { ROUTES } from '../router-registry.js';
+import { homeIconLabel } from './home-icon.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
@@ -75,6 +76,10 @@ function renderMain() {
       <button type="button" class="settings-row settings-nav-row" id="settingsStudioBtn">
         <span class="settings-nav-label"><svg class="inline-icon" width="17" height="17"><use href="#i-palette"/></svg>${t('着せ替え', 'Themes')}</span>
         <span class="settings-nav-value">${escapeHtml(currentThemeLabel())}<svg class="inline-icon" width="16" height="16"><use href="#i-chevron-right"/></svg></span>
+      </button>
+      <button type="button" class="settings-row settings-nav-row" id="settingsHomeIconBtn">
+        <span class="settings-nav-label"><svg class="inline-icon" width="17" height="17"><use href="#i-image"/></svg>${t('ホーム画面のアイコン', 'Home screen icon')}</span>
+        <span class="settings-nav-value">${escapeHtml(homeIconLabel())}<svg class="inline-icon" width="16" height="16"><use href="#i-chevron-right"/></svg></span>
       </button>
       <div class="settings-row">
         <span>${t('テーマ', 'Theme')}</span>
@@ -135,6 +140,7 @@ function renderMain() {
   syncThemeBtn();
   document.getElementById('settingsThemeBtn').addEventListener('click', () => { toggleTheme(); syncThemeBtn(); });
   document.getElementById('settingsStudioBtn').addEventListener('click', openThemeView);
+  document.getElementById('settingsHomeIconBtn').addEventListener('click', openHomeIconView);
   document.getElementById('settingsStartRoute').addEventListener('change', e => setStartRoute(e.target.value));
   document.getElementById('settingsLangJaBtn').addEventListener('click', () => setLang('ja'));
   document.getElementById('settingsLangEnBtn').addEventListener('click', () => setLang('en'));
@@ -167,6 +173,14 @@ function openThemeView() {
     if (!overlayEl || !cardEl) return;
     studio = m;
     overlayEl.classList.add('ts-live');
+    m.mount(cardEl, { onBack: renderMain, onClose: close });
+  });
+}
+
+// 「ホーム画面のアイコン」画面へ切り替える（着せ替えと同じく、シートの中身を差し替える）
+function openHomeIconView() {
+  import('./home-icon.js').then(m => {
+    if (!overlayEl || !cardEl) return;
     m.mount(cardEl, { onBack: renderMain, onClose: close });
   });
 }

@@ -46,7 +46,7 @@ export const INFO_I18N = {
     },
     icon: {
       title: { ja: `ホーム画面アイコンのカスタマイズ`, en: `Customizing the Home Screen Icon` },
-      body: { ja: `各サイトの「表示設定」内の「表示のカスタマイズ」から、「ホーム画面に追加」時のアイコンを絵文字＋背景色、または好きな画像に変更できます。この端末・ブラウザごとの設定で、プロフィール（保存枠）の切替には影響されません。<b>「ホーム画面に追加」をする前に設定してください</b>（追加した後に変更しても、既に追加済みのアイコンは自動更新されません）。`, en: `From "Display Customization" inside "Display Settings" on each site, you can change the icon used for "Add to Home Screen" — either an emoji plus background color, or an image of your choice. This is a per-device, per-browser setting and is not affected by switching profiles (save slots). <b>Please set this up before adding to your home screen</b> (changing it afterward won't update an icon you've already added).` },
+      body: { ja: `画面下の「表示設定」の「ホーム画面のアイコン」から、「ホーム画面に追加」時のアイコンを絵文字＋背景色、または好きな画像に変更できます。この端末・ブラウザごとの設定で、プロフィール（保存枠）の切替には影響されません。<b>「ホーム画面に追加」をする前に設定してください</b>（追加した後に変更しても、既に追加済みのアイコンは自動更新されません）。`, en: `From "Home screen icon" in "Display Settings" (bottom menu), you can change the icon used for "Add to Home Screen" — either an emoji plus background color, or an image of your choice. This is a per-device, per-browser setting and is not affected by switching profiles (save slots). <b>Please set this up before adding to your home screen</b> (changing it afterward won't update an icon you've already added).` },
     },
   },
 

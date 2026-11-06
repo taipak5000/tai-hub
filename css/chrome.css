@@ -541,3 +541,27 @@
   .hub-update-btn { background: var(--hub-accent-ink); color: var(--hub-card); }
   .hub-updated-toast { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
+
+/* ── 📱 ホーム画面のアイコン（表示設定 > ホーム画面のアイコン。js/chrome/home-icon.js） ── */
+.hi-hint { margin: 4px 0 14px; font-size: 12.5px; line-height: 1.7; color: var(--hub-text-2); }
+.hi-hint b { color: var(--hub-text); }
+.hi-seg { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--hub-sep); margin-bottom: 14px; }
+.hi-seg-btn { flex: 1; padding: 8px; border: 0; border-radius: 999px; background: none; color: var(--hub-text-2); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.hi-seg-btn.on { background: var(--hub-card); color: var(--hub-text); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.hi-label { margin: 10px 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.hi-emoji { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--hub-sep); border-radius: 10px; background: var(--hub-bg); color: var(--hub-text); font-size: 28px; text-align: center; }
+.hi-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.hi-swatch { width: 32px; height: 32px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.hi-swatch.on { border-color: var(--hub-text); }
+.hi-swatch:active, .hi-seg-btn:active, .hi-save:active, .hi-reset:active { transform: scale(0.95); }
+.hi-color { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--hub-text); }
+.hi-color input { width: 64px; height: 34px; padding: 0; border: 0; background: none; cursor: pointer; }
+.hi-file { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1.5px dashed var(--hub-sep); border-radius: 12px; color: var(--hub-accent-ink); font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.hi-file .inline-icon { stroke: currentColor; }
+.hi-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.hi-note { margin: 6px 2px 0; font-size: 11.5px; color: var(--hub-text-2); }
+.hi-preview-wrap { display: flex; flex-direction: column; align-items: center; margin: 14px 0; }
+.hi-preview-wrap canvas { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+.hi-save { width: 100%; padding: 12px; border: 0; border-radius: 12px; background: var(--hub-accent); color: #fff; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.hi-reset { width: 100%; margin-top: 8px; padding: 10px; border: 0; border-radius: 12px; background: var(--hub-sep); color: var(--hub-text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.hi-status { min-height: 1.4em; margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--hub-text-2); }
