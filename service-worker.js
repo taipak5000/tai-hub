@@ -40,6 +40,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
   if (!sameOrigin && !CDN_HOSTS.includes(url.hostname)) return;
+  // ?fresh の付いた要求（js/app-update.js が新しいバージョンを確かめる時）は保存分を返さず、そのままネットワークへ
+  if (sameOrigin && url.searchParams.has('fresh')) return;
 
   event.respondWith((async () => {
     const isNav = req.mode === 'navigate';

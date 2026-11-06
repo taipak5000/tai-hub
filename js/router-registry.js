@@ -149,6 +149,8 @@ export const ROUTES = {
   today: { ...lazyToolEntry(() => import('../features/today/today-view.js'), 'デイリーチェックシート', 'Daily Checklist'), hidden: true },
   'wish-plan': lazyToolEntry(() => import('../features/wish-plan/wish-plan-view.js'), 'ほしいもの計画', 'Wishlist Plan'),
   'coord-diary': lazyToolEntry(() => import('../features/coord-diary/coord-diary-view.js'), 'コーデ日記', 'Outfit Diary'),
+  // 更新履歴（関連ツールの一覧には載せず、一覧の下の「更新履歴」と新しい版のお知らせから開く）
+  changelog: { ...lazyToolEntry(() => import('../features/changelog/changelog-view.js'), '更新履歴', 'Changelog'), hidden: true },
   titles: lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'),
   // 旧スタンプ帳（2026-11-06に称号一覧へ置き換えた）。古いリンク用に称号一覧を開く
   stamps: { ...lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'), hidden: true },

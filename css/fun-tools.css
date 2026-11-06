@@ -661,3 +661,74 @@
 }
 @media (prefers-contrast: more) { .today-view .td-fold { border: 1px solid var(--hub-text-2); } }
 @media print { .today-view .td-bingo-sec { display: none !important; } }
+
+/* ── 📝 更新履歴（#/changelog、features/changelog/changelog-view.js） ── */
+.changelog-view { --cl-new: #5B52C9; --cl-new-bg: rgba(108, 99, 216, 0.12); --cl-improve: #0A6F8F; --cl-improve-bg: rgba(10, 132, 170, 0.12);
+  --cl-fix: #A34A00; --cl-fix-bg: rgba(255, 149, 0, 0.16); --cl-remove: #5E5E66; --cl-remove-bg: rgba(120, 120, 128, 0.14); }
+[data-theme="dark"] .changelog-view { --cl-new: #B7B1FF; --cl-new-bg: rgba(155, 147, 255, 0.18); --cl-improve: #6FD3F0; --cl-improve-bg: rgba(100, 210, 255, 0.14);
+  --cl-fix: #FFB35C; --cl-fix-bg: rgba(255, 159, 10, 0.18); --cl-remove: #C3C3CA; --cl-remove-bg: rgba(160, 160, 170, 0.18); }
+.changelog-view .cl-status {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; margin: 0 0 16px;
+  padding: 14px 16px; border: 1px solid var(--hub-sep); border-radius: var(--hub-r); background: var(--hub-card);
+}
+.changelog-view .cl-status-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--hub-accent-bg); color: var(--hub-accent-ink); }
+.changelog-view .cl-status-ic .inline-icon { stroke: currentColor; }
+.changelog-view .cl-status-title { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--hub-text); }
+.changelog-view .cl-status-sub { margin: 2px 0 0; font-size: 12px; line-height: 1.6; color: var(--hub-text-2); }
+.changelog-view .cl-ver { margin-left: 4px; font-variant-numeric: tabular-nums; color: var(--hub-accent-ink); }
+/* 新しい版があるときは、塗りつぶしの目立つカードにする */
+.changelog-view .cl-status.is-update {
+  grid-template-columns: auto 1fr; border-color: transparent; color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--hub-accent) 62%, #1b1446), color-mix(in srgb, var(--hub-accent) 45%, #6a1f55));
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--hub-accent) 35%, transparent);
+}
+.changelog-view .cl-status.is-update .cl-status-ic { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.changelog-view .cl-status.is-update .cl-status-title { color: #fff; font-size: 16px; }
+.changelog-view .cl-status.is-update .cl-status-sub { color: rgba(255, 255, 255, 0.92); }
+.changelog-view .cl-update-btn {
+  grid-column: 1 / -1; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px; border: 0; border-radius: 12px; background: #fff; color: #3a2f9e; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+}
+.changelog-view .cl-update-btn .inline-icon { stroke: currentColor; }
+.changelog-view .cl-update-btn:active { transform: scale(0.97); }
+.changelog-view .cl-update-btn:disabled { opacity: 0.7; transform: none; cursor: default; }
+.changelog-view .cl-status-note { grid-column: 1 / -1; margin: 4px 0 0; text-align: center; font-size: 11px; color: rgba(255, 255, 255, 0.85); }
+.changelog-view .cl-filter { margin-bottom: 14px; }
+.changelog-view .cl-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cl-improve); }
+.changelog-view .cl-dot.is-new { background: var(--cl-new); }
+.changelog-view .cl-dot.is-fix { background: var(--cl-fix); }
+.changelog-view .cl-dot.is-remove { background: var(--cl-remove); }
+.changelog-view .cl-chip-n { margin-left: 2px; font-size: 11px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.changelog-view .cl-list { display: flex; flex-direction: column; gap: 12px; }
+.changelog-view .cl-ver-card { padding: 14px 16px 10px; border: 1px solid var(--hub-sep); border-radius: var(--hub-r); background: var(--hub-card); }
+.changelog-view .cl-ver-card.is-pending { border: 1.5px dashed var(--hub-accent); }
+.changelog-view .cl-ver-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-bottom: 8px; }
+.changelog-view .cl-ver-name { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: var(--hub-text); font-variant-numeric: tabular-nums; }
+.changelog-view .cl-ver-date { margin-left: auto; font-size: 12px; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.changelog-view .cl-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; background: var(--hub-accent-bg); color: var(--hub-accent-ink); }
+.changelog-view .cl-tag.is-pending { background: var(--hub-accent); color: #fff; }
+.changelog-view .cl-tag.is-current { background: var(--cl-improve-bg); color: var(--cl-improve); }
+.changelog-view .cl-items { list-style: none; margin: 0; padding: 0; }
+.changelog-view .cl-item { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 10px; padding: 9px 0; border-top: 0.5px solid var(--hub-sep); }
+.changelog-view .cl-item:first-child { border-top: 0; }
+.changelog-view .cl-badge {
+  min-width: 46px; padding: 3px 7px; border-radius: 6px; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; line-height: 1.4;
+  background: var(--cl-improve-bg); color: var(--cl-improve);
+}
+.changelog-view .cl-badge.is-new { background: var(--cl-new-bg); color: var(--cl-new); }
+.changelog-view .cl-badge.is-fix { background: var(--cl-fix-bg); color: var(--cl-fix); }
+.changelog-view .cl-badge.is-remove { background: var(--cl-remove-bg); color: var(--cl-remove); }
+.changelog-view .cl-item-text { font-size: 13.5px; line-height: 1.7; color: var(--hub-text); }
+.changelog-view .cl-open {
+  display: inline-flex; align-items: center; gap: 2px; padding: 4px 8px 4px 10px; border: 1px solid var(--hub-sep); border-radius: 999px;
+  background: none; color: var(--hub-accent-ink); font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+.changelog-view .cl-open .inline-icon { stroke: currentColor; }
+.changelog-view .cl-open:active { transform: scale(0.95); }
+.changelog-view .cl-more { display: flex; margin: 14px auto 0; }
+@media (prefers-contrast: more) {
+  .changelog-view .cl-status.is-update { background: var(--hub-card); color: var(--hub-text); border: 2px solid var(--hub-accent-ink); box-shadow: none; }
+  .changelog-view .cl-status.is-update .cl-status-title, .changelog-view .cl-status.is-update .cl-status-sub, .changelog-view .cl-status-note { color: var(--hub-text); }
+  .changelog-view .cl-status.is-update .cl-status-ic { color: var(--hub-accent-ink); background: var(--hub-accent-bg); }
+  .changelog-view .cl-update-btn { background: var(--hub-accent-ink); color: var(--hub-card); }
+}

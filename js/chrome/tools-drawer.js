@@ -7,6 +7,7 @@ import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import { navigate } from '../router.js';
 import { initSiteLinks, refreshSiteLinks, getSiteLinks, siteLinkHref, siteLinkName } from '../site-links.js';
 import { refreshToLatest } from '../refresh.js';
+import { APP_VERSION, pendingVersions, onUpdateChanged } from '../app-update.js';
 
 let siteLinksStarted = false;
 
@@ -41,6 +42,7 @@ export function init() {
   siteLinksStarted = true;
   initSiteLinks();
   refreshSiteLinks().then(changed => { if (changed) renderNav(); }).catch(() => renderNav());
+  onUpdateChanged(renderNav); // 新しい版が見つかったら、下の更新ボタンを目立たせる
 }
 
 // 一覧の描画先は .js-tools-nav すべて（引き出し＋ワイド画面の左サイドパネル）
@@ -71,6 +73,21 @@ function testGroupHtml(list) {
     </div>`;
 }
 
+// 一覧の下: 「最新の状態に更新」と更新履歴へのリンク。新しい版が公開されていれば、ボタンを塗りつぶして版の番号を出す
+function refreshHtml() {
+  const pending = pendingVersions();
+  return `<div class="hub-refresh${pending.length ? ' has-update' : ''}">
+      <button type="button" class="hub-refresh-btn js-hub-refresh">
+        <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${pending.length ? t(`Ver.${escapeHtml(pending[0].version)} に更新`, `Update to Ver.${escapeHtml(pending[0].version)}`) : t('最新の状態に更新', 'Update to the latest version')}
+      </button>
+      <p class="hub-refresh-hint">${pending.length ? t('新しいバージョンが公開されています。保存したデータは消えません。', 'A new version is out. Your saved data is kept.') : t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
+      <a class="hub-version-link" href="#/changelog" data-hub-route="#/changelog">
+        <svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg><span>${t('更新履歴', 'Changelog')}</span><span class="hub-version-num">Ver.${escapeHtml(APP_VERSION)}</span>
+        <svg class="inline-icon" width="13" height="13"><use href="#i-chevron-right"/></svg>
+      </a>
+    </div>`;
+}
+
 function renderNavInto(nav) {
   const links = getSiteLinks();
   if (!links) {
@@ -81,12 +98,7 @@ function renderNavInto(nav) {
     <button type="button" class="hub-search-open js-hub-search">
       <svg class="inline-icon" width="17" height="17"><use href="#i-search"/></svg><span>${t('まとめてさがす', 'Search everything')}</span>
     </button>` + links.filter(s => !s.badgeTest || s.child).map(linkHtml).join('') + testGroupHtml(links.filter(s => s.badgeTest && !s.child)) + `
-    <div class="hub-refresh">
-      <button type="button" class="hub-refresh-btn js-hub-refresh">
-        <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${t('最新の状態に更新', 'Update to the latest version')}
-      </button>
-      <p class="hub-refresh-hint">${t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
-    </div>`;
+    ${refreshHtml()}`;
   nav.querySelector('.js-test-toggle')?.addEventListener('click', () => {
     const next = !testCollapsed();
     try { localStorage.setItem(TEST_COLLAPSED_KEY, next ? '1' : '0'); } catch (e) { /* noop */ }

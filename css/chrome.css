@@ -477,3 +477,74 @@
 .hub-titles-link:active { transform: scale(0.98); }
 @media (prefers-reduced-motion: reduce) { .hub-titles-link:active { transform: none; opacity: 0.7; } }
 @media (prefers-contrast: more) { .hub-titles-link { border-color: var(--hub-text-2); } }
+
+/* ── 🆕 新しいバージョンのお知らせ（js/app-update.js）──
+   作業を止めない知らせなのでスクリムは無し。見落とされないよう、ドックの上に塗りつぶしのカードで出す。 */
+.hub-update-banner {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 1250;
+  width: min(480px, calc(100vw - 24px)); transform: translateX(-50%);
+  padding: 14px 14px 10px; border-radius: 18px; color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--hub-accent) 62%, #1b1446), color-mix(in srgb, var(--hub-accent) 45%, #6a1f55));
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28); animation: hubUpdateIn 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+.hub-update-banner.out { animation: hubUpdateOut 0.24s ease-in forwards; }
+@keyframes hubUpdateIn { from { opacity: 0; transform: translate(-50%, 24px) scale(0.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes hubUpdateOut { to { opacity: 0; transform: translate(-50%, 16px); } }
+.hub-update-main { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; }
+.hub-update-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255, 255, 255, 0.22); }
+.hub-update-ic .inline-icon, .hub-update-banner .hub-update-btn .inline-icon, .hub-update-close .inline-icon { stroke: currentColor; }
+.hub-update-text { min-width: 0; }
+.hub-update-title { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.3; }
+.hub-update-ver { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; opacity: 0.9; font-variant-numeric: tabular-nums; }
+.hub-update-counts { margin: 5px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.hub-update-count { padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }
+.hub-update-heads { margin: 6px 0 0; padding-left: 16px; font-size: 12px; line-height: 1.55; opacity: 0.95; }
+.hub-update-heads li { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; list-style: disc; }
+.hub-update-close {
+  display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer;
+}
+.hub-update-actions { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; margin-top: 12px; }
+.hub-update-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 11px; background: none; color: #fff; font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; cursor: pointer;
+}
+.hub-update-btn.primary { border-color: transparent; background: #fff; color: #3a2f9e; font-weight: 800; }
+.hub-update-btn:active, .hub-update-close:active { transform: scale(0.96); }
+.hub-update-btn:disabled { opacity: 0.7; transform: none; cursor: default; }
+.hub-update-note { margin: 6px 0 0; text-align: center; font-size: 10.5px; letter-spacing: 0.02em; opacity: 0.85; }
+/* 更新した直後の短い知らせ（「更新内容」へのリンク付き） */
+.hub-updated-toast {
+  position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 1300; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 24px);
+  padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--hub-text);
+  background: var(--hub-card-glass); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15); animation: hubToastIn 0.25s ease-out;
+}
+.hub-updated-toast .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); flex-shrink: 0; }
+.hub-updated-toast a { color: var(--hub-accent-ink); font-weight: 800; white-space: nowrap; }
+.hub-updated-toast.out { animation: hubToastOut 0.25s ease-in forwards; }
+/* 関連ツール一覧の下: 新しい版があれば更新ボタンを塗りつぶす／更新履歴へのリンク */
+.hub-refresh.has-update .hub-refresh-btn { border-color: transparent; background: var(--hub-accent); color: #fff; box-shadow: 0 4px 14px color-mix(in srgb, var(--hub-accent) 35%, transparent); }
+.hub-refresh.has-update .hub-refresh-btn .inline-icon { stroke: currentColor; }
+.hub-version-link {
+  display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 10px; border-radius: 10px;
+  color: var(--hub-text); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.hub-version-link:active { background: var(--hub-accent-bg); }
+.hub-version-link .inline-icon { stroke: currentColor; color: var(--hub-text-2); flex-shrink: 0; }
+.hub-version-num { margin-left: auto; font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  .hub-update-banner, .hub-updated-toast { animation: iosFade 200ms ease; }
+  .hub-update-banner.out, .hub-updated-toast.out { animation: none; opacity: 0; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .hub-updated-toast { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .hub-update-banner { background: var(--hub-card); color: var(--hub-text); border: 2px solid var(--hub-accent-ink); }
+  .hub-update-banner .hub-update-btn { color: var(--hub-text); border-color: var(--hub-text-2); }
+  .hub-update-banner .hub-update-btn.primary { background: var(--hub-accent-ink); color: var(--hub-card); }
+  .hub-update-close, .hub-update-ic, .hub-update-count { background: var(--hub-accent-bg); color: var(--hub-text); }
+  .hub-updated-toast { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}

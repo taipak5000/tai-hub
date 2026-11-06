@@ -266,6 +266,16 @@ const landingPoint = currentY + project(v);
 - 精霊ツリーの楽譜ノードは、`spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける（52件すべて）。
   楽譜だけ旧キー`musicSheets`にしかデータが無い人がいるので、読み書きは`readMusicOwnedRaw()`を通す。
 
+## 📝 更新履歴と「新しいバージョンがあります」（2026-11-06追加）
+
+- **利用者に届く変更を公開したら、`js/changelog-data.js`の先頭に1件足すこと**（`version`は`年.月.日`のゼロ埋め。同じ日の2回目は`2026.11.06.2`）。
+  先頭の`version`が「今のバージョン」で、これが変わらないと新しい版のお知らせは出ない。非公開のツール（デイリーチェックシート・試作中の機能）のことは書かない。
+  `type`は`new`/`improve`/`fix`/`remove`、`route`を書くと「開く」ボタンが付く。
+- 画面は`#/changelog`（`features/changelog/changelog-view.js`。関連ツールの一覧には載せず、一覧の下の「更新履歴」から開く）。
+- 判定は`js/app-update.js`: 同じファイルを`?fresh=…`付きで読み直し、先頭の版が新しければ画面の下にバナー（今すぐ更新／更新内容を見る／あとで）を出す。
+  お知らせ・関連ツール一覧の更新ボタンにも出る。`service-worker.js`は`?fresh`付きの要求を素通しにする（保存分を返さない）。
+  新しい版で開いた最初の1回は「Ver.… に更新しました」のトーストを出す（`sky_hub_seen_version`）。
+
 ## 🩹 コメント内でクラス名を`/`区切りで列挙すると、CSSコメントが途中で終わる
 
 **日本語のdocコメント内で「このクラス群は使われなくなった」のような説明を

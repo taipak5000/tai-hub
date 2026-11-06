@@ -10,6 +10,7 @@
      - 週替わりビンゴの新しい週（ビンゴを使ったことがある人だけ）
      - 新しく獲得した称号（前に称号一覧を開いた時より増えていたら。js/titles.js）
      - 年末年始の「一年のふりかえり」
+     - 新しいバージョンの公開（js/app-update.js が確かめた時だけ。これだけは通信の結果を使う）
    既読はプロフィールごと（nsKey('noticesSeen_v1')＝お知らせのidの配列）。お知らせのidは
    「何の・いつの回か」まで含むので、次の来訪・翌年の記念日はまた未読として出る。
    ================================================================ */
@@ -20,6 +21,7 @@ import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES }
 import { loadFriendsDoc, upcomingAnniversaries } from '../features/friends/friends-state.js';
 import { hasBingoData, loadBingo, weekKeyAt } from '../features/bingo/bingo-state.js';
 import { titleTotals, titlesSeenCount } from './titles.js';
+import { pendingVersions } from './app-update.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const DAY = 86400000;
@@ -98,6 +100,13 @@ export function collectNotices(nowDate = new Date()) {
   const now = nowDate;
   const out = [];
   const waitlist = new Set(getWaitlist());
+
+  // 新しいバージョン（画面の下のお知らせを「あとで」で閉じても、ここには残る）
+  const pending = pendingVersions();
+  if (pending.length) {
+    const firstNew = pending.flatMap(v => v.items || [])[0];
+    out.push({ id: `appupdate:${pending[0].version}`, icon: 'i-sparkle', tone: 'accent', priority: 0, sortAt: now, title: t(`新しいバージョン（Ver.${pending[0].version}）があります`, `Ver.${pending[0].version} is available`), body: firstNew ? t(firstNew.ja, firstNew.en || firstNew.ja) : '', route: 'changelog', routeLabel: t('更新内容と更新', 'What’s new') });
+  }
 
   // 旅の精霊・再訪
   REVISIT_SPIRIT_SCHEDULES.forEach((s, si) => {

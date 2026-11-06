@@ -10,6 +10,7 @@ import * as toolsDrawer from './tools-drawer.js';
 import * as settingsModal from './settings-modal.js';
 import * as noticeModal from './notice-modal.js';
 import { unseenCount, onNoticesChanged } from '../notices.js';
+import { onUpdateChanged } from '../app-update.js';
 
 export function render(mountEl) {
   toolsDrawer.init();
@@ -46,6 +47,7 @@ export function render(mountEl) {
   // 🔔 未読のお知らせの数。起動直後の描画を邪魔しないよう少し待ってから数え、ツールの移動・画面へ戻った時・
   // 10分ごと（来訪の開始や日付の変わり目）に数え直す
   onNoticesChanged(refreshNoticeBadge);
+  onUpdateChanged(refreshNoticeBadge); // 新しいバージョンが見つかった時
   window.addEventListener('hashchange', () => setTimeout(refreshNoticeBadge, 300));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNoticeBadge(); });
   setInterval(refreshNoticeBadge, 10 * 60 * 1000);
