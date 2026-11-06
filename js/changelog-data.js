@@ -3,6 +3,7 @@
    ・新しい順に並べる。先頭の version が「今のバージョン」になる。
    ・利用者に届く変更を公開したら、先頭に1件足す（同じ日に2回目なら '2026.11.06.2' のように末尾に番号を付ける）。
      version は「年.月.日」をゼロ埋めで書く（文字列の大小で新旧を比べるため）。
+   ・title は版の見出し（何が変わったかを一言で）。
    ・type: 'new'＝新機能、'improve'＝改善、'fix'＝修正、'remove'＝削除・終了。
      route を書くと「開く」ボタンが付く（ハブ内のルート名。sub はその下の画面）。
    ・非公開のツール（デイリーチェックシート・試作中の機能など）のことは書かない。
@@ -10,14 +11,16 @@
 export const CHANGELOG = [
   {
     version: '2026.11.06',
+    title: { ja: '更新履歴と新しいバージョンのお知らせを追加', en: 'Changelog and update notices' },
     date: '2026-11-06',
     items: [
       { type: 'new', ja: '更新履歴のページを追加しました。これまでの変更をバージョンごとに見られます。', en: 'Added this changelog. You can browse every change by version.', route: 'changelog' },
-      { type: 'new', ja: '新しいバージョンが公開されると、画面の下にお知らせが出るようになりました。「今すぐ更新」を押すとその場で新しい版に切り替わります（保存したデータは消えません）。', en: 'When a new version is published, a banner now appears at the bottom of the screen. Tap “Update now” to switch right away (your saved data is kept).' },
+      { type: 'new', ja: '新しいバージョンが公開されると、画面の上端にお知らせの帯が出るようになりました。「最新に更新」を押すとその場で新しい版に切り替わります（保存したデータは消えません）。関連ツールの一覧のいちばん下でも、今のバージョンと最新かどうかを確かめられます。', en: 'When a new version is published, a bar now appears at the top of the screen. Tap “Update” to switch right away (your saved data is kept).' },
     ],
   },
   {
     version: '2026.11.05',
+    title: { ja: 'お知らせ・まとめてさがす・新しいツール5つを追加', en: 'Notices, search and five new tools' },
     date: '2026-11-05',
     items: [
       { type: 'new', ja: 'ドックに「お知らせ」を追加。旅の精霊の来訪、季節やイベントの終わり、次回アップデート、フレンドの記念日をまとめて知らせます。', en: 'Added Notices to the dock: travelling spirits, season and event endings, the next game update and friend anniversaries in one place.' },
@@ -37,6 +40,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.11.04',
+    title: { ja: '遥かなる真珠の季節に対応、ノマキャン計算機プロを強化', en: 'New season support and Calculator Pro upgrades' },
     date: '2026-11-04',
     items: [
       { type: 'new', ja: '精霊ツリー管理に「遥かなる真珠の季節」（案内人と4体）のツリーを追加しました。', en: 'Added the trees of the new season (guide and four spirits) to Spirit Trees.', route: 'spirit-catalog' },
@@ -51,6 +55,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.11.01',
+    title: { ja: 'いたずらな日々（2026）のアイテムを追加', en: 'Days of Mischief 2026 items' },
     date: '2026-11-01',
     items: [
       { type: 'new', ja: 'アイテム所持管理に、いたずらな日々（2026）の新しいアイテムを追加しました。', en: 'Added the Days of Mischief 2026 items to the item tracker.', route: 'item' },
@@ -60,6 +65,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.10.31',
+    title: { ja: 'ノマキャン計算機プロに20本ルートを追加', en: '20-candle route preset' },
     date: '2026-10-31',
     items: [
       { type: 'improve', ja: 'ノマキャン計算機プロに「20本ルート（ソロ・試練無し）」を最初から入れ、参考元へのリンクを載せました。', en: 'Candle Calculator Pro now includes a 20-candle solo route preset with a source link.', route: 'tai-nomacan-pro' },
@@ -67,6 +73,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.10.29',
+    title: { ja: '引き継いだデータの表示を修正', en: 'Fix for transferred data' },
     date: '2026-10-29',
     items: [
       { type: 'fix', ja: '引き継いだデータの一部が表示されない不具合を直しました。', en: 'Fixed some transferred data not being shown.' },
@@ -74,6 +81,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.10.28',
+    title: { ja: '再訪精霊データベースからツリーを管理できるように', en: 'Tree progress from the revisit database' },
     date: '2026-10-28',
     items: [
       { type: 'new', ja: '再訪精霊データベースから、その精霊のツリーの進み具合を確かめて付けられるようにしました。', en: 'You can now check and edit a spirit’s tree progress from the revisit database.', route: 'tai-revisit' },
@@ -84,6 +92,7 @@ export const CHANGELOG = [
   },
   {
     version: '2026.10.27',
+    title: { ja: '「最新の状態に更新」ボタンを追加', en: 'Update button' },
     date: '2026-10-27',
     items: [
       { type: 'new', ja: '関連ツールの一覧のいちばん下に「最新の状態に更新」ボタンを追加しました。画面が古いままの時に押すと、新しい版を取り直します。', en: 'Added “Update to the latest version” at the bottom of the tool list.' },

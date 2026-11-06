@@ -283,15 +283,8 @@
   .pf-drawer-test-toggle { color: var(--hub-text); }
 }
 
-/* 🔄 関連ツール一覧の下の「最新の状態に更新」（js/refresh.js） */
+/* 🔄 関連ツール一覧の下のバージョン欄（「最新に更新」は js/refresh.js。中の部品は下の .hub-ver-* ） */
 .hub-refresh { margin-top: 10px; padding-top: 12px; border-top: 0.5px solid var(--hub-sep); }
-.hub-refresh-btn {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 10px 12px; border: 1px solid var(--hub-sep); border-radius: 10px; background: var(--hub-bg);
-  color: var(--hub-accent); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
-}
-.hub-refresh-btn:active { transform: scale(0.97); }
-.hub-refresh-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
 .hub-refresh-hint { margin: 6px 2px 0; font-size: 11px; line-height: 1.6; color: var(--hub-text-2); }
 /* 読み込み直した直後の短い知らせ（非ブロッキングなので、スクリムなし＋半透明） */
 .hub-refresh-toast {
@@ -326,7 +319,7 @@
   html.side-panels-on #app-root { margin-left: var(--side-left-w); }
   html.side-dash-on #app-root { margin-right: var(--side-right-w); }
   html.side-panels-on .side-left, html.side-dash-on .side-right {
-    display: block; position: fixed; top: 0; bottom: var(--side-bottom); z-index: 900;
+    display: block; position: fixed; top: var(--update-bar-h, 0px); bottom: var(--side-bottom); z-index: 900;
     overflow-y: auto; overscroll-behavior: contain; background: var(--hub-card); color: var(--hub-text);
     padding: 16px 14px 20px;
   }
@@ -479,40 +472,31 @@
 @media (prefers-contrast: more) { .hub-titles-link { border-color: var(--hub-text-2); } }
 
 /* ── 🆕 新しいバージョンのお知らせ（js/app-update.js）──
-   作業を止めない知らせなのでスクリムは無し。見落とされないよう、ドックの上に塗りつぶしのカードで出す。 */
+   inacro-note.com にならい、画面の上端いっぱいにアクセント色の帯で出す。本文の上に差し込み（body の先頭）、
+   sticky で上端に留める＝ツールの見出しに重ならない。作業は止めないのでスクリムは無し。
+   色は塗り用のアクセントを暗く寄せた色にして、どの着せ替えでも白文字が読めるようにする。 */
 .hub-update-banner {
-  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 1250;
-  width: min(480px, calc(100vw - 24px)); transform: translateX(-50%);
-  padding: 14px 14px 10px; border-radius: 18px; color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--hub-accent) 62%, #1b1446), color-mix(in srgb, var(--hub-accent) 45%, #6a1f55));
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28); animation: hubUpdateIn 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  position: sticky; top: 0; z-index: 950;
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px;
+  padding: 8px 12px; padding-top: calc(8px + env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--hub-accent) 70%, #1b1446); color: #fff;
+  font-size: 13px; font-weight: 700; line-height: 1.4; letter-spacing: 0.01em;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); animation: hubUpdateIn 0.28s ease-out;
 }
-.hub-update-banner.out { animation: hubUpdateOut 0.24s ease-in forwards; }
-@keyframes hubUpdateIn { from { opacity: 0; transform: translate(-50%, 24px) scale(0.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
-@keyframes hubUpdateOut { to { opacity: 0; transform: translate(-50%, 16px); } }
-.hub-update-main { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; }
-.hub-update-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: rgba(255, 255, 255, 0.22); }
-.hub-update-ic .inline-icon, .hub-update-banner .hub-update-btn .inline-icon, .hub-update-close .inline-icon { stroke: currentColor; }
-.hub-update-text { min-width: 0; }
-.hub-update-title { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.3; }
-.hub-update-ver { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; opacity: 0.9; font-variant-numeric: tabular-nums; }
-.hub-update-counts { margin: 5px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
-.hub-update-count { padding: 1px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); font-size: 11px; font-weight: 700; letter-spacing: 0.03em; }
-.hub-update-heads { margin: 6px 0 0; padding-left: 16px; font-size: 12px; line-height: 1.55; opacity: 0.95; }
-.hub-update-heads li { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; list-style: disc; }
-.hub-update-close {
-  display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer;
-}
-.hub-update-actions { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; margin-top: 12px; }
+.hub-update-banner.out { animation: hubUpdateOut 0.2s ease-in forwards; }
+@keyframes hubUpdateIn { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: none; } }
+@keyframes hubUpdateOut { to { opacity: 0; transform: translateY(-100%); } }
+.hub-update-ic { display: inline-flex; }
+.hub-update-ic .inline-icon, .hub-update-close .inline-icon { stroke: currentColor; }
+.hub-update-msg { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.hub-update-ver { color: #fff; font-size: 12px; font-weight: 700; opacity: 0.92; text-decoration: underline; text-underline-offset: 2px; font-variant-numeric: tabular-nums; }
 .hub-update-btn {
-  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 11px; background: none; color: #fff; font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; cursor: pointer;
+  padding: 5px 14px; border: 0; border-radius: 999px; background: #fff; color: #3a2f9e;
+  font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
 }
-.hub-update-btn.primary { border-color: transparent; background: #fff; color: #3a2f9e; font-weight: 800; }
-.hub-update-btn:active, .hub-update-close:active { transform: scale(0.96); }
-.hub-update-btn:disabled { opacity: 0.7; transform: none; cursor: default; }
-.hub-update-note { margin: 6px 0 0; text-align: center; font-size: 10.5px; letter-spacing: 0.02em; opacity: 0.85; }
+.hub-update-btn:active, .hub-update-close:active { transform: scale(0.95); }
+.hub-update-btn:disabled { opacity: 0.7; cursor: default; transform: none; }
+.hub-update-close { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; opacity: 0.85; cursor: pointer; }
 /* 更新した直後の短い知らせ（「更新内容」へのリンク付き） */
 .hub-updated-toast {
   position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 1300; transform: translateX(-50%);
@@ -524,16 +508,26 @@
 .hub-updated-toast .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); flex-shrink: 0; }
 .hub-updated-toast a { color: var(--hub-accent-ink); font-weight: 800; white-space: nowrap; }
 .hub-updated-toast.out { animation: hubToastOut 0.25s ease-in forwards; }
-/* 関連ツール一覧の下: 新しい版があれば更新ボタンを塗りつぶす／更新履歴へのリンク */
-.hub-refresh.has-update .hub-refresh-btn { border-color: transparent; background: var(--hub-accent); color: #fff; box-shadow: 0 4px 14px color-mix(in srgb, var(--hub-accent) 35%, transparent); }
-.hub-refresh.has-update .hub-refresh-btn .inline-icon { stroke: currentColor; }
-.hub-version-link {
-  display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 10px; border-radius: 10px;
-  color: var(--hub-text); font-size: 13px; font-weight: 600; text-decoration: none;
+/* 関連ツール一覧の下のバージョン欄 */
+.hub-ver-line { margin: 0 2px 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.hub-ver-line b { color: var(--hub-text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.hub-ver-status { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
+.hub-ver-status .inline-icon { stroke: currentColor; }
+.hub-ver-status.is-ok { color: #1f8a3b; }
+.hub-ver-status.is-warn { color: #b45a00; }
+[data-theme="dark"] .hub-ver-status.is-ok { color: #4cd964; }
+[data-theme="dark"] .hub-ver-status.is-warn { color: #ffb35c; }
+.hub-ver-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-ver-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border: 1px solid var(--hub-sep); border-radius: 999px;
+  background: var(--hub-bg); color: var(--hub-text); font: inherit; font-size: 12.5px; font-weight: 700; text-decoration: none; cursor: pointer;
 }
-.hub-version-link:active { background: var(--hub-accent-bg); }
-.hub-version-link .inline-icon { stroke: currentColor; color: var(--hub-text-2); flex-shrink: 0; }
-.hub-version-num { margin-left: auto; font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.hub-ver-btn .inline-icon { stroke: currentColor; color: var(--hub-text-2); }
+.hub-ver-btn.is-primary { border-color: transparent; background: color-mix(in srgb, var(--hub-accent) 70%, #1b1446); color: #fff; }
+.hub-ver-btn.is-primary .inline-icon { color: #fff; }
+.hub-ver-btn:active { transform: scale(0.96); }
+.hub-ver-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+.hub-ver-line .hub-ver-btn { padding: 3px 10px; font-size: 11.5px; }
 @media (prefers-reduced-motion: reduce) {
   .hub-update-banner, .hub-updated-toast { animation: iosFade 200ms ease; }
   .hub-update-banner.out, .hub-updated-toast.out { animation: none; opacity: 0; }
@@ -542,9 +536,8 @@
   .hub-updated-toast { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
-  .hub-update-banner { background: var(--hub-card); color: var(--hub-text); border: 2px solid var(--hub-accent-ink); }
-  .hub-update-banner .hub-update-btn { color: var(--hub-text); border-color: var(--hub-text-2); }
-  .hub-update-banner .hub-update-btn.primary { background: var(--hub-accent-ink); color: var(--hub-card); }
-  .hub-update-close, .hub-update-ic, .hub-update-count { background: var(--hub-accent-bg); color: var(--hub-text); }
+  .hub-update-banner { background: var(--hub-card); color: var(--hub-text); border-bottom: 2px solid var(--hub-accent-ink); }
+  .hub-update-ver, .hub-update-close { color: var(--hub-text); }
+  .hub-update-btn { background: var(--hub-accent-ink); color: var(--hub-card); }
   .hub-updated-toast { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }

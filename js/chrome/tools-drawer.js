@@ -7,7 +7,7 @@ import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import { navigate } from '../router.js';
 import { initSiteLinks, refreshSiteLinks, getSiteLinks, siteLinkHref, siteLinkName } from '../site-links.js';
 import { refreshToLatest } from '../refresh.js';
-import { APP_VERSION, pendingVersions, onUpdateChanged } from '../app-update.js';
+import { APP_VERSION, pendingVersions, onUpdateChanged, updateStatus, checkForUpdate } from '../app-update.js';
 
 let siteLinksStarted = false;
 
@@ -73,18 +73,28 @@ function testGroupHtml(list) {
     </div>`;
 }
 
-// 一覧の下: 「最新の状態に更新」と更新履歴へのリンク。新しい版が公開されていれば、ボタンを塗りつぶして版の番号を出す
+// 一覧の下のバージョン欄（inacro-note.com のメニュー下部にならった形）:
+// 「バージョン ○○」＋確かめた結果（確認中…／✅ 最新版です／⚠️ 新版あり＋今すぐ更新／確認できませんでした＋再確認）
+// ＋「最新に更新」（新版ありの時は「今すぐ更新」に置き換わる）＋「更新履歴」
 function refreshHtml() {
   const pending = pendingVersions();
+  const st = updateStatus();
+  let statusHtml = '';
+  if (st === 'checking') statusHtml = `<span class="hub-ver-status">${t('確認中…', 'Checking…')}</span>`;
+  else if (st === 'latest') statusHtml = `<span class="hub-ver-status is-ok"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-check"/></svg>${t('最新版です', 'Up to date')}</span>`;
+  else if (st === 'stale') statusHtml = `<span class="hub-ver-status is-warn"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-warning"/></svg>${t(`新版あり（Ver.${escapeHtml(pending[0].version)}）`, `New: Ver.${escapeHtml(pending[0].version)}`)}</span>`;
+  else if (st === 'error') statusHtml = `<span class="hub-ver-status">${t('確認できませんでした', 'Could not check')}</span><button type="button" class="hub-ver-btn js-hub-recheck">${t('再確認', 'Retry')}</button>`;
   return `<div class="hub-refresh${pending.length ? ' has-update' : ''}">
-      <button type="button" class="hub-refresh-btn js-hub-refresh">
-        <svg class="inline-icon" width="17" height="17"><use href="#i-sync"/></svg> ${pending.length ? t(`Ver.${escapeHtml(pending[0].version)} に更新`, `Update to Ver.${escapeHtml(pending[0].version)}`) : t('最新の状態に更新', 'Update to the latest version')}
-      </button>
-      <p class="hub-refresh-hint">${pending.length ? t('新しいバージョンが公開されています。保存したデータは消えません。', 'A new version is out. Your saved data is kept.') : t('画面が古いままのときに押してください。保存したデータは消えません。', 'Tap this if the page looks out of date. Your saved data is kept.')}</p>
-      <a class="hub-version-link" href="#/changelog" data-hub-route="#/changelog">
-        <svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg><span>${t('更新履歴', 'Changelog')}</span><span class="hub-version-num">Ver.${escapeHtml(APP_VERSION)}</span>
-        <svg class="inline-icon" width="13" height="13"><use href="#i-chevron-right"/></svg>
-      </a>
+      <p class="hub-ver-line"><span>${t('バージョン', 'Version')} <b>${escapeHtml(APP_VERSION)}</b></span>${statusHtml}</p>
+      <div class="hub-ver-actions">
+        <button type="button" class="hub-ver-btn${pending.length ? ' is-primary' : ''} js-hub-refresh">
+          <svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${pending.length ? t('今すぐ更新', 'Update now') : t('最新に更新', 'Refresh')}
+        </button>
+        <a class="hub-ver-btn" href="#/changelog" data-hub-route="#/changelog">
+          <svg class="inline-icon" width="14" height="14"><use href="#i-edit"/></svg>${t('更新履歴', 'Changelog')}
+        </a>
+      </div>
+      <p class="hub-refresh-hint">${t('画面が古いままのときは「最新に更新」を押してください。保存したデータは消えません。', 'If the page looks out of date, tap Refresh. Your saved data is kept.')}</p>
     </div>`;
 }
 
@@ -115,9 +125,10 @@ function renderNavInto(nav) {
   nav.querySelector('.js-hub-refresh').addEventListener('click', e => {
     const btn = e.currentTarget;
     btn.disabled = true;
-    btn.lastChild.textContent = ` ${t('更新しています…', 'Updating…')}`;
+    btn.lastChild.textContent = ` ${t('更新中…', 'Updating…')}`;
     refreshToLatest();
   });
+  nav.querySelector('.js-hub-recheck')?.addEventListener('click', () => checkForUpdate(true));
   nav.querySelectorAll('a[data-hub-route]').forEach(a => {
     const route = a.dataset.hubRoute;
     if (!route) return;
@@ -131,6 +142,7 @@ function renderNavInto(nav) {
 
 export function open() {
   ensureDom();
+  checkForUpdate(); // 開いた時にバージョン欄を新しくする（30分以内に確かめていれば何もしない）
   document.getElementById('toolsDrawerOverlay').classList.add('show');
   document.getElementById('toolsDrawerPanel').classList.add('mobile-open');
 }

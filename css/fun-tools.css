@@ -702,12 +702,13 @@
 .changelog-view .cl-list { display: flex; flex-direction: column; gap: 12px; }
 .changelog-view .cl-ver-card { padding: 14px 16px 10px; border: 1px solid var(--hub-sep); border-radius: var(--hub-r); background: var(--hub-card); }
 .changelog-view .cl-ver-card.is-pending { border: 1.5px dashed var(--hub-accent); }
-.changelog-view .cl-ver-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-bottom: 8px; }
-.changelog-view .cl-ver-name { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; color: var(--hub-text); font-variant-numeric: tabular-nums; }
-.changelog-view .cl-ver-date { margin-left: auto; font-size: 12px; letter-spacing: 0.02em; color: var(--hub-text-2); }
-.changelog-view .cl-tag { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; background: var(--hub-accent-bg); color: var(--hub-accent-ink); }
-.changelog-view .cl-tag.is-pending { background: var(--hub-accent); color: #fff; }
-.changelog-view .cl-tag.is-current { background: var(--cl-improve-bg); color: var(--cl-improve); }
+.changelog-view .cl-ver-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px; color: var(--hub-text-2); }
+.changelog-view .cl-ver-date { letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.changelog-view .cl-ver-name { letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.changelog-view .cl-ver-title { margin: 10px 0 6px; font-size: 16px; font-weight: 800; line-height: 1.45; letter-spacing: -0.01em; color: var(--hub-text); }
+.changelog-view .cl-tag { padding: 2px 8px; border: 1px solid var(--hub-sep); border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; line-height: 1.5; color: var(--hub-text-2); }
+.changelog-view .cl-tag.is-pending { border-color: transparent; background: color-mix(in srgb, var(--hub-accent) 70%, #1b1446); color: #fff; }
+.changelog-view .cl-tag.is-current { border-color: var(--hub-accent); color: var(--hub-accent-ink); }
 .changelog-view .cl-items { list-style: none; margin: 0; padding: 0; }
 .changelog-view .cl-item { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 10px; padding: 9px 0; border-top: 0.5px solid var(--hub-sep); }
 .changelog-view .cl-item:first-child { border-top: 0; }

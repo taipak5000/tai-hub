@@ -4,8 +4,9 @@
    ・公開中の最新版は、同じファイルを ?fresh=… 付きで読み直して調べる
      （service-worker.js は ?fresh の付いた要求を素通しにする＝保存してある古い版を返さない）。
      起動の数秒後・画面に戻った時（30分おき）・30分ごとに確かめる。
-   ・新しい版があれば、画面の下に目立つお知らせ（今すぐ更新／更新内容）を出す。「あとで」で閉じると、
-     その版についてはこのタブを開いている間は出さない（次に開いた時はまた出す）。
+   ・新しい版があれば、画面の上端いっぱいに目立つ帯（新しいバージョンがあります。［最新に更新］✕）を出す
+     （inacro-note.com の見せ方にならった）。✕で閉じると、その版はこのタブを開いている間は出さない。
+   ・関連ツール一覧の下にはバージョン欄（最新版です／新版あり＋今すぐ更新／最新に更新／更新履歴）を出す（tools-drawer.js）。
    ・更新して新しい版で開いた最初の1回は「Ver.… に更新しました」と短く知らせる。
    「今すぐ更新」は js/refresh.js の refreshToLatest()（保存分を消して取り直す。利用者のデータは消さない）。
    ================================================================ */
@@ -22,6 +23,8 @@ const CHECK_EVERY = 30 * 60 * 1000;
 let remote = null; // 公開中の更新履歴（確かめられた時だけ）
 let lastCheck = 0;
 let checking = null;
+let barObserver = null;
+let status = ''; // '' | 'checking' | 'latest' | 'stale' | 'error'（関連ツール一覧の下のバージョン欄に出す）
 const listeners = new Set();
 
 export const TYPE_LABEL = {
@@ -37,6 +40,8 @@ export function pendingVersions() {
   if (!remote) return [];
   return remote.filter(v => v && typeof v.version === 'string' && v.version > APP_VERSION);
 }
+/** 最後に確かめた結果（'checking'・'latest'・'stale'・'error'。まだなら ''） */
+export function updateStatus() { return status; }
 /** 表示用の更新履歴: 公開中の最新が取れていればそれ、無ければ同梱分 */
 export function changelogList() { return pendingVersions().length ? remote : CHANGELOG; }
 export function onUpdateChanged(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -48,89 +53,78 @@ export function checkForUpdate(force = false) {
   if (!force && Date.now() - lastCheck < CHECK_EVERY) return Promise.resolve(pendingVersions());
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve(pendingVersions());
   lastCheck = Date.now();
+  status = 'checking';
+  emit();
   // 30分ごとに変わる値を付ける（毎回ちがうURLにすると、読み込んだモジュールが溜まり続けるため）
   const stamp = force ? Date.now() : Math.floor(Date.now() / CHECK_EVERY);
   checking = import(`./changelog-data.js?fresh=${stamp}`)
     .then(m => {
       if (Array.isArray(m.CHANGELOG)) {
         remote = m.CHANGELOG;
+        status = pendingVersions().length ? 'stale' : 'latest';
         renderBanner();
         emit();
       }
       return pendingVersions();
     })
-    .catch(() => pendingVersions())
+    .catch(() => { status = 'error'; emit(); return pendingVersions(); })
     .finally(() => { checking = null; });
   return checking;
 }
 
 function dismissedVersion() { try { return sessionStorage.getItem(DISMISS_KEY) || ''; } catch (e) { return ''; } }
 
-function countByType(list) {
-  const c = {};
-  list.forEach(v => (v.items || []).forEach(i => { c[i.type] = (c[i.type] || 0) + 1; }));
-  return c;
-}
-
+/** 画面の上端の帯（新しい版があるとき）。inacro-note.com と同じく「新しいバージョンがあります。［最新に更新］✕」の1行 */
 function bannerHtml(list) {
-  const latest = list[0];
-  const counts = countByType(list);
-  const summary = ['new', 'improve', 'fix', 'remove'].filter(k => counts[k]).map(k => `<span class="hub-update-count is-${k}">${escapeHtml(typeLabel(k))} ${counts[k]}</span>`).join('');
-  const heads = list.flatMap(v => v.items || []).filter(i => i.type === 'new').concat(list.flatMap(v => v.items || []).filter(i => i.type !== 'new')).slice(0, 2);
-  return `<div class="hub-update-main">
-      <span class="hub-update-ic" aria-hidden="true"><svg class="inline-icon" width="20" height="20"><use href="#i-sparkle"/></svg></span>
-      <div class="hub-update-text">
-        <p class="hub-update-title">${t('新しいバージョンがあります', 'A new version is available')}<span class="hub-update-ver">Ver.${escapeHtml(latest.version)}</span></p>
-        ${summary ? `<p class="hub-update-counts">${summary}</p>` : ''}
-        ${heads.length ? `<ul class="hub-update-heads">${heads.map(i => `<li>${escapeHtml(t(i.ja, i.en || i.ja))}</li>`).join('')}</ul>` : ''}
-      </div>
-      <button type="button" class="hub-update-close" data-act="later" aria-label="${t('あとで', 'Later')}"><svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg></button>
-    </div>
-    <div class="hub-update-actions">
-      <button type="button" class="hub-update-btn primary" data-act="update"><svg class="inline-icon" width="15" height="15"><use href="#i-sync"/></svg>${t('今すぐ更新', 'Update now')}</button>
-      <a class="hub-update-btn" href="#/changelog" data-act="log">${t('更新内容を見る', 'What’s new')}</a>
-    </div>
-    <p class="hub-update-note">${t('保存したデータは消えません', 'Your saved data is kept')}</p>`;
+  return `<span class="hub-update-ic" aria-hidden="true"><svg class="inline-icon" width="16" height="16"><use href="#i-sparkle"/></svg></span>
+    <span class="hub-update-msg">${t('新しいバージョンがあります。', 'A new version is available.')}<a class="hub-update-ver" href="#/changelog">Ver.${escapeHtml(list[0].version)}<span>${t('の内容', ' notes')}</span></a></span>
+    <button type="button" class="hub-update-btn" data-act="update">${t('最新に更新', 'Update')}</button>
+    <button type="button" class="hub-update-close" data-act="later" aria-label="${t('閉じる', 'Close')}"><svg class="inline-icon" width="13" height="13"><use href="#i-close"/></svg></button>`;
 }
 
-/** 新しい版があれば画面の下にお知らせを出す（「あとで」で閉じた版なら出さない） */
+/** 新しい版があれば画面の上端に帯を出す（✕で閉じた版なら、このタブを開いている間は出さない） */
 function renderBanner() {
   const list = pendingVersions();
   let el = document.getElementById('hubUpdateBanner');
-  // 更新履歴の画面には同じ内容の案内が上にあるので、下のお知らせは出さない
-  const onLog = /^#\/changelog\b/.test(location.hash);
-  if (!list.length || onLog || dismissedVersion() === list[0].version) { if (el) closeBanner(el); return; }
+  if (!list.length || dismissedVersion() === list[0].version) { if (el) closeBanner(el); return; }
   if (!el) {
-    el = document.createElement('section');
+    el = document.createElement('div');
     el.id = 'hubUpdateBanner';
     el.className = 'hub-update-banner';
-    el.setAttribute('role', 'status');
-    el.setAttribute('aria-live', 'polite');
+    el.setAttribute('role', 'alert');
     el.addEventListener('click', onBannerClick);
-    document.body.appendChild(el);
+    document.body.prepend(el);
+    // ワイド画面の左右のパネル（固定配置）は、帯の高さぶん下げる（css/chrome.css の --update-bar-h）
+    if (typeof ResizeObserver !== 'undefined') {
+      barObserver = new ResizeObserver(() => document.documentElement.style.setProperty('--update-bar-h', `${el.offsetHeight}px`));
+      barObserver.observe(el);
+    }
   }
   el.classList.remove('out');
   el.innerHTML = bannerHtml(list);
 }
 function closeBanner(el) {
   el.classList.add('out');
-  setTimeout(() => { if (el.classList.contains('out')) el.remove(); }, 260);
+  setTimeout(() => {
+    if (!el.classList.contains('out')) return;
+    if (barObserver) { barObserver.disconnect(); barObserver = null; }
+    document.documentElement.style.removeProperty('--update-bar-h');
+    el.remove();
+  }, 220);
 }
 function onBannerClick(e) {
   const btn = e.target.closest('[data-act]');
   if (!btn) return;
   const el = e.currentTarget;
-  const act = btn.dataset.act;
-  if (act === 'update') {
+  if (btn.dataset.act === 'update') {
     btn.disabled = true;
-    btn.lastChild.textContent = t('更新しています…', 'Updating…');
+    btn.textContent = t('更新中…', 'Updating…');
     startUpdate();
-  } else if (act === 'later') {
+  } else if (btn.dataset.act === 'later') {
     const list = pendingVersions();
     try { if (list[0]) sessionStorage.setItem(DISMISS_KEY, list[0].version); } catch (err) { /* noop */ }
     closeBanner(el);
   }
-  // 「更新内容を見る」はふつうのリンク（#/changelog）。開くとこのお知らせは隠れる（hashchange）
 }
 
 /** 新しい版へ切り替える（読み込み直し） */
@@ -148,7 +142,6 @@ export function initAppUpdate() {
   setInterval(() => checkForUpdate(), CHECK_EVERY);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
   window.addEventListener('online', () => checkForUpdate(true));
-  window.addEventListener('hashchange', () => { if (pendingVersions().length) renderBanner(); });
   return shown;
 }
 

@@ -2,7 +2,8 @@
    📝 更新履歴（#/changelog）。データは js/changelog-data.js、新しい版の判定は js/app-update.js。
    ・上に「お使いのバージョン」のカード。公開中の新しい版があれば、目立つ色で「今すぐ更新」を出す
      （まだ反映されていない版の内容も、下の一覧に「未反映」の印付きで先に見せる）。
-   ・下はバージョンごとのカードを新しい順に並べる。種類（新機能・改善・修正・削除）で絞り込める。
+   ・下はバージョンごとのカードを新しい順に並べる（inacro-note.com の更新履歴にならい、日付・「このバージョンの変更／公開済み」の印・
+     見出し・変更の一覧の順）。種類（新機能・改善・修正・削除）で絞り込める。
      古いものは最初の8件だけ出し、「もっと見る」で続きを出す。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -65,7 +66,7 @@ function statusHtml() {
     <span class="cl-status-ic" aria-hidden="true"><svg class="inline-icon" width="20" height="20"><use href="#i-check"/></svg></span>
     <div class="cl-status-text">
       <p class="cl-status-title">${t('お使いのバージョン', 'Your version')} <span class="cl-ver">Ver.${escapeHtml(APP_VERSION)}</span></p>
-      <p class="cl-status-sub">${t('新しいバージョンが出ると、画面の下にお知らせが出ます。', 'A banner appears at the bottom when a new version is out.')}</p>
+      <p class="cl-status-sub">${t('新しいバージョンが出ると、画面の上端にお知らせが出ます。', 'A bar appears at the top when a new version is out.')}</p>
     </div>
     <button type="button" class="fun-btn small" data-act="check"${checkState === 'checking' ? ' disabled' : ''}><svg class="inline-icon" width="13" height="13"><use href="#i-sync"/></svg>${checkLabel}</button>
   </section>`;
@@ -80,19 +81,18 @@ function itemHtml(i) {
   </li>`;
 }
 
-function versionHtml(v, idx) {
+function versionHtml(v) {
   const items = (v.items || []).filter(i => !filter || i.type === filter);
   if (!items.length) return '';
   const isCurrent = v.version === APP_VERSION;
   const isPending = v.version > APP_VERSION;
   return `<article class="cl-ver-card${isPending ? ' is-pending' : ''}${isCurrent ? ' is-current' : ''}">
     <header class="cl-ver-head">
-      <h2 class="cl-ver-name">Ver.${escapeHtml(v.version)}</h2>
-      ${isPending ? `<span class="cl-tag is-pending">${t('未反映', 'Not applied')}</span>` : ''}
-      ${isCurrent ? `<span class="cl-tag is-current">${t('お使いの版', 'Current')}</span>` : ''}
-      ${idx === 0 && !isPending && !isCurrent ? `<span class="cl-tag">${t('最新', 'Latest')}</span>` : ''}
       <time class="cl-ver-date" datetime="${escapeHtml(v.date || '')}">${escapeHtml(fmtDate(v.date))}</time>
+      <span class="cl-tag${isPending ? ' is-pending' : isCurrent ? ' is-current' : ''}">${isPending ? t('未反映（更新すると使えます）', 'Not applied yet') : isCurrent ? t('このバージョンの変更', 'This version') : t('公開済み', 'Released')}</span>
+      <span class="cl-ver-name">Ver.${escapeHtml(v.version)}</span>
     </header>
+    ${v.title ? `<h2 class="cl-ver-title">${escapeHtml(t(v.title.ja, v.title.en || v.title.ja))}</h2>` : ''}
     <ul class="cl-items">${items.map(itemHtml).join('')}</ul>
   </article>`;
 }
@@ -115,7 +115,7 @@ function render() {
       <button type="button" class="fun-chip${!filter ? ' on' : ''}" data-act="filter" data-type="">${t('すべて', 'All')}</button>
       ${TYPES.filter(k => counts[k]).map(k => `<button type="button" class="fun-chip${filter === k ? ' on' : ''}" data-act="filter" data-type="${k}"><span class="cl-dot is-${k}" aria-hidden="true"></span>${escapeHtml(typeLabel(k))}<span class="cl-chip-n">${counts[k]}</span></button>`).join('')}
     </div>
-    <div class="cl-list">${shown.map(v => versionHtml(v, list.indexOf(v))).join('')}</div>
+    <div class="cl-list">${shown.map(versionHtml).join('')}</div>
     ${!showAll && visible.length > FIRST_SHOWN ? `<button type="button" class="fun-btn cl-more" data-act="more">${t(`もっと見る（あと${visible.length - FIRST_SHOWN}件）`, `Show ${visible.length - FIRST_SHOWN} more`)}</button>` : ''}
   </div>`;
 }
