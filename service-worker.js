@@ -43,6 +43,13 @@ self.addEventListener('fetch', (event) => {
   // ?fresh の付いた要求（js/app-update.js が新しいバージョンを確かめる時）は保存分を返さず、そのままネットワークへ
   if (sameOrigin && url.searchParams.has('fresh')) return;
 
+  // ページを開く操作のうち、アプリ本体（./ と ./index.html）以外は素通しにする。
+  // ツールの紹介ページ（./item/ など。検索エンジン向けの静的なページ）を開いた時に、アプリの index.html を返してしまわないため
+  if (req.mode === 'navigate' && sameOrigin) {
+    const root = new URL('./', self.registration.scope).pathname;
+    if (url.pathname !== root && url.pathname !== root + 'index.html') return;
+  }
+
   event.respondWith((async () => {
     const isNav = req.mode === 'navigate';
     // ページ自体は ./ 1枚（クエリ違い・ハッシュ違いでも同じ index.html）

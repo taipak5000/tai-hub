@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.07',
+    title: { ja: 'Googleなどの検索から各ツールを見つけやすく', en: 'Easier to find in search engines' },
+    date: '2026-11-07',
+    items: [
+      { type: 'improve', ja: 'ツールごとの紹介ページを作り、「Sky アイテム管理」「Sky 連れ歩き」などで検索した時に見つかりやすくしました（検索結果に出るまでには時間がかかります）。', en: 'Added an intro page for each tool so they are easier to find in search engines (it takes time to show up).' },
+    ],
+  },
+  {
     version: '2026.11.06',
     title: { ja: '更新履歴と新しいバージョンのお知らせを追加', en: 'Changelog and update notices' },
     date: '2026-11-06',
