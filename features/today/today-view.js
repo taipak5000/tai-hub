@@ -164,7 +164,7 @@ function omikujiHtml() {
       <p class="td-omi-msg">${escapeHtml(L(MESSAGES[r.msg]))}</p>
       <dl class="td-omi-list">
         <div><dt>${t('ラッキーエリア', 'Lucky area')}</dt><dd>${escapeHtml(L(LUCKY_REALMS[r.realm]))}</dd></div>
-        ${emote ? `<div><dt>${t('ラッキーエモート', 'Lucky emote')}</dt><dd>${escapeHtml(CURRENT_LANG === 'en' ? emote.nameEn : emote.name)}</dd></div>` : ''}
+        ${emote ? `<div><dt>${t('ラッキーエモート', 'Lucky emote')}</dt><dd class="td-omi-emote">${emote.img ? `<span class="td-omi-emote-ic"><img src="${escapeHtml(emote.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></span>` : ''}${escapeHtml(CURRENT_LANG === 'en' ? emote.nameEn : emote.name)}</dd></div>` : ''}
         <div><dt>${t('ラッキーカラー', 'Lucky color')}</dt><dd><span class="td-omi-swatch" style="background:${color.hex}"></span>${escapeHtml(L(color))}</dd></div>
       </dl>
     </div>

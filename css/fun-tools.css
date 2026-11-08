@@ -366,6 +366,11 @@
 .today-view .td-omikuji .td-omi-box { animation: tdShake 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
 @keyframes tdShake { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(7deg); } 95% { transform: rotate(-4deg); } }
 .today-view .td-omi-paper { flex: 1; text-align: center; }
+/* ラッキーエモートは名前の前にアイコンも出す（画像が読めない時はアイコンの枠ごと消して名前だけ） */
+.today-view .td-omi-emote { display: inline-flex; align-items: center; gap: 6px; }
+.today-view .td-omi-emote-ic { display: inline-flex; width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.7); align-items: center; justify-content: center; flex-shrink: 0; }
+[data-theme="dark"] .today-view .td-omi-emote-ic { background: rgba(255,255,255,0.12); }
+.today-view .td-omi-emote-ic img { width: 26px; height: 26px; object-fit: contain; }
 .today-view .td-omikuji.just-drawn .td-omi-paper { animation: tdUnfold 0.6s var(--fun-pop); }
 @keyframes tdUnfold { from { opacity: 0; transform: translateY(-12px) scale(0.92); } to { opacity: 1; transform: none; } }
 .today-view .td-omi-fortune { font-size: 34px; font-weight: 900; letter-spacing: 0.12em; line-height: 1.1; }
