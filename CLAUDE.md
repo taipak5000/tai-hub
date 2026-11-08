@@ -242,9 +242,9 @@ const landingPoint = currentY + project(v);
 - **週替わりビンゴ**（`features/bingo/`。2026-11-06からデイリーチェックシートの画面の中の折りたたみ。`mount(el, { embedded: true })`。旧`#/bingo`は非公開の別名）・**フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・
   **一年のふりかえり**（`features/recap/`）。CSSは3つ共通で`css/fun-tools.css`、色は`--hub-*`トークンだけを使う（着せ替えに追従）。
 - **第2弾（2026-11-06）**: 今日の要点＋おみくじ（`features/today/`。大キャンドル等の計算は`event-dashboard.js`の`getTodayBrief()`）。
-  **「今日やること」は関連ツールの一覧から外し、デイリーチェックシートの画面（`#/daily-check`。旧`#/today`も同じ画面、どちらもhidden）にまとめた**:
+  **「今日やること」は関連ツールの一覧から外し、デイリーチェックシートの画面（`#/daily-check`。旧`#/today`も同じ画面）にまとめた**:
   `today-view.js`が要点を出し、その下にデイリーチェックシートを`mount(el, { embedded: true, labLinks: true })`で埋め込む。
-  **デイリーチェックシートはまだ非公開＝関連ツールの一覧に載せない**・
+  **デイリーチェックシートは2026-11-08にテスト機能として公開した**（`site-links.js`の`HUB_ONLY_TOOLS`に`badgeTest`付きで載せ、`#/daily-check`のhiddenを外した。`#/today`は古いリンク用でhiddenのまま）・
   ほしいもの計画（`features/wish-plan/`。欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通）・
   コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・
   思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。
@@ -269,7 +269,7 @@ const landingPoint = currentY + project(v);
 ## 📝 更新履歴と「新しいバージョンがあります」（2026-11-06追加）
 
 - **利用者に届く変更を公開したら、`js/changelog-data.js`の先頭に1件足すこと**（`version`は`年.月.日`のゼロ埋め。同じ日の2回目は`2026.11.06.2`）。
-  先頭の`version`が「今のバージョン」で、これが変わらないと新しい版のお知らせは出ない。非公開のツール（デイリーチェックシート・試作中の機能）のことは書かない。
+  先頭の`version`が「今のバージョン」で、これが変わらないと新しい版のお知らせは出ない。非公開のツール（試作中の機能）のことは書かない。
   `type`は`new`/`improve`/`fix`/`remove`、`route`を書くと「開く」ボタンが付く。
 - 更新履歴は**ポップアップ**（`features/changelog/changelog-view.js`の`open()`。inacro-note.comにそろえた）。`data-open-changelog`の付いたボタンで開く（`app-update.js`が拾う）。
   入口は関連ツール一覧の下の「更新履歴」・上端の帯・更新直後のトースト・お知らせ。古いリンク`#/changelog`は起動時のツールへ移ってから開く。
@@ -281,7 +281,7 @@ const landingPoint = currentY + project(v);
 ## 🔎 検索エンジン向けの紹介ページ（2026-11-07追加）
 
 - ツールは`#/item`のような`#`以降で切り替えるため、Googleには別々のページとして載らない。そこで**ツールごとの静的な紹介ページ**
-  （`item/index.html`・`companion/index.html`など13個）と`sitemap.xml`を、`tools/build-tool-pages.py`で作っている。
+  （`item/index.html`・`companion/index.html`など14個）と`sitemap.xml`を、`tools/build-tool-pages.py`で作っている。
   **紹介ページは直接書き換えず、スクリプトの`TOOLS`を直して`python3 tools/build-tool-pages.py`を実行する。**公開ツールを足した時もここに足す。
 - 紹介ページはアプリへ自動で移動させない（移動させると紹介ページが検索に載らない）。「ツールを開く」ボタンで`../#/<ルート>`を開く。
 - `service-worker.js`は、アプリ本体（`./`と`./index.html`）以外のページを開く操作を素通しにする（紹介ページにアプリのindex.htmlを返さないため）。

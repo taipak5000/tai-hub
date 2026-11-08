@@ -13,6 +13,8 @@ import { SITE_LINK_TOOLS } from './site-links-data.js';
 // afterId の直後に差し込む。
 const HUB_ONLY_TOOLS = [
   { id: 'tai-nomacan-pro', afterId: 'tai-nomacan', icon: 'i-compass', ja: 'ノマキャン計算機プロ', en: 'Candle Calculator Pro', badgeTest: true },
+  // デイリーチェックシート（2026-11-08にテスト機能として公開。testの印なので一覧の最後の「テスト中のツール」に入る）
+  { id: 'daily-check', afterId: 'tai-score', icon: 'i-check', ja: 'デイリーチェックシート', en: 'Daily Checklist', badgeTest: true },
   // 独立サイトを持たない、tai-hubで新しく作ったツール（2026-11-05）。星紡ぎカードの兄弟機能として、その下に並べる（2026-11-06〜）
   { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', child: true },
   { id: 'recap', afterId: 'friends', icon: 'i-calendar', ja: 'ふりかえり', en: 'Recap', child: true },

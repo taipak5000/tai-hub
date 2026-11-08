@@ -6,9 +6,17 @@
    ・title は版の見出し（何が変わったかを一言で）。
    ・type: 'new'＝新機能、'improve'＝改善、'fix'＝修正、'remove'＝削除・終了。
      route を書くと「開く」ボタンが付く（ハブ内のルート名。sub はその下の画面）。
-   ・非公開のツール（デイリーチェックシート・試作中の機能など）のことは書かない。
+   ・非公開のツール（試作中の機能など）のことは書かない。
    ================================================================ */
 export const CHANGELOG = [
+  {
+    version: '2026.11.08',
+    title: { ja: 'デイリーチェックシートをテスト公開', en: 'Daily Checklist (beta)' },
+    date: '2026-11-08',
+    items: [
+      { type: 'new', ja: 'デイリーチェックシートをテスト機能として公開しました。関連ツールの一覧の「テスト中のツール」から開けます。毎日やることのチェック、今日の要点とおみくじ、週替わりビンゴ、印刷・PDF・画像での保存ができます。', en: 'Released the Daily Checklist as a beta: daily tasks, today’s highlights and fortune, weekly bingo, and print/PDF/image export. Find it under “Tools in testing”.', route: 'daily-check' },
+    ],
+  },
   {
     version: '2026.11.07',
     title: { ja: 'Googleなどの検索から各ツールを見つけやすく', en: 'Easier to find in search engines' },
