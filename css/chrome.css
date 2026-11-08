@@ -315,7 +315,7 @@
    モーダル・引き出しはパネル(z-index:900)より上(1000〜)に出て、従来どおり全幅で開く。 */
 .side-panel { display: none; }
 @media (min-width: 1280px) {
-  html.side-panels-on, html.side-dash-on { --side-left-w: 232px; --side-right-w: 340px; --side-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  html.side-panels-on, html.side-dash-on { --side-left-w: 340px; --side-right-w: 340px; /* 左右を同じ幅にして、本文が画面の中央に来るようにする（2026-11-08） */ --side-bottom: calc(72px + env(safe-area-inset-bottom)); }
   html.side-panels-on #app-root { margin-left: var(--side-left-w); }
   html.side-dash-on #app-root { margin-right: var(--side-right-w); }
   html.side-panels-on .side-left, html.side-dash-on .side-right {

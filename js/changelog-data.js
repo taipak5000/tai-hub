@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.08.4',
+    title: { ja: 'パソコンの横長の画面で、本文が画面の中央に来るように', en: 'Centered content on wide screens' },
+    date: '2026-11-08',
+    items: [
+      { type: 'improve', ja: '横長の画面で左右に出る「関連ツール」と「ダッシュボード」の幅をそろえ、本文が画面の中央に来るようにしました。', en: 'On wide screens, the Related Tools and Dashboard side panels now have the same width so the page is centered.' },
+    ],
+  },
+  {
     version: '2026.11.08.3',
     title: { ja: '今手に入る未所持アイテムをワンタップで検索', en: 'One-tap search for unowned items available now' },
     date: '2026-11-08',
