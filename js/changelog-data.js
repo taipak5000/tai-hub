@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.08.2',
+    title: { ja: 'アイテム所持管理のメニューの並びを整理', en: 'Item tracker menu reordered' },
+    date: '2026-11-08',
+    items: [
+      { type: 'improve', ja: 'アイテム所持管理で、「季節・イベントでアイテムを検索」を「全アイテムを一覧で見る・選択」のすぐ下に、楽譜をカテゴリ一覧のすぐ下に移しました。', en: 'In the item tracker, Season/Event search now sits right under “Browse all items”, and Music Sheets right under the categories.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.08',
     title: { ja: 'デイリーチェックシートをテスト公開', en: 'Daily Checklist (beta)' },
     date: '2026-11-08',

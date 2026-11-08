@@ -93,6 +93,8 @@
 /* コーデ機能は元サイトと同じ2列 */
 .item-view .dash-feature-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
 .item-view .dash-feature-row .feature-btn { margin-bottom: 0; }
+/* カテゴリ一覧（2列/3列のタイル）のすぐ下に置くボタン（楽譜）。タイルの間隔と同じだけ空ける */
+.item-view .dash-after-grid { margin-top: 10px; }
 /* 元サイトでカテゴリの「›」と「はじめての方へ」の矢印だけは文字色（灰）で描いている */
 .item-view .cat-chevron .inline-icon, .item-view .welcome-toggle-icon .inline-icon { stroke: currentColor; color: currentColor; stroke-width: 2.2; }
 

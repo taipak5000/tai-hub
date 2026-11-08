@@ -210,12 +210,6 @@ function renderShell() {
                  : '全カテゴリのアイテムを画像タイルでまとめて表示し、タップで所持を一気に選択できます',
       })}
 
-      <p class="sec-label" id="dashCatLabel">${en ? 'Categories' : 'カテゴリ一覧'}</p>
-      <div class="cat-grid" id="dashCatGrid">
-        ${GRID_CATEGORIES.map(cat => catTileHtml(cat, null, null)).join('')}
-      </div>
-
-      <p class="sec-label">${en ? 'Item Search' : 'アイテム検索'}</p>
       ${featureBtnHtml({
         id: 'dashOpenSearchBtn', icon: 'i-search',
         label: en ? 'Search Items by Season / Event' : '季節・イベントでアイテムを検索',
@@ -223,13 +217,16 @@ function renderShell() {
                  : '全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます',
       })}
 
-      <p class="sec-label">${en ? 'Music Sheet Completion' : '楽譜コンプリート管理'}</p>
-      ${featureBtnHtml({
+      <p class="sec-label" id="dashCatLabel">${en ? 'Categories' : 'カテゴリ一覧'}</p>
+      <div class="cat-grid" id="dashCatGrid">
+        ${GRID_CATEGORIES.map(cat => catTileHtml(cat, null, null)).join('')}
+      </div>
+      <div class="dash-after-grid">${featureBtnHtml({
         href: `#/item/${MUSIC_SHEET_CAT ? MUSIC_SHEET_CAT.key : 'music_sheet'}`, icon: 'i-sheet-music',
         label: en ? 'Music Sheet Completion Tracker' : '楽譜コンプリート率',
         desc: en ? "Track which of the in-game Music Sheets you've collected, by acquisition method and candle cost"
                  : 'ゲーム内の楽譜の入手状況とコンプリート率を管理できます',
-      })}
+      })}</div>
 
       <p class="sec-label">${en ? 'Cost Management' : 'コスト管理'}</p>
       <div class="dash-feature-row">
