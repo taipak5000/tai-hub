@@ -210,12 +210,18 @@ function renderShell() {
                  : '全カテゴリのアイテムを画像タイルでまとめて表示し、タップで所持を一気に選択できます',
       })}
 
-      ${featureBtnHtml({
-        id: 'dashOpenSearchBtn', icon: 'i-search',
-        label: en ? 'Search Items by Season / Event' : '季節・イベントでアイテムを検索',
-        desc: en ? 'Search items across all categories by season, day event, category, favorite, and ownership status'
-                 : '全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます',
-      })}
+      <div class="dash-search-combo">
+        ${featureBtnHtml({
+          id: 'dashOpenSearchBtn', icon: 'i-search',
+          label: en ? 'Search Items by Season / Event' : '季節・イベントでアイテムを検索',
+          desc: en ? 'Search items across all categories by season, day event, category, favorite, and ownership status'
+                   : '全カテゴリのアイテムを季節・日々・カテゴリ・お気に入り・所持状況で横断検索できます',
+        })}
+        <button type="button" class="dash-avail-btn" id="dashOpenAvailBtn">
+          <svg class="inline-icon" width="18" height="18" aria-hidden="true"><use href="#i-sparkle"/></svg>
+          <span><b>${en ? 'Unowned items available now' : '今手に入る未所持アイテム'}</b><small>${en ? 'Current season/events · not owned' : '開催中の季節・イベント × 未所持で検索'}</small></span>
+        </button>
+      </div>
 
       <p class="sec-label" id="dashCatLabel">${en ? 'Categories' : 'カテゴリ一覧'}</p>
       <div class="cat-grid" id="dashCatGrid">
@@ -318,6 +324,8 @@ async function renderCategoryGrid(token) {
 // 開きっぱなしのモーダルを閉じる（ルート離脱時に後片付けする）。
 const FEATURE_TRIGGERS = [
   { btnId: 'dashOpenSearchBtn', mod: searchModal, action: 'open' },
+  // 「今手に入る未所持アイテム」＝現在開催中のみ＋未所持のみを選んだ状態で検索を開く
+  { btnId: 'dashOpenAvailBtn', mod: searchModal, action: 'openAvailable' },
   { btnId: 'dashOpenWishlistBtn', mod: wishlistCostModal, action: 'open' },
   { btnId: 'dashOpenAcquireLogBtn', mod: acquireLogModal, action: 'open' },
   { btnId: 'dashShareOnXBtn', mod: achievementShare, action: 'shareOnX' },

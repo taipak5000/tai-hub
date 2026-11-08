@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.08.3',
+    title: { ja: '今手に入る未所持アイテムをワンタップで検索', en: 'One-tap search for unowned items available now' },
+    date: '2026-11-08',
+    items: [
+      { type: 'new', ja: 'アイテム所持管理の「季節・イベントでアイテムを検索」の横に「今手に入る未所持アイテム」ボタンを追加しました。押すと「現在開催中の季節・イベントのみ」「未所持のみ」を選んだ状態で検索が開きます。', en: 'Added “Unowned items available now” next to item search: it opens search filtered to current seasons/events and items you don’t own.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.08.2',
     title: { ja: 'アイテム所持管理のメニューの並びを整理', en: 'Item tracker menu reordered' },
     date: '2026-11-08',

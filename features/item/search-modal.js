@@ -156,7 +156,11 @@ function isRevisitSpiritItem(item) {
    ================================================================ */
 let overlayEl = null;
 
-export async function open() {
+/** 「今手に入る未所持アイテム」: 現在開催中のみ＋未所持のみを選んだ状態で開く（アイテム所持管理のトップのボタン） */
+export function openAvailable() { return open({ currentOnly: true, owned: 'notOwned' }); }
+
+/** @param {{currentOnly?: boolean, owned?: 'all'|'owned'|'notOwned'}} [preset] 開いた時に選んでおく条件 */
+export async function open(preset = {}) {
   injectStyles();
   document.getElementById(OVERLAY_ID)?.remove();
 
@@ -166,6 +170,8 @@ export async function open() {
   overlayEl.addEventListener('click', e => { if (e.target === overlayEl) close(); });
   overlayEl.innerHTML = renderModalHtml();
   document.body.appendChild(overlayEl);
+  if (preset.currentOnly) overlayEl.querySelector('#smCurrentOnly').checked = true;
+  if (preset.owned) overlayEl.querySelector('#smOwned').value = preset.owned;
 
   wireControls();
   requestAnimationFrame(() => overlayEl.classList.add('open'));

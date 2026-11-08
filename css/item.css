@@ -93,6 +93,25 @@
 /* コーデ機能は元サイトと同じ2列 */
 .item-view .dash-feature-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
 .item-view .dash-feature-row .feature-btn { margin-bottom: 0; }
+/* 「季節・イベントでアイテムを検索」のカードの右側に「今手に入る未所持アイテム」を並べる（狭い画面では下に回す） */
+.item-view .dash-search-combo {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px;
+  background: var(--card); border-radius: var(--r); box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding-right: 14px;
+}
+.item-view .dash-search-combo .feature-btn { margin: 0; box-shadow: none; background: none; }
+.item-view .dash-avail-btn {
+  display: flex; align-items: center; gap: 8px; max-width: 300px; padding: 12px 16px; border: 0; border-radius: 14px;
+  background: var(--blue-bg); color: var(--blue); font-family: inherit; text-align: left; cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.item-view .dash-avail-btn:active { transform: scale(0.96); }
+.item-view .dash-avail-btn .inline-icon { flex-shrink: 0; stroke: currentColor; stroke-width: 2.2; }
+.item-view .dash-avail-btn b { display: block; font-size: 13.5px; font-weight: 800; }
+.item-view .dash-avail-btn small { display: block; margin-top: 2px; font-size: 11px; letter-spacing: 0.02em; opacity: 0.85; }
+@media (max-width: 599px) {
+  .item-view .dash-search-combo { grid-template-columns: 1fr; padding: 0 14px 14px 0; gap: 0; }
+  .item-view .dash-avail-btn { max-width: none; margin-left: 14px; }
+}
 /* カテゴリ一覧（2列/3列のタイル）のすぐ下に置くボタン（楽譜）。タイルの間隔と同じだけ空ける */
 .item-view .dash-after-grid { margin-top: 10px; }
 /* 元サイトでカテゴリの「›」と「はじめての方へ」の矢印だけは文字色（灰）で描いている */
