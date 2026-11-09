@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.09.2',
+    title: { ja: 'ヘアアクセサリーの並び順を修正', en: 'Hair accessory order fixed' },
+    date: '2026-11-09',
+    items: [
+      { type: 'fix', ja: 'ヘアアクセサリーで、常夏ハットから音楽ヘアピンまでの並び（月灯り兎アクセサリー・陽光スポーツサングラス・月灯り花の髪飾り・月灯りの光背）を正しい順番に直しました。', en: 'Fixed the order of several hair accessories.', route: 'item', sub: 'hair_accessory' },
+    ],
+  },
+  {
     version: '2026.11.09',
     title: { ja: 'ロイヤリティクラブのアイテムを追加', en: 'Loyalty Club items added' },
     date: '2026-11-09',
