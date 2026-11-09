@@ -111,6 +111,7 @@ export const ITEM_YOMI = {
   outfit_108: 'おんがくまーちんぐばんど ゆにふぉーむ',
   outfit_109: 'あにばーさりーすーつ',
   outfit_110: 'らいふくひだつきしょうぞく',
+  outfit_117: 'ひまわりどれす',
 
   // ▼ shoes（シューズ）
   shoes_001: 'そっとのぞくゆうびんや くつ',
@@ -345,6 +346,7 @@ export const ITEM_YOMI = {
   necklace_058: 'げんきいっぱいまなてぃぱっく',
   necklace_059: 'ねこねこしっぽあくせさりー',
   necklace_060: 'つきあかりしっぽあくせさりー',
+  necklace_062: 'ひまわりくろすたい',
 
   // ▼ hairstyle（ヘアスタイル）
   hairstyle_004: 'せんどうするほしよみ へあすたいる',
@@ -606,9 +608,11 @@ export const ITEM_YOMI = {
   hair_accessory_072: 'ほしのへああくせさりーき',
   hair_accessory_073: 'とれじゃーはんたーのさんかくぼう',
   hair_accessory_074: 'かいはべーる',
+  hair_accessory_085: 'はるめくくろーばーかざり',
   hair_accessory_075: 'いやしのぱっく',
   hair_accessory_078: 'もすしょっかく',
   hair_accessory_079: 'ようこうくらげぼんねっと',
+  hair_accessory_084: 'ひまわりかちゅーしゃ',
 
   // ▼ head_accessory（ヘッドアクセサリー）
   head_accessory_001: 'ぽんぽんするわかもの へっどあくせさりー',

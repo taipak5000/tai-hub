@@ -62,6 +62,7 @@ export const SEASON_NAME_EN = {
   '巣づくりの季節': 'Season of Nesting',
   '重なる音色の季節': 'Season of Duets',
   'ムーミンの季節': 'Season of Moomin',
+  'ロイヤリティクラブ': 'Loyalty Club',
   '光に染まる季節': 'Season of Radiance',
   '青い鳥の季節': 'Season of the Blue Bird',
   'ふたつの灯火の季節　前編': 'Season of The Two Embers - Part 1',

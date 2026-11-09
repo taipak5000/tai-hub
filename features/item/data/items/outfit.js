@@ -123,4 +123,5 @@ export const ITEMS = [
   { id: 'outfit_110', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/bf/Fortune-Pleated-Dress-icon.png/revision/latest/scale-to-width-down/51', nameEn: "Fortune Pleated Dress", name: '来福ひだ付き装束', event: '来福の日々', cost: 'premium', dye: true, noReprint: false, type: 'onesie' },  // ¥1,300
   { id: 'outfit_115', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/0a/Showy-Merchant-Outfit-icon.png/revision/latest/scale-to-width-down/51', nameEn: "Showy Merchant Outfit", name: '見せびらかしの商人　アウトフィット', event: '遥かなる真珠の季節', cost: 'free', dye: true, noReprint: false, type: 'onesie' },
   { id: 'outfit_116', img: 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/6/6d/Wrestling-Sailor-Outfit-icon.png/revision/latest/scale-to-width-down/51', nameEn: "Wrestling Sailor Outfit", name: '腕っぷし自慢の船乗り　アウトフィット', event: '遥かなる真珠の季節', cost: 'free', dye: true, noReprint: false, type: 'onesie' },
+  { id: 'outfit_117', img: '', nameEn: "ひまわりドレス", name: 'ひまわりドレス', event: 'ロイヤリティクラブ', cost: 'premium', dye: false, noReprint: false, type: 'outfit' }, // ロイヤリティクラブ（常時引き換え可能。英語名・画像・価格は未確認）
 ];

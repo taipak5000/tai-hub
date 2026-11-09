@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.09',
+    title: { ja: 'ロイヤリティクラブのアイテムを追加', en: 'Loyalty Club items added' },
+    date: '2026-11-09',
+    items: [
+      { type: 'new', ja: 'アイテム所持管理に、ロイヤリティクラブのアイテム（ひまわりカチューシャ・春めくクローバー飾り・ひまわりクロスタイ・ひまわりドレス）を追加しました。', en: 'Added four Loyalty Club items to the item tracker.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.08.4',
     title: { ja: 'パソコンの横長の画面で、本文が画面の中央に来るように', en: 'Centered content on wide screens' },
     date: '2026-11-08',
