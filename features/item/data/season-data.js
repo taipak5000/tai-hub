@@ -52,10 +52,12 @@ export function scheduleWithUpcomingSeason(schedule = EVENT_SCHEDULE, season = C
 export const EVENT_SCHEDULE = [
   { name: '月灯りの日々', start: '2026-09-19T16:00:00+09:00', end: '2026-10-10T15:59:59+09:00' },
   { name: 'いたずらな日々', start: '2026-10-23T16:00:00+09:00', end: '2026-11-11T23:59:59-08:00' }, // 終了は日本時間 2026/11/12 16:59:59（夏時間の終了後）
+  { name: 'お洒落な日々', start: '2026-11-27T00:00:00-08:00', end: '2026-12-10T23:59:59-08:00' }, // 日本時間 2026/11/27 17:00 〜 12/11 16:59:59
 ];
 
 export const CANDLE_BONUS_SCHEDULE = [
-  // 現在開催予定なし（終了したボーナスはこの配列から削除してよい）
+  // 終了したボーナスはこの配列から削除してよい
+  { name: 'ハート2倍キャンペーン', start: '2026-11-13T00:00:00-08:00', end: '2026-11-26T23:59:59-08:00' }, // 日本時間 2026/11/13 17:00 〜 11/27 16:59:59
 ];
 
 export const NEXT_UPDATE = {
@@ -82,6 +84,15 @@ export const REVISIT_SPIRIT_SCHEDULES = [
     anchorStart: '2026-11-05T00:00:00-08:00', // 日本時間 2026/11/5 17:00
     anchorEnd: '2026-11-08T23:59:59-08:00',   // 日本時間 2026/11/9 16:59:59
     intervalDays: 14,
+  },
+  {
+    // 来訪する精霊団（日本時間 2026/11/13 17:00 〜 11/27 16:59:59）。来る精霊とアイテムは未発表。
+    // 分かったら items（と分かれば spiritJa/spiritEn）を書き足す。labelJa/labelEn はお知らせ・ダッシュボードに出す名前
+    labelJa: '来訪する精霊団',
+    labelEn: 'Traveling Spirit Group',
+    items: [],
+    start: '2026-11-13T00:00:00-08:00',
+    end: '2026-11-26T23:59:59-08:00',
   },
   {
     items: [

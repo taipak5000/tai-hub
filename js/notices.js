@@ -122,6 +122,7 @@ export function collectNotices(nowDate = new Date()) {
     let title;
     if (waiting) title = w.active ? t(`待っていた「${name}」が来ています`, `${name}, whom you were waiting for, is here`) : t(`待っていた「${name}」がもうすぐ来ます`, `${name}, whom you were waiting for, arrives soon`);
     else if (name) title = w.active ? t(`旅の精霊「${name}」が来ています`, `Traveling spirit: ${name}`) : t(`旅の精霊「${name}」がもうすぐ来ます`, `${name} arrives soon`);
+    else if (s.labelJa) title = w.active ? t(`「${s.labelJa}」が来ています`, `${s.labelEn || s.labelJa} is here`) : t(`「${s.labelJa}」がもうすぐ来ます`, `${s.labelEn || s.labelJa} arrives soon`);
     else title = t('次の旅の精霊がもうすぐ来ます', 'The next traveling spirit arrives soon');
     let body = when;
     if (wishItems.length) body += t(`\n欲しいものリストのアイテムが${wishItems.length}つ手に入ります`, `\n${wishItems.length} item(s) on your wishlist are available`);

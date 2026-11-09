@@ -113,6 +113,8 @@ const DASH_EVENT_NAME_EN = {
   '大キャン２倍・シーズンキャンドル２倍': 'Double Grand & Season Candles',
   '月灯りの日々': 'Days of Moonlight',
   'いたずらな日々': 'Days of Mischief',
+  'お洒落な日々': 'Days of Style',
+  'ハート2倍キャンペーン': 'Double Hearts Event',
 };
 function dashEventName(name) {
   return CURRENT_LANG === 'en' ? (DASH_EVENT_NAME_EN[name] || name) : name;
@@ -642,10 +644,14 @@ function buildHtml(data) {
     const startDate = new Date(ev.start);
     bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${formatStart(startDate)}</span>`));
   });
-  revisitStatuses(data.revisitSchedules).forEach(({ status: rv }) => {
-    const revisitLabel = rv.active
-      ? t('再訪精霊が来訪中', 'Revisit Spirit is here now')
-      : t('再訪精霊の次回来訪まで', 'Revisit Spirit returns in');
+  revisitStatuses(data.revisitSchedules).forEach(({ schedule, status: rv }) => {
+    // 精霊団など名前の付いた来訪（season-data.js の labelJa/labelEn）はその名前で出す
+    const label = schedule && schedule.labelJa ? escapeHtml(t(schedule.labelJa, schedule.labelEn || schedule.labelJa)) : '';
+    const revisitLabel = label
+      ? (rv.active ? t(`<b>${label}</b>が来訪中`, `<b>${label}</b> is here now`) : t(`<b>${label}</b>の来訪まで`, `<b>${label}</b> arrives in`))
+      : rv.active
+        ? t('再訪精霊が来訪中', 'Revisit Spirit is here now')
+        : t('再訪精霊の次回来訪まで', 'Revisit Spirit returns in');
     bucketRows[bucketFor(rv.target)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-wing"/></svg>', `${revisitLabel}<span class="dash-countdown">${countdown(rv.target)}</span>`));
   });
   const edenTarget = nextEdenResetTarget();

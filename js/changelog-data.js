@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.09.3',
+    title: { ja: '11月後半からの予定を反映', en: 'Late November schedule added' },
+    date: '2026-11-09',
+    items: [
+      { type: 'improve', ja: 'ダッシュボードとお知らせに、来訪する精霊団（11/13 17:00〜11/27 16:59）・ハート2倍キャンペーン（同じ期間）・お洒落な日々（11/27 17:00〜12/11 16:59）を追加しました。お洒落な日々は、期間中はアイテム検索の「現在開催中」にも入ります。', en: 'Added the traveling spirit group and double hearts event (Nov 13–27) and Days of Style (Nov 27–Dec 11, JST) to the dashboard and notices.' },
+    ],
+  },
+  {
     version: '2026.11.09.2',
     title: { ja: 'ヘアアクセサリーの並び順を修正', en: 'Hair accessory order fixed' },
     date: '2026-11-09',
