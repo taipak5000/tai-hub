@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.09.4',
+    title: { ja: 'ロイヤリティクラブのアイテムを染色可能に修正', en: 'Loyalty Club items are dyeable' },
+    date: '2026-11-09',
+    items: [
+      { type: 'fix', ja: 'ロイヤリティクラブの4アイテム（ひまわりカチューシャ・春めくクローバー飾り・ひまわりクロスタイ・ひまわりドレス）を「染色可能」に直しました。', en: 'The four Loyalty Club items are now marked as dyeable.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.09.3',
     title: { ja: '11月後半からの予定を反映', en: 'Late November schedule added' },
     date: '2026-11-09',
