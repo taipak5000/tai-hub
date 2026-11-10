@@ -42,6 +42,7 @@ import {
 import { CURRENT_LANG, trEvent, trCat, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { isSeasonLikeEvent } from './data/season-data.js';
+import { enhanceEventSelect, eventSet } from './event-multi.js';
 import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 import { appendItemFooter } from './item-footer.js';
@@ -292,6 +293,7 @@ function buildEventOptions() {
     + (seasonEvents.length ? `<optgroup label="${en ? 'Seasons' : '季節'}">${opts(seasonEvents)}</optgroup>` : '')
     + (dayEvents.length ? `<optgroup label="${en ? 'Days' : '日々'}">${opts(dayEvents)}</optgroup>` : '')
     + (otherEvents.length ? `<optgroup label="${en ? 'Other' : 'その他'}">${opts(otherEvents)}</optgroup>` : '');
+  enhanceEventSelect(select); // 🗂️ 複数選べる欄に差し替える（features/item/event-multi.js）
 }
 
 /* ================================================================
@@ -378,7 +380,8 @@ function groupLabel(item) {
 function getFiltered() {
   const v = id => q('#' + id).value;
   const fName = normalizeSearchText(v('avName').trim());
-  const fEvent = v('avEvent'), fCat = v('avCat'), fOwned = v('avOwned'), fFav = v('avFav');
+  const fEvents = eventSet(q('#avEvent')); // 空＝すべて（複数選択）
+  const fCat = v('avCat'), fOwned = v('avOwned'), fFav = v('avFav');
   const fCost = v('avCostType'), fReprint = v('avReprint'), fDye = v('avDye'), fSort = v('avSort');
 
   const filtered = allItemsCache.filter(item => {
@@ -388,7 +391,7 @@ function getFiltered() {
       && !normalizeSearchText(item.event).includes(fName)
       && !normalizeSearchText(trEvent(item.event)).includes(fName)
       && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
-    if (fEvent !== 'all' && item.event !== fEvent) return false;
+    if (fEvents.size && !fEvents.has(item.event)) return false;
     if (fCat !== 'all' && item.catKey !== fCat) return false;
     if (fOwned !== 'all') {
       const isOwned = !!st(item.catKey).owned[item.id];

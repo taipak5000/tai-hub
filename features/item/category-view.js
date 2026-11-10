@@ -26,6 +26,8 @@ import {
 } from '../../js/state.js';
 import { CURRENT_LANG, trEvent, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
+import { enhanceEventSelect, eventSet } from './event-multi.js';
+import { isSeasonLikeEvent } from './data/season-data.js';
 import { appendItemFooter } from './item-footer.js';
 
 /* 季節・日々の登場順（イベント名順ソート／絞り込みセレクトの並び順）。
@@ -286,12 +288,27 @@ function buildEventFilter() {
     return ia - ib;
   });
   const select = containerEl.querySelector('#filterEvent');
-  events.forEach(ev => {
-    const opt = document.createElement('option');
-    opt.value = ev;
-    opt.textContent = trEvent(ev);
-    select.appendChild(opt);
+  // 季節・日々・その他でまとめる（複数選択の欄で「季節をまとめて」などを押せるように）
+  const en = CURRENT_LANG === 'en';
+  const isDay = e => !isSeasonLikeEvent(e) && (e.includes('日々') || e === 'Skyアニバーサリー');
+  const groups = [
+    [en ? 'Seasons' : '季節', events.filter(isSeasonLikeEvent)],
+    [en ? 'Days' : '日々', events.filter(isDay)],
+    [en ? 'Other' : 'その他', events.filter(e => !isSeasonLikeEvent(e) && !isDay(e))],
+  ];
+  groups.forEach(([label, list]) => {
+    if (!list.length) return;
+    const og = document.createElement('optgroup');
+    og.label = label;
+    list.forEach(ev => {
+      const opt = document.createElement('option');
+      opt.value = ev;
+      opt.textContent = trEvent(ev);
+      og.appendChild(opt);
+    });
+    select.appendChild(og);
   });
+  enhanceEventSelect(select); // 🗂️ 複数選べる欄に差し替える（features/item/event-multi.js）
 }
 
 // #filterColorは、そのカテゴリのアイテムにcolorフィールドがある場合のみ
@@ -415,7 +432,7 @@ function filterAndRender() {
   const fCost = containerEl.querySelector('#filterCost').value;
   const fDye = containerEl.querySelector('#filterDye').value;
   const fReprint = containerEl.querySelector('#filterReprint').value;
-  const fEvent = containerEl.querySelector('#filterEvent').value;
+  const fEvents = eventSet(containerEl.querySelector('#filterEvent')); // 空＝すべて（複数選択）
   // #filterColorはcolorデータを持つカテゴリ（現状はcapeのみ）だけに存在する
   const fColor = containerEl.querySelector('#filterColor')?.value ?? 'all';
   const fType = containerEl.querySelector('#filterType')?.value ?? 'all';
@@ -435,7 +452,7 @@ function filterAndRender() {
     if (fDye === 'dye-o' && !item.dye) return false;
     if (fDye === 'dye-x' && item.dye) return false;
     if (fReprint === 'noReprint' && !item.noReprint) return false;
-    if (fEvent !== 'all' && item.event !== fEvent) return false;
+    if (fEvents.size && !fEvents.has(item.event)) return false;
     if (fColor !== 'all' && item.color !== fColor) return false;
     if (fType !== 'all' && item.type !== fType) return false;
 

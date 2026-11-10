@@ -44,6 +44,7 @@
    ================================================================ */
 
 import { CURRENT_LANG, trEvent, trCat, trItem, escapeHtml, resetFilterPanel } from '../../js/i18n.js';
+import { enhanceEventSelect, eventSet } from './event-multi.js';
 import { getCategoryState, saveCategoryState, recordItemAcquire, removeItemAcquireRecord, isWishItem, toggleWishItem } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import { isSeasonLikeEvent, getCurrentEventNames, REVISIT_SPIRIT_SCHEDULES, isRevisitScheduleActive } from './data/season-data.js';
@@ -391,6 +392,7 @@ function buildEventOptions() {
     + (seasonEvents.length ? `<optgroup label="${en ? 'Seasons' : '季節'}">${opts(seasonEvents)}</optgroup>` : '')
     + (dayEvents.length ? `<optgroup label="${en ? 'Days' : '日々'}">${opts(dayEvents)}</optgroup>` : '')
     + (otherEvents.length ? `<optgroup label="${en ? 'Other' : 'その他'}">${opts(otherEvents)}</optgroup>` : '');
+  enhanceEventSelect(select); // 🗂️ 複数選べる欄に差し替える（features/item/event-multi.js）
 }
 
 function showLoading() {
@@ -468,7 +470,8 @@ function getFilteredItems(stateCache) {
   const q = sel => overlayEl.querySelector(sel);
 
   const fName = normalizeSearchText(q('#smName').value.trim());
-  const fEvent = q('#smEvent').value;
+  const fEvents = eventSet(q('#smEvent')); // 空＝すべて（複数選択）
+  const fEvent = fEvents.size === 1 ? [...fEvents][0] : 'all'; // 恒常精霊のエリア絞り込みは1つだけ選んだ時に出す
   const fCat = q('#smCat').value;
   const fOwned = q('#smOwned').value;
   const fFav = q('#smFav').value;
@@ -490,7 +493,7 @@ function getFilteredItems(stateCache) {
       && !normalizeSearchText(item.event).includes(fName)
       && !normalizeSearchText(trEvent(item.event)).includes(fName)
       && !(ITEM_YOMI[item.id] && normalizeSearchText(ITEM_YOMI[item.id]).includes(fName))) return false;
-    if (fEvent !== 'all' && item.event !== fEvent) return false;
+    if (fEvents.size && !fEvents.has(item.event)) return false;
     if (fCurrentOnly) {
       const isRevisitItem = isRevisitSpiritItem(item);
       const isCurrentEventItem = currentEventNames.includes(item.event);
@@ -541,10 +544,11 @@ function sortItems(items, mode, stateCache) {
   return items; // 'default'（カタログ順のまま）
 }
 
+function singleEvent() { const s = eventSet(overlayEl.querySelector('#smEvent')); return s.size === 1 ? [...s][0] : 'all'; }
 function render() {
   if (!overlayEl || !allItemsCache) return;
   const en = CURRENT_LANG === 'en';
-  syncRegularAreaFilterUI(overlayEl.querySelector('#smEvent').value);
+  syncRegularAreaFilterUI(singleEvent());
   syncCurrentTypeFilterUI();
   const stateCache = buildStateCache();
   const filtered = getFilteredItems(stateCache);
@@ -561,7 +565,7 @@ function render() {
   const notOwnedCount = filtered.length - ownedCount;
   const markBtn = overlayEl.querySelector('#smMarkAllBtn');
   if (markBtn) {
-    const show = overlayEl.querySelector('#smEvent').value !== 'all' && notOwnedCount > 0;
+    const show = eventSet(overlayEl.querySelector('#smEvent')).size > 0 && notOwnedCount > 0;
     markBtn.style.display = show ? '' : 'none';
     if (show) overlayEl.querySelector('#smMarkAllLabel').textContent = en
       ? `Mark ${notOwnedCount} filtered item(s) as owned`
