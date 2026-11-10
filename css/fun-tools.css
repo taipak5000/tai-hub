@@ -404,6 +404,22 @@
 .wish-plan-view .wp-row.soon { border-left-color: var(--hub-accent); }
 .wish-plan-view .wp-row.late { border-left-color: #ff9500; }
 .wish-plan-view .wp-row.other { opacity: 0.8; }
+.wish-plan-view .wp-row.off { opacity: 0.55; }
+.wish-plan-view .wp-row.off .wp-status { color: var(--hub-text-2); font-weight: 600; }
+/* 計算に入れるかどうかのチェック・グループ分け（2026-11-10） */
+.wish-plan-view .wp-include { display: flex; align-items: center; padding: 4px; margin: -4px 0 -4px -4px; cursor: pointer; }
+.wish-plan-view .wp-include input { width: 18px; height: 18px; margin: 0; accent-color: var(--hub-accent); cursor: pointer; }
+.wish-plan-view .wp-group-sel { margin-top: 5px; max-width: 100%; padding: 3px 8px; border: 1px solid var(--hub-sep); border-radius: 8px; background: var(--hub-bg); color: var(--hub-text); font: inherit; font-size: 11.5px; }
+.wish-plan-view .wp-groups { margin: 12px 0; padding: 12px; border-radius: 16px; background: var(--hub-card); }
+.wish-plan-view .wp-group-tabs { margin-bottom: 8px; }
+.wish-plan-view .wp-chip-n { margin-left: 4px; font-size: 11px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+.wish-plan-view .wp-group-add { border-style: dashed; }
+.wish-plan-view .wp-group-add .inline-icon { stroke: currentColor; margin-right: 2px; }
+.wish-plan-view .wp-group-edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.wish-plan-view .wp-group-edit .fun-input { flex: 1 1 180px; min-width: 0; }
+.wish-plan-view .wp-group-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.wish-plan-view .wp-group-info { margin-right: auto; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.wish-plan-view .wp-empty-group { margin: 0 0 12px; }
 .wish-plan-view .wp-rank { flex: none; width: 22px; text-align: center; font-size: 13px; font-weight: 800; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
 .wish-plan-view .wp-thumb { flex: none; width: 42px; height: 42px; border-radius: 10px; background: var(--hub-bg); overflow: hidden; }
 .wish-plan-view .wp-thumb img { width: 100%; height: 100%; object-fit: contain; }

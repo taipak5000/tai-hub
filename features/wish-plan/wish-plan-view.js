@@ -9,6 +9,8 @@
    - このツールだけのデータ（プロフィールごと）:
        wishPlanOrder_v1: ['catKey:id', …]（上ほど先に欲しい。載っていないものは最後に元の順で並ぶ）
        wishPlanSettings_v1: { deadline: 'season'|'date', date: 'YYYY-MM-DD', perDay: 1日に集める本数 }
+       wishPlanGroups_v1: { groups: [{ id, name }], assign: { 'catKey:id': groupId }, off: ['catKey:id'], view: 'all'|groupId }
+         （2026-11-10追加。グループ分けと「計算に入れない」印。計算は表示中のグループのうち、印の付いていないものだけ）
    キャンドル以外（課金・チケット・価格不明）のアイテムは、順番には並べるが本数の計算からは外す。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -22,6 +24,21 @@ import { toast } from '../shared/share-image.js';
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const ORDER_KEY = 'wishPlanOrder_v1';
 const SETTINGS_KEY = 'wishPlanSettings_v1';
+const GROUPS_KEY = 'wishPlanGroups_v1';
+let grp = null; // { groups, assign, off:Set, view }
+let groupEdit = null; // null | { mode: 'new'|'rename' }
+let groupDelConfirm = false;
+function loadGroups() {
+  const g = readJson(GROUPS_KEY, {});
+  const groups = (Array.isArray(g.groups) ? g.groups : []).filter(x => x && typeof x.id === 'string' && typeof x.name === 'string').map(x => ({ id: x.id.slice(0, 20), name: x.name.slice(0, 30) }));
+  const ids = new Set(groups.map(x => x.id));
+  const assign = {};
+  Object.entries(g.assign && typeof g.assign === 'object' ? g.assign : {}).forEach(([k, v]) => { if (ids.has(v)) assign[k] = v; });
+  grp = { groups, assign, off: new Set(Array.isArray(g.off) ? g.off.filter(k => typeof k === 'string') : []), view: ids.has(g.view) ? g.view : 'all' };
+}
+function saveGroups() { writeJson(GROUPS_KEY, { groups: grp.groups, assign: grp.assign, off: [...grp.off], view: grp.view }); }
+// 表示中のグループの行（「すべて」なら全部）
+function visibleRows() { return grp.view === 'all' ? rows : rows.filter(r => grp.assign[r.key] === grp.view); }
 const DAY = 86400000;
 
 let containerEl = null;
@@ -39,7 +56,8 @@ function writeJson(key, v) { try { localStorage.setItem(nsKey(key), JSON.stringi
 export function mount(container) {
   injectStylesheet();
   containerEl = container;
-  confirmId = null;
+  confirmId = null; groupEdit = null; groupDelConfirm = false;
+  loadGroups();
   const s = readJson(SETTINGS_KEY, {});
   settings = {
     deadline: s.deadline === 'date' ? 'date' : 'season',
@@ -143,9 +161,13 @@ function render() {
   let cumC = 0, cumH = 0;
   const perDay = settings.perDay;
   const now = new Date();
-  const lines = rows.map((row, idx) => {
+  const vis = visibleRows();
+  const counted = vis.filter(r => !grp.off.has(r.key));
+  const lines = vis.map((row, idx) => {
     let status = '', cls = '';
-    if (row.cost.type === 'candle' || row.cost.type === 'heart') {
+    const off = grp.off.has(row.key);
+    if (off) { status = t('計算に入れていません', 'Not included in the plan'); cls = 'off'; }
+    else if (row.cost.type === 'candle' || row.cost.type === 'heart') {
       const isC = row.cost.type === 'candle';
       if (isC) cumC += Number(row.cost.value) || 0; else cumH += Number(row.cost.value) || 0;
       const need = isC ? cumC - cur.candle : cumH - cur.heart;
@@ -158,14 +180,20 @@ function render() {
         cls = inTime ? 'soon' : 'late';
       } else { status = t(`あとハート${need}`, `${need} more hearts`); cls = 'soon'; }
     } else { status = t('本数の計算には入りません', 'Not counted in candles'); cls = 'other'; }
-    const first = idx === 0, last = idx === rows.length - 1;
+    const first = idx === 0, last = idx === vis.length - 1;
+    const groupSel = grp.groups.length ? `<select class="wp-group-sel" data-group-of="${escapeHtml(row.key)}" aria-label="${t('グループ', 'Group')}">
+        <option value="">${t('グループなし', 'No group')}</option>
+        ${grp.groups.map(g => `<option value="${escapeHtml(g.id)}"${grp.assign[row.key] === g.id ? ' selected' : ''}>${escapeHtml(g.name)}</option>`).join('')}
+      </select>` : '';
     return `<li class="wp-row ${cls}">
+      <label class="wp-include" title="${t('計算に入れる', 'Include in the plan')}"><input type="checkbox" data-include="${escapeHtml(row.key)}"${off ? '' : ' checked'} aria-label="${t('計算に入れる', 'Include in the plan')}"></label>
       <span class="wp-rank">${idx + 1}</span>
       <span class="wp-thumb" data-img-key="${escapeHtml(row.key)}">${thumbSrc(row) ? `<img src="${escapeHtml(thumbSrc(row))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
       <div class="wp-main">
         <div class="wp-name">${escapeHtml(row.name)}</div>
         <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(costLabel(row.cost))}</div>
         <div class="wp-status">${escapeHtml(status)}</div>
+        ${groupSel}
       </div>
       <div class="wp-move">
         <button type="button" class="fun-icon-btn" data-act="up" data-key="${escapeHtml(row.key)}"${first ? ' disabled' : ''} aria-label="${t('上へ', 'Move up')}"><svg class="inline-icon" width="14" height="14" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
@@ -196,22 +224,76 @@ function render() {
       </div>
     </section>
 
-    ${rows.length ? `<section class="wp-result">
-      <div class="wp-big"><span>${t('全部そろえるのに', 'To get everything')}</span><b>${needC.toLocaleString()}</b><small>${t('本たりません', 'candles short')}</small></div>
+    ${rows.length ? groupBarHtml(vis, counted) : ''}
+    ${rows.length && !vis.length ? `<p class="fun-hint wp-empty-group">${t('このグループにはまだアイテムがありません。「すべて」に戻って、各アイテムのグループを選んでください。', 'No items in this group yet. Go back to “All” and choose a group for each item.')}</p>` : ''}
+    ${vis.length ? `<section class="wp-result">
+      <div class="wp-big"><span>${counted.length === vis.length ? t('全部そろえるのに', 'To get everything') : t(`選んだ${counted.length}件をそろえるのに`, `To get the ${counted.length} selected`)}</span><b>${needC.toLocaleString()}</b><small>${t('本たりません', 'candles short')}</small></div>
       ${needC > 0 ? `<div class="wp-big"><span>${dl ? t(`期限（${fmtDate(dl)}）まで${daysLeft}日`, `${daysLeft} days to ${fmtDate(dl)}`) : t('期限なし', 'No deadline')}</span><b>${pace != null ? pace.toLocaleString() : '—'}</b><small>${t('本／日 あれば間に合います', 'candles/day needed')}</small></div>
       <p class="wp-note">${t(`1日${perDay}本なら、あと${allDays}日（${fmtDate(new Date(Date.now() + allDays * DAY))}ごろ）で全部そろいます。`, `At ${perDay}/day, you’ll have everything in ${allDays} days.`)}${pace != null && pace > perDay ? t(' このままだと期限に間に合わないものがあります。', ' Some items won’t make the deadline at this pace.') : ''}</p>` : `<p class="wp-note ok">${t('今のキャンドルで、欲しいもの（キャンドルで交換できるもの）が全部そろいます！', 'You can afford everything on your list right now!')}</p>`}
     </section>
     <ol class="wp-list">${lines}</ol>
-    <p class="fun-hint">${t('↑↓で順番を入れ替えられます。所持にしたアイテムは自動で一覧から外れます。', 'Reorder with ↑↓. Items you mark as owned drop off automatically.')}</p>`
-    : `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-cart"/></svg><p>${t('欲しいものリストが空です。アイテム所持管理で、欲しいアイテムのリボンを押して追加してください。', 'Your wishlist is empty. Add items from the item tracker.')}</p><button type="button" class="fun-btn" data-act="go-item">${t('アイテム所持管理を開く', 'Open item tracker')}</button></div>`}
+    <p class="fun-hint">${t('左のチェックを外すと、そのアイテムは計算に入りません。↑↓で順番を入れ替えられます。所持にしたアイテムは自動で一覧から外れます。', 'Uncheck an item to leave it out of the plan. Reorder with ↑↓. Items you mark as owned drop off automatically.')}</p>`
+    : (rows.length ? '' : `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-cart"/></svg><p>${t('欲しいものリストが空です。アイテム所持管理で、欲しいアイテムのリボンを押して追加してください。', 'Your wishlist is empty. Add items from the item tracker.')}</p><button type="button" class="fun-btn" data-act="go-item">${t('アイテム所持管理を開く', 'Open item tracker')}</button></div>`)}
   </div>`;
 }
 
+// グループのタブ（すべて・各グループ・＋グループを作る）と、選んでいるグループの名前の変更・削除、表示中をまとめて計算に入れる／外す
+function groupBarHtml(vis, counted) {
+  const count = id => (id === 'all' ? rows.length : rows.filter(r => grp.assign[r.key] === id).length);
+  const cur = grp.groups.find(g => g.id === grp.view);
+  const editing = groupEdit ? `<div class="wp-group-edit">
+      <input class="fun-input" type="text" maxlength="30" data-group-name value="${groupEdit.mode === 'rename' && cur ? escapeHtml(cur.name) : ''}" placeholder="${t('グループの名前（例: 次の季節で買う）', 'Group name')}">
+      <button type="button" class="fun-btn small primary" data-act="group-save">${groupEdit.mode === 'new' ? t('作る', 'Create') : t('変更', 'Rename')}</button>
+      <button type="button" class="fun-btn small" data-act="group-cancel">${t('やめる', 'Cancel')}</button>
+    </div>` : '';
+  return `<section class="wp-groups">
+    <div class="fun-chips wp-group-tabs" role="tablist">
+      <button type="button" class="fun-chip${grp.view === 'all' ? ' on' : ''}" data-act="group-view" data-g="all">${t('すべて', 'All')}<span class="wp-chip-n">${count('all')}</span></button>
+      ${grp.groups.map(g => `<button type="button" class="fun-chip${grp.view === g.id ? ' on' : ''}" data-act="group-view" data-g="${escapeHtml(g.id)}">${escapeHtml(g.name)}<span class="wp-chip-n">${count(g.id)}</span></button>`).join('')}
+      <button type="button" class="fun-chip wp-group-add" data-act="group-new"><svg class="inline-icon" width="12" height="12"><use href="#i-plus"/></svg>${t('グループを作る', 'New group')}</button>
+    </div>
+    ${editing}
+    <div class="wp-group-tools">
+      <span class="wp-group-info">${t(`計算に入れる: ${counted.length} / ${vis.length}件`, `Included: ${counted.length} / ${vis.length}`)}</span>
+      ${vis.length ? `<button type="button" class="fun-btn small" data-act="include-all">${t('すべて入れる', 'Include all')}</button><button type="button" class="fun-btn small" data-act="include-none">${t('すべて外す', 'Exclude all')}</button>` : ''}
+      ${cur && !groupEdit ? `<button type="button" class="fun-btn small" data-act="group-rename">${t('名前を変える', 'Rename')}</button><button type="button" class="fun-btn small${groupDelConfirm ? ' is-confirm' : ''}" data-act="group-del">${groupDelConfirm ? t('もう一度押すと削除', 'Tap again to delete') : t('グループを消す', 'Delete group')}</button>` : ''}
+    </div>
+  </section>`;
+}
+function genGroupId() { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+function onGroupAction(act, btn) {
+  if (act === 'group-view') { grp.view = btn.dataset.g; groupEdit = null; groupDelConfirm = false; saveGroups(); render(); return true; }
+  if (act === 'group-new') { groupEdit = { mode: 'new' }; groupDelConfirm = false; render(); root().querySelector('[data-group-name]')?.focus(); return true; }
+  if (act === 'group-rename') { groupEdit = { mode: 'rename' }; render(); const i = root().querySelector('[data-group-name]'); if (i) { i.focus(); i.select(); } return true; }
+  if (act === 'group-cancel') { groupEdit = null; render(); return true; }
+  if (act === 'group-save') {
+    const name = (root().querySelector('[data-group-name]')?.value || '').trim().slice(0, 30);
+    if (!name) { toast(t('グループの名前を入れてください', 'Enter a group name')); return true; }
+    if (groupEdit && groupEdit.mode === 'rename') { const g = grp.groups.find(x => x.id === grp.view); if (g) g.name = name; }
+    else { const id = genGroupId(); grp.groups.push({ id, name }); grp.view = id; }
+    groupEdit = null; saveGroups(); render(); return true;
+  }
+  if (act === 'group-del') {
+    if (!groupDelConfirm) { groupDelConfirm = true; render(); setTimeout(() => { if (groupDelConfirm && containerEl) { groupDelConfirm = false; render(); } }, 3500); return true; }
+    const id = grp.view;
+    grp.groups = grp.groups.filter(g => g.id !== id);
+    Object.keys(grp.assign).forEach(k => { if (grp.assign[k] === id) delete grp.assign[k]; }); // アイテムは「グループなし」に戻る（欲しいものからは外さない）
+    grp.view = 'all'; groupDelConfirm = false; saveGroups(); render();
+    toast(t('グループを消しました（アイテムはそのまま残っています）', 'Group deleted (items are kept)'));
+    return true;
+  }
+  if (act === 'include-all' || act === 'include-none') {
+    visibleRows().forEach(r => { if (act === 'include-all') grp.off.delete(r.key); else grp.off.add(r.key); });
+    saveGroups(); render(); return true;
+  }
+  return false;
+}
 function onClick(e) {
   const btn = e.target.closest('[data-act]');
   if (!btn || btn.disabled) return;
   const { act, key } = btn.dataset;
   if (act === 'go-item') { navigate('item', ''); return; }
+  if (onGroupAction(act, btn)) return;
   if (act === 'dl-season' || act === 'dl-date') {
     settings.deadline = act === 'dl-season' ? 'season' : 'date';
     if (settings.deadline === 'date' && !settings.date) {
@@ -223,7 +305,12 @@ function onClick(e) {
   const i = rows.findIndex(r => r.key === key);
   if (i < 0) return;
   if (act === 'up' || act === 'down') {
-    const j = act === 'up' ? i - 1 : i + 1;
+    // 表示中（グループで絞った）一覧の中で、となりの行と入れ替える
+    const vis = visibleRows();
+    const vi = vis.findIndex(r => r.key === key);
+    const other = vis[act === 'up' ? vi - 1 : vi + 1];
+    if (!other) return;
+    const j = rows.indexOf(other);
     [rows[i], rows[j]] = [rows[j], rows[i]];
     saveOrder(); render();
     root().querySelector(`[data-act="${act}"][data-key="${CSS.escape(key)}"]`)?.focus();
@@ -239,6 +326,8 @@ function onClick(e) {
 }
 function onChange(e) {
   const el = e.target;
+  if (el.dataset.include) { if (el.checked) grp.off.delete(el.dataset.include); else grp.off.add(el.dataset.include); saveGroups(); render(); return; }
+  if (el.dataset.groupOf) { if (el.value) grp.assign[el.dataset.groupOf] = el.value; else delete grp.assign[el.dataset.groupOf]; saveGroups(); render(); return; }
   if (el.dataset.cur) { setCurrency(el.dataset.cur, el.value); render(); return; }
   if (el.dataset.set === 'perDay') { settings.perDay = Math.min(999, Math.max(1, Math.floor(Number(el.value) || 1))); writeJson(SETTINGS_KEY, settings); render(); return; }
   if (el.dataset.set === 'date') { settings.date = el.value; writeJson(SETTINGS_KEY, settings); render(); }

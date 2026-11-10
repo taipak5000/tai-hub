@@ -95,7 +95,7 @@ export const SITE_CATALOG = [
   // 写真はIndexedDBにあり、バックアップ（このJSON）には含めない（記録と一言・フレンドの情報だけ移る）
   { id: 'friends', label: 'フレンド記念日・フォト日記', labelEn: 'Friend Anniversaries & Photo Diary', namespaced: true, keys: ['friendsDoc_v1'] },
   { id: 'today', label: 'デイリーチェックシートのおみくじ', labelEn: 'Checklist fortunes', namespaced: true, keys: ['todayTodo_v1', 'omikujiLog_v1'] },
-  { id: 'wish-plan', label: 'ほしいもの計画', labelEn: 'Wishlist Plan', namespaced: true, keys: ['wishPlanOrder_v1', 'wishPlanSettings_v1'] },
+  { id: 'wish-plan', label: 'ほしいもの計画', labelEn: 'Wishlist Plan', namespaced: true, keys: ['wishPlanOrder_v1', 'wishPlanSettings_v1', 'wishPlanGroups_v1'] },
   // コーデ日記の写真もIndexedDB（バックアップには含めない）
   { id: 'coord-diary', label: 'コーデ日記', labelEn: 'Outfit Diary', namespaced: true, keys: ['coordDiary_v1'] },
   // 🧪 試作中の機能（非公開のため hidden。データは静かに引き継ぐ）
