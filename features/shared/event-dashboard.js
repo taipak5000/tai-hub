@@ -559,6 +559,14 @@ function formatStart(d) {
   const hh = String(d.getHours()).padStart(2, '0'), mi = String(d.getMinutes()).padStart(2, '0');
   return `${d.getMonth() + 1}/${d.getDate()}${wd ? `(${wd})` : ''} ${hh}:${mi}`;
 }
+// 開催期間の小さな注記（開始〜終了。終了が無ければ開始だけ）。終了は「16:59:59」を分までで出す
+function periodNote(ev) {
+  const start = ev.start ? new Date(ev.start) : null;
+  const end = ev.end ? new Date(ev.end) : null;
+  if (start && end) return `${formatStart(start)} 〜 ${formatStart(end)}`;
+  if (start) return formatStart(start);
+  return end ? t(`${formatStart(end)}まで`, `Until ${formatStart(end)}`) : '';
+}
 function row(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
 }
@@ -628,21 +636,21 @@ function buildHtml(data) {
   }
   activeScheduledEvents(data.eventSchedule).forEach(ev => {
     const endDate = new Date(ev.end);
-    bucketRows[bucketFor(endDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(endDate)}</span>`));
+    bucketRows[bucketFor(endDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(endDate)}</span><span class="dash-note">${t(`${formatStart(endDate)}まで`, `Until ${formatStart(endDate)}`)}</span>`));
   });
   activeScheduledEvents(data.candleBonusSchedule).forEach(ev => {
     const bonusEnd = new Date(ev.end);
-    bucketRows[bucketFor(bonusEnd)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(bonusEnd)}</span>`));
+    bucketRows[bucketFor(bonusEnd)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(bonusEnd)}</span><span class="dash-note">${t(`${formatStart(bonusEnd)}まで`, `Until ${formatStart(bonusEnd)}`)}</span>`));
   });
   // 🆕 これから始まるイベント（開始が近いものは今日/今週、約1か月先までは今月）。
   // 開催中のものが「終了まで」の残り時間で振り分けられるのと対称に、「開始まで」で振り分ける
   upcomingScheduledEvents(data.eventSchedule).forEach(ev => {
     const startDate = new Date(ev.start);
-    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${formatStart(startDate)}</span>`));
+    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${periodNote(ev)}</span>`));
   });
   upcomingScheduledEvents(data.candleBonusSchedule).forEach(ev => {
     const startDate = new Date(ev.start);
-    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${formatStart(startDate)}</span>`));
+    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${periodNote(ev)}</span>`));
   });
   revisitStatuses(data.revisitSchedules).forEach(({ schedule, status: rv }) => {
     // 精霊団など名前の付いた来訪（season-data.js の labelJa/labelEn）はその名前で出す
