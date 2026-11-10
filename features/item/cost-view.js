@@ -276,6 +276,9 @@ function costHtml(cost, quantity) {
   }
   // 季節キャンドルの価格（季節の開催中の価格。キャンドル・星のキャンドルとは別の通貨なので、合計には入れない）
   if (cost.type === 'seasonCandle') return `<svg class="inline-icon" width="15" height="15"><use href="#i-star-candle"/></svg> ${en ? `${cost.value} Season Candles` : `季節キャンドル ${cost.value}本`}`;
+  // 季節パスの報酬・精霊ツリーで無料（価格が無いことが分かっているもの。合計には入れない）
+  if (cost.type === 'reward') return en ? 'Season Pass reward' : '報酬';
+  if (cost.type === 'free') return en ? 'Free' : '無料';
   if (cost.type === 'na') return en ? 'N/A' : '対象外';
   if (cost.type === 'ticket') return en ? 'Ticket Exchange' : 'チケット交換';
   return en ? 'Unknown' : '不明';
@@ -1258,6 +1261,8 @@ function renderShell() {
               <option value="starCandle">${t('星のキャンドル', 'Season Candles')}</option>
               <option value="heart">${t('ハート', 'Hearts')}</option>
               <option value="seasonCandle">${t('季節キャンドル', 'Season Candles (seasonal price)')}</option>
+              <option value="reward">${t('報酬', 'Rewards')}</option>
+              <option value="free">${t('無料', 'Free')}</option>
               <option value="money">${t('実額', 'Real Money')}</option>
             </select>
           </div>

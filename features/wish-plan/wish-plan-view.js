@@ -124,6 +124,8 @@ function costLabel(c) {
   if (c.type === 'heart') return t(`ハート ${c.value}`, `${c.value} hearts`);
   if (c.type === 'money') return c.value ? t(`課金 ${Number(c.value).toLocaleString()}円`, `Paid ¥${Number(c.value).toLocaleString()}`) : t('課金', 'Paid');
   if (c.type === 'ticket') return t('チケット', 'Tickets');
+  if (c.type === 'reward') return t('報酬', 'Reward');
+  if (c.type === 'free') return t('無料', 'Free');
   if (c.type === 'seasonCandle') return t(`季節キャンドル ${c.value}`, `${c.value} season candles`);
   if (c.type === 'na') return t('交換なし', 'Not purchasable');
   return t('価格不明', 'Unknown price');

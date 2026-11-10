@@ -282,10 +282,10 @@ const landingPoint = currentY + project(v);
 
 ## 💴 アイテム別コストの価格データ（`features/item/data/cost-data.js`）
 
-- `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル。2026-11-10追加）／`na`／`unknown`。
+- `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル。2026-11-10追加）／`reward`（季節パスの報酬＝「報酬」）／`free`（精霊ツリーで無料＝「無料」）／`na`／`unknown`。
   **`seasonCandle`は季節の開催中の価格で、キャンドルとは別の通貨なので合計には入れない**（表示とフィルターだけ）。
 - 「不明」を埋める時は SkyGame-Data（npm `skygame-data`。sky-planner.com と同じデータ）の`nodes`（精霊ツリー）・`itemLists`（ショップ）・`iaps`（課金パック）と英語名で突き合わせる。
-  対応: `c`→candle、`h`→heart、`ac`→starCandle、`ec`→ticket、`sc`→seasonCandle。課金パックのドル→円は、既存データから
+  対応: `c`→candle、`h`→heart、`ac`→starCandle、`ec`→ticket、`sc`→seasonCandle。価格の無いノードは、アイテムの`group`が`SeasonPass`なら`reward`、それ以外は`free`。課金パックのドル→円は、既存データから
   1.99→260・2.99→400・3.99→530・4.99→650・6.99→900・9.99→1300・11.99→1550・14.99→1950・17.99→2380・19.99→2600・24.99→3300・29.99→3900。
 
 ## 🔎 検索エンジン向けの紹介ページ（2026-11-07追加）
