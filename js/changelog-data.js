@@ -12,11 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.10.11',
+    version: '2026.11.10.12',
     title: { ja: '巣づくり工房の新しい家具を追加、アイテム別コストの不明な価格を補完', en: 'New Nesting Workshop furniture, more item costs' },
     date: '2026-11-10',
     items: [
-      { type: 'improve', ja: 'ほしいもの計画で、計算に入れるアイテムをチェックで選べるようにしました。名前付きのグループを作って、グループごとに計算することもできます（グループに入れるアイテムはチェックで選び、1つのアイテムを複数のグループに入れられます）。', en: 'Wishlist Plan: choose which items to include, and sort your wishlist into named groups to plan each group separately.', route: 'wish-plan' },
+      { type: 'improve', ja: 'ほしいもの計画で、計算に入れるアイテムをチェックで選べるようにしました。名前付きのグループを作って、グループごとに計算することもできます（グループに入れるアイテムはチェックで選び、1つのアイテムを複数のグループに入れられます）。各アイテムの「手に入れた」を押すと、価格ぶんキャンドル（またはハート）を減らして、アイテム所持管理で所持にします。', en: 'Wishlist Plan: choose which items to include, and sort your wishlist into named groups to plan each group separately.', route: 'wish-plan' },
       { type: 'improve', ja: 'アイテム所持管理の絞り込みで、季節・イベントを複数まとめて選べるようにしました（カテゴリの一覧・全アイテムの一覧・季節・イベントの検索）。「季節をまとめて」「日々をまとめて」で一度に選ぶこともできます。', en: 'Item tracker filters now let you pick several seasons/events at once, with one-tap “all seasons/all days”.', route: 'item' },
       { type: 'improve', ja: 'ダッシュボードのイベントに、開始日時だけでなく終了日時も小さく載せるようにしました（開催中のものは「○/○ ○:○まで」）。', en: 'The dashboard now shows end times for events, not just start times.' },
       { type: 'new', ja: 'アイテム所持管理の大きい設置アイテムに、巣づくり工房の新しい家具8つ（木製の寝室チェア・木製の寝室テーブル・木箱・木製の寝室ベッド・木製のコンソールテーブル・木製の絵の具箱・木製のロッキングチェア・木製のデスク）を追加しました。日本語名は仮のものです。', en: 'Added eight new Nesting Workshop furniture items (Arles set and Crate) to large placeables.', route: 'item', sub: 'large_placeable' },

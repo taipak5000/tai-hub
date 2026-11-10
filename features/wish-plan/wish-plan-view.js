@@ -15,7 +15,8 @@
    キャンドル以外（課金・チケット・価格不明）のアイテムは、順番には並べるが本数の計算からは外す。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { nsKey, getWishIds, removeWishItem, getCategoryState } from '../../js/state.js';
+import { nsKey, getWishIds, removeWishItem, getCategoryState, saveCategoryState, recordItemAcquire } from '../../js/state.js';
+import { loadMusicSheetState, saveMusicSheetState } from '../item/data/music-sheet-state.js';
 import { navigate } from '../../js/router.js';
 import { CATEGORY_REGISTRY } from '../item/data/categories.js';
 import { CURRENT_SEASON } from '../item/data/season-data.js';
@@ -66,6 +67,7 @@ let rows = [];
 let settings = null;
 let token = 0;
 let confirmId = null;
+let getConfirmId = null; // 「手に入れた」を一度押して確認待ちの行
 
 function readJson(key, fb) { try { const v = JSON.parse(localStorage.getItem(nsKey(key))); return v == null ? fb : v; } catch (e) { return fb; } }
 function writeJson(key, v) { try { localStorage.setItem(nsKey(key), JSON.stringify(v)); } catch (e) { /* noop */ } }
@@ -139,6 +141,36 @@ async function loadImages(my) {
 // 行のアイコン: 楽譜は行に画像を持ち、ほかは読み込み済みのアイテムデータ（images）から引く。
 // 並び替えなどで描き直した時にもアイコンが消えないよう、描くたびにここを通す
 function thumbSrc(row) { return row.img || (images[row.cat.key] && images[row.cat.key][row.id]) || ''; }
+// 「手に入れた」の確認の文言（キャンドル・ハートで交換するものは、減る数を出す）
+function getConfirmLabel(row) {
+  const c = row.cost, cur = currency();
+  if (c.type === 'candle' && c.value) return cur.candle >= c.value ? t(`キャンドル−${c.value}で入手`, `Spend ${c.value} candles`) : t(`キャンドルが足りません（${cur.candle}→0）`, `Not enough candles (${cur.candle}→0)`);
+  if (c.type === 'heart' && c.value) return cur.heart >= c.value ? t(`ハート−${c.value}で入手`, `Spend ${c.value} hearts`) : t(`ハートが足りません（${cur.heart}→0）`, `Not enough hearts (${cur.heart}→0)`);
+  return t('もう一度押すと所持にします', 'Tap again to mark owned');
+}
+// 手に入れた: キャンドル・ハートの価格ぶん所持数を減らし、アイテム所持管理で所持にする（欲しいものからは外れる）
+async function acquireRow(row) {
+  const c = row.cost;
+  let spent = '';
+  if ((c.type === 'candle' || c.type === 'heart') && c.value) {
+    const field = c.type === 'candle' ? 'candle' : 'heart';
+    const before = currency()[field];
+    setCurrency(field, Math.max(0, before - Number(c.value)));
+    spent = c.type === 'candle' ? t(`キャンドル−${Math.min(before, c.value)}`, `−${Math.min(before, c.value)} candles`) : t(`ハート−${Math.min(before, c.value)}`, `−${Math.min(before, c.value)} hearts`);
+  }
+  if (row.cat.key === 'music_sheet') {
+    const st = loadMusicSheetState();
+    st.owned[row.id] = true;
+    saveMusicSheetState(st.owned, st.fav, music);
+  } else {
+    const mod = await import(`../item/data/items/${row.cat.key}.js`);
+    const st = getCategoryState(row.cat.key);
+    st.owned[row.id] = true;
+    saveCategoryState(row.cat.key, st.owned, st.fav, mod.ITEMS || []);
+  }
+  recordItemAcquire(row.cat.key, row.id); // 獲得ログに残し、欲しいものから外す
+  return spent;
+}
 function currency() {
   const c = readJson('wishOwnCurrency', {});
   return { candle: Math.max(0, Number(c.candle) || 0), heart: Math.max(0, Number(c.heart) || 0) };
@@ -209,6 +241,7 @@ function render() {
         <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(costLabel(row.cost))}</div>
         <div class="wp-status">${escapeHtml(status)}</div>
         ${groupSel}
+        <div class="wp-get-row"><button type="button" class="wp-get-btn${getConfirmId === row.key ? ' is-confirm' : ''}" data-act="get" data-key="${escapeHtml(row.key)}">${getConfirmId === row.key ? escapeHtml(getConfirmLabel(row)) : `<svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-check"/></svg>${t('手に入れた', 'Got it')}`}</button></div>
       </div>
       <div class="wp-move">
         <button type="button" class="fun-icon-btn" data-act="up" data-key="${escapeHtml(row.key)}"${first ? ' disabled' : ''} aria-label="${t('上へ', 'Move up')}"><svg class="inline-icon" width="14" height="14" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
@@ -354,6 +387,21 @@ function onClick(e) {
     [rows[i], rows[j]] = [rows[j], rows[i]];
     saveOrder(); render();
     root().querySelector(`[data-act="${act}"][data-key="${CSS.escape(key)}"]`)?.focus();
+    return;
+  }
+  if (act === 'get') {
+    if (getConfirmId !== key) {
+      getConfirmId = key; confirmId = null; render();
+      setTimeout(() => { if (getConfirmId === key && containerEl) { getConfirmId = null; render(); } }, 4000);
+      return;
+    }
+    getConfirmId = null;
+    const row = rows[i];
+    acquireRow(row).then(spent => {
+      rows = rows.filter(r => r.key !== row.key); saveOrder();
+      if (containerEl) render();
+      toast(spent ? t(`「${row.name}」を所持にしました（${spent}）`, `Marked “${row.name}” as owned (${spent})`) : t(`「${row.name}」を所持にしました`, `Marked “${row.name}” as owned`));
+    }).catch(() => toast(t('所持にできませんでした。もう一度お試しください', 'Could not mark as owned. Please try again.')));
     return;
   }
   if (act === 'remove') {
