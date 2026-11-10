@@ -462,13 +462,13 @@ function calendarHtml(data) {
       const halfEnd = roundRight && it.endsMidDay;
       if (!halfStart && !halfEnd) {
         barsHtml += `<div class="dash-cal-bar${roundLeft ? ' round-l' : ''}${roundRight ? ' round-r' : ''}"`
-          + ` style="grid-column:${colStart} / span ${colSpan}; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
+          + ` style="grid-column:${colStart} / span ${colSpan}; grid-row:${localRow + 1}; --bar:${color};"`
           + ` title="${nameEsc}">${nameEsc}</div>`;
       } else if (colSpan === 1) {
         const cls = 'dash-cal-bar' + (halfStart ? ' half-start' : '') + (halfEnd ? ' half-end' : '')
           + (roundLeft ? ' round-l' : '') + (roundRight ? ' round-r' : '');
         barsHtml += `<div class="${cls}"`
-          + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
+          + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; --bar:${color};"`
           + ` title="${nameEsc}">${nameEsc}</div>`;
       } else {
         const endCol = colStart + colSpan - 1;
@@ -476,17 +476,17 @@ function calendarHtml(data) {
         const midSpan = (halfEnd ? endCol : endCol + 1) - midStart;
         if (halfStart) {
           barsHtml += `<div class="dash-cal-bar half-start round-l"`
-            + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
+            + ` style="grid-column:${colStart} / span 1; grid-row:${localRow + 1}; --bar:${color};"`
             + ` title="${nameEsc}"></div>`;
         }
         if (midSpan > 0) {
           barsHtml += `<div class="dash-cal-bar${(!halfStart && roundLeft) ? ' round-l' : ''}${(!halfEnd && roundRight) ? ' round-r' : ''}"`
-            + ` style="grid-column:${midStart} / span ${midSpan}; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
+            + ` style="grid-column:${midStart} / span ${midSpan}; grid-row:${localRow + 1}; --bar:${color};"`
             + ` title="${nameEsc}">${nameEsc}</div>`;
         }
         if (halfEnd) {
           barsHtml += `<div class="dash-cal-bar half-end round-r"`
-            + ` style="grid-column:${endCol} / span 1; grid-row:${localRow + 1}; background:${color}; color:${textColor};"`
+            + ` style="grid-column:${endCol} / span 1; grid-row:${localRow + 1}; --bar:${color};"`
             + ` title="${nameEsc}"></div>`;
         }
       }
@@ -506,7 +506,7 @@ function calendarHtml(data) {
     <details class="dash-calendar">
       <summary class="dash-calendar-summary">
         <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg>
-        <span>${t(`カレンダーで見る（${monthLabel}）`, `View as Calendar (${monthLabel})`)}</span>
+        <span>${t(`カレンダー（${monthLabel}）`, `Calendar (${monthLabel})`)}</span>
         <span class="dash-calendar-chevron">›</span>
       </summary>
       <div class="dash-cal-body">
@@ -570,19 +570,24 @@ function periodNote(ev) {
 function row(icon, html) {
   return `<div class="dash-row"><span class="dash-row-icon">${icon}</span><span class="dash-row-text">${html}</span></div>`;
 }
+// 🍃 予定1件ぶんのコンパクトな行（2026-11-10。大きなカードとアイコンをやめて、名前・残り時間・日付だけにした）。
+// name は組み立て済みのHTML、state は「終了まで」などの短い言葉、note は日付などの小さな補足
+function item({ name, state = '', time = '', note = '', dot = '' }) {
+  return `<div class="dash-item">${dot}<span class="dash-item-name">${name}</span>`
+    + (time ? `<span class="dash-item-time">${state ? `<span class="dash-item-state">${state}</span>` : ''}${time}</span>` : '')
+    + (note ? `<span class="dash-item-note">${note}</span>` : '')
+    + '</div>';
+}
+const shardDot = (isRed, dim) => `<span class="dash-item-dot${isRed ? ' is-red' : ''}${dim ? ' is-dim' : ''}" aria-hidden="true"></span>`;
 
 function buildHtml(data) {
+  const now = new Date();
   const dailyRows = [];
   const shard = shardInfo();
   if (shard.hasShard) {
-    const icon = shard.isRed
-      ? '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff453a;"></span>'
-      : '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#8e8e93;"></span>';
     const colorLabel = shard.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard');
-    const realmLabel = srLabel(shard.realm);
-    const locationLabel = t(shard.location.ja, shard.location.en);
-    const now = new Date();
-    // 開始〜終了を1回ずつ1行で出す。終わった回は打ち消し線、出現中の回には「出現中」を付ける
+    const where = `${srLabel(shard.realm)}・${t(shard.location.ja, shard.location.en)}`;
+    // 開始〜終了を1回ずつ並べる。終わった回は打ち消し線、出現中の回には「出現中」を付ける
     const active = shard.occurrences.find(occ => occ.getTime() <= now.getTime() && now.getTime() < shardEnd(occ).getTime());
     const times = shard.occurrences.map(occ => {
       const past = shardEnd(occ).getTime() <= now.getTime();
@@ -590,108 +595,76 @@ function buildHtml(data) {
       return `<span class="dash-shard-time${past ? ' past' : ''}${isActive ? ' active' : ''}">${formatShardRange(occ)}${isActive ? `<span class="dash-shard-active">${t('出現中', 'Active')}</span>` : ''}</span>`;
     }).join('');
     const soon = soonestFuture(shard.occurrences) || nextShardTime();
-    const countdownHtml = active
-      ? `<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(shardEnd(active))}</span>`
-      : (soon ? `<span class="dash-countdown">${t('次まで', 'Next in')} ${countdown(soon)}</span>` : '');
-    const shardLine = t(
-      `${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）が出現：`,
-      `${colorLabel} (<b>${realmLabel} · ${locationLabel}</b>) erupts: `,
-    );
-    dailyRows.push(row(icon, shardLine + `<span class="dash-shard-times">${times}</span>${countdownHtml}`));
+    dailyRows.push(item({
+      dot: shardDot(shard.isRed),
+      name: `${colorLabel} <span class="dash-item-sub">${where}</span>`,
+      state: active ? t('終了まで', 'Ends in') : soon ? t('次まで', 'Next in') : '',
+      time: active ? countdown(shardEnd(active)) : soon ? countdown(soon) : '',
+      note: `<span class="dash-shard-times">${times}</span>`,
+    }));
   } else {
     const nextShard = nextShardTime();
-    const nextHtml = nextShard ? `<span class="dash-countdown">${t('次まで', 'Next in')} ${countdown(nextShard)}</span>` : '';
-    dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', `${t('本日は闇の破片の出現はありません', 'No shard eruptions today')}${nextHtml}`));
+    dailyRows.push(item({ dot: shardDot(false, true), name: t('闇の破片なし', 'No shards today'), state: nextShard ? t('次まで', 'Next in') : '', time: nextShard ? countdown(nextShard) : '' }));
   }
-  // 次のデイリー（太平洋時間0時の切り替わり後）の闇の破片。今日の分と同じ形で、時刻だけを並べる
+  // 次のデイリー（太平洋時間0時の切り替わり後）の闇の破片
   const tomorrowShard = shardInfoForOffset(1);
-  const afterReset = t('デイリー切替後', 'After daily reset');
   if (tomorrowShard.hasShard) {
-    const icon = `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${tomorrowShard.isRed ? '#ff453a' : '#8e8e93'};opacity:0.55;"></span>`;
     const colorLabel = tomorrowShard.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard');
-    const realmLabel = srLabel(tomorrowShard.realm);
-    const locationLabel = t(tomorrowShard.location.ja, tomorrowShard.location.en);
+    const where = `${srLabel(tomorrowShard.realm)}・${t(tomorrowShard.location.ja, tomorrowShard.location.en)}`;
     const times = tomorrowShard.occurrences.map(occ => `<span class="dash-shard-time">${formatShardRange(occ)}</span>`).join('');
-    const line = t(
-      `${afterReset}：${colorLabel}（<b>${realmLabel}・${locationLabel}</b>）が出現：`,
-      `${afterReset}: ${colorLabel} (<b>${realmLabel} · ${locationLabel}</b>) erupts: `,
-    );
-    dailyRows.push(row(icon, line + `<span class="dash-shard-times">${times}</span>`));
+    dailyRows.push(item({ dot: shardDot(tomorrowShard.isRed, true), name: `${t('翌日', 'Next day')}：${colorLabel} <span class="dash-item-sub">${where}</span>`, note: `<span class="dash-shard-times">${times}</span>` }));
   } else {
-    dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-moon"/></svg>', t(`${afterReset}：闇の破片の出現はありません`, `${afterReset}: no shard eruptions`)));
+    dailyRows.push(item({ dot: shardDot(false, true), name: t('翌日：闇の破片なし', 'Next day: no shards') }));
   }
-  const candleRealm = grandCandleRealm();
-  dailyRows.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `${t('大キャンドル', 'Grand Candle')}${t('：', ': ')}<b>${srLabel(candleRealm)}</b><span class="dash-countdown">${t('次の変更まで', 'Changes in')} ${countdown(nextPacificMidnight())}</span>`));
-  const questCandleRealm = grandCandleRealm(-2, QUEST_CANDLE_ANCHOR_DATE, QUEST_CANDLE_ANCHOR_REALM_IDX);
-  dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-scroll"/></svg>', `${t('クエスト・シーズンキャンドル', 'Quest & Season Candle')}${t('：', ': ')}<b>${srLabel(questCandleRealm)}</b><span class="dash-countdown">${t('次の変更まで', 'Changes in')} ${countdown(nextPacificMidnight())}</span>`));
-  dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-geyser"/></svg>', `${t('ウニ焼き', 'Geyser')}<span class="dash-countdown">${t('次回まで', 'Next in')} ${countdown(nextEvenHourEvent(5))}</span>`));
-  dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-bread"/></svg>', `${t('パン焼き', 'Bread Baking')}<span class="dash-countdown">${t('次回まで', 'Next in')} ${countdown(nextEvenHourEvent(35))}</span>`));
-  dailyRows.push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-turtle"/></svg>', `${t('亀闇', 'Turtle Darkness')}<span class="dash-countdown">${t('次回まで', 'Next in')} ${countdown(nextEvenHourEvent(50))}</span>`));
+  // 大キャンドルとクエストキャンドルは同じ時刻に切り替わるので、残り時間は見出しに1回だけ出す
+  dailyRows.push(item({ name: `${t('大キャンドル', 'Grand Candle')} <b>${srLabel(grandCandleRealm())}</b>` }));
+  dailyRows.push(item({ name: `${t('クエスト・シーズンキャンドル', 'Quest & Season Candle')} <b>${srLabel(grandCandleRealm(-2, QUEST_CANDLE_ANCHOR_DATE, QUEST_CANDLE_ANCHOR_REALM_IDX))}</b>` }));
+  dailyRows.push(item({ name: t('ウニ焼き', 'Geyser'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(5)) }));
+  dailyRows.push(item({ name: t('パン焼き', 'Bread Baking'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(35)) }));
+  dailyRows.push(item({ name: t('亀闇', 'Turtle Darkness'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(50)) }));
   const dailyHtml = dailyRows.join('');
 
   const bucketRows = { today: [], week: [], month: [] };
+  const push = (target, html) => bucketRows[bucketFor(target)].push({ at: target.getTime(), html });
   let seasonErrored = false;
-  if (data.season && data.season.name && data.season.endDate && new Date() < new Date(data.season.endDate)) {
-    bucketRows.today.push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(data.season.name))}</b>${t('が開催中', ' is currently active')}`));
-  }
-  activeScheduledEvents(data.eventSchedule).forEach(ev => {
-    const endDate = new Date(ev.end);
-    bucketRows[bucketFor(endDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(endDate)}</span><span class="dash-note">${t(`${formatStart(endDate)}まで`, `Until ${formatStart(endDate)}`)}</span>`));
-  });
-  activeScheduledEvents(data.candleBonusSchedule).forEach(ev => {
-    const bonusEnd = new Date(ev.end);
-    bucketRows[bucketFor(bonusEnd)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が開催中', ' is currently active')}<span class="dash-countdown">${t('終了まで', 'Ends in')} ${countdown(bonusEnd)}</span><span class="dash-note">${t(`${formatStart(bonusEnd)}まで`, `Until ${formatStart(bonusEnd)}`)}</span>`));
-  });
-  // 🆕 これから始まるイベント（開始が近いものは今日/今週、約1か月先までは今月）。
-  // 開催中のものが「終了まで」の残り時間で振り分けられるのと対称に、「開始まで」で振り分ける
-  upcomingScheduledEvents(data.eventSchedule).forEach(ev => {
-    const startDate = new Date(ev.start);
-    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${periodNote(ev)}</span>`));
-  });
-  upcomingScheduledEvents(data.candleBonusSchedule).forEach(ev => {
-    const startDate = new Date(ev.start);
-    bucketRows[bucketFor(startDate)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-candle"/></svg>', `<b>${escapeHtml(dashEventName(ev.name))}</b>${t('が始まります', ' is coming up')}<span class="dash-countdown">${t('開始まで', 'Starts in')} ${countdown(startDate)}</span><span class="dash-note">${periodNote(ev)}</span>`));
-  });
+  const ended = ev => ({ name: escapeHtml(dashEventName(ev.name)), state: t('終了まで', 'Ends in'), time: countdown(new Date(ev.end)), note: t(`${formatStart(new Date(ev.end))}まで`, `Until ${formatStart(new Date(ev.end))}`) });
+  activeScheduledEvents(data.eventSchedule).forEach(ev => push(new Date(ev.end), item(ended(ev))));
+  activeScheduledEvents(data.candleBonusSchedule).forEach(ev => push(new Date(ev.end), item(ended(ev))));
+  // これから始まるイベント（開催中のものが「終了まで」で振り分けられるのと対称に、「開始まで」で振り分ける）
+  const upcoming = ev => push(new Date(ev.start), item({ name: escapeHtml(dashEventName(ev.name)), state: t('開始まで', 'Starts in'), time: countdown(new Date(ev.start)), note: periodNote(ev) }));
+  upcomingScheduledEvents(data.eventSchedule).forEach(upcoming);
+  upcomingScheduledEvents(data.candleBonusSchedule).forEach(upcoming);
   revisitStatuses(data.revisitSchedules).forEach(({ schedule, status: rv }) => {
     // 精霊団など名前の付いた来訪（season-data.js の labelJa/labelEn）はその名前で出す
-    const label = schedule && schedule.labelJa ? escapeHtml(t(schedule.labelJa, schedule.labelEn || schedule.labelJa)) : '';
-    const revisitLabel = label
-      ? (rv.active ? t(`<b>${label}</b>が来訪中`, `<b>${label}</b> is here now`) : t(`<b>${label}</b>の来訪まで`, `<b>${label}</b> arrives in`))
-      : rv.active
-        ? t('再訪精霊が来訪中', 'Revisit Spirit is here now')
-        : t('再訪精霊の次回来訪まで', 'Revisit Spirit returns in');
-    bucketRows[bucketFor(rv.target)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-wing"/></svg>', `${revisitLabel}<span class="dash-countdown">${countdown(rv.target)}</span>`));
+    const label = schedule && schedule.labelJa ? escapeHtml(t(schedule.labelJa, schedule.labelEn || schedule.labelJa)) : t('再訪精霊', 'Revisit Spirit');
+    push(rv.target, item({ name: label, state: rv.active ? t('帰るまで', 'Leaves in') : t('来訪まで', 'Arrives in'), time: countdown(rv.target) }));
   });
   const edenTarget = nextEdenResetTarget();
-  bucketRows[bucketFor(edenTarget)].push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-bolt"/></svg>', `${t('原罪', 'Eye of Eden')}${t('：', ': ')}${t('週間リセットまで', 'Weekly reset in')}<span class="dash-countdown">${countdown(edenTarget)}</span><span class="dash-note">${t('毎週日曜0時・太平洋時間', 'Every Sunday 00:00 Pacific Time')}</span>`));
+  push(edenTarget, item({ name: t('原罪の週間リセット', 'Eye of Eden reset'), time: countdown(edenTarget) }));
   if (data.nextUpdate && data.nextUpdate.date) {
     const updateTarget = new Date(data.nextUpdate.date);
-    if (new Date() < updateTarget) {
-      bucketRows[bucketFor(updateTarget)].push(row('<svg class="inline-icon edb-i" width="16" height="16"><use href="#edb-i-hammer"/></svg>', `${t('次回アップデート予定', 'Next Update')}<span class="dash-countdown">${countdown(updateTarget)}</span>`));
-    }
+    if (now < updateTarget) push(updateTarget, item({ name: t('次回アップデート', 'Next Update'), time: countdown(updateTarget) }));
   }
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
     // 終了済みの季節はダッシュボードに出さない（終了まで00:00:00のまま残ってしまうため）
-    if (new Date() < end) {
-      bucketRows[bucketFor(end)].push(row('<svg class="inline-icon" width="16" height="16"><use href="#i-palette"/></svg>', `${t('「', '')}<b>${escapeHtml(dashEventName(data.season.name))}</b>${t('」', '')}${t('終了まで', ' ends in')}<span class="dash-countdown">${countdown(end)}</span>`));
-    }
+    if (now < end) push(end, item({ name: escapeHtml(dashEventName(data.season.name)), state: t('終了まで', 'Ends in'), time: countdown(end), note: t(`${formatStart(end)}まで`, `Until ${formatStart(end)}`) }));
   } else {
     seasonErrored = true;
   }
+  const list = k => bucketRows[k].sort((x, y) => x.at - y.at).map(r => r.html).join('');
 
-  const bucketEmptyMsg = `<div class="dash-empty">${t('この期間の予定はありません', 'Nothing scheduled in this range')}</div>`;
-  const todayHtml = bucketRows.today.length ? bucketRows.today.join('') : `<div class="dash-empty">${t('現在開催中の季節・イベントはありません', 'No current seasons or events')}</div>`;
-  const weekHtml = bucketRows.week.length ? bucketRows.week.join('') : bucketEmptyMsg;
+  const bucketEmptyMsg = `<div class="dash-empty">${t('予定はありません', 'Nothing scheduled')}</div>`;
   const seasonErrorRow = seasonErrored ? `<div class="dash-empty">${t('シーズン情報が取得できませんでした', 'Could not load season info')}</div>` : '';
-  const monthHtml = seasonErrorRow + (bucketRows.month.length ? bucketRows.month.join('') : (seasonErrored ? '' : bucketEmptyMsg));
+  const section = (label, body, extra = '') => `<div class="dash-section"><p class="dash-section-label"><span>${label}</span>${extra}</p><div class="dash-list">${body}</div></div>`;
+  const resetExtra = `<span class="dash-section-extra">${t('リセットまで', 'Reset in')} ${countdown(nextPacificMidnight())}</span>`;
 
   return `
     <div class="dash-section">${calendarHtml(data)}</div>
-    <div class="dash-section"><p class="dash-section-label">${t('デイリー', 'Daily')}</p>${dailyHtml}</div>
-    <div class="dash-section"><p class="dash-section-label">${t('今日', 'Today')}</p>${todayHtml}</div>
-    <div class="dash-section"><p class="dash-section-label">${t('今週', 'This Week')}</p>${weekHtml}</div>
-    <div class="dash-section"><p class="dash-section-label">${t('今月', 'This Month')}</p>${monthHtml}</div>`;
+    ${section(t('デイリー', 'Daily'), dailyHtml, resetExtra)}
+    ${section(t('今日', 'Today'), list('today') || bucketEmptyMsg)}
+    ${section(t('今週', 'This Week'), list('week') || bucketEmptyMsg)}
+    ${section(t('今月', 'This Month'), seasonErrorRow + (list('month') || (seasonErrored ? '' : bucketEmptyMsg)))}`;
 }
 
 /* ================================================================
@@ -833,9 +806,27 @@ function injectStyles() {
   style.id = STYLE_ID;
   style.textContent = `
 .edb-i { stroke: var(--hub-text-2); }
-.dash-section { margin-top: 16px; }
+.dash-section { margin-top: 18px; }
 .dash-section:first-child { margin-top: 0; }
-.dash-section-label { font-size: 12px; font-weight: 700; color: var(--hub-text-2); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+.dash-section-label { display: flex; align-items: baseline; gap: 8px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); margin: 0 0 2px; letter-spacing: 0.04em; }
+.dash-section-extra { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+/* 🍃 予定の行（カードにせず、細い区切り線だけで並べる） */
+.dash-item { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--hub-sep); font-size: 13px; line-height: 1.45; color: var(--hub-text); }
+.dash-list > .dash-item:last-child { border-bottom: 0; }
+.dash-item-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: #8e8e93; align-self: center; }
+.dash-item-dot.is-red { background: #ff453a; }
+.dash-item-dot.is-dim { opacity: 0.45; }
+.dash-item-name { flex: 1 1 auto; min-width: 0; }
+.dash-item-name b { font-weight: 600; color: var(--hub-accent-ink, var(--hub-accent)); }
+.dash-item-sub { color: var(--hub-text-2); font-size: 12px; }
+.dash-item-time { flex-shrink: 0; margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.dash-item-state { margin-right: 5px; font-size: 11px; font-weight: 500; color: var(--hub-text-2); }
+.dash-item-note { flex-basis: 100%; font-size: 11.5px; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
+.dash-item .dash-count-num { font-size: 1em; }
+.dash-item .dash-count-unit { margin-right: 2px; }
+.dash-item .dash-shard-times { display: flex; flex-wrap: wrap; gap: 0 10px; margin-top: 1px; }
+.dash-item .dash-shard-time { display: inline; color: var(--hub-text-2); font-weight: 500; }
+.dash-item .dash-shard-time.active { color: var(--hub-accent-ink, var(--hub-accent)); font-weight: 600; }
 .dash-row { display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; background: var(--hub-bg); border-radius: var(--hub-r-sm); margin-bottom: 6px; font-size: 13px; color: var(--hub-text); line-height: 1.5; }
 .dash-row:last-child { margin-bottom: 0; }
 .dash-row-icon { flex-shrink: 0; }
@@ -849,15 +840,14 @@ function injectStyles() {
 .dash-shard-time { display: block; color: var(--hub-accent); font-weight: 600; font-variant-numeric: tabular-nums; }
 .dash-shard-active { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 1.6; color: #fff; background: var(--hub-accent); vertical-align: 1px; }
 .dash-shard-time.past { color: var(--hub-text-2); font-weight: 400; text-decoration: line-through; }
-.dash-empty { font-size: 12.5px; color: var(--hub-text-2); padding: 2px 2px 4px; }
-.dash-calendar-summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 12.5px; font-weight: 600; color: var(--hub-text); padding: 9px 11px; background: var(--hub-bg); border-radius: var(--hub-r-sm); user-select: none; }
+.dash-empty { font-size: 12.5px; color: var(--hub-text-2); padding: 7px 0; }
+.dash-calendar-summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 12px; font-weight: 700; color: var(--hub-text-2); padding: 4px 0; letter-spacing: 0.04em; user-select: none; }
 .dash-calendar-summary::-webkit-details-marker { display: none; }
 .dash-calendar-summary::marker { content: ''; }
 .dash-calendar-summary:focus-visible { outline: 2px solid var(--hub-accent); outline-offset: -2px; }
 .dash-calendar-chevron { margin-left: auto; font-size: 13px; color: var(--hub-text-2); transition: transform 0.2s ease; }
-.dash-calendar[open] .dash-calendar-summary { border-radius: var(--hub-r-sm) var(--hub-r-sm) 0 0; }
 .dash-calendar[open] .dash-calendar-chevron { transform: rotate(90deg); }
-.dash-cal-body { background: var(--hub-bg); border-radius: 0 0 var(--hub-r-sm) var(--hub-r-sm); padding: 10px 11px; }
+.dash-cal-body { padding: 6px 0 0; }
 .dash-cal-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); }
 .dash-cal-dow { text-align: center; font-size: 10px; font-weight: 700; color: var(--hub-text-2); padding-bottom: 4px; }
 .dash-cal-week + .dash-cal-week { margin-top: 4px; }
@@ -865,13 +855,23 @@ function injectStyles() {
 .dash-cal-daynum { display: flex; align-items: center; justify-content: center; height: 20px; }
 .dash-cal-daynum span { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--hub-text); }
 .dash-cal-daynum.is-today span { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--hub-accent); color: #fff; font-weight: 700; }
-.dash-cal-bars { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 18px; row-gap: 2px; column-gap: 0; padding-top: 2px; }
-.dash-cal-bar { display: flex; align-items: center; min-width: 0; height: 18px; margin: 0; padding: 0 6px; font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dash-cal-bar.round-l { border-top-left-radius: 9px; border-bottom-left-radius: 9px; margin-left: 2px; }
-.dash-cal-bar.round-r { border-top-right-radius: 9px; border-bottom-right-radius: 9px; margin-right: 2px; }
+.dash-cal-bars { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 16px; row-gap: 2px; column-gap: 0; padding-top: 2px; }
+/* 予定の帯は塗りつぶさず、左端の色の線＋淡い下地にする（色は名前ごと。文字は本文色） */
+.dash-cal-bar { display: flex; align-items: center; min-width: 0; height: 16px; margin: 0; padding: 0 5px; font-size: 10px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--hub-text); background: color-mix(in srgb, var(--bar) 18%, transparent); }
+.dash-cal-bar.round-l { border-left: 3px solid var(--bar); border-top-left-radius: 2px; border-bottom-left-radius: 2px; margin-left: 1px; }
+.dash-cal-bar.round-r { border-top-right-radius: 2px; border-bottom-right-radius: 2px; margin-right: 1px; }
+@media (prefers-contrast: more) { .dash-cal-bar { background: color-mix(in srgb, var(--bar) 35%, transparent); } .dash-item { border-bottom-color: var(--hub-text-2); } }
+@media (prefers-reduced-motion: reduce) { .dash-calendar-chevron { transition: none; } }
 .dash-cal-bar.half-end { width: 50%; }
 .dash-cal-bar.half-start { width: 50%; justify-self: end; }
-.edb-reminder-row { display: flex; align-items: center; gap: 8px; }
+.edb-reminder-row { align-items: center; flex-wrap: nowrap; cursor: pointer; }
+.edb-reminder-row:last-of-type { border-bottom: 0; }
+.edb-select { flex-shrink: 0; padding: 4px 8px; border: 0.5px solid var(--hub-sep); border-radius: 8px; background: var(--hub-card); color: var(--hub-text); font: inherit; font-size: 12.5px; }
+.edb-plain-btn { display: block; width: 100%; margin-top: 6px; padding: 8px 12px; border: 0.5px solid var(--hub-sep); border-radius: 10px; background: var(--hub-card); color: var(--hub-accent-ink, var(--hub-accent)); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.edb-plain-btn:active { transform: scale(0.98); }
+.edb-hint { margin-top: 5px; font-size: 11.5px; line-height: 1.5; color: var(--hub-text-2); }
+.edb-hint:empty { display: none; }
 .edb-reminder-row input[type="checkbox"] { width: 19px; height: 19px; flex-shrink: 0; cursor: pointer; accent-color: var(--hub-accent); }
 `;
   document.head.appendChild(style);
@@ -1024,10 +1024,10 @@ function exportIcs(statusEl) {
 function icsExportSectionHtml() {
   return `
     <div class="dash-section">
-      <p class="dash-section-label">${t('カレンダーへの登録', 'Add to Calendar')}</p>
-      <button type="button" class="pf-add-btn" id="edbIcsExportBtn" style="width:100%; box-sizing:border-box;">${t('予定をエクスポート（.icsファイル）', 'Export schedule (.ics file)')}</button>
-      <div class="pf-hint" style="margin-top:8px;">${t('シーズン終了・日替わり大キャンドル/クエストキャンドルの切替・週間リセット・闇の破片の出現（直近14日分）の予定をまとめたカレンダーファイルです。お使いのカレンダーアプリに取り込むと、通知を受け取れます。', 'A calendar file covering the season-end deadline, the daily Grand/Quest Candle change, the weekly reset, and shard eruptions for the next 14 days. Import it into your calendar app to get native notifications.')}</div>
-      <div class="pf-hint" id="edbIcsStatus"></div>
+      <p class="dash-section-label"><span>${t('カレンダーアプリに取り込む', 'Add to your calendar app')}</span></p>
+      <button type="button" class="edb-plain-btn" id="edbIcsExportBtn">${t('.icsファイルを書き出す', 'Export .ics file')}</button>
+      <div class="edb-hint">${t('季節の終了・リセット・闇の破片（14日分）', 'Season end, resets, shards (14 days)')}</div>
+      <div class="edb-hint" id="edbIcsStatus"></div>
     </div>`;
 }
 
@@ -1045,16 +1045,14 @@ let persistentTimer = null;
 function reminderSectionHtml() {
   return `
     <div class="dash-section">
-      <p class="dash-section-label"><svg class="inline-icon edb-i" width="15" height="15"><use href="#edb-i-bell"/></svg> ${t('通知リマインダー', 'Reminder Notifications')}</p>
-      <div class="dash-row edb-reminder-row">
-        <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg class="inline-icon" width="17" height="17"><use href="#edb-i-bell"/></svg></span>
-        <span class="dash-row-text">${t('季節・イベントの終了やリセットが近づいたら通知する', 'Notify me when a season, event, or reset is about to end')}</span>
+      <p class="dash-section-label"><span>${t('通知', 'Notifications')}</span></p>
+      <label class="dash-item edb-reminder-row">
+        <span class="dash-item-name">${t('終了やリセットの前に知らせる', 'Notify before ends and resets')}</span>
         <input type="checkbox" id="edbReminderCheckbox">
-      </div>
-      <div class="dash-row edb-reminder-row">
-        <span class="dash-row-icon icon-chip" style="width:22px; height:22px;"><svg class="inline-icon" width="17" height="17"><use href="#edb-i-clock"/></svg></span>
-        <span class="dash-row-text">${t('通知するタイミング', 'Remind me')}</span>
-        <select id="edbReminderMinutes" class="pf-icon-btn">
+      </label>
+      <div class="dash-item edb-reminder-row">
+        <span class="dash-item-name">${t('タイミング', 'When')}</span>
+        <select id="edbReminderMinutes" class="edb-select">
           <option value="10">${t('10分前', '10 min before')}</option>
           <option value="30">${t('30分前', '30 min before')}</option>
           <option value="60">${t('1時間前', '1 hour before')}</option>
@@ -1062,7 +1060,7 @@ function reminderSectionHtml() {
           <option value="1440">${t('1日前', '1 day before')}</option>
         </select>
       </div>
-      <div class="pf-hint" id="edbReminderStatus"></div>
+      <div class="edb-hint" id="edbReminderStatus"></div>
     </div>`;
 }
 
@@ -1083,9 +1081,9 @@ function syncReminderUIIn(root) {
     if (typeof Notification === 'undefined') {
       status.textContent = t('この端末・ブラウザは通知に対応していません', 'Notifications are not supported on this device/browser');
     } else if (Notification.permission === 'denied') {
-      status.textContent = t('ブラウザの通知が拒否されています。ブラウザの設定から許可すると使えます', 'Notifications are blocked. Allow them in your browser settings to use this.');
+      status.textContent = t('ブラウザの設定で通知が拒否されています', 'Notifications are blocked. Allow them in your browser settings to use this.');
     } else if (enabled) {
-      status.textContent = t('有効：終了・リセットが近づくとこの端末に通知します（このページを開いている間のみ）', 'Enabled: you’ll get a notification as it approaches (only while this page is open)');
+      status.textContent = t('このページを開いている間だけ届きます', 'Enabled: you’ll get a notification as it approaches (only while this page is open)');
     } else {
       status.textContent = '';
     }
