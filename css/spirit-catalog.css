@@ -256,6 +256,13 @@
 .spirit-catalog-view .cost-h, .spirit-catalog-view .cost-sh { background: rgba(255,45,85,0.10); color: #D6294F; }
 .spirit-catalog-view .cost-ac { background: var(--sc-blue-bg); color: var(--sc-blue); }
 .spirit-catalog-view .cost-ec { background: rgba(175,82,222,0.10); color: #8A3FC0; }
+/* アイテム別コストから補った価格（季節パスの報酬・無料・課金額） */
+.spirit-catalog-view .cost-reward { background: rgba(52,199,89,0.12); color: #1E7A3A; }
+.spirit-catalog-view .cost-free { background: rgba(142,142,147,0.16); color: #5E5E66; }
+.spirit-catalog-view .cost-money { background: rgba(255,149,0,0.14); color: #A34A00; }
+[data-theme="dark"] .spirit-catalog-view .cost-reward { color: #4CD964; }
+[data-theme="dark"] .spirit-catalog-view .cost-free { color: #C3C3CA; }
+[data-theme="dark"] .spirit-catalog-view .cost-money { color: #FFB35C; }
 [data-theme="dark"] .spirit-catalog-view .cost-c, [data-theme="dark"] .spirit-catalog-view .cost-sc { color: var(--sc-orange); }
 [data-theme="dark"] .spirit-catalog-view .cost-h, [data-theme="dark"] .spirit-catalog-view .cost-sh { background: rgba(255,55,95,0.16); color: #FF375F; }
 [data-theme="dark"] .spirit-catalog-view .cost-ec { background: rgba(191,90,242,0.16); color: #BF5AF2; }

@@ -966,6 +966,27 @@ export function getCostDisplayEnabled() {
 export function setCostDisplayEnabled(on) {
   try { localStorage.setItem(COST_DISPLAY_KEY, on ? '1' : '0'); } catch (_) { /* noop */ }
 }
+/* 💴 ツリーのデータに価格が無いノード（季節パスの報酬・無料・課金など）は、アイテム別コスト（features/item/data/cost-data.js）の
+   価格で補う（2026-11-10）。表示だけに使い、残りのコストの合計・キャンドルの自動増減には入れない。
+   返り値: { cls, label, title } か null */
+let itemCostIndex = null;
+export function itemCostChip(n) {
+  if (!n || !n.itemCatKey || !n.itemCostId) return null;
+  if (n.cost && Object.keys(n.cost).length) return null; // ツリー自身の価格があればそちらを使う
+  if (!itemCostIndex) {
+    itemCostIndex = {};
+    Object.keys(ITEM_COST_DATA).forEach((k) => (ITEM_COST_DATA[k] || []).forEach((x) => { itemCostIndex[`${k}:${x.id}`] = x; }));
+  }
+  const rec = itemCostIndex[`${n.itemCatKey}:${n.itemCostId}`];
+  if (!rec || !rec.cost) return null;
+  const c = rec.cost;
+  const en = CURRENT_LANG === 'en';
+  const title = (en ? (c.noteEn || c.note) : c.note) || '';
+  if (c.type === 'reward') return { cls: 'cost-reward', label: en ? 'Pass' : '報酬', title };
+  if (c.type === 'free' || (c.type === 'candle' && !c.value)) return { cls: 'cost-free', label: en ? 'Free' : '無料', title };
+  if (c.type === 'money' && c.value) return { cls: 'cost-money', label: `¥${Number(c.value).toLocaleString()}`, title };
+  return null;
+}
 export const COST_ICON = { c: 'i-candle', h: 'i-heart', sc: 'i-candle', sh: 'i-heart', ac: 'i-star-candle', ec: 'sc-i-ticket' };
 export function sumRemainingCost(list) {
   const totals = {};

@@ -285,6 +285,7 @@ const landingPoint = currentY + project(v);
 - `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル。2026-11-10追加）／`reward`（季節パスの報酬＝「報酬」）／`free`（精霊ツリーで無料＝「無料」）／`na`／`unknown`。
   **`seasonCandle`は季節の開催中の価格で、キャンドルとは別の通貨なので合計には入れない**（表示とフィルターだけ）。
 - 「不明」を埋める時は SkyGame-Data（npm `skygame-data`。sky-planner.com と同じデータ）の`nodes`（精霊ツリー）・`itemLists`（ショップ）・`iaps`（課金パック）と英語名で突き合わせる。
+- 精霊ツリー管理のツリーは、ツリーのデータ（SkyGame-Data）に価格が無いノードだけ、このデータの`reward`／`free`／`money`を印として出す（`spirit-catalog-state.js`の`itemCostChip()`。表示だけで合計には入れない）。
   対応: `c`→candle、`h`→heart、`ac`→starCandle、`ec`→ticket、`sc`→seasonCandle。価格の無いノードは、アイテムの`group`が`SeasonPass`なら`reward`、それ以外は`free`。課金パックのドル→円は、既存データから
   1.99→260・2.99→400・3.99→530・4.99→650・6.99→900・9.99→1300・11.99→1550・14.99→1950・17.99→2380・19.99→2600・24.99→3300・29.99→3900。
 

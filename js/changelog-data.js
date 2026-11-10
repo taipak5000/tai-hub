@@ -12,12 +12,12 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.10.5',
+    version: '2026.11.10.6',
     title: { ja: '巣づくり工房の新しい家具を追加、アイテム別コストの不明な価格を補完', en: 'New Nesting Workshop furniture, more item costs' },
     date: '2026-11-10',
     items: [
       { type: 'new', ja: 'アイテム所持管理の大きい設置アイテムに、巣づくり工房の新しい家具8つ（木製の寝室チェア・木製の寝室テーブル・木箱・木製の寝室ベッド・木製のコンソールテーブル・木製の絵の具箱・木製のロッキングチェア・木製のデスク）を追加しました。日本語名は仮のものです。', en: 'Added eight new Nesting Workshop furniture items (Arles set and Crate) to large placeables.', route: 'item', sub: 'large_placeable' },
-      { type: 'improve', ja: 'アイテム別コストで「不明」だったアイテムのほとんどに価格を入れました（季節キャンドル・チケット・キャンドル・実額）。季節パスの報酬は「報酬」、精霊ツリーで無料のものは「無料」と表示します。季節キャンドルの価格は季節の開催中のもので、キャンドルの合計には含めません。', en: 'Filled in prices for 84 items that were “Unknown” in the cost list (season candles, tickets, candles and real money). Season candle prices are not added to candle totals.', route: 'item', sub: 'cost' },
+      { type: 'improve', ja: 'アイテム別コストで「不明」だったアイテムのほとんどに価格を入れました（季節キャンドル・チケット・キャンドル・実額）。季節パスの報酬は「報酬」、精霊ツリーで無料のものは「無料」と表示します。季節キャンドルの価格は季節の開催中のもので、キャンドルの合計には含めません。精霊ツリー管理のツリーでも、価格の無いノードに「報酬」「無料」や課金額を出すようにしました（コスト表示をオンにした時）。', en: 'Filled in prices for 84 items that were “Unknown” in the cost list (season candles, tickets, candles and real money). Season candle prices are not added to candle totals.', route: 'item', sub: 'cost' },
       { type: 'improve', ja: 'コーデ日記の「着ていたアイテム」を、マイコーデと同じくカテゴリごとに所持アイテムのアイコンから1つずつ選ぶ形にしました。名前での絞り込みもできます（持ち運べる・小さい設置・大きい設置はどれか1つ）。', en: 'Outfit Diary now lets you pick one owned item per category from icons, like My Coord, with a name filter.', route: 'coord-diary' },
       { type: 'improve', ja: 'ロイヤリティクラブの4アイテムに画像と英語名を入れ、引き換えに必要なポイント（10・20・50・150）を載せました。', en: 'Added images, English names and point costs (10/20/50/150) to the Loyalty Club items.', route: 'item' },
     ],

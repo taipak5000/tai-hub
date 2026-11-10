@@ -858,7 +858,11 @@ function treeNodeHtml(spirit, n, style, prereqSatisfied) {
   const unlockSource = S.getUnlockSource(n);
   const unlocked = !!unlockSource;
   const nextAvailable = !unlocked && !!prereqSatisfied;
-  const costChips = Object.keys(n.cost || {}).map((k) => `<span class="cost-chip cost-${k}">${icon(S.COST_ICON[k], 10)}${n.cost[k]}</span>`).join('');
+  // ツリーに価格が無いノードは、アイテム別コストの「報酬・無料・課金額」を出す（合計には入れない）
+  const extra = S.itemCostChip(n);
+  const costChips = extra
+    ? `<span class="cost-chip ${extra.cls}"${extra.title ? ` title="${escapeHtml(extra.title)}"` : ''}>${escapeHtml(extra.label)}</span>`
+    : Object.keys(n.cost || {}).map((k) => `<span class="cost-chip cost-${k}">${icon(S.COST_ICON[k], 10)}${n.cost[k]}</span>`).join('');
   // 羽トラッカー・エモート管理と同期するノードの印（🔄）と、連携ツールから自動で解放された印は、
   // ツリーの中にたくさん並んで邪魔になるため出さない（同期そのものは今までどおり行う）
   const tierBadge = S.getCostTierBadge(spirit, n);
