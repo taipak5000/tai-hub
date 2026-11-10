@@ -101,6 +101,9 @@ async function loadImages(my) {
   });
 }
 
+// 行のアイコン: 楽譜は行に画像を持ち、ほかは読み込み済みのアイテムデータ（images）から引く。
+// 並び替えなどで描き直した時にもアイコンが消えないよう、描くたびにここを通す
+function thumbSrc(row) { return row.img || (images[row.cat.key] && images[row.cat.key][row.id]) || ''; }
 function currency() {
   const c = readJson('wishOwnCurrency', {});
   return { candle: Math.max(0, Number(c.candle) || 0), heart: Math.max(0, Number(c.heart) || 0) };
@@ -158,7 +161,7 @@ function render() {
     const first = idx === 0, last = idx === rows.length - 1;
     return `<li class="wp-row ${cls}">
       <span class="wp-rank">${idx + 1}</span>
-      <span class="wp-thumb" data-img-key="${escapeHtml(row.key)}">${row.img ? `<img src="${escapeHtml(row.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
+      <span class="wp-thumb" data-img-key="${escapeHtml(row.key)}">${thumbSrc(row) ? `<img src="${escapeHtml(thumbSrc(row))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
       <div class="wp-main">
         <div class="wp-name">${escapeHtml(row.name)}</div>
         <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(costLabel(row.cost))}</div>

@@ -14,7 +14,7 @@ import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { navigate } from '../../js/router.js';
 import { ROUTES } from '../../js/router-registry.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
-import { APP_VERSION, changelogList, pendingVersions, checkForUpdate, onUpdateChanged, startUpdate, typeLabel } from '../../js/app-update.js';
+import { APP_VERSION, compareVersion, changelogList, pendingVersions, checkForUpdate, onUpdateChanged, startUpdate, typeLabel } from '../../js/app-update.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const TYPES = ['new', 'improve', 'fix', 'remove'];
@@ -109,7 +109,7 @@ function versionHtml(v) {
   const items = (v.items || []).filter(i => !filter || i.type === filter);
   if (!items.length) return '';
   const isCurrent = v.version === APP_VERSION;
-  const isPending = v.version > APP_VERSION;
+  const isPending = compareVersion(v.version, APP_VERSION) > 0;
   return `<article class="cl-ver-card${isPending ? ' is-pending' : ''}${isCurrent ? ' is-current' : ''}">
     <header class="cl-ver-head">
       <time class="cl-ver-date" datetime="${escapeHtml(v.date || '')}">${escapeHtml(fmtDate(v.date))}</time>

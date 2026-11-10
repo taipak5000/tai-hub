@@ -15,6 +15,15 @@ import { CURRENT_LANG, escapeHtml } from './i18n.js';
 import { refreshToLatest } from './refresh.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
+/** 版番号を数字の並びとして比べる（'2026.11.10.10' が '2026.11.10.9' より新しいと分かるように。文字の大小だと逆になる） */
+export function compareVersion(a, b) {
+  const pa = String(a || '').split('.').map(Number), pb = String(b || '').split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d;
+  }
+  return 0;
+}
 export const APP_VERSION = (CHANGELOG[0] && CHANGELOG[0].version) || '';
 const SEEN_VERSION_KEY = 'sky_hub_seen_version'; // 端末で最後に開いたバージョン（更新した直後の知らせ用）
 const DISMISS_KEY = 'sky_hub_update_dismissed'; // sessionStorage: 「あとで」を押した版
@@ -38,7 +47,7 @@ export function typeLabel(type) { const l = TYPE_LABEL[type] || TYPE_LABEL.impro
 /** 今動いている版より新しい版の一覧（新しい順）。確かめていない・無い時は [] */
 export function pendingVersions() {
   if (!remote) return [];
-  return remote.filter(v => v && typeof v.version === 'string' && v.version > APP_VERSION);
+  return remote.filter(v => v && typeof v.version === 'string' && compareVersion(v.version, APP_VERSION) > 0);
 }
 /** 最後に確かめた結果（'checking'・'latest'・'stale'・'error'。まだなら ''） */
 export function updateStatus() { return status; }
@@ -140,8 +149,8 @@ export function initAppUpdate() {
   let shown = false;
   try {
     const seen = localStorage.getItem(SEEN_VERSION_KEY);
-    if (seen && APP_VERSION && seen < APP_VERSION) { showUpdatedToast(); shown = true; }
-    if (APP_VERSION && (!seen || seen < APP_VERSION)) localStorage.setItem(SEEN_VERSION_KEY, APP_VERSION);
+    if (seen && APP_VERSION && compareVersion(seen, APP_VERSION) < 0) { showUpdatedToast(); shown = true; }
+    if (APP_VERSION && (!seen || compareVersion(seen, APP_VERSION) < 0)) localStorage.setItem(SEEN_VERSION_KEY, APP_VERSION);
   } catch (e) { /* noop */ }
   setTimeout(() => checkForUpdate(true), 4000);
   setInterval(() => checkForUpdate(), CHECK_EVERY);
