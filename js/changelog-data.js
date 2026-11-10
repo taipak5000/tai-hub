@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.10.2',
-    title: { ja: 'コーデ日記のアイテム選びを改善、ロイヤリティクラブのアイテムに画像', en: 'Outfit Diary item picker, Loyalty Club images' },
+    version: '2026.11.10.3',
+    title: { ja: '巣づくり工房の新しい家具を追加、コーデ日記のアイテム選びを改善', en: 'New Nesting Workshop furniture, Outfit Diary item picker' },
     date: '2026-11-10',
     items: [
+      { type: 'new', ja: 'アイテム所持管理の大きい設置アイテムに、巣づくり工房の新しい家具8つ（木製の寝室チェア・木製の寝室テーブル・木箱・木製の寝室ベッド・木製のコンソールテーブル・木製の絵の具箱・木製のロッキングチェア・木製のデスク）を追加しました。日本語名は仮のものです。', en: 'Added eight new Nesting Workshop furniture items (Arles set and Crate) to large placeables.', route: 'item', sub: 'large_placeable' },
       { type: 'improve', ja: 'コーデ日記の「着ていたアイテム」を、マイコーデと同じくカテゴリごとに所持アイテムのアイコンから1つずつ選ぶ形にしました。名前での絞り込みもできます（持ち運べる・小さい設置・大きい設置はどれか1つ）。', en: 'Outfit Diary now lets you pick one owned item per category from icons, like My Coord, with a name filter.', route: 'coord-diary' },
       { type: 'improve', ja: 'ロイヤリティクラブの4アイテムに画像と英語名を入れ、引き換えに必要なポイント（10・20・50・150）を載せました。', en: 'Added images, English names and point costs (10/20/50/150) to the Loyalty Club items.', route: 'item' },
     ],

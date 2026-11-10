@@ -968,6 +968,14 @@ export const ITEM_YOMI = {
   large_placeable_122: 'ちょうやくぱっど（こう）',
   large_placeable_117: 'ちゃれんじのだいざ',
   large_placeable_118: 'たからさがしのはた',
+  large_placeable_129: 'もくせいのしんしつちぇあ',
+  large_placeable_130: 'もくせいのしんしつてーぶる',
+  large_placeable_131: 'きばこ',
+  large_placeable_132: 'もくせいのしんしつべっど',
+  large_placeable_133: 'もくせいのこんそーるてーぶる',
+  large_placeable_134: 'もくせいのえのぐばこ',
+  large_placeable_135: 'もくせいのろっきんぐちぇあ',
+  large_placeable_136: 'もくせいのですく',
 
   // ▼ small_placeable（小さい設置アイテム）
   small_placeable_001: 'そたるけんじゃ せっちあいてむ',
