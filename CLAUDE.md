@@ -246,7 +246,7 @@ const landingPoint = currentY + project(v);
   `today-view.js`が要点を出し、その下にデイリーチェックシートを`mount(el, { embedded: true, labLinks: true })`で埋め込む。
   **デイリーチェックシートは2026-11-08にテスト機能として公開した**（`site-links.js`の`HUB_ONLY_TOOLS`に`badgeTest`付きで載せ、`#/daily-check`のhiddenを外した。`#/today`は古いリンク用でhiddenのまま）・
   ほしいもの計画（`features/wish-plan/`。欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通）・
-  コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB）・
+  コーデ日記（`features/coord-diary/`。写真はフォト日記と同じIndexedDB。着ていたアイテムはマイコーデと同じく**カテゴリごとに所持アイテムのアイコンから1つ**選ぶ＝`wearRowsHtml()`。選び直しは`refreshWearRows()`でその欄だけ描き直す）・
   思い出の場所（フォト日記/コーデ日記の`place`。一覧は`features/shared/places.js`）・月のふりかえり（`#/recap/month`）。
   **新しいツールに記録を足したら、ふりかえり（`recap-view.js`）にも数を足せるか考えること。**
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`。旧スタンプ帳`#/stamps`を置き換え、2026-11-06）: 全ツールの称号をここに集める。

@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.10',
+    title: { ja: 'コーデ日記: 着ていたアイテムをカテゴリごとにアイコンで選べるように', en: 'Outfit Diary: pick worn items by category' },
+    date: '2026-11-10',
+    items: [
+      { type: 'improve', ja: 'コーデ日記の「着ていたアイテム」を、マイコーデと同じくカテゴリごとに所持アイテムのアイコンから1つずつ選ぶ形にしました。名前での絞り込みもできます（持ち運べる・小さい設置・大きい設置はどれか1つ）。', en: 'Outfit Diary now lets you pick one owned item per category from icons, like My Coord, with a name filter.', route: 'coord-diary' },
+    ],
+  },
+  {
     version: '2026.11.09.4',
     title: { ja: 'ロイヤリティクラブのアイテムを染色可能に修正', en: 'Loyalty Club items are dyeable' },
     date: '2026-11-09',

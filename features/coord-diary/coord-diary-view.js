@@ -127,8 +127,7 @@ export function mount(container) {
     // 入力中の検索欄・フォームを消さないよう、候補とアイテム表示の部分だけ差し替える（フォームが無ければ全体を描き直す）
     if (form) {
       syncForm();
-      const box = root().querySelector('.cd-pick'); if (box) box.innerHTML = pickHtml();
-      const sel = root().querySelector('.cd-selected'); if (sel) sel.innerHTML = selectedHtml();
+      refreshWearRows();
       const list = root().querySelector('.cd-list'); if (list) list.innerHTML = monthEntries().map(entryHtml).join('');
       loadPhotos();
     } else render();
@@ -345,9 +344,9 @@ function formHtml() {
     </div>
     <div class="fun-field">
       <span class="fun-label">${t('着ていたアイテム', 'Items worn')} <span class="cd-sel-count">${selectedCount}</span></span>
-      <div class="cd-items cd-selected">${selectedHtml()}</div>
-      ${ownedCount ? `<input class="fun-input" type="search" name="q" value="${escapeHtml(form.query || '')}" placeholder="${t('所持アイテムから探す（例: ケープ）', 'Search your items (e.g. cape)')}" autocomplete="off">
-        <div class="cd-pick">${pickHtml()}</div>`
+      ${ownedCount ? `<p class="fun-hint cdw-hint">${t('カテゴリごとに、所持しているアイテムのアイコンから1つ選びます（×で外す）。', 'Pick one of your owned items per category (× to clear).')}</p>
+        <input class="fun-input" type="search" name="q" value="${escapeHtml(form.query || '')}" placeholder="${t('所持アイテムを名前で絞り込む（例: ひまわり）', 'Filter your items by name')}" autocomplete="off">
+        <div class="cdw-rows">${wearRowsHtml()}</div>`
         : `<p class="fun-hint">${t('アイテム所持管理で所持にしたアイテムが、ここで選べるようになります。', 'Items you mark as owned in the item tracker can be picked here.')}</p>`}
     </div>
     <label class="fun-field"><span class="fun-label">${t('メモ', 'Note')}</span><textarea class="fun-textarea" name="memo" rows="2" maxlength="1000" placeholder="${t('テーマ・こだわり・染色の色など', 'Theme, dye colors, details…')}">${escapeHtml(form.memo || '')}</textarea></label>
@@ -359,23 +358,48 @@ function formHtml() {
     </div>
   </form>`;
 }
-function selectedHtml() {
-  return [...form.items].map(k => {
-    const [cat, id] = k.split(':');
-    const it = itemInfo({ cat, id });
-    return `<button type="button" class="cd-item is-chip" data-act="unpick" data-key="${escapeHtml(k)}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}<svg class="inline-icon" width="11" height="11"><use href="#i-close"/></svg></button>`;
-  }).join('');
-}
 function monthEntries() {
   const mKey = `${month.y}-${String(month.m + 1).padStart(2, '0')}`;
   return doc.entries.filter(e => e.date.startsWith(mKey)).sort((a, b) => b.date.localeCompare(a.date));
 }
 function norm(s) { return String(s || '').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s/g, ''); }
-function pickHtml() {
+// 🧥 着ていたアイテム: マイコーデと同じく、カテゴリごとに所持アイテムのアイコンを横に並べて1つ選ぶ（2026-11-10）。
+// 持ち運べる・小さい設置・大きい設置は、ゲームと同じくどれか1つだけ（マイコーデの EXCLUSIVE_KEYS と同じ決まり）。
+// 以前の記録で同じカテゴリに複数入っているものは、そのカテゴリを選び直すまでそのまま残す。
+const EXCLUSIVE_CATS = ['portable_item', 'small_placeable', 'large_placeable'];
+function catLabel(c) { return CURRENT_LANG === 'en' ? (c.nameEn || c.name) : c.name; }
+function tileHtml(it, selected) {
+  const name = escapeHtml(it.name);
+  return `<button type="button" class="cdw-tile${selected ? ' selected' : ''}" data-act="wear" data-cat="${it.cat.key}" data-key="${escapeHtml(it.k)}" title="${name}" aria-label="${name}" aria-pressed="${selected}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.parentNode.title.slice(0,4)}))">` : `<span>${escapeHtml(it.name.slice(0, 4))}</span>`}</button>`;
+}
+function wearRowsHtml() {
   const q = norm(form.query);
-  const list = Object.entries(owned).filter(([k, it]) => !form.items.has(k) && (!q || it.key.includes(q))).slice(0, q ? 40 : 12);
-  if (!list.length) return `<p class="fun-hint">${t('見つかりません', 'No matches')}</p>`;
-  return list.map(([k, it]) => `<button type="button" class="cd-item is-pick" data-act="pick" data-key="${escapeHtml(k)}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</button>`).join('');
+  return CATS.map(c => {
+    const picked = [...form.items].filter(k => k.startsWith(c.key + ':'));
+    const list = Object.values(owned).filter(it => it.cat.key === c.key && (!q || it.key.includes(q)));
+    // 所持から外れたアイテムでも、選んである分は先頭に出して外せるようにする
+    picked.forEach(k => { if (!list.some(it => it.k === k)) { const [cat, id] = k.split(':'); const it = itemInfo({ cat, id }); list.unshift({ ...it, k, cat: c }); } });
+    if (q && !list.length) return '';
+    const names = picked.map(k => { const [cat, id] = k.split(':'); return itemInfo({ cat, id }).name; });
+    const hint = c.key === EXCLUSIVE_CATS[0] && !q ? `<p class="cdw-excl"><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg>${t('持ち運べる・小さい設置・大きい設置は、どれか1つだけ選べます', 'Only one of portable, small and large placeables')}</p>` : '';
+    return `${hint}<div class="cdw-row" data-cat="${c.key}">
+      <div class="cdw-label">${c.img ? `<img src="${escapeHtml(c.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<span>${escapeHtml(catLabel(c))}</span>${names.length ? `<b>${escapeHtml(names.join('・'))}</b>` : ''}</div>
+      ${list.length ? `<div class="cdw-strip">
+        <button type="button" class="cdw-tile cdw-none${picked.length ? '' : ' selected'}" data-act="wear" data-cat="${c.key}" data-key="" title="${t('選ばない', 'None')}" aria-label="${t('選ばない', 'None')}" aria-pressed="${!picked.length}"><svg class="inline-icon" width="18" height="18"><use href="#i-close"/></svg></button>
+        ${list.map(it => tileHtml(it, form.items.has(it.k))).join('')}
+      </div>` : `<p class="cdw-empty">${t('（所持アイテムなし）', '(No owned items)')}</p>`}
+    </div>`;
+  }).join('') || `<p class="fun-hint">${t('見つかりません', 'No matches')}</p>`;
+}
+// 選び直した時・絞り込んだ時は、この欄だけ描き直す（入力欄のフォーカスと、各カテゴリの横スクロールの位置を保つ）
+function refreshWearRows() {
+  const box = root() && root().querySelector('.cdw-rows');
+  if (!box || !form) return;
+  const scroll = {};
+  box.querySelectorAll('.cdw-row').forEach(r => { const s = r.querySelector('.cdw-strip'); if (s) scroll[r.dataset.cat] = s.scrollLeft; });
+  box.innerHTML = wearRowsHtml();
+  box.querySelectorAll('.cdw-row').forEach(r => { const s = r.querySelector('.cdw-strip'); if (s && scroll[r.dataset.cat]) s.scrollLeft = scroll[r.dataset.cat]; });
+  const cnt = root().querySelector('.fun-form .cd-sel-count'); if (cnt) cnt.textContent = form.items.size;
 }
 
 async function loadPhotos() {
@@ -462,12 +486,13 @@ function onClick(e) {
   if (act === 'post') { const entry = doc.entries.find(x => x.id === btn.dataset.id); if (entry) postEntry(entry); return; }
   if (act === 'edit') { openForm(doc.entries.find(x => x.id === btn.dataset.id)); return; }
   if (act === 'cancel') { form = null; clearPending(); render(); return; }
-  if (act === 'pick' || act === 'unpick') {
-    syncForm();
-    if (act === 'pick') form.items.add(btn.dataset.key); else form.items.delete(btn.dataset.key);
-    render();
-    const q = root().querySelector('.fun-form input[name=q]');
-    if (q && act === 'pick') { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  if (act === 'wear') {
+    const cat = btn.dataset.cat, key = btn.dataset.key;
+    // そのカテゴリで選んでいたものを外してから選ぶ（1カテゴリ1つ）。持ち運べる・設置は3つのうち1つだけ
+    const clear = key && EXCLUSIVE_CATS.includes(cat) ? EXCLUSIVE_CATS : [cat];
+    [...form.items].forEach(k => { if (clear.includes(k.split(':')[0])) form.items.delete(k); });
+    if (key) form.items.add(key);
+    refreshWearRows();
     return;
   }
   if (act === 'clear-photo') { syncForm(); clearPending(); form.removePhoto = true; render(); return; }
@@ -485,7 +510,7 @@ function onInput(e) {
   if (e.target.name !== 'q' || !form) return;
   form.query = e.target.value;
   clearTimeout(qTimer);
-  qTimer = setTimeout(() => { const box = root().querySelector('.cd-pick'); if (box) box.innerHTML = pickHtml(); }, 100);
+  qTimer = setTimeout(refreshWearRows, 120);
 }
 async function onChange(e) {
   if (e.target.name !== 'photo' || !e.target.files || !e.target.files[0]) return;
