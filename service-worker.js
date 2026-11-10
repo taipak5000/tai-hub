@@ -10,6 +10,10 @@
      ブラウザ自体のキャッシュ（GitHub Pagesは最大10分）を使い回さず、必ずサーバーに最新か
      問い合わせる（変わっていなければ304で済むので重くない）。関連ツール一覧の
      「最新の状態に更新」（js/refresh.js）は、保存分を消してこの経路で取り直させる。
+   ・さらに同一オリジンは、URLに ?fresh=… を付けて取る（2026-11-10）。GitHub Pagesの配信網（CDN）は
+     ファイルを最大10分ため込み、no-cache を付けても古い版を返すことがあるため。手元の保存分の
+     ETag・Last-Modified を付けて問い合わせるので、変わっていなければ304で済む。
+     返すレスポンスは元のURLのものとして作り直す（モジュールの基準URLが ?fresh 付きにならないように）。
 
    ・同一オリジンのGETと、Vue / html2canvas / フォントのCDNだけを対象にする
      （Wikiの画像などの外部画像は対象外＝オフラインでは表示されない）。
@@ -33,6 +37,28 @@ self.addEventListener('activate', (event) => {
     await self.clients.claim();
   })());
 });
+
+// 配信網（CDN）のため込みを避けるため、同一オリジンのURLに毎回ちがう ?fresh を付ける
+function bustUrl(u) {
+  const b = new URL(u.href);
+  b.searchParams.set('fresh', Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+  return b.href;
+}
+// 手元の保存分があれば、それと同じなら304を返してもらう
+function conditionalHeaders(cached) {
+  const h = {};
+  if (!cached) return h;
+  const etag = cached.headers.get('ETag');
+  const lm = cached.headers.get('Last-Modified');
+  if (etag) h['If-None-Match'] = etag;
+  else if (lm) h['If-Modified-Since'] = lm;
+  return h;
+}
+// ?fresh 付きで取ったレスポンスを、URLを持たないレスポンスに作り直す（要求した元のURLのものとして扱われる）
+async function asOriginal(res) {
+  const body = await res.blob();
+  return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -59,9 +85,16 @@ self.addEventListener('fetch', (event) => {
     const revalidate = (async () => {
       try {
         // 同一オリジンはブラウザのキャッシュを経由せずサーバーに確かめる（ページ遷移は index.html を取る）
-        const res = sameOrigin
-          ? await fetch(isNav ? new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : new Request(req, { cache: 'no-cache' }))
-          : await fetch(req);
+        let res;
+        if (sameOrigin) {
+          const net = await fetch(bustUrl(isNav ? new URL(url.pathname, url.origin) : url), {
+            cache: 'no-store', credentials: 'same-origin', headers: conditionalHeaders(cached),
+          });
+          if (net.status === 304 && cached) return cached; // 変わっていない
+          res = net.ok ? await asOriginal(net) : net;
+        } else {
+          res = await fetch(req);
+        }
         // 同一オリジンは成功したものだけ、CDNは不透明レスポンス（no-corsのscript）も保存する
         if (res && (res.ok || (!sameOrigin && res.type === 'opaque'))) {
           const cache = await caches.open(CACHE_NAME);

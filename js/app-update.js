@@ -12,7 +12,7 @@
    ================================================================ */
 import { CHANGELOG } from './changelog-data.js';
 import { CURRENT_LANG, escapeHtml } from './i18n.js';
-import { refreshToLatest } from './refresh.js';
+import { refreshToLatest, retryRefreshIfBehind } from './refresh.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 /** 版番号を数字の並びとして比べる（'2026.11.10.10' が '2026.11.10.9' より新しいと分かるように。文字の大小だと逆になる） */
@@ -142,11 +142,13 @@ export function openChangelog() {
 }
 
 /** 新しい版へ切り替える（読み込み直し） */
-export function startUpdate() { refreshToLatest(); }
+export function startUpdate() { const p = pendingVersions(); refreshToLatest(p[0] && p[0].version); }
 
 /** 起動時に1回呼ぶ。更新した直後の最初の起動なら「Ver.… に更新しました」を出して true を返す */
 export function initAppUpdate() {
   let shown = false;
+  // 「最新に更新」で目指した版にまだなっていなければ、1回だけ自動でやり直す
+  if (retryRefreshIfBehind(APP_VERSION, compareVersion)) return true;
   try {
     const seen = localStorage.getItem(SEEN_VERSION_KEY);
     if (seen && APP_VERSION && compareVersion(seen, APP_VERSION) < 0) { showUpdatedToast(); shown = true; }
