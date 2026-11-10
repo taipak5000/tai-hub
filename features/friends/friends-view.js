@@ -78,7 +78,7 @@ function render() {
     <div class="fun-wrap">
       <header class="fun-head">
         <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-heart"/></svg>${t('フレンド記念日', 'Friend Anniversaries')}</h1>
-        <p class="fun-lead">${t('記念日が近づくと「お知らせ」に出ます。', 'Keep the days you became friends and other anniversaries — you’ll get a notice when they come around. Save memories in the photo diary.')}</p>
+        <p class="fun-lead">${t('記念日が近づくと「お知らせ」に出ます。思い出の写真はフォト日記へ。', 'Keep the days you became friends and other anniversaries — you’ll get a notice when they come around. Save memories in the photo diary.')}</p>
       </header>
       ${soon.length ? `<section class="fr-soon" aria-label="${t('もうすぐの記念日', 'Coming up')}">
         <h2 class="fun-h2">${t('もうすぐの記念日', 'Coming up')}</h2>

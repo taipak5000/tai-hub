@@ -190,6 +190,7 @@ function renderShell() {
         <header class="sc-page-head">
           <div class="sc-title-icon" aria-hidden="true"></div>
           <h1>${tt('星のキャンドル計算機', 'Star Candle Calculator')}</h1>
+          <p class="sc-subtitle">${tt('Sky 星を紡ぐ子どもたち・目標本数まであと何週間？', 'Sky: Children of the Light — how many weeks until your goal?')}</p>
         </header>
 
         <div class="sc-one-year-ago-banner" id="scOneYearAgoBanner">
