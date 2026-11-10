@@ -10,6 +10,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.10.2',
+    title: { ja: 'ロイヤリティクラブのアイテムに画像を追加', en: 'Loyalty Club item images' },
+    date: '2026-11-10',
+    items: [
+      { type: 'improve', ja: 'ロイヤリティクラブの4アイテムに画像と英語名を入れ、引き換えに必要なポイント（10・20・50・150）を載せました。', en: 'Added images, English names and point costs (10/20/50/150) to the Loyalty Club items.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.10',
     title: { ja: 'コーデ日記: 着ていたアイテムをカテゴリごとにアイコンで選べるように', en: 'Outfit Diary: pick worn items by category' },
     date: '2026-11-10',
