@@ -280,6 +280,14 @@ const landingPoint = currentY + project(v);
   各版には`title`（見出し）を付ける。`service-worker.js`は`?fresh`付きの要求を素通しにする（保存分を返さない）。
   新しい版で開いた最初の1回は「Ver.… に更新しました」のトーストを出す（`sky_hub_seen_version`）。
 
+## 💴 アイテム別コストの価格データ（`features/item/data/cost-data.js`）
+
+- `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル。2026-11-10追加）／`na`／`unknown`。
+  **`seasonCandle`は季節の開催中の価格で、キャンドルとは別の通貨なので合計には入れない**（表示とフィルターだけ）。
+- 「不明」を埋める時は SkyGame-Data（npm `skygame-data`。sky-planner.com と同じデータ）の`nodes`（精霊ツリー）・`itemLists`（ショップ）・`iaps`（課金パック）と英語名で突き合わせる。
+  対応: `c`→candle、`h`→heart、`ac`→starCandle、`ec`→ticket、`sc`→seasonCandle。課金パックのドル→円は、既存データから
+  1.99→260・2.99→400・3.99→530・4.99→650・6.99→900・9.99→1300・11.99→1550・14.99→1950・17.99→2380・19.99→2600・24.99→3300・29.99→3900。
+
 ## 🔎 検索エンジン向けの紹介ページ（2026-11-07追加）
 
 - ツールは`#/item`のような`#`以降で切り替えるため、Googleには別々のページとして載らない。そこで**ツールごとの静的な紹介ページ**

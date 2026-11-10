@@ -278,6 +278,7 @@ function costHtml(cost) {
     case 'starCandle': return `<span class="wcm-cost"><svg class="inline-icon" width="16" height="16"><use href="#i-star"/></svg> ${cost.value}</span>`;
     case 'heart': return `<span class="wcm-cost"><svg class="inline-icon" width="16" height="16"><use href="#i-heart"/></svg> ${cost.value}</span>`;
     case 'money': return `<span class="wcm-cost money">¥${Number(cost.value).toLocaleString()}</span>`;
+    case 'seasonCandle': return `<span class="wcm-cost unknown">${en ? `${cost.value} Season Candles` : `季節キャンドル ${cost.value}本`}</span>`;
     case 'ticket': return `<span class="wcm-cost unknown">${en ? 'Ticket exchange' : 'チケット交換'}</span>`;
     case 'na': return `<span class="wcm-cost unknown">${en ? 'Pass/Ultimate item' : 'パス・究極系'}</span>`;
     default: return `<span class="wcm-cost unknown">${en ? 'Unknown' : '価格不明'}</span>`;
