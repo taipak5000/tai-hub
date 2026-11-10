@@ -184,7 +184,6 @@ function renderShell() {
         <header class="page-head">
           <div class="title-icon" aria-hidden="true"></div>
           <h1>${escapeHtml(tt('ノマキャン計算機', 'Nomacan Calculator'))}</h1>
-          <p class="subtitle">${CURRENT_LANG === 'en' ? 'Sky: Children of the Light — how many days until your goal?' : 'Sky 星を紡ぐ子どもたち・目標本数まであと何日？'}</p>
         </header>
 
         <div class="one-year-ago-banner" id="oneYearAgoBanner" role="status" aria-live="polite"></div>

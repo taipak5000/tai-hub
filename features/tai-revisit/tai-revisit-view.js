@@ -645,7 +645,6 @@ function renderShell() {
         </div>
 
         <p class="sec-label">${escapeHtml(t('upcomingSectionLabel'))}</p>
-        <div class="sec-sub">${escapeHtml(t('upcomingSectionSub'))}</div>
         <div class="spirit-list" id="trUpcomingList"></div>
 
         <details class="collapse-section" id="trSeasonOverviewSection">

@@ -169,7 +169,7 @@ function render() {
   r.innerHTML = `<div class="fun-wrap">
     <header class="fun-head">
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-hanger"/></svg>${t('コーデ日記', 'Outfit Diary')}</h1>
-      <p class="fun-lead">${t('その日のコーデを、写真と着ていたアイテムで残しておけます。アイテムは「アイテム所持管理」で所持にしたものから選べます。', 'Log your outfit of the day with a photo and the items you wore, picked from your owned items.')}</p>
+      <p class="fun-lead">${t('着ていたアイテムは、所持にしたものから選べます。', 'Log your outfit of the day with a photo and the items you wore, picked from your owned items.')}</p>
     </header>
     <div class="cd-tools" role="group" aria-label="${t('コーデ機能', 'Coord tools')}">
       ${toolBtn('random', 'i-dice', t('ランダムコーデ', 'Random Coord'), t('所持アイテムからコーデを提案', 'A random outfit from your items'))}

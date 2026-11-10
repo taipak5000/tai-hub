@@ -256,7 +256,7 @@ function render() {
   r.innerHTML = `<div class="fun-wrap">
     <header class="fun-head">
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-cart"/></svg>${t('ほしいもの計画', 'Wishlist Plan')}</h1>
-      <p class="fun-lead">${t('アイテム所持管理の「欲しいもの」に順番を付けて、上から順にいつ手に入るかを計算します。期限までにそろえるには1日何本必要かもわかります。', 'Put your wishlist in order and see when you can get each item, and how many candles a day you need.')}</p>
+      <p class="fun-lead">${t('欲しいものに順番を付けると、いつ手に入るかを計算します。', 'Put your wishlist in order and see when you can get each item, and how many candles a day you need.')}</p>
     </header>
 
     <section class="wp-summary">

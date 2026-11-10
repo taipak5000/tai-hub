@@ -259,11 +259,6 @@ async function renderPanel(container) {
         </div>
       </div>
     </div>
-    ${!hasAnyOwned ? `
-    <div class="titp-hint">
-      <span class="titp-hint-icon">${iconHtml('lightbulb')}</span>
-      <span>${en ? 'Register items on each category page and your completion rate will automatically appear here' : '各カテゴリページでアイテムを登録すると、ここに所持率が自動で反映されます'}</span>
-    </div>` : ''}
 
     <div id="titpCondRates"></div>
 

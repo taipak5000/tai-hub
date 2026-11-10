@@ -16,7 +16,7 @@ import { CURRENT_LANG } from '../../../js/i18n.js';
 
 export const REVISIT_I18N = {
   ja: {
-    introPart1: '過去に来訪（Traveling Spirit）・特別来訪（Returning Spirits）した精霊の履歴を検索できる、閲覧専用の参考データベースです。所持チェックなどの記録機能はありません。データは',
+    introPart1: '旅の精霊・特別来訪の過去の記録です（見るだけで、記録はしません）。データは',
     introPart2: 'プロジェクトを基にしています。',
     searchPlaceholder: '精霊名で検索…',
     seasonAll: 'すべての季節',
@@ -50,7 +50,7 @@ export const REVISIT_I18N = {
     seasonOverviewOverallLine: '全季節合計: {revisited} / {total} 精霊が再訪済み（{pct}%）',
     seasonOverviewSubLine: '{revisited} / {total} 精霊　・　来訪合計 {visits} 回',
     upcomingSectionLabel: '進行中・次回の特別来訪',
-    upcomingSectionSub: '現在進行中、またはこれから始まる特別来訪（Returning Spirits）の一覧です。',
+    upcomingSectionSub: '',
     upcomingEmptyState: '現在、進行中・予定されている特別来訪はありません。',
     calendarOngoingBadge: '進行中',
     calendarNextBadge: '次回予定',
@@ -68,7 +68,7 @@ export const REVISIT_I18N = {
     treeManageTitle: '精霊ツリー管理で、この精霊のツリーをチェックする（閉じるとここに戻ります）',
   },
   en: {
-    introPart1: 'A read-only reference database for looking up the visit history of Traveling Spirits and Returning Spirits. There is no ownership-tracking feature here. Data is based on the',
+    introPart1: 'Past visits of Traveling and Returning Spirits (read-only). Data is based on the',
     introPart2: ' project.',
     searchPlaceholder: 'Search by spirit name…',
     seasonAll: 'All Seasons',
@@ -102,7 +102,7 @@ export const REVISIT_I18N = {
     seasonOverviewOverallLine: 'All seasons: {revisited} / {total} spirits revisited ({pct}%)',
     seasonOverviewSubLine: '{revisited} / {total} spirits · {visits} total visits',
     upcomingSectionLabel: 'Ongoing & Next Returning Spirits',
-    upcomingSectionSub: 'Returning Spirits currently active or scheduled to start soon.',
+    upcomingSectionSub: '',
     upcomingEmptyState: 'No ongoing or upcoming Returning Spirits right now.',
     calendarOngoingBadge: 'Ongoing',
     calendarNextBadge: 'Coming Up',

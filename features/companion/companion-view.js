@@ -587,7 +587,6 @@ const TEMPLATE = `
 <div class="companion-view" v-cloak>
   <header>
     <h1><svg class="inline-icon" width="20" height="20" style="vertical-align:-3px;"><use href="#i-sparkle"/></svg> {{ t('app_title') }}</h1>
-    <div class="subtitle">{{ t('app_subtitle') }}</div>
     <div class="season-info-badge">
       <strong>{{ seasonNameDisplay }}</strong>
       <span class="season-info-dates">{{ seasonStartText }} 〜 {{ seasonEndText }}</span>

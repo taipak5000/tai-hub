@@ -241,11 +241,7 @@ const I18N = {
     resetKeyBindingsToast: 'キー割り当てを初期設定に戻しました',
     keySwapToast: '「{label}」（マス{n}）と入れ替えました',
     sharedSongLoadedToast: '共有された楽譜「{name}」を読み込みました',
-    introText: `Skyの5×3マス（ハープ等）の楽器で演奏できる楽譜を、自由に作成・保存・共有・練習できるツールです。
-        <a href="https://sky-music.specy.app/" target="_blank" rel="noopener noreferrer">Sky Music Nightly</a>形式の楽譜ファイルの
-        インポート・エクスポートにも対応しているほか、Sky Studio形式の楽譜ファイルの読み込みにも対応しているので、
-        すでに公開されている楽譜もそのまま読み込めます。
-        データはこの端末のブラウザだけに保存され、外部には送信されません。`,
+    introText: `5×3マスの楽器（ハープなど）の楽譜を作って練習できます。<a href="https://sky-music.specy.app/" target="_blank" rel="noopener noreferrer">Sky Music Nightly</a>形式とSky Studio形式の楽譜を読み込めます。`,
   },
   en: {
     heroBannerTitle: 'Creation Record',
@@ -460,12 +456,7 @@ const I18N = {
     resetKeyBindingsToast: 'Key bindings reset to default',
     keySwapToast: 'Swapped with "{label}" (tile {n})',
     sharedSongLoadedToast: 'Loaded the shared song "{name}"',
-    introText: `A free tool for creating, saving, sharing, and practicing sheet music playable on Sky's 5×3-key
-        instruments (Harp, etc). It also supports importing and exporting
-        <a href="https://sky-music.specy.app/" target="_blank" rel="noopener noreferrer">Sky Music Nightly</a>-format
-        sheet music files, as well as loading Sky Studio-format files, so sheet music already published elsewhere
-        can be loaded as-is.
-        Your data is stored only in this device's browser and is never sent anywhere else.`,
+    introText: `Write and practice sheet music for 5×3-key instruments (Harp, etc). Loads <a href="https://sky-music.specy.app/" target="_blank" rel="noopener noreferrer">Sky Music Nightly</a> and Sky Studio files.`,
   },
 };
 

@@ -147,8 +147,8 @@ function renderShell() {
 
     <div class="notice-card">
       ${t(
-        '精霊が再訪してきたとき、その精霊から初回だけもらえる<b>光の翼</b>（星のキャンドル2本消費）を、季節・精霊ごとにチェックして記録します。地方に隠れている光の子を見つけた場合も、光の子1体につき光の翼1枚がもらえます。<br>また、原罪に行って転生すると、精霊に配った枚数とは別に光の翼が1枚加算されるため、下のケープレベルの計算にはこの分を+1して反映しています。',
-        'Track the <b>Winged Light</b> you receive the first time a Revisit Spirit returns (costs 2 Star Candles), checked off by season and spirit. Finding a hidden Child of Light in a realm also grants 1 Winged Light each.<br>Also, reincarnating at Eye of Eden adds 1 more Winged Light on top of what you\'ve given to Spirits, so the Cape Level calculation below includes this +1.',
+        '再訪精霊から初回にもらえる<b>光の翼</b>（星のキャンドル2本）を記録します。ケープレベルには、原罪で転生した時の1枚を足しています。',
+        'Track the <b>Winged Light</b> you get the first time a Revisit Spirit returns (2 Star Candles). Cape Level includes the 1 you get from reincarnating at Eye of Eden.',
       )}
     </div>
 

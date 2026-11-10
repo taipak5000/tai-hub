@@ -45,7 +45,6 @@ function render() {
   r.innerHTML = `<div class="fun-wrap">
     <header class="fun-head">
       <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-trophy"/></svg>${t('称号一覧', 'Titles')}</h1>
-      <p class="fun-lead">${t('各ツールで手に入れた称号を、ここにまとめています。まだの称号は名前が伏せてあり、手に入れる条件だけが見えます。', 'All the titles you’ve earned across the tools. Titles not yet earned show only how to get them.')}</p>
     </header>
     <div class="tl-total"><b>${totals.earned}</b><span>/ ${totals.total}</span><small>${t('の称号を獲得', 'titles earned')}</small>
       <span class="tl-bar" aria-hidden="true"><span style="width:${totals.total ? Math.round(totals.earned / totals.total * 100) : 0}%"></span></span></div>

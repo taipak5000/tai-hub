@@ -174,7 +174,6 @@ function render() {
     <div class="fun-wrap">
       <header class="fun-head">
         <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-trophy"/></svg>${t('ふりかえり', 'Recap')}</h1>
-        <p class="fun-lead">${t('tai-hubに残っている記録から、その年・その月に集めたものと続けたことをまとめました。画像にして保存・共有できます。', 'A look back at what you collected and kept up, by year or by month. Save it as an image to share.')}</p>
       </header>
       <div class="fun-tabs" role="tablist">
         <button type="button" class="fun-tab${month === null ? ' on' : ''}" role="tab" aria-selected="${month === null}" data-act="period" data-p="year">${t('一年', 'Year')}</button>

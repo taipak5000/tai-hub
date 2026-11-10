@@ -130,7 +130,6 @@ function render() {
   const visible = list.filter(v => (v.items || []).some(i => !filter || i.type === filter));
   const shown = showAll ? visible : visible.slice(0, FIRST_SHOWN);
   r.innerHTML = `<div class="cl-wrap">
-    <p class="fun-lead cl-lead">${t('Skyツールに入った変更を、新しい順に載せています。', 'Every change to the Sky tools, newest first.')}</p>
     ${statusHtml()}
     <div class="fun-chips cl-filter" role="group" aria-label="${t('種類で絞り込む', 'Filter by type')}">
       <button type="button" class="fun-chip${!filter ? ' on' : ''}" data-act="filter" data-type="">${t('すべて', 'All')}</button>

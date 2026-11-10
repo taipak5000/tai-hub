@@ -20,7 +20,7 @@ import { CURRENT_LANG } from '../../../js/i18n.js';
 const DICT = {
   ja: {
     pageHeading: '星紡ぎカード',
-    ledeHtml: 'Sky 星を紡ぐ子どもたちの自己紹介カードを作れるサイトです。入力した項目はその場でシェア用のカードにまとめられ、<b>項目ごとに公開・非公開を選べます。</b>',
+    ledeHtml: '項目ごとに公開・非公開を選べます。',
     editorHeading: '編集',
     secThemeTitle: '背景テーマ',
     secAvatarTitle: 'プロフィール画像',
@@ -143,7 +143,7 @@ const DICT = {
   },
   en: {
     pageHeading: 'Star-Spun Card',
-    ledeHtml: 'A site for making a self-intro card for Sky: Children of the Light. Everything you enter is instantly gathered into a shareable card, and <b>each item can be shown or hidden individually.</b>',
+    ledeHtml: 'Each item can be shown or hidden.',
     editorHeading: 'Edit',
     secThemeTitle: 'Background Theme',
     secAvatarTitle: 'Profile Picture',

@@ -92,7 +92,7 @@ function render() {
     <div class="fun-wrap">
       ${embedded ? `<p class="fun-hint bg-embed-lead">${t('できたマスをタップして、縦・横・斜めをそろえましょう。毎週日曜のウィークリーリセットで新しいお題に変わります。', 'Tap a square when you’ve done it and line them up. New prompts every weekly reset.')}</p>` : `<header class="fun-head">
         <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-grid"/></svg>${t('週替わりビンゴ', 'Weekly Bingo')}</h1>
-        <p class="fun-lead">${t('Skyで遊ぶ時の小さなお題です。できたマスをタップして、縦・横・斜めをそろえましょう。毎週日曜のウィークリーリセットで新しいお題に変わります。', 'Little things to do in Sky. Tap a square when you’ve done it and line them up. New prompts every weekly reset.')}</p>
+        <p class="fun-lead">${t('できたマスをタップします。お題は毎週日曜のリセットで変わります。', 'Little things to do in Sky. Tap a square when you’ve done it and line them up. New prompts every weekly reset.')}</p>
       </header>`}
 
       <div class="bg-card" id="bgCapture">

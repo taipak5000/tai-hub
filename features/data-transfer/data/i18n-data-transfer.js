@@ -27,11 +27,11 @@ const DT_I18N = {
     sectionExport: { ja: '引き継ぎコードを作成', en: 'Create a Transfer Code' },
     sectionImport: { ja: 'コードから復元', en: 'Restore from a Code' },
     exportHint: {
-      ja: 'Dropbox等の外部サービスを使わず、ファイルまたはコピー&ペーストで端末間のデータを引き継げます。引き継ぎたいサイトだけを選んでコードを作成し、別の端末の「コードから復元」に読み込んでください。コードは自動で圧縮されますが、長くなりやすいので「ファイルとしてダウンロード」がおすすめです（AirDropやメッセージアプリへの添付で送れます）。このブラウザに保存されているデータが対象で、taipak5000.github.io系ツール共通のプロフィール（保存枠）は常に一緒に引き継がれます。',
+      ja: '引き継ぐツールを選んでコードを作り、別の端末の「コードから復元」で読み込みます。コードは長いので、ファイルで送るのがおすすめです。プロフィール（保存枠）は必ず一緒に引き継がれます。',
       en: 'You can transfer data between devices using a file or copy & paste, without any external service like Dropbox. Select only the sites you want to bring over to generate a code, then load it into "Restore from a Code" on another device. The code is compressed automatically, but it can still get long, so downloading it as a file is recommended (you can send it via AirDrop or as a message attachment). This applies to data stored in this browser — the profiles (save slots) shared across taipak5000.github.io tools are always carried over together with it.',
     },
     importHint: {
-      ja: '別の端末で作成した引き継ぎコードを、ファイルから読み込むか、ここに貼り付けてください。コードに含まれるサイトが自動で検出され、その中から復元したいものだけを選べます。',
+      ja: 'コードのファイルを読み込むか、貼り付けてください。復元するツールを選べます。',
       en: 'Load the transfer code created on another device from a file, or paste it below. The sites contained in the code are detected automatically, and you can choose which ones to restore.',
     },
     pasteHint: { ja: 'またはコードを直接貼り付け：', en: 'Or paste the code directly:' },

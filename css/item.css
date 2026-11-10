@@ -71,32 +71,27 @@
 .item-view .card { background: var(--card); border-radius: var(--r); padding: 14px; }
 .item-view a { color: inherit; text-decoration: none; }
 
-/* 元サイトの .feature-btn（アイコンが上・ラベル・説明の縦並び、影付きカード）と青いアイコンチップ */
+/* 🍃 機能への入口は、アイコン・名前・矢印だけの1行（2026-11-10。以前は説明文付きの大きなカード） */
 .item-view .feature-btn {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 5px; width: 100%; text-align: left;
-  background: var(--card); border: 0; border-radius: var(--r); padding: 16px 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 10px; cursor: pointer; color: var(--text); font-family: inherit;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: var(--card); border: 0; border-radius: var(--r); padding: 12px 14px;
+  margin-bottom: 6px; cursor: pointer; color: var(--text); font-family: inherit;
+  transition: transform 0.12s ease;
 }
-.item-view .feature-btn:active { transform: scale(0.965); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.item-view .feature-icon {
-  flex-shrink: 0; background: var(--blue-bg); color: var(--blue); border-radius: 26%;
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 60%);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35), inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 2px rgba(0,0,0,0.10);
-}
-.item-view .feature-icon .inline-icon { stroke-width: 2.2; vertical-align: 0; display: block; }
-.item-view .feature-label { display: block; font-weight: 700; font-size: 14px; color: var(--text); }
-.item-view .feature-desc { display: block; font-size: 11px; color: var(--text-2); line-height: 1.45; margin-top: 5px; }
-.item-view .feature-btn.twitter { background: #000; }
-.item-view .feature-btn.twitter .feature-label { color: #fff; }
-.item-view .feature-btn.twitter .feature-desc { color: rgba(255,255,255,0.68); }
+.item-view .feature-btn:active { transform: scale(0.985); }
+.item-view .feature-icon { flex-shrink: 0; display: inline-flex; color: var(--text-2); }
+.item-view .feature-icon .inline-icon { stroke: currentColor; stroke-width: 2; vertical-align: 0; display: block; }
+.item-view .feature-label { display: block; font-weight: 600; font-size: 14px; color: var(--text); }
+.item-view .feature-chev { margin-left: auto; flex-shrink: 0; stroke: var(--text-2); }
+@media (prefers-reduced-motion: reduce) { .item-view .feature-btn { transition: none; } }
 /* コーデ機能は元サイトと同じ2列 */
 .item-view .dash-feature-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
+.item-view .dash-feature-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .item-view .dash-feature-row .feature-btn { margin-bottom: 0; }
 /* 「季節・イベントでアイテムを検索」のカードの右側に「今手に入る未所持アイテム」を並べる（狭い画面では下に回す） */
 .item-view .dash-search-combo {
   display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px;
-  background: var(--card); border-radius: var(--r); box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding-right: 14px;
+  background: var(--card); border-radius: var(--r); padding-right: 10px;
 }
 .item-view .dash-search-combo .feature-btn { margin: 0; box-shadow: none; background: none; }
 .item-view .dash-avail-btn {

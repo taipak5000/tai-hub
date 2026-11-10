@@ -178,16 +178,15 @@ function renderWelcomeCard() {
     </div>`;
 }
 
-function featureBtnHtml({ id, href, icon, label, desc, variant }) {
+// 🍃 説明文は付けず、アイコン・名前・矢印だけの行にする（2026-11-10。desc は呼び出し側に残っていても使わない）
+function featureBtnHtml({ id, href, icon, label, variant }) {
   const tag = href ? 'a' : 'button';
   const attrs = href ? `href="${href}"` : `type="button" id="${id}"`;
   return `
     <${tag} class="feature-btn${variant ? ' ' + variant : ''}" ${attrs}>
-      <span class="feature-icon icon-chip" style="width:32px; height:32px;"><svg class="inline-icon" width="25" height="25"><use href="#${icon}"/></svg></span>
-      <span>
-        <span class="feature-label">${label}</span>
-        <span class="feature-desc">${desc}</span>
-      </span>
+      <span class="feature-icon"><svg class="inline-icon" width="18" height="18"><use href="#${icon}"/></svg></span>
+      <span class="feature-label">${label}</span>
+      <svg class="inline-icon feature-chev" width="14" height="14" aria-hidden="true"><use href="#i-chevron-right"/></svg>
     </${tag}>`;
 }
 
