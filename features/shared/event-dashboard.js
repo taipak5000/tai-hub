@@ -808,11 +808,11 @@ function injectStyles() {
 .edb-i { stroke: var(--hub-text-2); }
 .dash-section { margin-top: 18px; }
 .dash-section:first-child { margin-top: 0; }
-.dash-section-label { display: flex; align-items: baseline; gap: 8px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); margin: 0 0 2px; letter-spacing: 0.04em; }
+.dash-section-label { display: flex; align-items: baseline; gap: 8px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); margin: 0 0 6px; letter-spacing: 0.04em; }
 .dash-section-extra { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: 0; }
-/* 🍃 予定の行（カードにせず、細い区切り線だけで並べる） */
-.dash-item { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--hub-sep); font-size: 13px; line-height: 1.45; color: var(--hub-text); }
-.dash-list > .dash-item:last-child { border-bottom: 0; }
+/* 🍃 予定の行（小さめの角丸カードに、名前・残り時間・日付だけを1行で並べる） */
+.dash-item { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding: 8px 11px; margin-bottom: 4px; background: var(--hub-bg); border-radius: var(--hub-r-sm); font-size: 13px; line-height: 1.45; color: var(--hub-text); }
+.dash-list > .dash-item:last-child { margin-bottom: 0; }
 .dash-item-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: #8e8e93; align-self: center; }
 .dash-item-dot.is-red { background: #ff453a; }
 .dash-item-dot.is-dim { opacity: 0.45; }
@@ -824,8 +824,10 @@ function injectStyles() {
 .dash-item-note { flex-basis: 100%; font-size: 11.5px; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
 .dash-item .dash-count-num { font-size: 1em; }
 .dash-item .dash-count-unit { margin-right: 2px; }
-.dash-item .dash-shard-times { display: flex; flex-wrap: wrap; gap: 0 10px; margin-top: 1px; }
-.dash-item .dash-shard-time { display: inline; color: var(--hub-text-2); font-weight: 500; }
+/* 闇の破片の時刻は1回ずつ改行して、ぱっと見で分かるようにする */
+.dash-item .dash-shard-times { display: block; margin-top: 2px; }
+.dash-item .dash-shard-time { display: block; font-size: 12.5px; color: var(--hub-text); font-weight: 500; }
+.dash-item .dash-shard-time.past { color: var(--hub-text-2); font-weight: 400; }
 .dash-item .dash-shard-time.active { color: var(--hub-accent-ink, var(--hub-accent)); font-weight: 600; }
 .dash-row { display: flex; align-items: flex-start; gap: 8px; padding: 9px 11px; background: var(--hub-bg); border-radius: var(--hub-r-sm); margin-bottom: 6px; font-size: 13px; color: var(--hub-text); line-height: 1.5; }
 .dash-row:last-child { margin-bottom: 0; }
@@ -861,12 +863,11 @@ function injectStyles() {
   color: var(--hub-text); background: color-mix(in srgb, var(--bar) 18%, transparent); }
 .dash-cal-bar.round-l { border-left: 3px solid var(--bar); border-top-left-radius: 2px; border-bottom-left-radius: 2px; margin-left: 1px; }
 .dash-cal-bar.round-r { border-top-right-radius: 2px; border-bottom-right-radius: 2px; margin-right: 1px; }
-@media (prefers-contrast: more) { .dash-cal-bar { background: color-mix(in srgb, var(--bar) 35%, transparent); } .dash-item { border-bottom-color: var(--hub-text-2); } }
+@media (prefers-contrast: more) { .dash-cal-bar { background: color-mix(in srgb, var(--bar) 35%, transparent); } .dash-item { outline: 1px solid var(--hub-text-2); } }
 @media (prefers-reduced-motion: reduce) { .dash-calendar-chevron { transition: none; } }
 .dash-cal-bar.half-end { width: 50%; }
 .dash-cal-bar.half-start { width: 50%; justify-self: end; }
 .edb-reminder-row { align-items: center; flex-wrap: nowrap; cursor: pointer; }
-.edb-reminder-row:last-of-type { border-bottom: 0; }
 .edb-select { flex-shrink: 0; padding: 4px 8px; border: 0.5px solid var(--hub-sep); border-radius: 8px; background: var(--hub-card); color: var(--hub-text); font: inherit; font-size: 12.5px; }
 .edb-plain-btn { display: block; width: 100%; margin-top: 6px; padding: 8px 12px; border: 0.5px solid var(--hub-sep); border-radius: 10px; background: var(--hub-card); color: var(--hub-accent-ink, var(--hub-accent)); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .edb-plain-btn:active { transform: scale(0.98); }
