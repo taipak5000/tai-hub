@@ -592,6 +592,18 @@ export function spiritProgress(spirit) {
   const done = trackable.filter((n) => isNodeUnlocked(n)).length;
   return { done, total };
 }
+/** ツリーを100%にするのに残っているもの: { nodes: 残りのノード数, cost: {c,h,sc,sh,ac,ec}, reward, money: 円の合計, moneyCount } */
+export function spiritRemainingSummary(spirit) {
+  const left = spirit.nodes.filter((n) => !isChecklistExcludedNode(n) && !isNodeUnlocked(n));
+  const out = { nodes: left.length, cost: sumRemainingCost([{ nodes: left }]), reward: 0, money: 0, moneyCount: 0 };
+  left.forEach((n) => {
+    const chip = itemCostChip(n);
+    if (!chip) return;
+    if (chip.cls === 'cost-reward') out.reward += 1;
+    if (chip.cls === 'cost-money') { out.moneyCount += 1; out.money += Number(String(chip.label).replace(/[^0-9]/g, '')) || 0; }
+  });
+  return out;
+}
 export function spiritNodesRemaining(spirit, predicate) {
   return spirit.nodes.filter((n) => !isChecklistExcludedNode(n) && predicate(n) && !isNodeUnlocked(n)).length;
 }

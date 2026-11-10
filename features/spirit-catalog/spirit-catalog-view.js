@@ -471,6 +471,22 @@ function spiritCardHtml(s, areaTagMode) {
     </button>`;
 }
 
+// 📊 ツリーを100%にするのに必要なもの（残りのノード数と、必要なキャンドル・ハートなど）を詳細の上にまとめて出す。
+// コスト表示のオン・オフにかかわらず出す（開いた時にぱっと見で分かるように）
+function remainingToCompleteHtml(s) {
+  const r = S.spiritRemainingSummary(s);
+  const en = CURRENT_LANG === 'en';
+  if (!r.nodes) return `<div class="sc-remaining is-done">${icon('i-check', 14)}<b>${en ? 'Tree complete!' : 'このツリーはコンプリート！'}</b></div>`;
+  const chips = remainingCostChipsHtml(r.cost);
+  const extra = [
+    r.reward ? `<span class="cost-chip cost-reward">${en ? `Pass ×${r.reward}` : `報酬 ×${r.reward}`}</span>` : '',
+    r.moneyCount ? `<span class="cost-chip cost-money">¥${r.money.toLocaleString()}</span>` : '',
+  ].join('');
+  return `<div class="sc-remaining">
+      <div class="sc-remaining-head">${en ? 'To 100%' : '100%まで'}<b>${en ? `${r.nodes} left` : `あと${r.nodes}個`}</b></div>
+      <div class="sc-remaining-chips">${chips}${extra}${!chips && !extra ? `<span class="sc-remaining-free">${en ? 'No candles needed' : 'キャンドル等は不要'}</span>` : ''}</div>
+    </div>`;
+}
 function remainingCostChipsHtml(totals) {
   const order = ['c', 'h', 'sc', 'sh', 'ac', 'ec'];
   return order.filter((k) => totals[k]).map((k) => `<span class="cost-chip cost-${k}">${icon(S.COST_ICON[k], 10)}${totals[k]}</span>`).join('');
@@ -967,6 +983,7 @@ function renderDetail(guid) {
         <span>${escapeHtml(t('detail.progress'))}: <b>${done} / ${total}</b></span>
         ${revisitNote}
       </div>
+      ${remainingToCompleteHtml(s)}
       ${revisitHistoryHtml(s)}
       ${markAllArea(guid, total - done)}
       ${markQuestsArea(guid, S.spiritNodesRemaining(s, S.isQuestNode))}
