@@ -12,13 +12,13 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.10.15',
+    version: '2026.11.10.16',
     title: { ja: '巣づくり工房の新しい家具を追加、アイテム別コストの不明な価格を補完', en: 'New Nesting Workshop furniture, more item costs' },
     date: '2026-11-10',
     items: [
       { type: 'improve', ja: '各ツールの説明文を短くし、アイテム所持管理・エモート所持率管理の機能の入口を、アイコンと名前だけの1行にしました。', en: 'Shorter descriptions across the tools, and simpler one-line entries for features in the Item and Emote trackers.' },
       { type: 'improve', ja: 'ダッシュボード（今日・今週・今月）を見やすくしました。予定は名前と残り時間だけの小さなカードにまとめ、重なっていた説明を減らし、カレンダーの帯を控えめな色にしました。闇の破片の時刻は1回ずつ改行して出します。', en: 'Cleaner dashboard: compact rows with name and time left, fewer repeated notes, subtler calendar bars, and shard times on separate lines.' },
-      { type: 'fix', ja: '「新しいバージョンがあります」の「最新に更新」を押しても前の版のままになり、何度も押す必要があった不具合を直しました。', en: 'Fixed "Update" sometimes needing several taps before the new version loaded.' },
+      { type: 'fix', ja: '「新しいバージョンがあります」が何度も出る不具合を直しました。「最新に更新」は1回押せば新しい版になります。起動した直後に新しい版が見つかった時は、お知らせを出さずにそのまま新しい版に切り替えます。', en: 'Fixed the update notice appearing repeatedly. "Update" now works in one tap, and a new version found right at launch is applied automatically.' },
       { type: 'improve', ja: 'ほしいもの計画で、計算に入れるアイテムをチェックで選べるようにしました。名前付きのグループを作って、グループごとに計算することもできます（グループに入れるアイテムはチェックで選び、1つのアイテムを複数のグループに入れられます）。各アイテムの「手に入れた」を押すと、価格ぶんキャンドル（またはハート）を減らして、アイテム所持管理で所持にします。', en: 'Wishlist Plan: choose which items to include, and sort your wishlist into named groups to plan each group separately.', route: 'wish-plan' },
       { type: 'improve', ja: 'アイテム所持管理の絞り込みで、季節・イベントを複数まとめて選べるようにしました（カテゴリの一覧・全アイテムの一覧・季節・イベントの検索）。「季節をまとめて」「日々をまとめて」で一度に選ぶこともできます。', en: 'Item tracker filters now let you pick several seasons/events at once, with one-tap “all seasons/all days”.', route: 'item' },
       { type: 'improve', ja: 'ダッシュボードのイベントに、開始日時だけでなく終了日時も小さく載せるようにしました（開催中のものは「○/○ ○:○まで」）。', en: 'The dashboard now shows end times for events, not just start times.' },

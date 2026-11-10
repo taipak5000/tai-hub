@@ -3,7 +3,10 @@
    ・今動いているバージョン＝読み込んだ changelog-data.js の先頭の version。
    ・公開中の最新版は、同じファイルを ?fresh=… 付きで読み直して調べる
      （service-worker.js は ?fresh の付いた要求を素通しにする＝保存してある古い版を返さない）。
-     起動の数秒後・画面に戻った時（30分おき）・30分ごとに確かめる。
+     起動した時・画面に戻った時（30分おき）・30分ごとに確かめる。
+   ・起動した直後（と、30分以上離れてから戻った直後）に新しい版が見つかり、まだ画面を触っていなければ、
+     帯を出さずにそのまま新しい版へ切り替える（2026-11-10）。Service Worker は保存してある版をまず表示するため、
+     新しい版を公開した後の最初の起動では必ず前の版が出て、そのたびに帯が出ていた。切り替えは同じ版につき1回まで。
    ・新しい版があれば、画面の上端いっぱいに目立つ帯（新しいバージョンがあります。［最新に更新］✕）を出す
      （inacro-note.com の見せ方にならった）。✕で閉じると、その版はこのタブを開いている間は出さない。
    ・関連ツール一覧の下にはバージョン欄（最新版です／新版あり＋今すぐ更新／最新に更新／更新履歴）を出す（tools-drawer.js）。
@@ -33,6 +36,26 @@ let remote = null; // 公開中の更新履歴（確かめられた時だけ）
 let lastCheck = 0;
 let checking = null;
 let barObserver = null;
+const AUTO_KEY = 'sky_hub_auto_applied'; // sessionStorage: 起動直後に自動で切り替えた版（同じ版で繰り返さない）
+const AUTO_WINDOW = 10000; // 起動・復帰から何ミリ秒までに見つかった版を自動で切り替えるか
+let autoUntil = 0;
+let touched = false;
+function armAutoApply() { autoUntil = Date.now() + AUTO_WINDOW; touched = false; }
+// 起動直後に新しい版が見つかり、まだ画面を触っていなければ、帯を出さずに切り替える
+function maybeAutoApply() {
+  const list = pendingVersions();
+  if (!list.length || touched || Date.now() > autoUntil) return false;
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+  const v = list[0].version;
+  try {
+    if (sessionStorage.getItem(AUTO_KEY) === v) return false;
+    sessionStorage.setItem(AUTO_KEY, v);
+  } catch (e) { return false; }
+  autoUntil = 0;
+  refreshToLatest(v);
+  return true;
+}
 let status = ''; // '' | 'checking' | 'latest' | 'stale' | 'error'（関連ツール一覧の下のバージョン欄に出す）
 const listeners = new Set();
 
@@ -71,6 +94,7 @@ export function checkForUpdate(force = false) {
       if (Array.isArray(m.CHANGELOG)) {
         remote = m.CHANGELOG;
         status = pendingVersions().length ? 'stale' : 'latest';
+        if (maybeAutoApply()) return pendingVersions();
         renderBanner();
         emit();
       }
@@ -154,9 +178,16 @@ export function initAppUpdate() {
     if (seen && APP_VERSION && compareVersion(seen, APP_VERSION) < 0) { showUpdatedToast(); shown = true; }
     if (APP_VERSION && (!seen || compareVersion(seen, APP_VERSION) < 0)) localStorage.setItem(SEEN_VERSION_KEY, APP_VERSION);
   } catch (e) { /* noop */ }
-  setTimeout(() => checkForUpdate(true), 4000);
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => { touched = true; }, { capture: true, passive: true }));
+  armAutoApply();
+  checkForUpdate(true);
   setInterval(() => checkForUpdate(), CHECK_EVERY);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    // 30分以上離れてから戻った時は、起動した時と同じに扱う（ホーム画面のアプリは閉じずに戻ることが多い）
+    if (hiddenAt && Date.now() - hiddenAt >= CHECK_EVERY) { armAutoApply(); checkForUpdate(true); } else checkForUpdate();
+  });
   window.addEventListener('online', () => checkForUpdate(true));
   // data-open-changelog の付いたボタン（上端の帯・関連ツール一覧の下・更新直後のトースト）で更新履歴を開く
   document.addEventListener('click', e => {
