@@ -172,7 +172,8 @@ const landingPoint = currentY + project(v);
 - **フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・**ふりかえり**（`features/recap/`、`#/recap/month`）。
   CSSは`css/fun-tools.css`、色は`--hub-*`トークンだけを使う。新しいツールに記録を足したら、ふりかえりにも数を足せるか考える。
 - **ほしいもの計画**（`features/wish-plan/`）: 欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通。並び順・設定・グループ分けと
-  「計算に入れない」印は`wishPlanOrder_v1`/`wishPlanSettings_v1`/`wishPlanGroups_v1`。
+  「計算に入れない」印は`wishPlanOrder_v1`/`wishPlanSettings_v1`/`wishPlanGroups_v1`。グループは`items`にアイテムを持ち（チェックで選ぶ。1つのアイテムを複数のグループに入れられる）、
+  「計算に入れない」印は表示（すべて・各グループ）ごとに`offBy`へ別々に持つ。
 - **コーデ日記**（`features/coord-diary/`）: 写真はフォト日記と同じIndexedDB。着ていたアイテムはカテゴリごとに所持アイテムのアイコンから1つ選ぶ
   （`wearRowsHtml()`。選び直しは`refreshWearRows()`でその欄だけ描き直す）。シーズンアルバム（`season-album.js`）は季節（`features/shared/season-dates.js`）と
   日々（`features/shared/event-dates.js`）ごとに並べる。新しい季節・日々が始まったら、この2つのファイルの末尾に足す。撮影お題ガチャは`photo-gacha.js`。

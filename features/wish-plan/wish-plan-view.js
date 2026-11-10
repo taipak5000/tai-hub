@@ -9,8 +9,9 @@
    - このツールだけのデータ（プロフィールごと）:
        wishPlanOrder_v1: ['catKey:id', …]（上ほど先に欲しい。載っていないものは最後に元の順で並ぶ）
        wishPlanSettings_v1: { deadline: 'season'|'date', date: 'YYYY-MM-DD', perDay: 1日に集める本数 }
-       wishPlanGroups_v1: { groups: [{ id, name }], assign: { 'catKey:id': groupId }, off: ['catKey:id'], view: 'all'|groupId }
-         （2026-11-10追加。グループ分けと「計算に入れない」印。計算は表示中のグループのうち、印の付いていないものだけ）
+       wishPlanGroups_v1: { groups: [{ id, name, items: ['catKey:id', …] }], offBy: { all|groupId: ['catKey:id', …] }, view: 'all'|groupId }
+         グループは作る時にチェックでアイテムを選ぶ（1つのアイテムを複数のグループに入れられる）。
+         「計算に入れない」印は表示（すべて・各グループ）ごとに別々に持つ。計算は表示中の一覧のうち、印の付いていないものだけ。
    キャンドル以外（課金・チケット・価格不明）のアイテムは、順番には並べるが本数の計算からは外す。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
@@ -30,16 +31,32 @@ let groupEdit = null; // null | { mode: 'new'|'rename' }
 let groupDelConfirm = false;
 function loadGroups() {
   const g = readJson(GROUPS_KEY, {});
-  const groups = (Array.isArray(g.groups) ? g.groups : []).filter(x => x && typeof x.id === 'string' && typeof x.name === 'string').map(x => ({ id: x.id.slice(0, 20), name: x.name.slice(0, 30) }));
+  const groups = (Array.isArray(g.groups) ? g.groups : []).filter(x => x && typeof x.id === 'string' && typeof x.name === 'string')
+    .map(x => ({ id: x.id.slice(0, 20), name: x.name.slice(0, 30), items: Array.isArray(x.items) ? x.items.filter(k => typeof k === 'string') : [] }));
+  // 以前の形（1アイテム1グループの assign）から移す
+  if (g.assign && typeof g.assign === 'object') {
+    Object.entries(g.assign).forEach(([k, id]) => { const gr = groups.find(x => x.id === id); if (gr && !gr.items.includes(k)) gr.items.push(k); });
+  }
   const ids = new Set(groups.map(x => x.id));
-  const assign = {};
-  Object.entries(g.assign && typeof g.assign === 'object' ? g.assign : {}).forEach(([k, v]) => { if (ids.has(v)) assign[k] = v; });
-  grp = { groups, assign, off: new Set(Array.isArray(g.off) ? g.off.filter(k => typeof k === 'string') : []), view: ids.has(g.view) ? g.view : 'all' };
+  const offBy = {};
+  if (g.offBy && typeof g.offBy === 'object') Object.entries(g.offBy).forEach(([v, list]) => { if ((v === 'all' || ids.has(v)) && Array.isArray(list)) offBy[v] = new Set(list.filter(k => typeof k === 'string')); });
+  if (Array.isArray(g.off) && !offBy.all) offBy.all = new Set(g.off.filter(k => typeof k === 'string')); // 以前の形
+  grp = { groups, offBy, view: ids.has(g.view) ? g.view : 'all' };
 }
-function saveGroups() { writeJson(GROUPS_KEY, { groups: grp.groups, assign: grp.assign, off: [...grp.off], view: grp.view }); }
+function saveGroups() {
+  const offBy = {};
+  Object.entries(grp.offBy).forEach(([v, set]) => { if (set.size) offBy[v] = [...set]; });
+  writeJson(GROUPS_KEY, { groups: grp.groups, offBy, view: grp.view });
+}
+// 表示中（すべて・グループ）の「計算に入れない」印
+function offSet() { if (!grp.offBy[grp.view]) grp.offBy[grp.view] = new Set(); return grp.offBy[grp.view]; }
 // 表示中のグループの行（「すべて」なら全部）
-function visibleRows() { return grp.view === 'all' ? rows : rows.filter(r => grp.assign[r.key] === grp.view); }
-const DAY = 86400000;
+function visibleRows() {
+  if (grp.view === 'all') return rows;
+  const g = grp.groups.find(x => x.id === grp.view);
+  const set = new Set(g ? g.items : []);
+  return rows.filter(r => set.has(r.key));
+}const DAY = 86400000;
 
 let containerEl = null;
 let costData = null;
@@ -162,10 +179,10 @@ function render() {
   const perDay = settings.perDay;
   const now = new Date();
   const vis = visibleRows();
-  const counted = vis.filter(r => !grp.off.has(r.key));
+  const counted = vis.filter(r => !offSet().has(r.key));
   const lines = vis.map((row, idx) => {
     let status = '', cls = '';
-    const off = grp.off.has(row.key);
+    const off = offSet().has(row.key);
     if (off) { status = t('計算に入れていません', 'Not included in the plan'); cls = 'off'; }
     else if (row.cost.type === 'candle' || row.cost.type === 'heart') {
       const isC = row.cost.type === 'candle';
@@ -181,10 +198,8 @@ function render() {
       } else { status = t(`あとハート${need}`, `${need} more hearts`); cls = 'soon'; }
     } else { status = t('本数の計算には入りません', 'Not counted in candles'); cls = 'other'; }
     const first = idx === 0, last = idx === vis.length - 1;
-    const groupSel = grp.groups.length ? `<select class="wp-group-sel" data-group-of="${escapeHtml(row.key)}" aria-label="${t('グループ', 'Group')}">
-        <option value="">${t('グループなし', 'No group')}</option>
-        ${grp.groups.map(g => `<option value="${escapeHtml(g.id)}"${grp.assign[row.key] === g.id ? ' selected' : ''}>${escapeHtml(g.name)}</option>`).join('')}
-      </select>` : '';
+    const inGroups = grp.groups.filter(g => g.items.includes(row.key)).map(g => g.name);
+    const groupSel = inGroups.length ? `<div class="wp-in-groups">${inGroups.map(n => `<span>${escapeHtml(n)}</span>`).join('')}</div>` : '';
     return `<li class="wp-row ${cls}">
       <label class="wp-include" title="${t('計算に入れる', 'Include in the plan')}"><input type="checkbox" data-include="${escapeHtml(row.key)}"${off ? '' : ' checked'} aria-label="${t('計算に入れる', 'Include in the plan')}"></label>
       <span class="wp-rank">${idx + 1}</span>
@@ -225,7 +240,7 @@ function render() {
     </section>
 
     ${rows.length ? groupBarHtml(vis, counted) : ''}
-    ${rows.length && !vis.length ? `<p class="fun-hint wp-empty-group">${t('このグループにはまだアイテムがありません。「すべて」に戻って、各アイテムのグループを選んでください。', 'No items in this group yet. Go back to “All” and choose a group for each item.')}</p>` : ''}
+    ${rows.length && !vis.length ? `<p class="fun-hint wp-empty-group">${t('このグループにはまだアイテムがありません。「名前・アイテムを編集」から入れるアイテムを選んでください。', 'No items in this group yet. Use “Edit group” to choose items.')}</p>` : ''}
     ${vis.length ? `<section class="wp-result">
       <div class="wp-big"><span>${counted.length === vis.length ? t('全部そろえるのに', 'To get everything') : t(`選んだ${counted.length}件をそろえるのに`, `To get the ${counted.length} selected`)}</span><b>${needC.toLocaleString()}</b><small>${t('本たりません', 'candles short')}</small></div>
       ${needC > 0 ? `<div class="wp-big"><span>${dl ? t(`期限（${fmtDate(dl)}）まで${daysLeft}日`, `${daysLeft} days to ${fmtDate(dl)}`) : t('期限なし', 'No deadline')}</span><b>${pace != null ? pace.toLocaleString() : '—'}</b><small>${t('本／日 あれば間に合います', 'candles/day needed')}</small></div>
@@ -239,12 +254,18 @@ function render() {
 
 // グループのタブ（すべて・各グループ・＋グループを作る）と、選んでいるグループの名前の変更・削除、表示中をまとめて計算に入れる／外す
 function groupBarHtml(vis, counted) {
-  const count = id => (id === 'all' ? rows.length : rows.filter(r => grp.assign[r.key] === id).length);
+  const rowKeys = new Set(rows.map(r => r.key));
+  const count = id => (id === 'all' ? rows.length : (grp.groups.find(g => g.id === id)?.items || []).filter(k => rowKeys.has(k)).length);
   const cur = grp.groups.find(g => g.id === grp.view);
   const editing = groupEdit ? `<div class="wp-group-edit">
-      <input class="fun-input" type="text" maxlength="30" data-group-name value="${groupEdit.mode === 'rename' && cur ? escapeHtml(cur.name) : ''}" placeholder="${t('グループの名前（例: 次の季節で買う）', 'Group name')}">
-      <button type="button" class="fun-btn small primary" data-act="group-save">${groupEdit.mode === 'new' ? t('作る', 'Create') : t('変更', 'Rename')}</button>
-      <button type="button" class="fun-btn small" data-act="group-cancel">${t('やめる', 'Cancel')}</button>
+      <input class="fun-input" type="text" maxlength="30" data-group-name value="${escapeHtml(groupEdit.name || '')}" placeholder="${t('グループの名前（例: 次の季節で買う）', 'Group name')}">
+      <p class="wp-group-pick-head">${t('このグループに入れるアイテム', 'Items in this group')}<span>${t(`${groupEdit.items.size}件`, `${groupEdit.items.size}`)}</span>
+        <button type="button" class="fun-btn small" data-act="pick-all">${t('すべて選ぶ', 'All')}</button><button type="button" class="fun-btn small" data-act="pick-none">${t('選択を外す', 'None')}</button></p>
+      <div class="wp-group-pick">${rows.map(r => `<label class="wp-pick-row"><input type="checkbox" data-pick="${escapeHtml(r.key)}"${groupEdit.items.has(r.key) ? ' checked' : ''}><span class="wp-thumb">${thumbSrc(r) ? `<img src="${escapeHtml(thumbSrc(r))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span><span class="wp-pick-name">${escapeHtml(r.name)}<small>${escapeHtml(CURRENT_LANG === 'en' ? r.cat.nameEn : r.cat.name)}</small></span></label>`).join('')}</div>
+      <div class="wp-group-edit-actions">
+        <button type="button" class="fun-btn small" data-act="group-cancel">${t('やめる', 'Cancel')}</button>
+        <button type="button" class="fun-btn small primary" data-act="group-save">${groupEdit.mode === 'new' ? t('作る', 'Create') : t('保存', 'Save')}</button>
+      </div>
     </div>` : '';
   return `<section class="wp-groups">
     <div class="fun-chips wp-group-tabs" role="tablist">
@@ -256,34 +277,53 @@ function groupBarHtml(vis, counted) {
     <div class="wp-group-tools">
       <span class="wp-group-info">${t(`計算に入れる: ${counted.length} / ${vis.length}件`, `Included: ${counted.length} / ${vis.length}`)}</span>
       ${vis.length ? `<button type="button" class="fun-btn small" data-act="include-all">${t('すべて入れる', 'Include all')}</button><button type="button" class="fun-btn small" data-act="include-none">${t('すべて外す', 'Exclude all')}</button>` : ''}
-      ${cur && !groupEdit ? `<button type="button" class="fun-btn small" data-act="group-rename">${t('名前を変える', 'Rename')}</button><button type="button" class="fun-btn small${groupDelConfirm ? ' is-confirm' : ''}" data-act="group-del">${groupDelConfirm ? t('もう一度押すと削除', 'Tap again to delete') : t('グループを消す', 'Delete group')}</button>` : ''}
+      ${cur && !groupEdit ? `<button type="button" class="fun-btn small" data-act="group-rename">${t('名前・アイテムを編集', 'Edit group')}</button><button type="button" class="fun-btn small${groupDelConfirm ? ' is-confirm' : ''}" data-act="group-del">${groupDelConfirm ? t('もう一度押すと削除', 'Tap again to delete') : t('グループを消す', 'Delete group')}</button>` : ''}
     </div>
   </section>`;
 }
 function genGroupId() { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
 function onGroupAction(act, btn) {
   if (act === 'group-view') { grp.view = btn.dataset.g; groupEdit = null; groupDelConfirm = false; saveGroups(); render(); return true; }
-  if (act === 'group-new') { groupEdit = { mode: 'new' }; groupDelConfirm = false; render(); root().querySelector('[data-group-name]')?.focus(); return true; }
-  if (act === 'group-rename') { groupEdit = { mode: 'rename' }; render(); const i = root().querySelector('[data-group-name]'); if (i) { i.focus(); i.select(); } return true; }
+  if (act === 'group-new') {
+    groupEdit = { mode: 'new', name: '', items: new Set() }; // 作る時は何も選んでいない状態から
+    groupDelConfirm = false; render(); root().querySelector('[data-group-name]')?.focus(); return true;
+  }
+  if (act === 'group-rename') {
+    const g = grp.groups.find(x => x.id === grp.view);
+    if (!g) return true;
+    groupEdit = { mode: 'edit', name: g.name, items: new Set(g.items) };
+    render(); root().querySelector('[data-group-name]')?.focus(); return true;
+  }
+  if (act === 'pick-all' || act === 'pick-none') {
+    if (!groupEdit) return true;
+    groupEdit.name = root().querySelector('[data-group-name]')?.value || groupEdit.name;
+    groupEdit.items = new Set(act === 'pick-all' ? rows.map(r => r.key) : []);
+    render(); return true;
+  }
   if (act === 'group-cancel') { groupEdit = null; render(); return true; }
   if (act === 'group-save') {
     const name = (root().querySelector('[data-group-name]')?.value || '').trim().slice(0, 30);
+    if (!groupEdit) return true;
     if (!name) { toast(t('グループの名前を入れてください', 'Enter a group name')); return true; }
-    if (groupEdit && groupEdit.mode === 'rename') { const g = grp.groups.find(x => x.id === grp.view); if (g) g.name = name; }
-    else { const id = genGroupId(); grp.groups.push({ id, name }); grp.view = id; }
+    // 欲しいものから外れたアイテムの印も、グループには残しておく（また欲しいものに入れた時に戻るように）。ここでは選んだものだけを入れ直す
+    const keep = groupEdit.mode === 'edit' ? (grp.groups.find(x => x.id === grp.view)?.items || []).filter(k => !rows.some(r => r.key === k)) : [];
+    const items = [...keep, ...rows.map(r => r.key).filter(k => groupEdit.items.has(k))];
+    if (groupEdit.mode === 'edit') { const g = grp.groups.find(x => x.id === grp.view); if (g) { g.name = name; g.items = items; } }
+    else { const id = genGroupId(); grp.groups.push({ id, name, items }); grp.view = id; }
     groupEdit = null; saveGroups(); render(); return true;
   }
   if (act === 'group-del') {
     if (!groupDelConfirm) { groupDelConfirm = true; render(); setTimeout(() => { if (groupDelConfirm && containerEl) { groupDelConfirm = false; render(); } }, 3500); return true; }
     const id = grp.view;
     grp.groups = grp.groups.filter(g => g.id !== id);
-    Object.keys(grp.assign).forEach(k => { if (grp.assign[k] === id) delete grp.assign[k]; }); // アイテムは「グループなし」に戻る（欲しいものからは外さない）
+    delete grp.offBy[id]; // グループを消しても、アイテムは欲しいものに残る
     grp.view = 'all'; groupDelConfirm = false; saveGroups(); render();
     toast(t('グループを消しました（アイテムはそのまま残っています）', 'Group deleted (items are kept)'));
     return true;
   }
   if (act === 'include-all' || act === 'include-none') {
-    visibleRows().forEach(r => { if (act === 'include-all') grp.off.delete(r.key); else grp.off.add(r.key); });
+    const off = offSet();
+    visibleRows().forEach(r => { if (act === 'include-all') off.delete(r.key); else off.add(r.key); });
     saveGroups(); render(); return true;
   }
   return false;
@@ -326,8 +366,13 @@ function onClick(e) {
 }
 function onChange(e) {
   const el = e.target;
-  if (el.dataset.include) { if (el.checked) grp.off.delete(el.dataset.include); else grp.off.add(el.dataset.include); saveGroups(); render(); return; }
-  if (el.dataset.groupOf) { if (el.value) grp.assign[el.dataset.groupOf] = el.value; else delete grp.assign[el.dataset.groupOf]; saveGroups(); render(); return; }
+  if (el.dataset.include) { const off = offSet(); if (el.checked) off.delete(el.dataset.include); else off.add(el.dataset.include); saveGroups(); render(); return; }
+  if (el.dataset.pick && groupEdit) {
+    // 選び直しは数だけ書き換える（名前の入力欄を描き直してフォーカスを外さないため）
+    if (el.checked) groupEdit.items.add(el.dataset.pick); else groupEdit.items.delete(el.dataset.pick);
+    const n = root().querySelector('.wp-group-pick-head span'); if (n) n.textContent = t(`${groupEdit.items.size}件`, `${groupEdit.items.size}`);
+    return;
+  }
   if (el.dataset.cur) { setCurrency(el.dataset.cur, el.value); render(); return; }
   if (el.dataset.set === 'perDay') { settings.perDay = Math.min(999, Math.max(1, Math.floor(Number(el.value) || 1))); writeJson(SETTINGS_KEY, settings); render(); return; }
   if (el.dataset.set === 'date') { settings.date = el.value; writeJson(SETTINGS_KEY, settings); render(); }
