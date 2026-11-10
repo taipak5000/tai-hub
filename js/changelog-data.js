@@ -1,7 +1,9 @@
 /* ================================================================
    📝 更新履歴のデータ（#/changelog が表示する。js/app-update.js が「新しいバージョンがあるか」の判定にも使う）。
    ・新しい順に並べる。先頭の version が「今のバージョン」になる。
-   ・利用者に届く変更を公開したら、先頭に1件足す（同じ日に2回目なら '2026.11.06.2' のように末尾に番号を付ける）。
+   ・利用者に届く変更を公開したら記録する。**1日1件にまとめる**: その日の版がすでにあれば、新しい版を足さずにその版の items へ書き足し、
+     version の末尾の番号だけ上げる（'2026.11.10' → '2026.11.10.2'。番号を上げないと新しい版のお知らせが出ない）。title もその日の内容に合わせて直す。
+   ・並び順・誤字・データの小さな直しは、単独の行にしない。同じ日の関連する行に一言足すか、気付かれにくいものは載せない。
      version は「年.月.日」をゼロ埋めで書く（文字列の大小で新旧を比べるため）。
    ・title は版の見出し（何が変わったかを一言で）。
    ・type: 'new'＝新機能、'improve'＝改善、'fix'＝修正、'remove'＝削除・終了。
@@ -11,82 +13,31 @@
 export const CHANGELOG = [
   {
     version: '2026.11.10.2',
-    title: { ja: 'ロイヤリティクラブのアイテムに画像を追加', en: 'Loyalty Club item images' },
+    title: { ja: 'コーデ日記のアイテム選びを改善、ロイヤリティクラブのアイテムに画像', en: 'Outfit Diary item picker, Loyalty Club images' },
     date: '2026-11-10',
     items: [
+      { type: 'improve', ja: 'コーデ日記の「着ていたアイテム」を、マイコーデと同じくカテゴリごとに所持アイテムのアイコンから1つずつ選ぶ形にしました。名前での絞り込みもできます（持ち運べる・小さい設置・大きい設置はどれか1つ）。', en: 'Outfit Diary now lets you pick one owned item per category from icons, like My Coord, with a name filter.', route: 'coord-diary' },
       { type: 'improve', ja: 'ロイヤリティクラブの4アイテムに画像と英語名を入れ、引き換えに必要なポイント（10・20・50・150）を載せました。', en: 'Added images, English names and point costs (10/20/50/150) to the Loyalty Club items.', route: 'item' },
     ],
   },
   {
-    version: '2026.11.10',
-    title: { ja: 'コーデ日記: 着ていたアイテムをカテゴリごとにアイコンで選べるように', en: 'Outfit Diary: pick worn items by category' },
-    date: '2026-11-10',
-    items: [
-      { type: 'improve', ja: 'コーデ日記の「着ていたアイテム」を、マイコーデと同じくカテゴリごとに所持アイテムのアイコンから1つずつ選ぶ形にしました。名前での絞り込みもできます（持ち運べる・小さい設置・大きい設置はどれか1つ）。', en: 'Outfit Diary now lets you pick one owned item per category from icons, like My Coord, with a name filter.', route: 'coord-diary' },
-    ],
-  },
-  {
     version: '2026.11.09.4',
-    title: { ja: 'ロイヤリティクラブのアイテムを染色可能に修正', en: 'Loyalty Club items are dyeable' },
-    date: '2026-11-09',
-    items: [
-      { type: 'fix', ja: 'ロイヤリティクラブの4アイテム（ひまわりカチューシャ・春めくクローバー飾り・ひまわりクロスタイ・ひまわりドレス）を「染色可能」に直しました。', en: 'The four Loyalty Club items are now marked as dyeable.', route: 'item' },
-    ],
-  },
-  {
-    version: '2026.11.09.3',
-    title: { ja: '11月後半からの予定を反映', en: 'Late November schedule added' },
-    date: '2026-11-09',
-    items: [
-      { type: 'improve', ja: 'ダッシュボードとお知らせに、来訪する精霊団（11/13 17:00〜11/27 16:59）・ハート2倍キャンペーン（同じ期間）・お洒落な日々（11/27 17:00〜12/11 16:59）を追加しました。お洒落な日々は、期間中はアイテム検索の「現在開催中」にも入ります。', en: 'Added the traveling spirit group and double hearts event (Nov 13–27) and Days of Style (Nov 27–Dec 11, JST) to the dashboard and notices.' },
-    ],
-  },
-  {
-    version: '2026.11.09.2',
-    title: { ja: 'ヘアアクセサリーの並び順を修正', en: 'Hair accessory order fixed' },
-    date: '2026-11-09',
-    items: [
-      { type: 'fix', ja: 'ヘアアクセサリーで、常夏ハットから音楽ヘアピンまでの並び（月灯り兎アクセサリー・陽光スポーツサングラス・月灯り花の髪飾り・月灯りの光背）を正しい順番に直しました。', en: 'Fixed the order of several hair accessories.', route: 'item', sub: 'hair_accessory' },
-    ],
-  },
-  {
-    version: '2026.11.09',
-    title: { ja: 'ロイヤリティクラブのアイテムを追加', en: 'Loyalty Club items added' },
+    title: { ja: 'ロイヤリティクラブのアイテムと11月後半の予定を追加', en: 'Loyalty Club items and late November schedule' },
     date: '2026-11-09',
     items: [
       { type: 'new', ja: 'アイテム所持管理に、ロイヤリティクラブのアイテム（ひまわりカチューシャ・春めくクローバー飾り・ひまわりクロスタイ・ひまわりドレス）を追加しました。', en: 'Added four Loyalty Club items to the item tracker.', route: 'item' },
+      { type: 'improve', ja: 'ダッシュボードとお知らせに、来訪する精霊団（11/13 17:00〜11/27 16:59）・ハート2倍キャンペーン（同じ期間）・お洒落な日々（11/27 17:00〜12/11 16:59）を追加しました。お洒落な日々は、期間中はアイテム検索の「現在開催中」にも入ります。', en: 'Added the traveling spirit group and double hearts event (Nov 13–27) and Days of Style (Nov 27–Dec 11, JST) to the dashboard and notices.' },
+      { type: 'fix', ja: 'ヘアアクセサリーの一部（常夏ハットから音楽ヘアピンまでの間）の並び順を直しました。', en: 'Fixed the order of several hair accessories.', route: 'item', sub: 'hair_accessory' },
     ],
   },
   {
     version: '2026.11.08.4',
-    title: { ja: 'パソコンの横長の画面で、本文が画面の中央に来るように', en: 'Centered content on wide screens' },
-    date: '2026-11-08',
-    items: [
-      { type: 'improve', ja: '横長の画面で左右に出る「関連ツール」と「ダッシュボード」の幅をそろえ、本文が画面の中央に来るようにしました。', en: 'On wide screens, the Related Tools and Dashboard side panels now have the same width so the page is centered.' },
-    ],
-  },
-  {
-    version: '2026.11.08.3',
-    title: { ja: '今手に入る未所持アイテムをワンタップで検索', en: 'One-tap search for unowned items available now' },
-    date: '2026-11-08',
-    items: [
-      { type: 'new', ja: 'アイテム所持管理の「季節・イベントでアイテムを検索」の横に「今手に入る未所持アイテム」ボタンを追加しました。押すと「現在開催中の季節・イベントのみ」「未所持のみ」を選んだ状態で検索が開きます。', en: 'Added “Unowned items available now” next to item search: it opens search filtered to current seasons/events and items you don’t own.', route: 'item' },
-    ],
-  },
-  {
-    version: '2026.11.08.2',
-    title: { ja: 'アイテム所持管理のメニューの並びを整理', en: 'Item tracker menu reordered' },
-    date: '2026-11-08',
-    items: [
-      { type: 'improve', ja: 'アイテム所持管理で、「季節・イベントでアイテムを検索」を「全アイテムを一覧で見る・選択」のすぐ下に、楽譜をカテゴリ一覧のすぐ下に移しました。', en: 'In the item tracker, Season/Event search now sits right under “Browse all items”, and Music Sheets right under the categories.', route: 'item' },
-    ],
-  },
-  {
-    version: '2026.11.08',
-    title: { ja: 'デイリーチェックシートをテスト公開', en: 'Daily Checklist (beta)' },
+    title: { ja: 'デイリーチェックシートをテスト公開、アイテム所持管理を使いやすく', en: 'Daily Checklist (beta) and item tracker updates' },
     date: '2026-11-08',
     items: [
       { type: 'new', ja: 'デイリーチェックシートをテスト機能として公開しました。関連ツールの一覧の「テスト中のツール」から開けます。毎日やることのチェック、今日の要点とおみくじ、週替わりビンゴ、印刷・PDF・画像での保存ができます。', en: 'Released the Daily Checklist as a beta: daily tasks, today’s highlights and fortune, weekly bingo, and print/PDF/image export. Find it under “Tools in testing”.', route: 'daily-check' },
+      { type: 'new', ja: 'アイテム所持管理に「今手に入る未所持アイテム」ボタンを追加しました。押すと「現在開催中の季節・イベントのみ」「未所持のみ」を選んだ状態で検索が開きます。あわせて、季節・イベントの検索を「全アイテム」の下に、楽譜をカテゴリ一覧の下に移しました。', en: 'Added “Unowned items available now” to the item tracker, and moved search and Music Sheets closer to the item lists.', route: 'item' },
+      { type: 'improve', ja: '横長の画面で左右に出る「関連ツール」と「ダッシュボード」の幅をそろえ、本文が画面の中央に来るようにしました。', en: 'On wide screens, the side panels now have the same width so the page is centered.' },
     ],
   },
   {
@@ -155,17 +106,11 @@ export const CHANGELOG = [
   },
   {
     version: '2026.10.31',
-    title: { ja: 'ノマキャン計算機プロに20本ルートを追加', en: '20-candle route preset' },
+    title: { ja: '「最新の状態に更新」ボタン、ノマキャン計算機プロの20本ルート', en: 'Update button and 20-candle route' },
     date: '2026-10-31',
     items: [
+      { type: 'new', ja: '関連ツールの一覧のいちばん下に「最新の状態に更新」ボタンを追加しました。画面が古いままの時に押すと、新しい版を取り直します。', en: 'Added “Update to the latest version” at the bottom of the tool list.' },
       { type: 'improve', ja: 'ノマキャン計算機プロに「20本ルート（ソロ・試練無し）」を最初から入れ、参考元へのリンクを載せました。', en: 'Candle Calculator Pro now includes a 20-candle solo route preset with a source link.', route: 'tai-nomacan-pro' },
-    ],
-  },
-  {
-    version: '2026.10.29',
-    title: { ja: '引き継いだデータの表示を修正', en: 'Fix for transferred data' },
-    date: '2026-10-29',
-    items: [
       { type: 'fix', ja: '引き継いだデータの一部が表示されない不具合を直しました。', en: 'Fixed some transferred data not being shown.' },
     ],
   },
@@ -178,14 +123,6 @@ export const CHANGELOG = [
       { type: 'new', ja: 'ダッシュボードに、デイリーの切り替え後の闇の破片を出すようにしました。', en: 'The dashboard now shows the shard eruption after the daily reset.' },
       { type: 'fix', ja: '九色の鹿の4体（薬草採集人・狩人・国王・王女）の再訪ツリーを実際の形に直しました。', en: 'Fixed the revisit trees of four spirits to match the game.' },
       { type: 'fix', ja: '精霊同行ツールで、旧サイトのサブ保存枠のデータが表示されない不具合を直しました。', en: 'Fixed sub-slot data from the old companion site not showing.', route: 'companion' },
-    ],
-  },
-  {
-    version: '2026.10.27',
-    title: { ja: '「最新の状態に更新」ボタンを追加', en: 'Update button' },
-    date: '2026-10-27',
-    items: [
-      { type: 'new', ja: '関連ツールの一覧のいちばん下に「最新の状態に更新」ボタンを追加しました。画面が古いままの時に押すと、新しい版を取り直します。', en: 'Added “Update to the latest version” at the bottom of the tool list.' },
     ],
   },
 ];
