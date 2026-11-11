@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.11',
+    title: { ja: 'いたずらな日々の終了日時を修正', en: 'Days of Mischief end time fixed' },
+    date: '2026-11-11',
+    items: [
+      { type: 'fix', ja: 'いたずらな日々の終了を、日本時間 11/13（金）16:59 に直しました（1日早く表示されていました）。', en: 'Days of Mischief now ends 11/13 16:59 JST (it was shown a day early).' },
+    ],
+  },
+  {
     version: '2026.11.10.16',
     title: { ja: '巣づくり工房の新しい家具を追加、アイテム別コストの不明な価格を補完', en: 'New Nesting Workshop furniture, more item costs' },
     date: '2026-11-10',
