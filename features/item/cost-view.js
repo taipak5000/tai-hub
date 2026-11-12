@@ -1668,7 +1668,8 @@ function injectStyles() {
 .item-view {
   --cost-orange-ink: #B84500; --cost-money: #D70015; --cost-green-ink: #1B6E30; --cost-link: #0062CC;
   --cost-solid: #0062CC; --cost-solid-green: #1F7A37;
-  --cost-remain-bg: color-mix(in srgb, var(--blue) 46%, #08122b);
+  /* 残りコストの塗り。標準の配色のアクセント（紫 #6C63D8）を白文字が読める濃さにした色 */
+  --cost-remain-bg: #574DC4;
 }
 [data-theme="dark"] .item-view {
   --cost-orange-ink: #FF9F0A; --cost-money: #FF7B73; --cost-green-ink: #30D158; --cost-link: #4DA3FF;
@@ -1724,7 +1725,7 @@ function injectStyles() {
 .item-view .cost-sum-details[open] summary .cost-summary-toggle-icon { transform: rotate(90deg); }
 .item-view .cost-summary-hint { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--cost-sub); }
 @media (prefers-contrast: more) {
-  .item-view .cost-sum-sec.remain { background: #08122b; }
+  .item-view .cost-sum-sec.remain { background: #2E2670; }
   .item-view .cost-sum-sec.spent { background: var(--card); border: 1px solid var(--text-2); border-left-width: 4px; }
   .item-view .cost-share-chip { border-color: var(--cost-sub); }
 }
