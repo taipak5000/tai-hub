@@ -133,6 +133,15 @@ export function upcomingAnniversaries(doc, withinDays = 7, now = new Date()) {
   return out.sort((a, b) => a.inDays - b.inDays);
 }
 
+/** 記念日の見出し（お知らせ・ダッシュボード・カレンダー書き出しで共通）。t は (ja, en) => 文字列 */
+export function anniversaryTitle(a, t) {
+  const who = a.friend ? a.friend.name || t('フレンド', 'Friend') : '';
+  if (a.kind === 'friend') return t(`${who}さんとフレンドになって${a.years}周年`, `${a.years} year(s) with ${who}`);
+  if (a.kind === 'milestone') return t(`${who}さんとフレンドになって${a.count}日`, `${a.count} days with ${who}`);
+  if (a.kind === 'birthday') return a.years ? t(`${who}さんの${a.years}歳の誕生日`, `${who}'s ${a.years}th birthday`) : t(`${who}さんの誕生日`, `${who}'s birthday`);
+  return a.years ? t(`${a.title}（${a.years}年目）`, `${a.title} (year ${a.years})`) : a.title;
+}
+
 /** フレンドになってからの日数（今日を1日目とは数えず、当日=0日） */
 export function daysSince(since, now = new Date()) {
   if (!since) return null;

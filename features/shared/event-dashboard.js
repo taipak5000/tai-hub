@@ -83,6 +83,8 @@
 
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { mountBackupReminder } from '../../js/backup-reminder.js';
+import { allDayEvent, calendarText, downloadIcs, tokyoDateStr } from '../../js/ics.js';
+import { loadFriendsDoc, upcomingAnniversaries, anniversaryTitle } from '../friends/friends-state.js';
 import { pacificFakeToReal, cycleBounds, cycleIndexAt, ptOffsetChanges, ptParts, ptToReal } from '../../js/pacific-time.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, CANDLE_BONUS_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES,
@@ -573,16 +575,36 @@ function row(icon, html) {
 }
 // 🍃 予定1件ぶんのコンパクトな行（2026-11-10。大きなカードとアイコンをやめて、名前・残り時間・日付だけにした）。
 // name は組み立て済みのHTML、state は「終了まで」などの短い言葉、note は日付などの小さな補足
-function item({ name, state = '', time = '', note = '', dot = '' }) {
-  return `<div class="dash-item">${dot}<span class="dash-item-name">${name}</span>`
+// ics を渡すと「カレンダーに追加」のボタンを付ける（{ id, summary, at: 日時 }。日本時間のその日の終日予定になる。js/ics.js）
+function item({ name, state = '', time = '', note = '', dot = '', ics = null }) {
+  let cal = '';
+  if (ics) {
+    icsList.push(ics);
+    const payload = escapeHtml(JSON.stringify({ id: ics.id, summary: ics.summary, description: ics.description || '', date: icsDateOf(ics) }));
+    cal = `<button type="button" class="dash-item-cal" data-ics="${payload}" aria-label="${escapeHtml(t(`「${ics.summary}」をカレンダーに追加`, `Add "${ics.summary}" to calendar`))}" title="${t('カレンダーに追加', 'Add to calendar')}"><svg class="inline-icon" width="15" height="15" aria-hidden="true"><use href="#i-calendar"/></svg></button>`;
+  }
+  return `<div class="dash-item${ics ? ' has-cal' : ''}">${dot}<span class="dash-item-name">${name}</span>`
     + (time ? `<span class="dash-item-time">${state ? `<span class="dash-item-state">${state}</span>` : ''}${time}</span>` : '')
+    + cal
     + (note ? `<span class="dash-item-note">${note}</span>` : '')
     + '</div>';
 }
+// 予定の日付（日本時間のその日。記念日は端末の日付のまま）→ 'YYYYMMDD'
+function icsDateOf(ics) {
+  if (!ics.local) return tokyoDateStr(ics.at);
+  const d = ics.at;
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+function saveIcs(evs, filename) {
+  downloadIcs(calendarText(evs.flatMap(e => allDayEvent(e)), CURRENT_LANG), filename);
+}
+// 今描いている予定のうち、カレンダーに入れられるもの（描くたびに作り直す。まとめて書き出す時もこれを使う）
+let icsList = [];
 const shardDot = (isRed, dim) => `<span class="dash-item-dot${isRed ? ' is-red' : ''}${dim ? ' is-dim' : ''}" aria-hidden="true"></span>`;
 
 function buildHtml(data) {
   const now = new Date();
+  icsList = [];
   const dailyRows = [];
   const shard = shardInfo();
   if (shard.hasShard) {
@@ -628,31 +650,50 @@ function buildHtml(data) {
   const bucketRows = { today: [], week: [], month: [] };
   const push = (target, html) => bucketRows[bucketFor(target)].push({ at: target.getTime(), html });
   let seasonErrored = false;
-  const ended = ev => ({ name: escapeHtml(dashEventName(ev.name)), state: t('終了まで', 'Ends in'), time: countdown(new Date(ev.end)), note: t(`${formatStart(new Date(ev.end))}まで`, `Until ${formatStart(new Date(ev.end))}`) });
+  const ended = ev => ({ name: escapeHtml(dashEventName(ev.name)), state: t('終了まで', 'Ends in'), time: countdown(new Date(ev.end)), note: t(`${formatStart(new Date(ev.end))}まで`, `Until ${formatStart(new Date(ev.end))}`),
+    ics: { id: `end-${ev.name}-${new Date(ev.end).getTime()}`, summary: t(`${dashEventName(ev.name)} 終了`, `${dashEventName(ev.name)} ends`), at: new Date(ev.end) } });
   activeScheduledEvents(data.eventSchedule).forEach(ev => push(new Date(ev.end), item(ended(ev))));
   activeScheduledEvents(data.candleBonusSchedule).forEach(ev => push(new Date(ev.end), item(ended(ev))));
   // これから始まるイベント（開催中のものが「終了まで」で振り分けられるのと対称に、「開始まで」で振り分ける）
-  const upcoming = ev => push(new Date(ev.start), item({ name: escapeHtml(dashEventName(ev.name)), state: t('開始まで', 'Starts in'), time: countdown(new Date(ev.start)), note: periodNote(ev) }));
+  const upcoming = ev => push(new Date(ev.start), item({ name: escapeHtml(dashEventName(ev.name)), state: t('開始まで', 'Starts in'), time: countdown(new Date(ev.start)), note: periodNote(ev),
+    ics: { id: `start-${ev.name}-${new Date(ev.start).getTime()}`, summary: t(`${dashEventName(ev.name)} 開始`, `${dashEventName(ev.name)} starts`), at: new Date(ev.start), description: periodNote(ev) } }));
   upcomingScheduledEvents(data.eventSchedule).forEach(upcoming);
   upcomingScheduledEvents(data.candleBonusSchedule).forEach(upcoming);
   revisitStatuses(data.revisitSchedules).forEach(({ schedule, status: rv }) => {
     // 精霊団など名前の付いた来訪（season-data.js の labelJa/labelEn）はその名前で出す
     const label = schedule && schedule.labelJa ? escapeHtml(t(schedule.labelJa, schedule.labelEn || schedule.labelJa)) : t('再訪精霊', 'Revisit Spirit');
-    push(rv.target, item({ name: label, state: rv.active ? t('帰るまで', 'Leaves in') : t('来訪まで', 'Arrives in'), time: countdown(rv.target) }));
+    const plain = label.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    push(rv.target, item({ name: label, state: rv.active ? t('帰るまで', 'Leaves in') : t('来訪まで', 'Arrives in'), time: countdown(rv.target),
+      ics: { id: `revisit-${rv.active ? 'leave' : 'arrive'}-${rv.target.getTime()}`, summary: rv.active ? t(`${plain} 帰る日`, `${plain} leaves`) : t(`${plain} 来訪`, `${plain} arrives`), at: rv.target } }));
   });
   const edenTarget = nextEdenResetTarget();
   push(edenTarget, item({ name: t('原罪の週間リセット', 'Eye of Eden reset'), time: countdown(edenTarget) }));
   if (data.nextUpdate && data.nextUpdate.date) {
     const updateTarget = new Date(data.nextUpdate.date);
-    if (now < updateTarget) push(updateTarget, item({ name: t('次回アップデート', 'Next Update'), time: countdown(updateTarget) }));
+    if (now < updateTarget) push(updateTarget, item({ name: t('次回アップデート', 'Next Update'), time: countdown(updateTarget),
+      ics: { id: `update-${updateTarget.getTime()}`, summary: t('Sky 次回アップデート', 'Sky next update'), at: updateTarget } }));
   }
   if (data.season && data.season.endDate) {
     const end = new Date(data.season.endDate);
     // 終了済みの季節はダッシュボードに出さない（終了まで00:00:00のまま残ってしまうため）
-    if (now < end) push(end, item({ name: escapeHtml(dashEventName(data.season.name)), state: t('終了まで', 'Ends in'), time: countdown(end), note: t(`${formatStart(end)}まで`, `Until ${formatStart(end)}`) }));
+    if (now < end) push(end, item({ name: escapeHtml(dashEventName(data.season.name)), state: t('終了まで', 'Ends in'), time: countdown(end), note: t(`${formatStart(end)}まで`, `Until ${formatStart(end)}`),
+      ics: { id: `season-end-${end.getTime()}`, summary: t(`${dashEventName(data.season.name)} 終了`, `${dashEventName(data.season.name)} ends`), at: end } }));
   } else {
     seasonErrored = true;
   }
+  // フレンドの記念日（features/friends。31日以内）。終日の予定なので、残り時間ではなく「今日・○日後」を出す
+  try {
+    upcomingAnniversaries(loadFriendsDoc(), 31, now).forEach(a => {
+      const title = anniversaryTitle(a, t);
+      const at = new Date(a.date.getFullYear(), a.date.getMonth(), a.date.getDate(), 12);
+      push(a.inDays === 0 ? now : at, item({
+        name: escapeHtml(title),
+        time: a.inDays === 0 ? t('今日', 'Today') : t(`${a.inDays}日後`, `in ${a.inDays}d`),
+        note: `${a.date.getMonth() + 1}/${a.date.getDate()}`,
+        ics: { id: `anniv-${a.key}`, summary: title, at, local: true },
+      }));
+    });
+  } catch (e) { /* 記念日が読めなくても予定は出す */ }
   const list = k => bucketRows[k].sort((x, y) => x.at - y.at).map(r => r.html).join('');
 
   const bucketEmptyMsg = `<div class="dash-empty">${t('予定はありません', 'Nothing scheduled')}</div>`;
@@ -822,6 +863,10 @@ function injectStyles() {
 .dash-item-sub { color: var(--hub-text-2); font-size: 12px; }
 .dash-item-time { flex-shrink: 0; margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .dash-item-state { margin-right: 5px; font-size: 11px; font-weight: 500; color: var(--hub-text-2); }
+.dash-item-cal { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--hub-text-2); cursor: pointer; align-self: center; }
+.dash-item-cal:hover { background: var(--hub-accent-bg); color: var(--hub-accent-ink, var(--hub-accent)); }
+.dash-item-cal:active { transform: scale(0.92); }
+.dash-item-cal .inline-icon { stroke: currentColor; }
 .dash-item-note { flex-basis: 100%; font-size: 11.5px; color: var(--hub-text-2); font-variant-numeric: tabular-nums; }
 .dash-item .dash-count-num { font-size: 1em; }
 .dash-item .dash-count-unit { margin-right: 2px; }
@@ -1027,8 +1072,10 @@ function icsExportSectionHtml() {
   return `
     <div class="dash-section">
       <p class="dash-section-label"><span>${t('カレンダーアプリに取り込む', 'Add to your calendar app')}</span></p>
-      <button type="button" class="edb-plain-btn" id="edbIcsExportBtn">${t('.icsファイルを書き出す', 'Export .ics file')}</button>
-      <div class="edb-hint">${t('季節の終了・リセット・闇の破片（14日分）', 'Season end, resets, shards (14 days)')}</div>
+      <button type="button" class="edb-plain-btn" id="edbIcsEventsBtn">${t('予定をまとめて書き出す', 'Export all events')}</button>
+      <div class="edb-hint">${t('上の一覧の季節・イベント・旅の精霊・記念日を、終日の予定にします', 'Seasons, events, spirits and anniversaries listed above, as all-day events')}</div>
+      <button type="button" class="edb-plain-btn" id="edbIcsExportBtn">${t('リセットと闇の破片を書き出す', 'Export resets & shards')}</button>
+      <div class="edb-hint">${t('毎日・毎週のリセットと、闇の破片（14日分）を時刻つきで', 'Daily/weekly resets and shards (14 days), with times')}</div>
       <div class="edb-hint" id="edbIcsStatus"></div>
     </div>`;
 }
@@ -1125,6 +1172,24 @@ function renderInto(root, withIcs) {
 
   const icsBtn = root.querySelector('#edbIcsExportBtn');
   if (icsBtn) icsBtn.addEventListener('click', () => exportIcs(root.querySelector('#edbIcsStatus')));
+  const evBtn = root.querySelector('#edbIcsEventsBtn');
+  if (evBtn) evBtn.addEventListener('click', () => {
+    buildHtml(getData()); // 今の予定を集め直す
+    const evs = icsList.map(ics => ({ id: ics.id, summary: ics.summary, description: ics.description || '', date: icsDateOf(ics) }));
+    const status = root.querySelector('#edbIcsStatus');
+    if (!evs.length) { if (status) status.textContent = t('書き出せる予定がありません', 'Nothing to export'); return; }
+    saveIcs(evs, `sky-events_${evs[0].date}.ics`);
+    if (status) status.textContent = t(`${evs.length}件の予定を書き出しました`, `Exported ${evs.length} events`);
+  });
+  // 各予定の「カレンダーに追加」（一覧は1秒ごとに描き直すので、押された時に root で受ける）
+  root.addEventListener('click', e => {
+    const b = e.target.closest('.dash-item-cal');
+    if (!b || !root.contains(b)) return;
+    try {
+      const ev = JSON.parse(b.dataset.ics);
+      saveIcs([ev], `sky-${ev.date}.ics`);
+    } catch (err) { console.error('[event-dashboard] ics', err); }
+  });
 }
 
 function tickInto(root) {

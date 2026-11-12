@@ -18,7 +18,7 @@ import { CURRENT_LANG } from './i18n.js';
 import { nsKey, getWishIds, isItemOwned } from './state.js';
 import { cycleIndexAt, cycleBounds } from './pacific-time.js';
 import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES } from '../features/item/data/season-data.js';
-import { loadFriendsDoc, upcomingAnniversaries } from '../features/friends/friends-state.js';
+import { loadFriendsDoc, upcomingAnniversaries, anniversaryTitle } from '../features/friends/friends-state.js';
 import { hasBingoData, loadBingo, weekKeyAt } from '../features/bingo/bingo-state.js';
 import { titleTotals, titlesSeenCount } from './titles.js';
 import { pendingVersions } from './app-update.js';
@@ -166,13 +166,8 @@ export function collectNotices(nowDate = new Date()) {
   // フレンドの記念日
   const fdoc = loadFriendsDoc();
   upcomingAnniversaries(fdoc, 7, now).forEach(a => {
-    const who = a.friend ? a.friend.name || t('フレンド', 'Friend') : '';
     const whenTxt = a.inDays === 0 ? t('今日', 'Today') : a.inDays === 1 ? t('明日', 'Tomorrow') : t(`${a.inDays}日後（${a.date.getMonth() + 1}/${a.date.getDate()}）`, `In ${a.inDays} days (${a.date.getMonth() + 1}/${a.date.getDate()})`);
-    let title;
-    if (a.kind === 'friend') title = t(`${who}さんとフレンドになって${a.years}周年`, `${a.years} year(s) with ${who}`);
-    else if (a.kind === 'milestone') title = t(`${who}さんとフレンドになって${a.count}日`, `${a.count} days with ${who}`);
-    else if (a.kind === 'birthday') title = a.years ? t(`${who}さんの${a.years}歳の誕生日`, `${who}'s ${a.years}th birthday`) : t(`${who}さんの誕生日`, `${who}'s birthday`);
-    else title = a.years ? t(`${a.title}（${a.years}年目）`, `${a.title} (year ${a.years})`) : a.title;
+    const title = anniversaryTitle(a, t);
     out.push({ id: `anniv:${a.key}`, icon: 'i-heart', tone: 'pink', priority: a.inDays === 0 ? 0 : 1, sortAt: a.date, title, body: whenTxt, route: 'friends', routeLabel: t('フレンド記念日', 'Friend anniversaries') });
   });
 
