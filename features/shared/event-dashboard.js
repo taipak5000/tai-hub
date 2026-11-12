@@ -83,6 +83,7 @@
 
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { mountBackupReminder } from '../../js/backup-reminder.js';
+import { mountWelcome } from '../../js/onboarding.js';
 import { collectNotices, isSeen } from '../../js/notices.js';
 import { nsKey } from '../../js/state.js';
 import { allDayEvent, calendarText, downloadIcs, tokyoDateStr } from '../../js/ics.js';
@@ -1295,6 +1296,7 @@ function renderInto(root, withIcs) {
     if (b.dataset.dashOpen === 'recap') { document.getElementById('dashModalOverlay')?.classList.remove('open'); location.hash = '#/recap/month'; }
   });
   mountBackupReminder(root); // しばらくバックアップしていない時だけ、先頭に控えめな帯（js/backup-reminder.js）
+  mountWelcome(root); // まだ記録が何も無いプロフィールにだけ、あいさつと主なツールへの入口（js/onboarding.js）
 
   const cb = root.querySelector('#edbReminderCheckbox');
   const sel = root.querySelector('#edbReminderMinutes');

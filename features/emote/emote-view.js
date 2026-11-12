@@ -187,6 +187,7 @@ function buildShell() {
           <div class="em-header-pct" id="emHdrPct">--%</div>
         </div>
 
+        <p class="em-empty-guide" id="emEmptyGuide" hidden>${t('持っているエモートのレベルをチェックすると、所持率がここに表示されます。下の一覧の数字（1〜4）を押してください。', 'Check the emote levels you own and your completion rate shows up here. Tap the level numbers in the list below.')}</p>
         <div class="em-header-card em-guide-header-card" id="emGuideHeaderCard">
           <div class="em-header-info">
             <div class="em-header-icon">${compassIcon(24)}</div>
@@ -546,6 +547,9 @@ function renderList() {
   const stats = getStats();
   containerEl.querySelector('#emHdrCount').innerHTML = tpl(levelCountTemplate(), { owned: stats.owned, total: stats.total });
   containerEl.querySelector('#emHdrPct').innerHTML = formatPctHtml(stats.pct);
+  // 👋 まだ何もチェックしていない時は、何をすればよいかを一言だけ出す（js/onboarding.js と同じ考え方。データは入れない）
+  const guide = containerEl.querySelector('#emEmptyGuide');
+  if (guide) guide.hidden = stats.owned > 0;
   renderTitlesPanel(stats);
   renderGuideStats(stats);
 
@@ -796,6 +800,8 @@ function injectStyles() {
 .emote-view .em-bulk-own-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* ── 達成率シェア・入手履歴を開くボタン（feature-btn） ── */
+.emote-view .em-empty-guide { margin: 8px 0 0; padding: 11px 14px; border-radius: var(--r); background: var(--card); font-size: 13px; line-height: 1.6; color: var(--text); }
+.emote-view .em-empty-guide[hidden] { display: none; }
 .emote-view .em-feature-btn { width: 100%; box-sizing: border-box; background: var(--card); border: none; border-radius: var(--r); padding: 12px 14px; margin-top: 6px; text-align: left; display: flex; flex-direction: row; align-items: center; gap: 10px; cursor: pointer; font-family: inherit; color: var(--text); }
 .emote-view .em-feature-btn::after { content: '›'; margin-left: auto; font-size: 18px; line-height: 1; color: var(--text-2); }
 .emote-view .em-feature-btn:active { transform: scale(0.985); }
