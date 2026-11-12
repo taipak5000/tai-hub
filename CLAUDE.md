@@ -167,6 +167,7 @@ const landingPoint = currentY + project(v);
   旅の精霊を更新する時は`spiritJa`/`spiritEn`も書き換える（「待っている」印との照合に使う）。精霊団など名前のある来訪は`labelJa`/`labelEn`。
   複数の精霊が一緒に来る時は`spiritsJa`/`spiritsEn`（配列）に並べる（お知らせ・ダッシュボードに顔ぶれを出し、`spiritsEn`で「待っている」印と照合する）。
   あわせて再訪精霊データベース（`features/tai-revisit/data/revisit-data.js`）の各精霊の`visits`末尾にも、精霊団なら`{"date","endDate","type":"SV"}`、旅の精霊なら`type:"TS"`の来訪を足す（日付は日本時間）。
+  **どの精霊が来るか分かった時点で、イベントの開始前でも足す**（開始前は「進行中・次回の特別来訪」に「次回予定」として載り、始まると「進行中」に変わる）。
 - **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: データは開いた時に読み込む（精霊ツリーのデータは大きいので起動時には読まない）。
 - **デイリーチェックシート**（`#/daily-check`。テスト公開中）: `features/today/today-view.js`が今日の要点・おみくじを出し、
   その下にチェックシート（`features/daily-check/`）を`mount(el, { embedded: true, labLinks: true })`で埋め込む。週替わりビンゴ（`features/bingo/`）も
