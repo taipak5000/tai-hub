@@ -383,6 +383,18 @@ function setText(sel, text) {
   const el = hostEl && hostEl.querySelector(sel);
   if (el) el.textContent = text;
 }
+// サマリーの数値（単位は小さく添える。textContent は従来と同じ「1,234本」になるので共有画像の読み取りもそのまま）
+function sumValueHtml(n, unit) {
+  return `${n.toLocaleString()}${CURRENT_LANG === 'en' || !unit ? '' : `<span class="cost-unit">${unit}</span>`}`;
+}
+function setSumValues(suffix, candle, starCandle, heart, money) {
+  if (!hostEl) return;
+  const put = (key, html) => { const el = hostEl.querySelector(`#costSum${key}${suffix}`); if (el) el.innerHTML = html; };
+  put('Candle', sumValueHtml(candle, '本'));
+  put('StarCandle', sumValueHtml(starCandle, '本'));
+  put('Heart', sumValueHtml(heart, '個'));
+  put('Money', `¥${money.toLocaleString()}`);
+}
 
 function renderItems() {
   if (!hostEl) return;
@@ -527,10 +539,8 @@ function renderSummary(items) {
   lastOwnedCount = ownedCount;
   lastTotalItemCount = items.length;
   const en = CURRENT_LANG === 'en';
-  setText('#costSumCandle', `${candleSum.toLocaleString()}${en ? '' : '本'}`);
-  setText('#costSumStarCandle', `${starCandleSum.toLocaleString()}${en ? '' : '本'}`);
-  setText('#costSumHeart', `${heartSum.toLocaleString()}${en ? '' : '個'}`);
-  setText('#costSumMoney', `¥${moneySum.toLocaleString()}`);
+  setSumValues('', candleSum, starCandleSum, heartSum, moneySum);
+  setText('#costOwnedCount', t(`所持 ${ownedCount.toLocaleString()} / ${items.length.toLocaleString()}件`, `${ownedCount.toLocaleString()} / ${items.length.toLocaleString()} owned`));
 
   const giftRow = hostEl.querySelector('#costSummaryGiftRow');
   if (giftRow) {
@@ -617,11 +627,8 @@ function renderRemainingSummary(items) {
     }
   });
 
-  const en = CURRENT_LANG === 'en';
-  setText('#costSumCandleRemain', `${candleSum.toLocaleString()}${en ? '' : '本'}`);
-  setText('#costSumStarCandleRemain', `${starCandleSum.toLocaleString()}${en ? '' : '本'}`);
-  setText('#costSumHeartRemain', `${heartSum.toLocaleString()}${en ? '' : '個'}`);
-  setText('#costSumMoneyRemain', `¥${moneySum.toLocaleString()}`);
+  setSumValues('Remain', candleSum, starCandleSum, heartSum, moneySum);
+  setText('#costRemainCount', t(`未所持 ${remainCount.toLocaleString()}件`, `${remainCount.toLocaleString()} not owned`));
   const hintEl = hostEl.querySelector('#costSummaryHintRemain');
   if (hintEl) {
     hintEl.innerHTML = t(
@@ -632,7 +639,7 @@ function renderRemainingSummary(items) {
 }
 
 /* ================================================================
-   折りたたみカード（残りコスト／プレゼント履歴／キャンドル課金）
+   折りたたみカード（プレゼント履歴／キャンドル課金／この集計について）
    ================================================================ */
 function toggleCollapse(bodySel, iconSel) {
   const body = hostEl.querySelector(bodySel);
@@ -641,10 +648,12 @@ function toggleCollapse(bodySel, iconSel) {
   const expanded = body.style.display !== 'none';
   body.style.display = expanded ? 'none' : 'block';
   if (icon) icon.style.transform = expanded ? '' : 'rotate(90deg)';
+  const head = hostEl.querySelector(`[aria-controls="${body.id}"]`);
+  if (head) head.setAttribute('aria-expanded', String(!expanded));
 }
-function toggleRemaining() { toggleCollapse('#costRemainingBody', '#costRemainToggleIcon'); }
 function toggleGiftCard() { toggleCollapse('#costGiftBody', '#costGiftToggleIcon'); }
 function toggleCandleCard() { toggleCollapse('#costCandleBody', '#costCandleToggleIcon'); }
+function toggleAbout() { toggleCollapse('#costAboutBody', '#costAboutToggleIcon'); }
 
 /* ================================================================
    🎁 課金アイテムプレゼント履歴（全カテゴリ横断のアイコン付きライブ検索ピッカー、
@@ -1108,6 +1117,29 @@ function clearToasts() {
 /* ================================================================
    外枠の描画
    ================================================================ */
+// サマリーの4通貨（並び順・アイコンは「残り」「かかった」の両セクションで共通）
+const SUM_CURRENCIES = [
+  { key: 'Candle', icon: 'i-candle', ja: 'キャンドル', en: 'Candles', unit: '本' },
+  { key: 'StarCandle', icon: 'i-star', ja: '星のキャンドル', en: 'Star Candles', unit: '本' },
+  { key: 'Heart', icon: 'i-heart', ja: 'ハート', en: 'Hearts', unit: '個' },
+  { key: 'Money', icon: 'i-coin', ja: '実額', en: 'Real Money', unit: '' },
+];
+function sumGridHtml(suffix) {
+  return `<div class="cost-sum-grid">${SUM_CURRENCIES.map(c => `
+    <div class="cost-sum-cell">
+      <div class="cost-sum-label"><svg class="inline-icon" width="14" height="14"><use href="#${c.icon}"/></svg>${t(c.ja, c.en)}</div>
+      <div class="cost-sum-value" id="costSum${c.key}${suffix}">${c.key === 'Money' ? '¥0' : `0${t(`<span class="cost-unit">${c.unit}</span>`, '')}`}</div>
+    </div>`).join('')}</div>`;
+}
+
+// 折りたたみ（課金の記録・この集計について）の見出しボタン
+function collapseHeadHtml(onclick, iconId, labelHtml, bodyId) {
+  return `<button type="button" class="cost-collapse-head" aria-expanded="false" aria-controls="${bodyId}" onclick="${onclick}">
+      <span>${labelHtml}</span>
+      <span class="cost-summary-toggle-icon" id="${iconId}">${ICON_CHEVRON}</span>
+    </button>`;
+}
+
 function renderShell() {
   const en = CURRENT_LANG === 'en';
   return `
@@ -1116,122 +1148,40 @@ function renderShell() {
         <a href="#/item" class="back-link">${en ? '&larr; Back to Category List' : '&larr; カテゴリ一覧へ戻る'}</a>
         <h1 class="item-large-title">${en ? 'Item Costs' : 'アイテム別コスト'}</h1>
 
-        <div class="cost-notice-card">
-          ${en
-            ? `Costs are compiled from the <a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki (English)</a>'s "Source" and "Cost" tables for each item.<br>
-          There are four currencies: <b>Candles</b> (the basic currency for most items), <b>Season Candles</b> (a special currency used for Nesting Workshop furniture and some permanent items), <b>Hearts</b>, and <b>Real Money (JPY)</b>. Real-money amounts are converted to Japanese App Store price tiers (the wiki lists USD, so tier prices are converted to their real JPY equivalents). Some real-money items are priced as a bundle with another item (noted where applicable) &mdash; owning multiple items in the same bundle only adds that bundle's price once to the total.<br>
-          Covers all 12 categories (Shoes, Necklace, Large Placeable Items, Outfit, Hairstyle, Face Accessory, Head Accessory, Hair Accessory, Props, Mask, Small Placeable Items, Cape) plus Music Sheets. Items are grouped by season/day rather than by category.<br>
-          <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> The costs listed here are approximate estimates only.</b> Actual amounts may differ due to how wiki data, bundle pricing, and currency rounding are interpreted. No accuracy is guaranteed &mdash; please use this as a reference only.`
-            : `<a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki（英語版）</a>の「入手方法(Source)」「コスト(Cost)」の一覧表を基に、各アイテムの実際の入手コストをまとめています。<br>
-          通貨は<b>キャンドル</b>（通常アイテムの基本通貨）・<b>星のキャンドル</b>（巣づくり工房の家具や一部の恒常アイテムで使う特別な通貨）・<b>ハート</b>・<b>実額（円）</b>の4種類があります。実額は日本のAppストア価格帯を基にした円換算です（Wikiは米ドル表記のため、Tierごとの実際の円価格に置き換えています）。実額のアイテムは、他のアイテムとのセット価格になっている場合があります（その場合は注記しています）。セット内の複数アイテムを所持済みにしても、合計額にはセット価格が1回分のみ加算されます。<br>
-          全12カテゴリ（シューズ・ネックレス・大きい設置アイテム・アウトフィット・ヘアスタイル・フェイスアクセサリー・ヘッドアクセサリー・ヘアアクセサリー・持ち物アイテム・マスク・小さい設置アイテム・ケープ）に加え、楽譜にも対応しています。カテゴリ分けはせず、季節・日々ごとにまとめて表示しています。<br>
-          <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> ここに記載しているコストはあくまで目安・概算です。</b>Wikiの情報やセット価格の解釈、円換算の丸めなどにより、実際の金額と差が生じる場合があります。正確な金額の保証はできませんので、参考程度にご利用ください。`}
-        </div>
-
-        <div class="cost-summary-card">
-          <div class="cost-summary-title">${t('所持済みアイテムにかかったコスト（全カテゴリ）', 'Cost of owned items (all categories)')}</div>
-          <div class="cost-summary-grid">
-            <div><div class="cost-summary-item-label">${t('キャンドル', 'Candles')}</div><div class="cost-summary-item-value" id="costSumCandle">0${t('本', '')}</div></div>
-            <div><div class="cost-summary-item-label">${t('星のキャンドル', 'Season Candles')}</div><div class="cost-summary-item-value" id="costSumStarCandle">0${t('本', '')}</div></div>
-            <div><div class="cost-summary-item-label">${t('ハート', 'Hearts')}</div><div class="cost-summary-item-value" id="costSumHeart">0${t('個', '')}</div></div>
-            <div><div class="cost-summary-item-label">${t('実額', 'Real Money')}</div><div class="cost-summary-item-value" id="costSumMoney">¥0</div></div>
-          </div>
-          <div class="cost-summary-gift-row" id="costSummaryGiftRow" style="display:none;">
-            <span>${ICON_GIFT} ${t('プレゼント分（実額とは別）', 'Gift purchases (shown separately)')}</span><b id="costSummaryGiftMoney">¥0</b>
-          </div>
-          <div class="cost-summary-gift-row" id="costSummaryCandleRow" style="display:none;">
-            <span><svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg> ${t('キャンドル課金分（実額とは別）', 'Candle purchases (shown separately)')}</span><b id="costSummaryCandleMoney">¥0</b>
-          </div>
-          <div class="cost-summary-hint" id="costSummaryHint">${t('読み込み中…', 'Loading…')}</div>
-        </div>
-
-        <div class="cost-summary-card cost-remaining">
-          <div class="cost-summary-title-row" onclick="window.__costViewToggleRemaining()">
-            <span class="cost-summary-title" style="margin-bottom:0;">${t('未所持アイテムを集めるための残りコスト', 'Remaining cost to collect unowned items')}</span>
-            <span class="cost-summary-toggle-icon" id="costRemainToggleIcon">${ICON_CHEVRON}</span>
-          </div>
-          <div id="costRemainingBody" style="display:none;">
-            <div class="cost-summary-grid">
-              <div><div class="cost-summary-item-label">${t('キャンドル', 'Candles')}</div><div class="cost-summary-item-value" id="costSumCandleRemain">0${t('本', '')}</div></div>
-              <div><div class="cost-summary-item-label">${t('星のキャンドル', 'Season Candles')}</div><div class="cost-summary-item-value" id="costSumStarCandleRemain">0${t('本', '')}</div></div>
-              <div><div class="cost-summary-item-label">${t('ハート', 'Hearts')}</div><div class="cost-summary-item-value" id="costSumHeartRemain">0${t('個', '')}</div></div>
-              <div><div class="cost-summary-item-label">${t('実額', 'Real Money')}</div><div class="cost-summary-item-value" id="costSumMoneyRemain">¥0</div></div>
+        <section class="cost-summary" aria-label="${t('コストの合計', 'Cost totals')}">
+          <div class="cost-sum-sec remain">
+            <div class="cost-sum-head">
+              <h2 class="cost-sum-title">${t('集めるための残りコスト', 'Remaining cost to collect')}</h2>
+              <span class="cost-sum-count" id="costRemainCount"></span>
             </div>
-            <div class="cost-summary-hint" id="costSummaryHintRemain">${t('読み込み中…', 'Loading…')}</div>
+            ${sumGridHtml('Remain')}
           </div>
-        </div>
-
-        <div class="cost-share-row">
-          <button type="button" class="cost-share-btn" onclick="window.__costViewShareCost()">
-            <svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('Xで共有', 'Share on X')}</span>
-          </button>
-          <button type="button" class="cost-share-btn" onclick="window.__costViewShareReceivedGifts()">
-            ${ICON_GIFT}<span>${t('もらったギフトを共有', 'Share Gifts I Received')}</span>
-          </button>
-        </div>
-        <div class="cost-share-row" style="margin-top:8px;">
-          <button type="button" class="cost-share-btn" onclick="window.__costViewShareRecap('month')">
-            <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今月の支出を振り返りシェア', "Share This Month's Spending")}</span>
-          </button>
-          <button type="button" class="cost-share-btn" onclick="window.__costViewShareRecap('year')">
-            <svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今年の支出を振り返りシェア', "Share This Year's Spending")}</span>
-          </button>
-        </div>
-
-        <div class="cost-gift-card">
-          <div class="cost-summary-title-row" onclick="window.__costViewToggleGiftCard()">
-            <span>${ICON_GIFT} ${t('課金アイテムプレゼント履歴', 'Gift Purchase History')}</span>
-            <span class="cost-summary-toggle-icon" id="costGiftToggleIcon">${ICON_CHEVRON}</span>
-          </div>
-          <div id="costGiftBody" style="display:none;">
-            <p class="cost-note">${t('相手にプレゼントするために購入した課金アイテムを記録できます。実額の合計に加算するかは1件ずつ任意で選べます。', 'Record real-money items you bought to gift to another player. You can optionally include each one in the real-money total above.')}</p>
-            <div style="margin-top:10px;">
-              <p class="cost-note" style="margin:0 0 4px;">${t('上の実額の合計への反映方法：', 'How to reflect included gifts in the real-money total above:')}</p>
-              <div class="cost-acquire-toggle" id="costGiftDisplayModeToggle">
-                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetGiftDisplayMode('combined')">${t('合計に含める', 'Merge into the total')}</button>
-                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetGiftDisplayMode('separate')">${t('分けて表示', 'Show separately')}</button>
-              </div>
+          <div class="cost-sum-sec spent">
+            <div class="cost-sum-head">
+              <h2 class="cost-sum-title">${t('かかったコスト（所持済み）', 'Spent on owned items')}</h2>
+              <span class="cost-sum-count" id="costOwnedCount"></span>
             </div>
-            <div class="cost-gift-form">
-              <select id="costGiftCat" onchange="window.__costViewOnGiftCatChange()"></select>
-              <input type="text" id="costGiftFilter" class="cost-gift-filter" autocomplete="off"
-                placeholder="${t('アイテム名で検索（全カテゴリ横断）', 'Search by item name (across all categories)')}" oninput="window.__costViewRenderGiftPicker()">
-              <div class="cost-gift-picker" id="costGiftPicker"></div>
-              <div class="cost-gift-preview" id="costGiftPreview" style="display:none;"></div>
-              <div class="cost-gift-form-row">
-                <input type="text" id="costGiftRecipient" placeholder="${t('相手のプレイヤーネーム（任意）', "Recipient's player name (optional)")}" maxlength="60">
-                <input type="date" id="costGiftDate">
-              </div>
-              <button type="button" class="cost-gift-add-btn" onclick="window.__costViewAddGiftRecord()">${t('追加する', 'Add')}</button>
+            ${sumGridHtml('')}
+            <div class="cost-summary-gift-row" id="costSummaryGiftRow" style="display:none;">
+              <span>${ICON_GIFT} ${t('プレゼント分（実額とは別）', 'Gift purchases (shown separately)')}</span><b id="costSummaryGiftMoney">¥0</b>
             </div>
-            <div class="cost-gift-list" id="costGiftList"></div>
-            <div class="cost-share-row" style="margin-top:14px;">
-              <button type="button" class="cost-share-btn" onclick="window.__costViewShareGiftHistory()">
-                <svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('プレゼント履歴を共有', 'Share Gift History')}</span>
-              </button>
+            <div class="cost-summary-gift-row" id="costSummaryCandleRow" style="display:none;">
+              <span><svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg> ${t('キャンドル課金分（実額とは別）', 'Candle purchases (shown separately)')}</span><b id="costSummaryCandleMoney">¥0</b>
             </div>
           </div>
-        </div>
-
-        <div class="cost-gift-card">
-          <div class="cost-summary-title-row" onclick="window.__costViewToggleCandleCard()">
-            <span><svg class="inline-icon" width="20" height="20"><use href="#i-candle"/></svg> ${t('キャンドル課金', 'Candle Purchases')}</span>
-            <span class="cost-summary-toggle-icon" id="costCandleToggleIcon">${ICON_CHEVRON}</span>
+          <p class="cost-sum-excl"><svg class="inline-icon" width="13" height="13"><use href="#i-warning"/></svg>${t('季節キャンドル・チケット交換はこの合計に含まれません。', 'Season Candles and ticket exchanges are not included in these totals.')}</p>
+          <div class="cost-share-chips" role="group" aria-label="${t('画像でXに共有', 'Share an image on X')}">
+            <button type="button" class="cost-share-chip" onclick="window.__costViewShareCost()"><svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('集計を共有', 'Share totals')}</span></button>
+            <button type="button" class="cost-share-chip" onclick="window.__costViewShareReceivedGifts()">${ICON_GIFT}<span>${t('もらったギフト', 'Gifts received')}</span></button>
+            <button type="button" class="cost-share-chip" onclick="window.__costViewShareRecap('month')"><svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今月の支出', 'This month')}</span></button>
+            <button type="button" class="cost-share-chip" onclick="window.__costViewShareRecap('year')"><svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今年の支出', 'This year')}</span></button>
           </div>
-          <div id="costCandleBody" style="display:none;">
-            <p class="cost-note">${t('常時ショップで購入できるキャンドルパックの購入回数を記録できます。上の実額の合計に含めるかは任意で選べます。', 'Record how many times you bought the candle packs that are always available in the shop. You can optionally include the total in the real-money total above.')}</p>
-            <div style="margin-top:10px;">
-              <p class="cost-note" style="margin:0 0 4px;">${t('上の実額の合計への反映方法：', 'How to reflect included purchases in the real-money total above:')}</p>
-              <div class="cost-acquire-toggle" id="costCandleDisplayModeToggle">
-                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetCandleDisplayMode('combined')">${t('合計に含める', 'Merge into the total')}</button>
-                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetCandleDisplayMode('separate')">${t('分けて表示', 'Show separately')}</button>
-              </div>
-            </div>
-            <div class="cost-candle-pack-grid" id="costCandlePackGrid"></div>
-            <div class="cost-candle-summary-row" id="costCandlePurchaseSummary" style="display:none;"></div>
-            <div class="cost-gift-list" id="costCandleList"></div>
-          </div>
-        </div>
+          <details class="cost-sum-details">
+            <summary><span class="cost-summary-toggle-icon">${ICON_CHEVRON}</span>${t('集計の内訳', 'How these totals are calculated')}</summary>
+            <p class="cost-summary-hint" id="costSummaryHint">${t('読み込み中…', 'Loading…')}</p>
+            <p class="cost-summary-hint" id="costSummaryHintRemain"></p>
+          </details>
+        </section>
 
         <div class="cost-jump-bar">
           <div class="cost-jump-bar-row">
@@ -1275,8 +1225,73 @@ function renderShell() {
           </div>
         </div>
 
-        <p class="sec-label">${t('アイテムのコスト一覧', 'Item Cost List')}</p>
+        <h2 class="sec-label cost-list-label">${t('アイテムのコスト一覧', 'Item Cost List')}</h2>
         <div id="costItemList"></div>
+
+        <p class="sec-label cost-more-label">${t('課金の記録', 'Purchase records')}</p>
+        <div class="cost-gift-card">
+          ${collapseHeadHtml('window.__costViewToggleGiftCard()', 'costGiftToggleIcon', `${ICON_GIFT} ${t('課金アイテムプレゼント履歴', 'Gift Purchase History')}`, 'costGiftBody')}
+          <div id="costGiftBody" style="display:none;">
+            <p class="cost-note">${t('相手にプレゼントするために購入した課金アイテムを記録できます。実額の合計に加算するかは1件ずつ任意で選べます。', 'Record real-money items you bought to gift to another player. You can optionally include each one in the real-money total above.')}</p>
+            <div style="margin-top:10px;">
+              <p class="cost-note" style="margin:0 0 4px;">${t('上の実額の合計への反映方法：', 'How to reflect included gifts in the real-money total above:')}</p>
+              <div class="cost-acquire-toggle" id="costGiftDisplayModeToggle">
+                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetGiftDisplayMode('combined')">${t('合計に含める', 'Merge into the total')}</button>
+                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetGiftDisplayMode('separate')">${t('分けて表示', 'Show separately')}</button>
+              </div>
+            </div>
+            <div class="cost-gift-form">
+              <select id="costGiftCat" onchange="window.__costViewOnGiftCatChange()" aria-label="${t('カテゴリ', 'Category')}"></select>
+              <input type="text" id="costGiftFilter" class="cost-gift-filter" autocomplete="off"
+                placeholder="${t('アイテム名で検索（全カテゴリ横断）', 'Search by item name (across all categories)')}" oninput="window.__costViewRenderGiftPicker()">
+              <div class="cost-gift-picker" id="costGiftPicker"></div>
+              <div class="cost-gift-preview" id="costGiftPreview" style="display:none;"></div>
+              <div class="cost-gift-form-row">
+                <input type="text" id="costGiftRecipient" placeholder="${t('相手のプレイヤーネーム（任意）', "Recipient's player name (optional)")}" maxlength="60">
+                <input type="date" id="costGiftDate">
+              </div>
+              <button type="button" class="cost-gift-add-btn" onclick="window.__costViewAddGiftRecord()">${t('追加する', 'Add')}</button>
+            </div>
+            <div class="cost-gift-list" id="costGiftList"></div>
+            <div class="cost-share-row" style="margin-top:14px;">
+              <button type="button" class="cost-share-btn" onclick="window.__costViewShareGiftHistory()">
+                <svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('プレゼント履歴を共有', 'Share Gift History')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cost-gift-card">
+          ${collapseHeadHtml('window.__costViewToggleCandleCard()', 'costCandleToggleIcon', `<svg class="inline-icon" width="20" height="20"><use href="#i-candle"/></svg> ${t('キャンドル課金', 'Candle Purchases')}`, 'costCandleBody')}
+          <div id="costCandleBody" style="display:none;">
+            <p class="cost-note">${t('常時ショップで購入できるキャンドルパックの購入回数を記録できます。上の実額の合計に含めるかは任意で選べます。', 'Record how many times you bought the candle packs that are always available in the shop. You can optionally include the total in the real-money total above.')}</p>
+            <div style="margin-top:10px;">
+              <p class="cost-note" style="margin:0 0 4px;">${t('上の実額の合計への反映方法：', 'How to reflect included purchases in the real-money total above:')}</p>
+              <div class="cost-acquire-toggle" id="costCandleDisplayModeToggle">
+                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetCandleDisplayMode('combined')">${t('合計に含める', 'Merge into the total')}</button>
+                <button type="button" class="cost-acquire-btn" onclick="window.__costViewSetCandleDisplayMode('separate')">${t('分けて表示', 'Show separately')}</button>
+              </div>
+            </div>
+            <div class="cost-candle-pack-grid" id="costCandlePackGrid"></div>
+            <div class="cost-candle-summary-row" id="costCandlePurchaseSummary" style="display:none;"></div>
+            <div class="cost-gift-list" id="costCandleList"></div>
+          </div>
+        </div>
+
+        <div class="cost-gift-card cost-about-card">
+          ${collapseHeadHtml('window.__costViewToggleAbout()', 'costAboutToggleIcon', `<svg class="inline-icon" width="16" height="16"><use href="#i-warning"/></svg> ${t('この集計について', 'About these costs')}`, 'costAboutBody')}
+          <div id="costAboutBody" class="cost-about-body" style="display:none;">
+          ${en
+            ? `Costs are compiled from the <a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki (English)</a>'s "Source" and "Cost" tables for each item.<br>
+          There are four currencies: <b>Candles</b> (the basic currency for most items), <b>Season Candles</b> (a special currency used for Nesting Workshop furniture and some permanent items), <b>Hearts</b>, and <b>Real Money (JPY)</b>. Real-money amounts are converted to Japanese App Store price tiers (the wiki lists USD, so tier prices are converted to their real JPY equivalents). Some real-money items are priced as a bundle with another item (noted where applicable) &mdash; owning multiple items in the same bundle only adds that bundle's price once to the total.<br>
+          Covers all 12 categories (Shoes, Necklace, Large Placeable Items, Outfit, Hairstyle, Face Accessory, Head Accessory, Hair Accessory, Props, Mask, Small Placeable Items, Cape) plus Music Sheets. Items are grouped by season/day rather than by category.<br>
+          <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> The costs listed here are approximate estimates only.</b> Actual amounts may differ due to how wiki data, bundle pricing, and currency rounding are interpreted. No accuracy is guaranteed &mdash; please use this as a reference only.`
+            : `<a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki（英語版）</a>の「入手方法(Source)」「コスト(Cost)」の一覧表を基に、各アイテムの実際の入手コストをまとめています。<br>
+          通貨は<b>キャンドル</b>（通常アイテムの基本通貨）・<b>星のキャンドル</b>（巣づくり工房の家具や一部の恒常アイテムで使う特別な通貨）・<b>ハート</b>・<b>実額（円）</b>の4種類があります。実額は日本のAppストア価格帯を基にした円換算です（Wikiは米ドル表記のため、Tierごとの実際の円価格に置き換えています）。実額のアイテムは、他のアイテムとのセット価格になっている場合があります（その場合は注記しています）。セット内の複数アイテムを所持済みにしても、合計額にはセット価格が1回分のみ加算されます。<br>
+          全12カテゴリ（シューズ・ネックレス・大きい設置アイテム・アウトフィット・ヘアスタイル・フェイスアクセサリー・ヘッドアクセサリー・ヘアアクセサリー・持ち物アイテム・マスク・小さい設置アイテム・ケープ）に加え、楽譜にも対応しています。カテゴリ分けはせず、季節・日々ごとにまとめて表示しています。<br>
+          <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> ここに記載しているコストはあくまで目安・概算です。</b>Wikiの情報やセット価格の解釈、円換算の丸めなどにより、実際の金額と差が生じる場合があります。正確な金額の保証はできませんので、参考程度にご利用ください。`}
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -1289,7 +1304,7 @@ function renderShell() {
 const HANDLERS = {
   __costViewRenderItems: () => renderItems(),
   __costViewJumpToGroup: gid => jumpToGroup(gid),
-  __costViewToggleRemaining: () => toggleRemaining(),
+  __costViewToggleAbout: () => toggleAbout(),
   __costViewToggleGiftCard: () => toggleGiftCard(),
   __costViewToggleCandleCard: () => toggleCandleCard(),
   __costViewSetGiftDisplayMode: mode => setGiftDisplayMode(mode),
@@ -1383,28 +1398,59 @@ function injectStyles() {
 
 .item-view .cost-notice-card {
   background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-size: 12.5px; color: var(--text-2); line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-size: 13px; color: var(--text-2); line-height: 1.7;
 }
-.item-view .cost-notice-card b { color: var(--text); }
-.item-view .cost-notice-card a { color: var(--blue); font-weight: 600; }
+.item-view .cost-about-body { font-size: 13px; color: var(--text-2); line-height: 1.75; margin-top: 10px; }
+.item-view .cost-about-body b { color: var(--text); }
+.item-view .cost-about-body a { color: var(--blue); font-weight: 600; }
 
-.item-view .cost-summary-card {
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-d) 100%);
-  border-radius: var(--r); padding: 20px; margin-top: 16px; color: #fff;
-  box-shadow: 0 4px 14px rgba(255,149,0,0.25);
-}
-.item-view .cost-summary-title { font-size: 14px; font-weight: 700; opacity: 0.9; margin-bottom: 12px; }
-.item-view .cost-summary-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; margin-bottom: 12px; }
-.item-view .cost-summary-title-row span:first-child { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; }
-.item-view .cost-summary-toggle-icon { opacity: 0.85; transition: transform 0.15s; flex-shrink: 0; }
-.item-view .cost-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.item-view .cost-summary-item-label { font-size: 11px; opacity: 0.85; margin-bottom: 3px; }
-.item-view .cost-summary-item-value { font-size: 17px; font-weight: 800; }
-.item-view .cost-summary-hint { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.25); font-size: 11.5px; line-height: 1.6; opacity: 0.95; }
-.item-view .cost-summary-gift-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.25); font-size: 13px; }
+/* ── 統合サマリー（残り＝塗りの面／かかった＝淡い面＋色帯）──
+   塗りの面はアクセント（--blue。着せ替え中は文字用のアクセント色が入る）を濃紺と混ぜて暗くし、
+   どの着せ替えでも白文字が読める濃さにする。 */
+.item-view .cost-summary { background: var(--card); border-radius: var(--r); padding: 12px; margin-top: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; flex-direction: column; gap: 10px; }
+.item-view .cost-sum-sec { border-radius: var(--r-sm); padding: 12px 14px; }
+.item-view .cost-sum-sec.remain { background: color-mix(in srgb, var(--blue) 46%, #08122b); color: #fff; }
+.item-view .cost-sum-sec.spent { background: var(--orange-bg); border-left: 4px solid var(--orange); color: var(--text); }
+.item-view .cost-sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.item-view .cost-sum-title { font-size: 14px; font-weight: 700; line-height: 1.3; margin: 0; }
+.item-view .cost-sum-count { font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.item-view .cost-sum-sec.spent .cost-sum-count { color: var(--text-2); }
+.item-view .cost-sum-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+@media (min-width: 700px) { .item-view .cost-sum-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.item-view .cost-sum-cell { min-width: 0; }
+.item-view .cost-sum-label { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-view .cost-sum-sec.spent .cost-sum-label { color: var(--text-2); }
+.item-view .cost-sum-sec.remain .cost-sum-label .inline-icon { stroke: #fff; }
+.item-view .cost-sum-value { font-size: 20px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.item-view .cost-unit { font-size: 12.5px; font-weight: 700; margin-left: 2px; letter-spacing: 0.02em; }
+.item-view .cost-summary-gift-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); font-size: 13px; }
 .item-view .cost-summary-gift-row span { display: flex; align-items: center; gap: 5px; }
-.item-view .cost-summary-card.cost-remaining { background: linear-gradient(135deg, var(--blue) 0%, #0051A8 100%); box-shadow: 0 4px 14px rgba(0,122,255,0.25); margin-top: 12px; }
+.item-view .cost-summary-gift-row b { font-variant-numeric: tabular-nums; }
+.item-view .cost-sum-excl { display: flex; align-items: flex-start; gap: 5px; margin: 0; font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.item-view .cost-sum-excl .inline-icon { flex-shrink: 0; margin-top: 2px; }
+.item-view .cost-share-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.item-view .cost-share-chip {
+  min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px;
+  background: transparent; border: 1px solid var(--sep); border-radius: var(--r-sm); color: var(--text); cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 600; line-height: 1.2; letter-spacing: 0.02em; text-align: center;
+}
+@media (min-width: 700px) { .item-view .cost-share-chip { flex-direction: row; gap: 6px; font-size: 12.5px; } }
+.item-view .cost-share-chip:active { transform: scale(0.97); }
+.item-view .cost-sum-details { font-size: 12.5px; color: var(--text-2); }
+.item-view .cost-sum-details summary { cursor: pointer; font-weight: 600; min-height: 36px; display: flex; align-items: center; gap: 4px; list-style: none; }
+.item-view .cost-sum-details summary::-webkit-details-marker { display: none; }
+.item-view .cost-sum-details[open] summary .cost-summary-toggle-icon { transform: rotate(90deg); }
+.item-view .cost-summary-hint { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+@media (prefers-contrast: more) {
+  .item-view .cost-sum-sec.remain { background: #08122b; }
+  .item-view .cost-sum-sec.spent { background: var(--card); border: 1px solid var(--text-2); border-left-width: 4px; }
+  .item-view .cost-share-chip { border-color: var(--text-2); }
+}
+@media (prefers-reduced-motion: reduce) { .item-view .cost-share-chip:active { transform: none; opacity: 0.7; } }
 
+.item-view .cost-collapse-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 0; margin: -4px 0; background: none; border: 0; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; text-align: left; cursor: pointer; }
+.item-view .cost-collapse-head > span:first-child { display: flex; align-items: center; gap: 6px; }
+.item-view .cost-more-label { margin-top: 28px; }
 .item-view .cost-season-group-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 14px 4px 8px; scroll-margin-top: 12px; }
 .item-view .cost-season-group-name { font-size: 13.5px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 5px; }
 .item-view .cost-season-group-count { font-size: 11px; color: var(--text-2); font-weight: 600; }
@@ -1452,7 +1498,7 @@ function injectStyles() {
 .item-view .cost-quantity-hint { font-size: 11px; color: var(--text-3); }
 
 .item-view .cost-gift-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-.item-view .cost-gift-card .cost-summary-title-row { color: var(--text); }
+.item-view .cost-summary-toggle-icon { transition: transform 0.15s; flex-shrink: 0; display: inline-flex; }
 .item-view .cost-gift-card .cost-summary-toggle-icon { color: var(--text-2); }
 .item-view .cost-note { font-size: 11.5px; color: var(--text-2); line-height: 1.6; margin: 0; }
 .item-view .cost-gift-form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
