@@ -173,8 +173,8 @@ function renderWelcomeCard() {
         <span class="welcome-toggle-icon" id="dashWelcomeToggleIcon"><svg class="inline-icon" width="14" height="14">${CHEVRON_RIGHT_PATH}</svg></span>
       </button>
       <div class="welcome-text" id="dashWelcomeText" style="display:none;">${en
-        ? 'This tool lets you track your Sky dress-up item collection by category.<br>Use the Random Coord feature to discover new combinations, save favorites with My Coord, and share your completion rate as an image on X.<br>Start by registering items in a category you\'re interested in!<br>Clicking an item\'s name searches for &quot;item name + Sky&quot; automatically, so give it a try!<br>Please report any bugs or issues to @Skyzztai!'
-        : 'このツールでは、Skyのドレスアップアイテムの所持状況をカテゴリ別にチェックできます。<br>ランダムコーデ機能で新しい組み合わせを発見したり、マイコーデでお気に入りを保存したりできるほか、達成率を画像にしてXでシェアすることも可能です。<br>まずは気になるカテゴリからアイテムを登録してみてください！<br>アイテムの名前をクリックすると、「アイテム名+Sky」で自動で検索できますので活用してみてください！<br>不具合やミスは@Skyzztaiまでお知らせください！'}</div>
+        ? 'This tool lets you track your Sky dress-up item collection by category.<br>Use the Random Coord feature to discover new combinations, save favorites with My Coord, and share your completion rate as an image on X.<br>Start by registering items in a category you\'re interested in!<br>Tap an item\'s name to see its price, add it to your Wishlist Plan, or search the web for it!<br>Please report any bugs or issues to @Skyzztai!'
+        : 'このツールでは、Skyのドレスアップアイテムの所持状況をカテゴリ別にチェックできます。<br>ランダムコーデ機能で新しい組み合わせを発見したり、マイコーデでお気に入りを保存したりできるほか、達成率を画像にしてXでシェアすることも可能です。<br>まずは気になるカテゴリからアイテムを登録してみてください！<br>アイテムの名前を押すと、価格の確認やほしいもの計画への追加、「アイテム名+Sky」での検索ができます！<br>不具合やミスは@Skyzztaiまでお知らせください！'}</div>
     </div>`;
 }
 

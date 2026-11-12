@@ -97,6 +97,7 @@ export async function mount(container, catConfig) {
   window.__catViewToggleOwned = handleToggleOwned;
   window.__catViewToggleFav = handleToggleFav;
   window.__catViewToggleWish = handleToggleWish;
+  window.__catViewDetail = handleOpenDetail;
   window.__catViewSetViewMode = handleSetViewMode;
   window.__catViewSetGridCols = handleSetGridCols;
   window.__catViewFilterAndRender = filterAndRender;
@@ -118,6 +119,7 @@ export function unmount() {
   delete window.__catViewToggleOwned;
   delete window.__catViewToggleFav;
   delete window.__catViewToggleWish;
+  delete window.__catViewDetail;
   delete window.__catViewSetViewMode;
   delete window.__catViewSetGridCols;
   delete window.__catViewFilterAndRender;
@@ -373,6 +375,21 @@ function handleToggleFav(id, btn) {
     : '<svg class="inline-icon" width="16" height="16" style="stroke:currentColor;fill:none;stroke-width:1.6"><use href="#i-star"/></svg>';
 }
 
+// 名前を押すと詳細シート（ほしいもの計画への追加・価格・検索）。features/item/item-detail-sheet.js
+function handleOpenDetail(id) {
+  const item = categoryItems.find(x => String(x.id) === String(id));
+  if (!item) return;
+  import('./item-detail-sheet.js').then(m => m.openItemDetail({
+    catKey: categoryConfig.key, item, label: trItem(item), eventLabel: trEvent(item.event),
+    imgSrc: item.img || `images/${categoryConfig.key}/${item.id}.png`,
+    onChange: () => {
+      const card = containerEl && containerEl.querySelector(`#card_${CSS.escape(String(id))}`);
+      const scope = card && (card.closest('.cv-item-tile') || card);
+      if (scope) scope.querySelectorAll('.cv-tile-wish-btn, .cv-wish-btn').forEach(b => b.classList.toggle('is-wish', isWishItem(categoryConfig.key, id)));
+    },
+  }));
+}
+
 function handleToggleWish(id, btn) {
   const added = toggleWishItem(categoryConfig.key, id);
   if (added === null) {
@@ -380,6 +397,9 @@ function handleToggleWish(id, btn) {
     return;
   }
   btn.classList.toggle('is-wish', added);
+  showCatViewToast(added
+    ? (CURRENT_LANG === 'en' ? 'Added to your Wishlist Plan' : 'ほしいもの計画に追加しました')
+    : (CURRENT_LANG === 'en' ? 'Removed from your Wishlist Plan' : 'ほしいもの計画から外しました'));
 }
 
 /* ================================================================
@@ -512,7 +532,7 @@ function filterAndRender() {
           </div>
           <span class="cv-tile-owned-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
         </div>
-        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-tile-name">${trItem(item)}</a>
+        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-tile-name" onclick="event.preventDefault(); window.__catViewDetail('${item.id}')">${trItem(item)}</a>
       </div>
     `;
   };
@@ -529,7 +549,7 @@ function filterAndRender() {
             <span class="cv-item-thumb-check"><svg class="inline-icon" width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
           </div>
           <div class="cv-item-details">
-            <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-name-link" onclick="event.stopPropagation();">
+            <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-name-link" onclick="event.preventDefault(); event.stopPropagation(); window.__catViewDetail('${item.id}')">
               ${trItem(item)} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14L20 4"/><path d="M14 4h6v6"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></svg>
             </a>
             <div class="cv-item-meta-row">

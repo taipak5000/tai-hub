@@ -47,6 +47,7 @@ import { ITEM_YOMI } from './data/yomi-data.js';
 import { checkAndUnlockTitles } from './titles-panel.js';
 import { appendItemFooter } from './item-footer.js';
 import { injectCategoryViewStyles, showCatViewToast, EVENT_ORDER } from './category-view.js';
+import { openItemDetail } from './item-detail-sheet.js';
 
 // 12種のウェアラブルカテゴリのみが対象（section:'special' の楽譜は別形状のデータのため対象外）
 const GRID_CATEGORIES = CATEGORY_REGISTRY.filter(c => c.section === 'grid');
@@ -342,6 +343,10 @@ function onClick(e) {
     if (entry) toggleFav(entry.dataset.cat, entry.dataset.id, actEl);
   } else if (act === 'toggle-wish') {
     if (entry) toggleWish(entry.dataset.cat, entry.dataset.id, actEl);
+  } else if (act === 'detail') {
+    // 名前を押すと詳細シート（検索はシートの中から）
+    e.preventDefault();
+    if (entry) openDetail(entry);
   } else if (act === 'view-grid') setView('grid');
   else if (act === 'view-list') setView('list');
   else if (act === 'more') renderChunk();
@@ -465,7 +470,7 @@ function tileHtml(item) {
         </div>
         <span class="cv-tile-owned-check"><svg class="inline-icon" width="11" height="11" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
       </div>
-      <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-tile-name">${escapeHtml(name)}</a>
+      <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-tile-name" data-act="detail">${escapeHtml(name)}</a>
     </div>`;
 }
 
@@ -486,7 +491,7 @@ function rowHtml(item) {
           <span class="cv-item-thumb-check"><svg class="inline-icon" width="10" height="10" style="stroke:currentColor;fill:none;stroke-width:2.2"><use href="#i-check"/></svg></span>
         </div>
         <div class="cv-item-details">
-          <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-name-link">${escapeHtml(name)}</a>
+          <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="cv-item-name-link" data-act="detail">${escapeHtml(name)}</a>
           <div class="cv-item-meta-row">
             <span class="cv-badge">${escapeHtml(en ? cat.nameEn : cat.name)}</span>
             <span class="cv-badge">${escapeHtml(trEvent(item.event))}</span>
@@ -661,6 +666,15 @@ function toggleFav(catKey, id, btn) {
   if (svg) svg.style.fill = s.fav[id] ? 'currentColor' : 'none';
 }
 
+function openDetail(entry) {
+  const item = avItems.find(x => x.catKey === entry.dataset.cat && String(x.id) === entry.dataset.id);
+  if (!item) return;
+  openItemDetail({
+    catKey: item.catKey, item, label: trItem(item), eventLabel: trEvent(item.event), imgSrc: item.img || '',
+    onChange: () => entry.querySelectorAll('.cv-tile-wish-btn, .cv-wish-btn').forEach(b => b.classList.toggle('is-wish', isWishItem(item.catKey, item.id))),
+  });
+}
+
 function toggleWish(catKey, id, btn) {
   const en = CURRENT_LANG === 'en';
   const added = toggleWishItem(catKey, id);
@@ -670,8 +684,8 @@ function toggleWish(catKey, id, btn) {
   }
   btn.classList.toggle('is-wish', added);
   showCatViewToast(added
-    ? (en ? 'Added to wishlist' : 'ウィッシュリストに追加しました')
-    : (en ? 'Removed from wishlist' : 'ウィッシュリストから外しました'));
+    ? (en ? 'Added to your Wishlist Plan' : 'ほしいもの計画に追加しました')
+    : (en ? 'Removed from your Wishlist Plan' : 'ほしいもの計画から外しました'));
 }
 
 /* 現在の絞り込み結果のうち未所持のものをまとめて所持済みにする（確認ダイアログあり） */
