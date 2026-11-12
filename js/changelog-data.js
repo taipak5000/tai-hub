@@ -12,7 +12,7 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.12',
+    version: '2026.11.12.2',
     title: { ja: '達成率の推移・画像カード・ピン留めなどを追加', en: 'Completion graph, image cards, pinned tools and more' },
     date: '2026-11-12',
     items: [
@@ -24,6 +24,7 @@ export const CHANGELOG = [
       { type: 'new', ja: 'よく使うツールを4つまでピン留めして、画面の上からすぐ開けるようにしました（「他のツール」の一覧のピンから）。', en: 'Pin up to four tools to the top of the screen from the Other Tools list.' },
       { type: 'new', ja: '着せ替えに、草原・雨林・峡谷・捨てられた地・書庫・天界をイメージした見本を追加しました。', en: 'New realm-inspired themes: Prairie, Forest, Valley, Wasteland, Vault and Heaven.' },
       { type: 'improve', ja: 'しばらくバックアップしていない時に、ダッシュボードでお知らせするようにしました。', en: 'The dashboard now reminds you when you haven’t backed up for a while.' },
+      { type: 'fix', ja: '着せ替えの色によって読みにくかったボタンや文字（星紡ぎカードの投稿ボタン・ノマキャン計算機プロのボタン・羽トラッカーのボタン・デイリーチェックシートの日付など）を、読める濃さにしました。', en: 'Buttons and labels that were hard to read with some themes (Star-Spun Card, Candle Calculator Pro, Wing Tracker, Daily Checklist) are now readable.' },
     ],
   },
   {

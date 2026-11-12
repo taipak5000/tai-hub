@@ -431,7 +431,9 @@
 .tc-panel-head-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 .tc-share-btn{
   appearance:none; cursor:pointer; border:none; border-radius:100px; padding:9px 18px;
-  background:linear-gradient(135deg, var(--tc-card-gold) 0%, var(--tc-card-gold-ink) 100%); color:#fff;
+  /* 🩹 --tc-card-gold は .tc-card の中でしか決まっていないため、このボタンでは背景が透明になり白い文字が読めなかった（2026-11-12）。
+     金色を直接書き、白い文字で4.5:1以上になる濃さにする */
+  background:linear-gradient(135deg, #9C7128 0%, #7A561B 100%); color:#fff;
   font-family:"Zen Kaku Gothic New",sans-serif; font-size:12.5px; font-weight:700; white-space:nowrap;
   display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(168,122,50,0.32);
   transition:transform .15s var(--tc-ease-snap), box-shadow .15s;

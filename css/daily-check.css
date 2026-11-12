@@ -124,7 +124,10 @@
 
 .daily-check-view .dc-paper-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding-right: 40px; margin-bottom: 8px; }
 .daily-check-view .dc-title { margin: 0; font-size: 21px; line-height: 1.15; letter-spacing: -0.01em; font-weight: 800; color: var(--dc-ink); }
-.daily-check-view .dc-date { font-size: 14px; font-weight: 700; color: var(--dc-accent); white-space: pre; }
+/* 🩹 シートの色（--dc-accent）は飾り（線・印）向けの明るさで、文字にすると紙の上で3:1に届かなかった。
+   日付・ラベルの文字だけ、シートの文字色（--dc-ink）へ少し寄せて読める濃さにする（2026-11-12） */
+.daily-check-view .dc-paper { --dc-accent-ink: color-mix(in srgb, var(--dc-accent) 68%, var(--dc-ink)); }
+.daily-check-view .dc-date { font-size: 14px; font-weight: 700; color: var(--dc-accent-ink); white-space: pre; }
 
 .daily-check-view .dc-section { margin-top: 12px; }
 .daily-check-view .dc-sec {
@@ -162,7 +165,7 @@
 .daily-check-view .dc-num-line.sm { width: 1.4em; }
 
 .daily-check-view .dc-memo { display: flex; gap: 8px; margin-top: 14px; padding-top: 10px; border-top: 2px dotted var(--dc-line); }
-.daily-check-view .dc-memo-label { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--dc-accent); }
+.daily-check-view .dc-memo-label { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--dc-accent-ink); }
 .daily-check-view .dc-memo-lines { flex: 1; height: 72px; background-image: linear-gradient(transparent 23px, var(--dc-line) 23px); background-size: 100% 24px; }
 .daily-check-view .dc-memo-lines.short { height: 48px; }
 

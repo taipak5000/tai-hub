@@ -300,6 +300,14 @@ export function derivePalette(theme, scheme) {
   const onGold = worst('#1B1B3A') >= worst('#ffffff') ? '#1B1B3A' : '#ffffff';
   // 意味色（エラー赤）は色味を保ったまま、その面で読める濃さにだけ補正する
   const redInk = ensureContrast('#FF3B30', faces, 4.5);
+  // ノマキャン計算機プロの意味色（緑＝あり・橙＝効率）も同じく、色味を保ったまま読める濃さにする。
+  // 文字に使う〜Ink と、白い文字を載せるボタンの面に使う〜Solid を分ける（2026-11-12）
+  const greenInk = ensureContrast('#34C759', faces, 4.5);
+  const orangeInk = ensureContrast('#FF9500', faces, 4.5);
+  const greenSolid = darkenForWhiteText('#34C759', 4.5);
+  const orangeSolid = darkenForWhiteText('#FF9500', 4.5);
+  const redSolid = darkenForWhiteText('#FF3B30', 4.5);
+  const purpleSolid = darkenForWhiteText('#AF52DE', 4.5);
 
   // 白い文字を載せる大きなカード用の「深い色」。accentSolid（白文字で4.5以上）をさらに暗くした
   // グラデーションの終点と、アクセントの色相を帯びた夜色（暗い面。白文字がいつでも読める）
@@ -314,6 +322,7 @@ export function derivePalette(theme, scheme) {
     accent, accentFill, accentSolid, accentInk, accentBg,
     a2, accent2Fill, accent2Ink, accent2Bg,
     accentLight, onGold, redInk, accentDeep, night1, night2,
+    greenInk, orangeInk, greenSolid, orangeSolid, redSolid, purpleSolid,
     glass: rgba(card, dark ? 0.68 : 0.72),
     // 「ガラス」の質感では、カードの面をやや透かす
     cardSurface: glassA ? rgba(card, dark ? 0.55 : 0.62) : card,
@@ -404,6 +413,7 @@ const TOOL_MAPS = [
   ['.nomacan-pro-view', p => ({
     '--npb-bg': p.bg, '--npb-card': p.cardSurface, '--npb-text': p.text, '--npb-text-2': p.text2, '--npb-border': p.sep,
     '--npb-input-bg': p.surface2, '--npb-stat-bg': p.surface2, '--npb-blue': p.accentInk,
+    '--npb-green': p.greenInk, '--npb-orange': p.orangeInk, '--npb-red': p.redInk,
   })],
   ['.star-candle-view, ' + R + ' .sc-shard-cal-card', p => ({
     '--indigo': p.bg, '--violet': p.card, '--violet-deep': p.surface2, '--gold': p.accentFill, '--gold-light': p.accentLight,
@@ -434,6 +444,17 @@ const BRAND_RULES = p => [
   `.wings-view .summary-card{background:linear-gradient(135deg,${p.accentSolid} 0%,${p.accentDeep} 100%);box-shadow:0 4px 14px ${rgba(p.accentSolid, 0.28)}}`,
   `.wings-view .cape-card{background:linear-gradient(160deg,${p.night1} 0%,${p.night2} 100%);box-shadow:0 4px 14px ${rgba(p.night2, 0.4)}}`,
   `.wings-view .mode-tab.active{background:${p.accentSolid};box-shadow:0 2px 8px ${rgba(p.accentSolid, 0.3)}}`,
+  // 白い文字を載せるボタンは、文字用の色（〜Ink。暗い背景では明るくなる）ではなく白文字で4.5以上の面の色にする（2026-11-12）
+  `.wings-view :is(.share-btn.customize,.filter-toggle-btn.active){background:${p.accentSolid}}`,
+  `.nomacan-pro-view :is(.nmp-btn:not(.nmp-btn-orange):not(.nmp-btn-green):not(.nmp-btn-red):not(.nmp-btn-purple):not(.nmp-btn-outline),.nmp-btn-blue){background:${p.accentSolid}}`,
+  `.nomacan-pro-view :is(.nmp-btn-orange,.nmp-spell-import-btn){background:${p.orangeSolid}}`,
+  `.nomacan-pro-view .nmp-btn-green{background:${p.greenSolid}}`,
+  `.nomacan-pro-view .nmp-btn-red{background:${p.redSolid}}`,
+  `.nomacan-pro-view .nmp-btn-purple{background:${p.purpleSolid}}`,
+  `.nomacan-pro-view .nmp-tm-live{color:${p.greenInk}}`,
+  `.item-view .titp-empty-btn{background:${p.accentSolid}}`,
+  // daily-check: アクセント色の文字（「＋ 新しいシート」・リンク）
+  `.daily-check-view :is(.dc-tab-add,.dc-link){color:${p.accentInk}}`,
   // star-candle: 金のグラデーション面（ボタン・バッジ・選択中の日付）の文字は、背景色ではなく読める濃さの色にする
   `.star-candle-view :is(.sc-add-current-btn,.sc-max-badge,.sc-active-badge,.sc-date-picker-cell.is-selected){color:${p.onGold}}`,
 ];

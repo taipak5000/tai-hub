@@ -353,7 +353,7 @@ function injectStyles() {
 /* 達成率ゼロ（所持アイテム0件）時のヒント。item/index.htmlの.hintと同じ見た目 */
 .item-view .titp-empty-guide { display: flex; align-items: center; gap: 12px; margin: 10px 0 0; padding: 12px 14px; border-radius: var(--r); background: var(--card); }
 .item-view .titp-empty-guide p { flex: 1; margin: 0; font-size: 13px; line-height: 1.6; color: var(--text); }
-.item-view .titp-empty-btn { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border-radius: 10px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
+.item-view .titp-empty-btn { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border-radius: 10px; background: #0A66D6; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; }
 .item-view .titp-empty-btn:active { transform: scale(0.97); }
 @media (max-width: 380px) { .item-view .titp-empty-guide { flex-direction: column; align-items: stretch; } .item-view .titp-empty-btn { justify-content: center; } }
 .item-view .titp-hint {
