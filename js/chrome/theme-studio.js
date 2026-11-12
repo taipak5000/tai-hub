@@ -101,11 +101,14 @@ function previewHtml(theme, selected) {
    ================================================================ */
 function paneThemes() {
   const cur = current();
-  const presetCards = T.PRESETS.map(pr => {
+  const card = pr => {
     const sel = T.sameLook(cur, pr.theme);
     return `<button type="button" class="ts-preset${sel ? ' selected' : ''}" data-act="preset" data-id="${pr.id}" aria-pressed="${sel}">
       ${previewHtml(pr.theme, sel)}<span class="ts-pname">${escapeHtml(t(pr.ja, pr.en))}</span></button>`;
-  }).join('');
+  };
+  const presetCards = T.PRESETS.filter(pr => !pr.group).map(card).join('');
+  // エリアの見本（js/theme.js の group: 'area'）は別の欄にまとめる
+  const areaCards = T.PRESETS.filter(pr => pr.group === 'area').map(card).join('');
   const stdSel = cur === null;
   const changed = JSON.stringify(undoTheme) !== JSON.stringify(cur);
   return `
@@ -115,6 +118,7 @@ function paneThemes() {
         ${previewHtml(null, stdSel)}<span class="ts-pname">${t('標準', 'Default')}</span></button>
       ${presetCards}
     </div>
+    ${areaCards ? `<p class="ts-group-label">${t('エリア', 'Realms')}</p><div class="ts-grid">${areaCards}</div>` : ''}
     <div class="ts-actions">
       <button type="button" class="ts-btn" data-act="random">${ICON('i-dice')}${t('おまかせ', 'Surprise me')}</button>
       <button type="button" class="ts-btn" data-act="goto-custom">${ICON('i-palette')}${t('細かく調整する', 'Fine-tune')}</button>

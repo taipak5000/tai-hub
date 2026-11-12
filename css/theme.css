@@ -47,6 +47,7 @@
 .ts-seg.ts-seg-inline button { padding: 6px 11px; font-size: 12px; }
 
 .ts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px; }
+.ts-group-label { margin: 18px 2px 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-text-2); }
 .ts-preset {
   border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--hub-text);
   display: flex; flex-direction: column; align-items: stretch; gap: 6px; text-align: center;

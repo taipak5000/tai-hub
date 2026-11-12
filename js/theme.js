@@ -217,6 +217,14 @@ export const PRESETS = [
   P('winter', '雪', 'Snow', { accent: '#4A86C5', hue: 210, tint: 30, force: 'light', fx: 'snow', card: 'glass', radius: 'round' }),
   P('gold', '黄金', 'Golden', { accent: '#D4A02C', hue: 42, tint: 55, force: 'dark', fx: 'stars', font: 'serif', radius: 'sharp' }),
   P('mono', 'モノクロ', 'Mono', { accent: '#6B7280', hue: 220, tint: 5, card: 'flat', radius: 'sharp', font: 'gothic' }),
+  // 🗺️ エリアの見本（2026-11-12）。Skyの各エリアの色をもとにした組み合わせ。着せ替え画面では「エリア」の欄にまとめて出す。
+  // 文字の色は他と同じく背景から計算してコントラストを保証する（ensureContrast）ので、淡い金などのアクセントでも読める
+  { ...P('area-prairie', '草原', 'Daylight Prairie', { accent: '#3E9E4F', hue: 200, tint: 45, force: 'light', grad: { on: true, shift: -60, angle: 175 }, radius: 'round', fx: 'petals' }), group: 'area' },
+  { ...P('area-forest', '雨林', 'Hidden Forest', { accent: '#1E7A5A', hue: 188, tint: 55, grad: { on: true, shift: -40, angle: 170 }, fx: 'bubbles', card: 'soft' }), group: 'area' },
+  { ...P('area-valley', '峡谷', 'Valley of Triumph', { accent: '#E2702B', hue: 28, tint: 60, grad: { on: true, shift: -24, angle: 165 }, card: 'glass' }), group: 'area' },
+  { ...P('area-wasteland', '捨てられた地', 'Golden Wasteland', { accent: '#7C98B6', hue: 215, tint: 30, force: 'dark', grad: { on: true, shift: 18, angle: 180 }, radius: 'sharp', fx: 'fireflies' }), group: 'area' },
+  { ...P('area-vault', '書庫', 'Vault of Knowledge', { accent: '#D2A53C', hue: 228, tint: 72, force: 'dark', font: 'serif', fx: 'stars', card: 'glass' }), group: 'area' },
+  { ...P('area-eden', '天界', 'Heaven', { accent: '#C49A2E', hue: 46, tint: 18, force: 'light', grad: { on: true, shift: 20, angle: 180 }, radius: 'round', fx: 'snow', card: 'glass' }), group: 'area' },
 ];
 
 /** おまかせ生成: 調和する色の組み合わせをランダムに作る */
