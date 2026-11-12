@@ -19,6 +19,7 @@ import { CURRENT_LANG, trCat, escapeHtml } from '../../js/i18n.js';
 import { getCategoryState, isCountableItem } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import * as titlesPanel from './titles-panel.js';
+import { mountHistoryChart, unmountHistoryChart } from './history-chart.js';
 import * as searchModal from './search-modal.js';
 import * as wishlistCostModal from './wishlist-cost-modal.js';
 import * as acquireLogModal from './acquire-log-modal.js';
@@ -200,6 +201,9 @@ function renderShell() {
       ${renderWelcomeCard()}
 
       <div id="dashTitlesPanel"></div>
+
+      <p class="sec-label">${en ? 'Completion Over Time' : '達成率の推移'}</p>
+      <div id="dashHistoryChart"></div>
 
       <p class="sec-label">${en ? 'All Items' : '全アイテム'}</p>
       ${featureBtnHtml({
@@ -400,11 +404,13 @@ export function mount(container) {
   setupFeatureTriggers();
   setupIntroCard();
   titlesPanel.mount(hostEl.querySelector('#dashTitlesPanel'));
+  mountHistoryChart(hostEl.querySelector('#dashHistoryChart'));
 }
 
 export function unmount() {
   mountToken++; // 進行中の非同期描画（カテゴリ件数取得）を無効化する
   teardownFeatureTriggers();
   teardownIntroCard();
+  unmountHistoryChart();
   hostEl = null;
 }

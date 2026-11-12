@@ -228,6 +228,8 @@ export function saveCategoryState(catKey, itemOwned, itemFav, itemsArray) {
     .map(item => ({ id: item.id, name: item.name, nameEn: item.nameEn, img: item.img }));
   const dataToSave = { total, owned, itemOwned, itemFav, ownedItems };
   localStorage.setItem(nsKey('gameItems_' + catKey), JSON.stringify(dataToSave));
+  // 所持率の記録（js/collection-history.js）に知らせる。ここから直接読み込むと循環するのでイベントで渡す
+  if (typeof document !== 'undefined') document.dispatchEvent(new CustomEvent('hub-collection-changed', { detail: { catKey } }));
 }
 
 export function isItemOwned(catKey, itemId) {

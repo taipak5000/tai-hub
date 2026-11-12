@@ -148,11 +148,17 @@ async function compute() {
   const omi = Object.entries((readJson('omikujiLog_v1', {}) || {}).days || {}).filter(([k]) => keyIn(k, y)).map(([, r]) => r);
   const titlesEarned = TITLE_TOOLS.flatMap(x => toolTitles(x.key)).filter(i => i.earned && i.earnedAt && inYear(i.earnedAt, y)).length;
 
+  // アイテムの達成率の伸び（js/collection-history.js の記録のうち、この期間の最初と最後）
+  const ch = (Array.isArray(readJson('collectionHistory_v1', [])) ? readJson('collectionHistory_v1', []) : []).filter(r => r && r.total && keyIn(r.date, y));
+  const rateFrom = ch.length >= 2 ? ch[0].owned / ch[0].total * 100 : null;
+  const rateTo = ch.length >= 2 ? ch[ch.length - 1].owned / ch[ch.length - 1].total * 100 : null;
+
   const topMonth = months.some(v => v > 0) ? months.indexOf(Math.max(...months)) : -1;
   stats = {
     y, months, topMonth, itemsYear, ownedNow, totalNow, topCat, topCatCount: topCatKey ? catCount[topCatKey] : 0,
     emotesYear, emPct: emLast ? emLast.pct : null, wingsYear, wgPct: wgLast ? wgLast.pct : null,
     tree, candles, candleDays, longest, dcDays, bingo, newFriends, diaryCount: diaryYear.length, photosYear,
+    rateFrom, rateTo,
     coordCount, omikuji: omi.length, daikichi: omi.filter(r => r && r.f === 0).length, titlesEarned, month,
   };
   render();
@@ -223,6 +229,7 @@ function cardHtml(s) {
     ? t(`いちばん集めた月は${s.topMonth + 1}月（${s.months[s.topMonth]}個）`, `Busiest month: ${new Date(2000, s.topMonth, 1).toLocaleString('en', { month: 'long' })} (${s.months[s.topMonth]})`)
     : t(`いちばん集めた日は${s.month + 1}月${s.topMonth + 1}日（${s.months[s.topMonth]}個）`, `Busiest day: ${s.month + 1}/${s.topMonth + 1} (${s.months[s.topMonth]})`));
   if (s.topCat && s.topCatCount) highlights.push(t(`よく集めたのは「${s.topCat.name}」（${s.topCatCount}個）`, `Most collected: ${s.topCat.nameEn} (${s.topCatCount})`));
+  if (s.rateFrom != null && s.rateTo - s.rateFrom >= 0.05) highlights.push(t(`アイテムの達成率が ${s.rateFrom.toFixed(1)}% → ${s.rateTo.toFixed(1)}% に上がりました`, `Item completion rose from ${s.rateFrom.toFixed(1)}% to ${s.rateTo.toFixed(1)}%`));
   if (s.longest >= 3) highlights.push(t(`キャンドル集めを${s.longest}日続けました`, `${s.longest}-day candle streak`));
 
   const profile = pfDisplayName(getActiveProfile());
