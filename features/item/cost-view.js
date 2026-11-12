@@ -480,7 +480,7 @@ function renderItemRow(item, groupName) {
           title="${t('ウィッシュリストに追加', 'Add to wishlist')}"
           aria-label="${t('ウィッシュリストに追加', 'Add to wishlist')}"><span class="cost-wish-dot"><svg class="inline-icon" width="15" height="15"><use href="#i-cart"/></svg></span></button>
       </div>
-      <div class="cost-row-detail" id="${domId}" ${isOpen ? '' : 'hidden'}>${isOpen ? renderItemDetail(item) : ''}</div>
+      ${isOpen ? `<div class="cost-row-detail" id="${domId}">${renderItemDetail(item)}</div>` : ''}
     </div>`;
 }
 
@@ -490,19 +490,15 @@ function toggleRow(key) {
   const wrap = hostEl.querySelector(`.cost-row-wrap[data-key="${CSS.escape(key)}"]`);
   const item = itemsByKey.get(key);
   if (!wrap || !item) return;
-  const det = wrap.querySelector('.cost-row-detail');
   const btn = wrap.querySelector('.cost-row-toggle');
   const willOpen = !openItems.has(key);
+  const old = wrap.querySelector('.cost-row-detail');
+  if (old) old.remove();
   if (willOpen) {
     openItems.add(key);
-    det.innerHTML = renderItemDetail(item);
-    det.hidden = false;
-    det.classList.add('anim-in');
+    wrap.insertAdjacentHTML('beforeend', `<div class="cost-row-detail anim-in" id="${btn.getAttribute('aria-controls')}">${renderItemDetail(item)}</div>`);
   } else {
     openItems.delete(key);
-    det.hidden = true;
-    det.innerHTML = '';
-    det.classList.remove('anim-in');
   }
   wrap.classList.toggle('open', willOpen);
   btn.setAttribute('aria-expanded', String(willOpen));
@@ -528,6 +524,60 @@ function setSumValues(suffix, candle, starCandle, heart, money) {
   put('Money', `¥${money.toLocaleString()}`);
 }
 
+/* ── 一覧の絞り込み・グループの開閉（画面の中だけの状態。保存はしない）── */
+let ownFilter = 'all';            // 'all' | 'owned' | 'notOwned'
+let searchQuery = '';
+const collapsedGroups = new Set(); // 折りたたんだグループ（季節名・日々名・'__other'）
+let searchTimer = null;
+
+// 検索用の正規化（全角半角・大文字小文字・カタカナ/ひらがなの違いを無視する）
+function normSearch(str) {
+  return String(str || '').normalize('NFKC').toLowerCase()
+    .replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+// グループ見出しの小計（0の通貨は省く）
+function subtotalPartsHtml(c) {
+  const parts = [];
+  if (c.candle) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-candle"/></svg>${c.candle.toLocaleString()}</span>`);
+  if (c.starCandle) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-star"/></svg>${c.starCandle.toLocaleString()}</span>`);
+  if (c.heart) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-heart"/></svg>${c.heart.toLocaleString()}</span>`);
+  if (c.money) parts.push(`<span class="is-money">¥${c.money.toLocaleString()}</span>`);
+  return parts.join('');
+}
+function groupSubtotal(groupItems, ob, rb) {
+  const own = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+  const rem = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+  groupItems.forEach(item => {
+    const o = ob.per.get(item), r = rb.per.get(item);
+    if (o) { own.candle += o.candle; own.starCandle += o.starCandle; own.heart += o.heart; own.money += o.money; }
+    if (r) { rem.candle += r.candle; rem.starCandle += r.starCandle; rem.heart += r.heart; rem.money += r.money; }
+  });
+  return { own, rem };
+}
+
+function renderGroup(gid, gkey, iconHtml, label, groupItems, groupNameForRows, ob, rb) {
+  const collapsed = collapsedGroups.has(gkey);
+  const { own, rem } = groupSubtotal(groupItems, ob, rb);
+  const ownHtml = subtotalPartsHtml(own), remHtml = subtotalPartsHtml(rem);
+  const sub = (ownHtml ? `<span class="cost-sub-set"><span class="cost-sub-lbl">${t('所持', 'Spent')}</span>${ownHtml}</span>` : '')
+    + (remHtml ? `<span class="cost-sub-set"><span class="cost-sub-lbl">${t('残り', 'Left')}</span>${remHtml}</span>` : '');
+  return `
+    <section class="cost-group" id="${gid}">
+      <button type="button" class="cost-group-head" data-gkey="${escapeHtml(gkey)}" aria-expanded="${!collapsed}" aria-controls="${gid}-list"
+        onclick="window.__costViewToggleGroup(this.dataset.gkey)">
+        <span class="cost-group-top">
+          <span class="cost-season-group-name"><span class="cost-group-chev">${ICON_CHEVRON}</span>${iconHtml} ${escapeHtml(label)}</span>
+          <span class="cost-season-group-count">${groupItems.length}${t('件', ' items')}</span>
+        </span>
+        ${sub ? `<span class="cost-group-sub">${sub}</span>` : ''}
+      </button>
+      <div class="cost-group-list" id="${gid}-list" ${collapsed ? 'hidden' : ''} style="contain-intrinsic-size: auto ${groupItems.length * 61}px;">
+        ${collapsed ? '' : groupItems.map(it => renderItemRow(it, groupNameForRows)).join('')}
+      </div>
+    </section>`;
+}
+
 function renderItems() {
   if (!hostEl) return;
   // 描き直しでフォーカスが外れないよう、操作中の要素（data-fk）を覚えておき、描き直した後に戻す
@@ -535,14 +585,18 @@ function renderItems() {
   const focusKey = active && hostEl.contains(active) && active.dataset ? active.dataset.fk : null;
   const allItems = computeAllItems();
   itemsByKey = new Map(allItems.map(it => [itemKey(it), it]));
-  const ownFilter = hostEl.querySelector('#costOwnFilter')?.value || 'all';
+  const ob = computeOwnedBreakdown(allItems);
+  const rb = computeRemainBreakdown(allItems);
+
   const costTypeFilter = hostEl.querySelector('#costTypeFilter')?.value || 'all';
   const categoryFilter = hostEl.querySelector('#costCategoryFilter')?.value || 'all';
+  const q = normSearch(searchQuery.trim());
   const items = allItems.filter(item => {
     if (ownFilter === 'owned' && !item.owned) return false;
     if (ownFilter === 'notOwned' && item.owned) return false;
     if (costTypeFilter !== 'all' && (!item.cost || item.cost.type !== costTypeFilter)) return false;
     if (categoryFilter !== 'all' && item.catKey !== categoryFilter) return false;
+    if (q && !normSearch(item.name).includes(q) && !normSearch(item.nameEn).includes(q)) return false;
     return true;
   });
 
@@ -560,32 +614,35 @@ function renderItems() {
   let html = '';
   let seasonOptions = '', dayOptions = '', otherOptions = '';
   let groupIndex = 0;
-  const itemUnit = t('件', ' items');
+  const groupKeys = [];
 
   SEASON_ORDER.forEach(season => {
     if (!seasonGroups[season]) return;
     const gid = `costGrp-${groupIndex++}`;
-    html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name">${seasonPendantIconHtml(season, 16, 'i-sparkle')} ${escapeHtml(trEvent(season))}</span><span class="cost-season-group-count">${seasonGroups[season].length}${itemUnit}</span></div>`;
-    html += `<div class="cost-group-list">${seasonGroups[season].map(it => renderItemRow(it, season)).join('')}</div>`;
+    groupKeys.push(season);
+    html += renderGroup(gid, season, seasonPendantIconHtml(season, 16, 'i-sparkle'), trEvent(season), seasonGroups[season], season, ob, rb);
     seasonOptions += `<option value="${gid}">${escapeHtml(trEvent(season))}（${seasonGroups[season].length}）</option>`;
   });
   DAY_ORDER.forEach(day => {
     if (!dayGroups[day]) return;
     const gid = `costGrp-${groupIndex++}`;
-    html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name"><svg class="inline-icon" width="14" height="14"><use href="#i-sun"/></svg> ${escapeHtml(trEvent(day))}</span><span class="cost-season-group-count">${dayGroups[day].length}${itemUnit}</span></div>`;
-    html += `<div class="cost-group-list">${dayGroups[day].map(it => renderItemRow(it, day)).join('')}</div>`;
+    groupKeys.push(day);
+    html += renderGroup(gid, day, '<svg class="inline-icon" width="14" height="14"><use href="#i-sun"/></svg>', trEvent(day), dayGroups[day], day, ob, rb);
     dayOptions += `<option value="${gid}">${escapeHtml(trEvent(day))}（${dayGroups[day].length}）</option>`;
   });
   if (otherItems.length) {
     const gid = `costGrp-${groupIndex++}`;
-    const otherLabel = t('その他（パック・恒常精霊・ショップなど）', 'Other (Packs, Realm Spirits, Shops, etc.)');
-    html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name"><svg class="inline-icon" width="14" height="14"><use href="#i-sparkle"/></svg> ${otherLabel}</span><span class="cost-season-group-count">${otherItems.length}${itemUnit}</span></div>`;
-    html += `<div class="cost-group-list">${otherItems.map(it => renderItemRow(it, null)).join('')}</div>`;
+    groupKeys.push('__other');
+    html += renderGroup(gid, '__other', '<svg class="inline-icon" width="14" height="14"><use href="#i-sparkle"/></svg>',
+      t('その他（パック・恒常精霊・ショップなど）', 'Other (Packs, Realm Spirits, Shops, etc.)'), otherItems, null, ob, rb);
     otherOptions = `<option value="${gid}">${t('その他', 'Other')}（${otherItems.length}）</option>`;
   }
+  lastGroupKeys = groupKeys;
 
   if (!html) {
-    html = `<div class="cost-notice-card" style="text-align:center;">${t('条件に一致するアイテムがありません。', 'No items match the current filter.')}</div>`;
+    html = `<div class="cost-notice-card cost-empty">${t('条件に一致するアイテムがありません。', 'No items match the current filter.')}`
+      + (searchQuery.trim() ? `<button type="button" class="cost-clear-search-btn" onclick="window.__costViewClearSearch()">${t('検索をクリア', 'Clear search')}</button>` : '')
+      + `</div>`;
   }
 
   const listEl = hostEl.querySelector('#costItemList');
@@ -598,14 +655,56 @@ function renderItems() {
   const jumpSelect = hostEl.querySelector('#costJumpSelect');
   if (jumpSelect) {
     jumpSelect.innerHTML =
-      `<option value="">${t('季節・日々を選択してジャンプ', 'Select a season/day to jump to')}</option>` +
+      `<option value="">${t('ジャンプ', 'Jump to')}</option>` +
       (seasonOptions ? `<optgroup label="${t('季節', 'Seasons')}">${seasonOptions}</optgroup>` : '') +
       (dayOptions ? `<optgroup label="${t('日々', 'Days')}">${dayOptions}</optgroup>` : '') +
       (otherOptions ? `<optgroup label="${t('その他', 'Other')}">${otherOptions}</optgroup>` : '');
   }
+  updateFilterControls();
 
-  renderSummary(allItems);
-  renderRemainingSummary(allItems);
+  renderSummary(allItems, ob);
+  renderRemainingSummary(allItems, rb);
+}
+
+let lastGroupKeys = [];
+function toggleGroup(gkey) {
+  if (collapsedGroups.has(gkey)) collapsedGroups.delete(gkey); else collapsedGroups.add(gkey);
+  renderItems();
+}
+// すべて折りたたむ／すべて開く
+function toggleAllGroups() {
+  const allCollapsed = lastGroupKeys.length > 0 && lastGroupKeys.every(k => collapsedGroups.has(k));
+  if (allCollapsed) collapsedGroups.clear(); else lastGroupKeys.forEach(k => collapsedGroups.add(k));
+  renderItems();
+  const list = hostEl && hostEl.querySelector('#costItemList');
+  if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ block: 'start' });
+}
+
+function setOwnFilter(v) { ownFilter = ['owned', 'notOwned'].includes(v) ? v : 'all'; renderItems(); }
+function onSearchInput(v) {
+  searchQuery = v || '';
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => renderItems(), 120);
+  const clr = hostEl && hostEl.querySelector('#costSearchClear');
+  if (clr) clr.hidden = !searchQuery;
+}
+function clearSearch() {
+  searchQuery = '';
+  const input = hostEl && hostEl.querySelector('#costSearch');
+  if (input) { input.value = ''; input.focus(); }
+  renderItems();
+}
+function updateFilterControls() {
+  if (!hostEl) return;
+  hostEl.querySelectorAll('.cost-seg-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.own === ownFilter)));
+  const clr = hostEl.querySelector('#costSearchClear');
+  if (clr) clr.hidden = !searchQuery;
+  const allBtn = hostEl.querySelector('#costToggleAllGroups');
+  if (allBtn) {
+    const allCollapsed = lastGroupKeys.length > 0 && lastGroupKeys.every(k => collapsedGroups.has(k));
+    allBtn.textContent = allCollapsed ? t('すべて開く', 'Expand') : t('折りたたむ', 'Collapse');
+    allBtn.setAttribute('aria-label', allCollapsed ? t('すべてのグループを開く', 'Expand all groups') : t('すべてのグループを折りたたむ', 'Collapse all groups'));
+  }
 }
 
 function jumpToGroup(gid) {
@@ -618,30 +717,34 @@ function jumpToGroup(gid) {
 
 let lastOwnedCount = 0, lastTotalItemCount = 0; // 共有画像（コスト集計カード）用
 
-function renderSummary(items) {
-  let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, ownedCount = 0;
-  let giftReceivedCount = 0, giftReceivedMoneySum = 0;
-  let paidCandleCount = 0, paidCandleMoneySum = 0;
+// 所持済みアイテムの集計（従来の renderSummary() の判定をそのまま、アイテムごとの寄与として記録する）。
+// 総計は寄与の和なので、季節ごとの小計（renderItems）を全部足すとサマリーのアイテム分と必ず一致する。
+// セット価格は従来どおり、items の並び（カテゴリ順）で最初に数えたアイテムに1回分だけ付く。
+function computeOwnedBreakdown(items) {
+  const per = new Map();
+  const r = { per, candle: 0, starCandle: 0, heart: 0, money: 0, ownedCount: 0, giftReceivedCount: 0, giftReceivedMoneySum: 0, paidCandleCount: 0, paidCandleMoneySum: 0 };
   const countedSetIds = new Set();
-
   items.forEach(item => {
     if (!item.owned) return;
-    ownedCount++;
+    r.ownedCount++;
+    const c = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+    per.set(item, c);
     if (item.seasonPendantOwned && item.acquireMode === 'inSeason') return; // 季節中入手扱いのためコスト計算から除外
     if (item.isTicketItem && item.acquireMode !== 'revisit') return; // チケットで入手扱い（0）のためコスト計算から除外
     const cost = item.isTicketItem ? (item.revisitCost || {}) : item.cost;
     // 大きい/小さい設置アイテムは所持数（未設定時は1）をコストに乗算して集計する
     const qty = item.quantity || 1;
-    if (cost.type === 'candle' && typeof cost.value === 'number') candleSum += cost.value * qty;
-    else if (cost.type === 'starCandle' && typeof cost.value === 'number') starCandleSum += cost.value * qty;
-    else if (cost.type === 'heart' && typeof cost.value === 'number') heartSum += cost.value * qty;
+    if (cost.type === 'candle' && typeof cost.value === 'number') c.candle += cost.value * qty;
+    else if (cost.type === 'starCandle' && typeof cost.value === 'number') c.starCandle += cost.value * qty;
+    else if (cost.type === 'heart' && typeof cost.value === 'number') c.heart += cost.value * qty;
 
     // 課金で購入したキャンドルで入手したと申告されたアイテムは、キャンドル本数の集計は変えず、
     // 申告された実額も別途「実額」の集計に加算する（この申告額は自己申告の合計額のため、
     // 所持数による乗算はしない）
     if ((cost.type === 'candle' || cost.type === 'starCandle') && item.candleMoneyMode === 'paidCandle' && item.candleMoneyYen > 0) {
-      paidCandleCount++;
-      paidCandleMoneySum += item.candleMoneyYen;
+      r.paidCandleCount++;
+      r.paidCandleMoneySum += item.candleMoneyYen;
+      c.money += item.candleMoneyYen;
     }
     if (cost.type === 'money' && typeof cost.value === 'number') {
       if (cost.setId) {
@@ -649,13 +752,52 @@ function renderSummary(items) {
         countedSetIds.add(cost.setId);
       }
       if (item.moneyAcquireMode === 'gift') {
-        giftReceivedCount++;
-        giftReceivedMoneySum += cost.value * qty;
+        r.giftReceivedCount++;
+        r.giftReceivedMoneySum += cost.value * qty;
         return; // ギフトでもらった分は自分の課金額の集計から除外
       }
-      moneySum += cost.value * qty;
+      c.money += cost.value * qty;
     }
   });
+  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.money += c.money; });
+  return r;
+}
+
+// 未所持アイテムの集計（従来の renderRemainingSummary() と同じ判定。アイテムごとの寄与も記録する）
+function computeRemainBreakdown(items) {
+  const per = new Map();
+  const r = { per, candle: 0, starCandle: 0, heart: 0, money: 0, remainCount: 0 };
+  const ownedSetIds = new Set();
+  const countedNotOwnedSetIds = new Set();
+  // セットの一部を既に所持している場合、残りのピースに追加コストはかからない
+  items.forEach(item => { if (item.owned && item.cost.setId) ownedSetIds.add(item.cost.setId); });
+  items.forEach(item => {
+    if (item.owned) return;
+    r.remainCount++;
+    const c = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+    per.set(item, c);
+    const cost = item.cost;
+    if (cost.type === 'candle' && typeof cost.value === 'number') c.candle += cost.value;
+    else if (cost.type === 'starCandle' && typeof cost.value === 'number') c.starCandle += cost.value;
+    else if (cost.type === 'heart' && typeof cost.value === 'number') c.heart += cost.value;
+    else if (cost.type === 'money' && typeof cost.value === 'number') {
+      if (cost.setId) {
+        if (ownedSetIds.has(cost.setId)) return;
+        if (countedNotOwnedSetIds.has(cost.setId)) return;
+        countedNotOwnedSetIds.add(cost.setId);
+      }
+      c.money += cost.value;
+    }
+  });
+  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.money += c.money; });
+  return r;
+}
+
+function renderSummary(items, ob) {
+  const candleSum = ob.candle, starCandleSum = ob.starCandle, heartSum = ob.heart, ownedCount = ob.ownedCount;
+  const { giftReceivedCount, giftReceivedMoneySum, paidCandleCount, paidCandleMoneySum } = ob;
+  // ob.money はアイテム分（課金キャンドルの申告額を含む）。従来と同じく、プレゼント履歴・キャンドル課金を「合計に含める」時だけ足す
+  let moneySum = ob.money;
 
   const giftHistory = loadGiftHistory().filter(g => g.include);
   let giftGivenMoneySum = 0;
@@ -665,7 +807,6 @@ function renderSummary(items) {
   });
   const giftDisplayMode = loadGiftDisplayMode();
   if (giftDisplayMode === 'combined') moneySum += giftGivenMoneySum;
-  moneySum += paidCandleMoneySum;
 
   const candlePurchases = loadCandlePurchases().filter(p => p.include !== false);
   let candlePurchaseMoneySum = 0;
@@ -678,7 +819,6 @@ function renderSummary(items) {
 
   lastOwnedCount = ownedCount;
   lastTotalItemCount = items.length;
-  const en = CURRENT_LANG === 'en';
   setSumValues('', candleSum, starCandleSum, heartSum, moneySum);
   setText('#costOwnedCount', t(`所持 ${ownedCount.toLocaleString()} / ${items.length.toLocaleString()}件`, `${ownedCount.toLocaleString()} / ${items.length.toLocaleString()} owned`));
 
@@ -742,31 +882,8 @@ function notifyTitlesCheck() {
   }).catch(e => console.error('[item cost] title check failed', e));
 }
 
-function renderRemainingSummary(items) {
-  let candleSum = 0, starCandleSum = 0, heartSum = 0, moneySum = 0, remainCount = 0;
-  const ownedSetIds = new Set();
-  const countedNotOwnedSetIds = new Set();
-
-  // セットの一部を既に所持している場合、残りのピースに追加コストはかからない
-  items.forEach(item => { if (item.owned && item.cost.setId) ownedSetIds.add(item.cost.setId); });
-
-  items.forEach(item => {
-    if (item.owned) return;
-    remainCount++;
-    const cost = item.cost;
-    if (cost.type === 'candle' && typeof cost.value === 'number') candleSum += cost.value;
-    else if (cost.type === 'starCandle' && typeof cost.value === 'number') starCandleSum += cost.value;
-    else if (cost.type === 'heart' && typeof cost.value === 'number') heartSum += cost.value;
-    else if (cost.type === 'money' && typeof cost.value === 'number') {
-      if (cost.setId) {
-        if (ownedSetIds.has(cost.setId)) return;
-        if (countedNotOwnedSetIds.has(cost.setId)) return;
-        countedNotOwnedSetIds.add(cost.setId);
-      }
-      moneySum += cost.value;
-    }
-  });
-
+function renderRemainingSummary(items, rb) {
+  const candleSum = rb.candle, starCandleSum = rb.starCandle, heartSum = rb.heart, moneySum = rb.money, remainCount = rb.remainCount;
   setSumValues('Remain', candleSum, starCandleSum, heartSum, moneySum);
   setText('#costRemainCount', t(`未所持 ${remainCount.toLocaleString()}件`, `${remainCount.toLocaleString()} not owned`));
   const hintEl = hostEl.querySelector('#costSummaryHintRemain');
@@ -774,6 +891,9 @@ function renderRemainingSummary(items) {
     hintEl.innerHTML = t(
       `未所持 ${remainCount} / ${items.length} 件（対応済みカテゴリ内）をすべて集めるために必要な合計です。セット価格のアイテムは、セットの一部を既に所持していれば追加コストなし、未所持のセットは1回分のみ加算しています。`,
       `Total needed to collect all ${remainCount} / ${items.length} unowned items (within supported categories). For bundle-priced items, no extra cost is added if you already own part of the bundle; each not-yet-owned bundle is only counted once.`,
+    ) + t(
+      '一覧の季節ごとの小計は、表示中のアイテムの分です（絞り込みをしていなければ、全部の小計の和が上の合計と一致します）。課金アイテムプレゼント履歴とキャンドル課金はアイテムではないため、小計には含みません。',
+      ' Subtotals in each season heading cover the items currently shown (with no filter, they add up to the totals above). Gift purchases and candle purchases are not items, so they are not part of any subtotal.',
     );
   }
 }
@@ -1309,46 +1429,41 @@ function renderShell() {
               <span><svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg> ${t('キャンドル課金分（実額とは別）', 'Candle purchases (shown separately)')}</span><b id="costSummaryCandleMoney">¥0</b>
             </div>
           </div>
-          <p class="cost-sum-excl"><svg class="inline-icon" width="13" height="13"><use href="#i-warning"/></svg>${t('季節キャンドル・チケット交換はこの合計に含まれません。', 'Season Candles and ticket exchanges are not included in these totals.')}</p>
+          <details class="cost-sum-details">
+            <summary><span class="cost-sum-excl">${t('季節キャンドル・チケット交換はこの合計に含まれません', 'Season Candles and ticket exchanges are not included in these totals')}</span><span class="cost-sum-more">${t('内訳', 'Details')}<span class="cost-summary-toggle-icon">${ICON_CHEVRON}</span></span></summary>
+            <p class="cost-summary-hint" id="costSummaryHint">${t('読み込み中…', 'Loading…')}</p>
+            <p class="cost-summary-hint" id="costSummaryHintRemain"></p>
+          </details>
           <div class="cost-share-chips" role="group" aria-label="${t('画像でXに共有', 'Share an image on X')}">
             <button type="button" class="cost-share-chip" onclick="window.__costViewShareCost()"><svg class="inline-icon" width="15" height="15"><use href="#i-upload"/></svg><span>${t('集計を共有', 'Share totals')}</span></button>
             <button type="button" class="cost-share-chip" onclick="window.__costViewShareReceivedGifts()">${ICON_GIFT}<span>${t('もらったギフト', 'Gifts received')}</span></button>
             <button type="button" class="cost-share-chip" onclick="window.__costViewShareRecap('month')"><svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今月の支出', 'This month')}</span></button>
             <button type="button" class="cost-share-chip" onclick="window.__costViewShareRecap('year')"><svg class="inline-icon" width="15" height="15"><use href="#i-calendar"/></svg><span>${t('今年の支出', 'This year')}</span></button>
           </div>
-          <details class="cost-sum-details">
-            <summary><span class="cost-summary-toggle-icon">${ICON_CHEVRON}</span>${t('集計の内訳', 'How these totals are calculated')}</summary>
-            <p class="cost-summary-hint" id="costSummaryHint">${t('読み込み中…', 'Loading…')}</p>
-            <p class="cost-summary-hint" id="costSummaryHintRemain"></p>
-          </details>
         </section>
 
-        <div class="cost-jump-bar">
-          <div class="cost-jump-bar-row">
-            <svg class="inline-icon" width="14" height="14"><use href="#i-hanger"/></svg>
-            <label for="costCategoryFilter" class="cost-jump-label">${t('カテゴリ', 'Category')}</label>
-            <select id="costCategoryFilter" class="cost-jump-select" onchange="window.__costViewRenderItems()">
-              <option value="all">${t('すべて表示', 'Show all')}</option>
+        <div class="cost-filter-bar" id="costFilterBar">
+          <div class="cost-search">
+            <svg class="inline-icon" width="16" height="16" aria-hidden="true"><use href="#i-search"/></svg>
+            <input type="search" id="costSearch" autocomplete="off" enterkeyhint="search" aria-label="${t('アイテム名で検索', 'Search by item name')}"
+              placeholder="${t('アイテム名で検索', 'Search by item name')}" oninput="window.__costViewOnSearch(this.value)">
+            <button type="button" class="cost-search-clear" id="costSearchClear" hidden aria-label="${t('検索をクリア', 'Clear search')}" onclick="window.__costViewClearSearch()"><svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg></button>
+          </div>
+          <div class="cost-filter-row">
+            <div class="cost-seg" role="group" aria-label="${t('所持状況', 'Ownership')}">
+              <button type="button" class="cost-seg-btn" data-own="all" aria-pressed="true" onclick="window.__costViewSetOwnFilter('all')">${t('すべて', 'All')}</button>
+              <button type="button" class="cost-seg-btn" data-own="owned" aria-pressed="false" onclick="window.__costViewSetOwnFilter('owned')">${t('所持', 'Owned')}</button>
+              <button type="button" class="cost-seg-btn" data-own="notOwned" aria-pressed="false" onclick="window.__costViewSetOwnFilter('notOwned')">${t('未所持', 'Missing')}</button>
+            </div>
+            <select id="costCategoryFilter" class="cost-filter-select" aria-label="${t('カテゴリ', 'Category')}" onchange="window.__costViewRenderItems()">
+              <option value="all">${t('全カテゴリ', 'All categories')}</option>
               ${GRID_CATEGORIES.map(c => `<option value="${c.key}">${escapeHtml(trCat(c.name))}</option>`).join('')}
               <option value="${MUSIC_SHEET_CAT_KEY}">${t('楽譜', 'Music Sheets')}</option>
             </select>
-          </div>
-          <div class="cost-jump-bar-row">
-            <svg class="inline-icon" width="14" height="14"><use href="#i-folder"/></svg>
-            <label for="costOwnFilter" class="cost-jump-label">${t('所持状況', 'Ownership')}</label>
-            <select id="costOwnFilter" class="cost-jump-select" onchange="window.__costViewRenderItems()">
-              <option value="all">${t('すべて表示', 'Show all')}</option>
-              <option value="owned">${t('所持中のみ', 'Owned only')}</option>
-              <option value="notOwned">${t('未所持のみ', 'Not owned only')}</option>
-            </select>
-          </div>
-          <div class="cost-jump-bar-row">
-            <svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg>
-            <label for="costTypeFilter" class="cost-jump-label">${t('通貨', 'Currency')}</label>
-            <select id="costTypeFilter" class="cost-jump-select" onchange="window.__costViewRenderItems()">
-              <option value="all">${t('すべて表示', 'Show all')}</option>
+            <select id="costTypeFilter" class="cost-filter-select" aria-label="${t('通貨', 'Currency')}" onchange="window.__costViewRenderItems()">
+              <option value="all">${t('全通貨', 'All currencies')}</option>
               <option value="candle">${t('キャンドル', 'Candles')}</option>
-              <option value="starCandle">${t('星のキャンドル', 'Season Candles')}</option>
+              <option value="starCandle">${t('星のキャンドル', 'Star Candles')}</option>
               <option value="heart">${t('ハート', 'Hearts')}</option>
               <option value="seasonCandle">${t('季節キャンドル', 'Season Candles (seasonal price)')}</option>
               <option value="reward">${t('報酬', 'Rewards')}</option>
@@ -1356,23 +1471,24 @@ function renderShell() {
               <option value="money">${t('実額', 'Real Money')}</option>
             </select>
           </div>
-          <div class="cost-jump-bar-row">
-            <svg class="inline-icon" width="14" height="14"><use href="#i-sparkle"/></svg>
-            <label for="costJumpSelect" class="cost-jump-label">${t('ジャンプ', 'Jump to')}</label>
-            <select id="costJumpSelect" class="cost-jump-select" onchange="window.__costViewJumpToGroup(this.value)">
-              <option value="">${t('季節・日々を選択してジャンプ', 'Select a season/day to jump to')}</option>
-            </select>
-          </div>
         </div>
 
-        <h2 class="sec-label cost-list-label">${t('アイテムのコスト一覧', 'Item Cost List')}</h2>
+        <div class="cost-list-head">
+          <h2 class="sec-label cost-list-label">${t('アイテムのコスト一覧', 'Item Cost List')}</h2>
+          <div class="cost-jump-row">
+          <select id="costJumpSelect" class="cost-jump-select" aria-label="${t('季節・日々へジャンプ', 'Jump to a season/day')}" onchange="window.__costViewJumpToGroup(this.value)">
+            <option value="">${t('ジャンプ', 'Jump to')}</option>
+          </select>
+          <button type="button" class="cost-link-btn" id="costToggleAllGroups" onclick="window.__costViewToggleAllGroups()">${t('折りたたむ', 'Collapse')}</button>
+          </div>
+        </div>
         <p class="cost-legend">
           <span><svg class="inline-icon" width="13" height="13"><use href="#i-candle"/></svg>${t('キャンドル', 'Candles')}</span>
           <span><svg class="inline-icon" width="13" height="13"><use href="#i-star"/></svg>${t('星のキャンドル', 'Star Candles')}</span>
           <span><svg class="inline-icon" width="13" height="13"><use href="#i-heart"/></svg>${t('ハート', 'Hearts')}</span>
-          <span class="is-season"><svg class="inline-icon" width="13" height="13"><use href="#i-star-candle"/></svg>${t('季節キャンドル（合計外）', 'Season Candles (not totaled)')}</span>
+          <span class="is-season"><svg class="inline-icon" width="13" height="13"><use href="#i-star-candle"/></svg>${t('季節キャンドル', 'Season Candles')}</span>
           <span class="is-money">¥ ${t('実額', 'Real money')}</span>
-          <span>${t('行を押すと詳細', 'Tap a row for details')}</span>
+          <span class="cost-legend-hint">${t('行を押すと詳細', 'Tap a row for details')}</span>
         </p>
         <div id="costItemList"></div>
 
@@ -1454,6 +1570,11 @@ const HANDLERS = {
   __costViewJumpToGroup: gid => jumpToGroup(gid),
   __costViewToggleAbout: () => toggleAbout(),
   __costViewToggleRow: key => toggleRow(key),
+  __costViewToggleGroup: gkey => toggleGroup(gkey),
+  __costViewToggleAllGroups: () => toggleAllGroups(),
+  __costViewSetOwnFilter: v => setOwnFilter(v),
+  __costViewOnSearch: v => onSearchInput(v),
+  __costViewClearSearch: () => clearSearch(),
   __costViewToggleGiftCard: () => toggleGiftCard(),
   __costViewToggleCandleCard: () => toggleCandleCard(),
   __costViewSetGiftDisplayMode: mode => setGiftDisplayMode(mode),
@@ -1542,42 +1663,53 @@ function injectStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-.item-view .cost-wrap { max-width: 720px; margin: 0 auto; --cost-money: #E0251B; }
-[data-theme="dark"] .item-view .cost-wrap { --cost-money: #FF6961; }
+/* このページの意味色（文字用の〜ink と、白い文字を載せる面の〜solid）。着せ替え中は js/theme.js の TOOL_MAPS が
+   背景に対して読める濃さに補正した値（orangeInk・redInk・greenInk・accentSolid・greenSolid）で上書きする */
+.item-view {
+  --cost-orange-ink: #B84500; --cost-money: #D70015; --cost-green-ink: #1B6E30; --cost-link: #0062CC;
+  --cost-solid: #0062CC; --cost-solid-green: #1F7A37;
+  --cost-remain-bg: color-mix(in srgb, var(--blue) 46%, #08122b);
+}
+[data-theme="dark"] .item-view {
+  --cost-orange-ink: #FF9F0A; --cost-money: #FF7B73; --cost-green-ink: #30D158; --cost-link: #4DA3FF;
+  --cost-solid: #0064D2; --cost-solid-green: #1F7A37;
+}
+.item-view .cost-wrap { max-width: 720px; margin: 0 auto; --cost-sub: color-mix(in srgb, var(--text-2) 60%, var(--text)); }
 @media (min-width: 850px) { .item-view .cost-wrap { max-width: 960px; } }
 
 .item-view .cost-notice-card {
   background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-size: 13px; color: var(--text-2); line-height: 1.7;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-size: 13px; color: var(--cost-sub); line-height: 1.7;
 }
-.item-view .cost-about-body { font-size: 13px; color: var(--text-2); line-height: 1.75; margin-top: 10px; }
+.item-view .cost-about-body { font-size: 13px; color: var(--cost-sub); line-height: 1.75; margin-top: 10px; }
 .item-view .cost-about-body b { color: var(--text); }
-.item-view .cost-about-body a { color: var(--blue); font-weight: 600; }
+.item-view .cost-about-body a { color: var(--cost-link); font-weight: 600; }
 
 /* ── 統合サマリー（残り＝塗りの面／かかった＝淡い面＋色帯）──
    塗りの面はアクセント（--blue。着せ替え中は文字用のアクセント色が入る）を濃紺と混ぜて暗くし、
    どの着せ替えでも白文字が読める濃さにする。 */
-.item-view .cost-summary { background: var(--card); border-radius: var(--r); padding: 12px; margin-top: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; flex-direction: column; gap: 10px; }
-.item-view .cost-sum-sec { border-radius: var(--r-sm); padding: 12px 14px; }
-.item-view .cost-sum-sec.remain { background: color-mix(in srgb, var(--blue) 46%, #08122b); color: #fff; }
+.item-view .cost-summary { background: var(--card); border-radius: var(--r); padding: 10px; margin-top: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); display: flex; flex-direction: column; gap: 8px; }
+.item-view .cost-sum-sec { border-radius: var(--r-sm); padding: 10px 12px; }
+.item-view .cost-sum-sec.remain { background: var(--cost-remain-bg); color: #fff; }
+.item-view .cost-sum-sec.remain :is(.cost-sum-title, .cost-sum-count, .cost-sum-label, .cost-sum-value) { color: #fff; }
 .item-view .cost-sum-sec.spent { background: var(--orange-bg); border-left: 4px solid var(--orange); color: var(--text); }
-.item-view .cost-sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.item-view .cost-sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
 .item-view .cost-sum-title { font-size: 14px; font-weight: 700; line-height: 1.3; margin: 0; }
 .item-view .cost-sum-count { font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
-.item-view .cost-sum-sec.spent .cost-sum-count { color: var(--text-2); }
-.item-view .cost-sum-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+.item-view .cost-sum-sec.spent .cost-sum-count { color: var(--cost-sub); }
+.item-view .cost-sum-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 14px; }
 @media (min-width: 700px) { .item-view .cost-sum-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .item-view .cost-sum-cell { min-width: 0; }
 .item-view .cost-sum-label { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-view .cost-sum-sec.spent .cost-sum-label { color: var(--text-2); }
+.item-view .cost-sum-sec.spent .cost-sum-label { color: var(--cost-sub); }
 .item-view .cost-sum-sec.remain .cost-sum-label .inline-icon { stroke: #fff; }
 .item-view .cost-sum-value { font-size: 20px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .item-view .cost-unit { font-size: 12.5px; font-weight: 700; margin-left: 2px; letter-spacing: 0.02em; }
 .item-view .cost-summary-gift-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); font-size: 13px; }
 .item-view .cost-summary-gift-row span { display: flex; align-items: center; gap: 5px; }
 .item-view .cost-summary-gift-row b { font-variant-numeric: tabular-nums; }
-.item-view .cost-sum-excl { display: flex; align-items: flex-start; gap: 5px; margin: 0; font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
-.item-view .cost-sum-excl .inline-icon { flex-shrink: 0; margin-top: 2px; }
+.item-view .cost-sum-excl { flex: 1; min-width: 0; font-size: 12.5px; color: var(--cost-sub); font-weight: 600; line-height: 1.45; }
+.item-view .cost-sum-more { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; color: var(--cost-link); font-weight: 600; }
 .item-view .cost-share-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .item-view .cost-share-chip {
   min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px;
@@ -1586,38 +1718,93 @@ function injectStyles() {
 }
 @media (min-width: 700px) { .item-view .cost-share-chip { flex-direction: row; gap: 6px; font-size: 12.5px; } }
 .item-view .cost-share-chip:active { transform: scale(0.97); }
-.item-view .cost-sum-details { font-size: 12.5px; color: var(--text-2); }
-.item-view .cost-sum-details summary { cursor: pointer; font-weight: 600; min-height: 36px; display: flex; align-items: center; gap: 4px; list-style: none; }
+.item-view .cost-sum-details { font-size: 12.5px; color: var(--cost-sub); }
+.item-view .cost-sum-details summary { cursor: pointer; min-height: 32px; padding: 0 2px; display: flex; align-items: center; gap: 8px; list-style: none; }
 .item-view .cost-sum-details summary::-webkit-details-marker { display: none; }
 .item-view .cost-sum-details[open] summary .cost-summary-toggle-icon { transform: rotate(90deg); }
-.item-view .cost-summary-hint { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+.item-view .cost-summary-hint { margin: 4px 0 0; font-size: 12.5px; line-height: 1.7; color: var(--cost-sub); }
 @media (prefers-contrast: more) {
   .item-view .cost-sum-sec.remain { background: #08122b; }
   .item-view .cost-sum-sec.spent { background: var(--card); border: 1px solid var(--text-2); border-left-width: 4px; }
-  .item-view .cost-share-chip { border-color: var(--text-2); }
+  .item-view .cost-share-chip { border-color: var(--cost-sub); }
 }
 @media (prefers-reduced-motion: reduce) { .item-view .cost-share-chip:active { transform: none; opacity: 0.7; } }
 
 .item-view .cost-collapse-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 0; margin: -4px 0; background: none; border: 0; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; text-align: left; cursor: pointer; }
 .item-view .cost-collapse-head > span:first-child { display: flex; align-items: center; gap: 6px; }
 .item-view .cost-more-label { margin-top: 28px; }
-.item-view .cost-season-group-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 14px 4px 8px; scroll-margin-top: 12px; }
-.item-view .cost-season-group-name { font-size: 13.5px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 5px; }
-.item-view .cost-season-group-count { font-size: 11px; color: var(--text-2); font-weight: 600; }
+/* ── フィルターバー（sticky）と季節の見出し（sticky・小計つき・折りたたみ）──
+   スクロールはページ全体。上端の「新しいバージョン」の帯（--update-bar-h）の下に留め、
+   見出しはさらにフィルターバーの高さ（--cost-bar-h。ResizeObserverで実測）ぶん下に留める。 */
+.item-view .cost-filter-bar {
+  position: sticky; top: var(--update-bar-h, 0px); z-index: 6; margin: 8px -8px 0; padding: 6px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 0 0 var(--r) var(--r);
+}
+.item-view .cost-search { position: relative; display: flex; align-items: center; }
+.item-view .cost-search > .inline-icon { position: absolute; left: 11px; color: var(--cost-sub); pointer-events: none; }
+.item-view .cost-search input { width: 100%; height: 38px; padding: 0 40px 0 34px; border: 1px solid var(--sep); border-radius: var(--r-sm); background: var(--card); color: var(--text); font-size: 16px; font-family: inherit; -webkit-appearance: none; appearance: none; }
+.item-view .cost-search input::-webkit-search-cancel-button { display: none; }
+.item-view .cost-search-clear { position: absolute; right: 2px; width: 36px; height: 36px; padding: 0; background: none; border: 0; color: var(--cost-sub); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.item-view .cost-search-clear[hidden] { display: none; }
+.item-view .cost-filter-row { display: flex; gap: 6px; align-items: stretch; }
+.item-view .cost-seg { display: flex; flex-shrink: 0; padding: 2px; gap: 2px; border-radius: var(--r-sm); background: rgba(118,118,128,0.14); }
+.item-view .cost-seg-btn { min-width: 44px; height: 34px; padding: 0 9px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.item-view .cost-seg-btn[aria-pressed="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.14); font-weight: 700; }
+.item-view .cost-filter-select { flex: 1; min-width: 0; height: 38px; padding: 0 8px; border: 1px solid var(--sep); border-radius: var(--r-sm); background: var(--card); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 600; }
+.item-view .cost-list-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 4px; }
+.item-view .cost-list-head .cost-list-label { margin: 0; white-space: nowrap; }
+.item-view .cost-jump-row { display: flex; align-items: center; gap: 2px; margin-left: auto; min-width: 0; }
+.item-view .cost-jump-select { max-width: 140px; min-width: 0; field-sizing: content; height: 40px; background: transparent; border: 0; padding: 0 2px; font-size: 13px; font-weight: 600; color: var(--cost-link); font-family: inherit; }
+.item-view .cost-link-btn { flex-shrink: 0; min-height: 40px; padding: 0 6px; background: none; border: 0; color: var(--cost-link); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 
-.item-view .cost-jump-bar { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding: 4px 0; }
-.item-view .cost-jump-bar-row { display: flex; align-items: center; gap: 8px; }
-.item-view .cost-jump-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
-.item-view .cost-jump-select { flex: 1; min-width: 0; background: var(--card); border: none; border-radius: var(--r-sm); padding: 9px 12px; font-size: 13.5px; font-weight: 600; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-family: inherit; }
+.item-view .cost-group { margin-top: 10px; }
+.item-view .cost-group-head {
+  position: sticky; top: calc(var(--update-bar-h, 0px) + var(--cost-bar-h, 0px)); z-index: 4;
+  display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 8px 6px; margin: 0; border: 0; text-align: left; cursor: pointer;
+  font-family: inherit; color: var(--text);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  scroll-margin-top: calc(var(--update-bar-h, 0px) + var(--cost-bar-h, 0px));
+}
+.item-view .cost-group { scroll-margin-top: calc(var(--update-bar-h, 0px) + var(--cost-bar-h, 0px)); }
+.item-view .cost-group-head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: var(--r-sm); }
+.item-view .cost-group-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.item-view .cost-season-group-name { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 5px; min-width: 0; line-height: 1.3; }
+.item-view .cost-group-chev { display: inline-flex; color: var(--cost-sub); transform: rotate(90deg); transition: transform 0.15s; }
+.item-view .cost-group-head[aria-expanded="false"] .cost-group-chev { transform: none; }
+.item-view .cost-season-group-count { flex-shrink: 0; font-size: 12px; color: var(--cost-sub); font-weight: 600; letter-spacing: 0.02em; }
+.item-view .cost-group-sub { display: flex; flex-wrap: wrap; gap: 2px 12px; padding-left: 17px; font-size: 12px; color: var(--cost-sub); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+.item-view .cost-sub-set { display: inline-flex; align-items: center; gap: 7px; }
+.item-view .cost-sub-set > span { display: inline-flex; align-items: center; gap: 2px; }
+.item-view .cost-sub-lbl { font-weight: 700; color: var(--text); }
+.item-view .cost-group-sub .is-money { color: var(--cost-money); font-weight: 700; }
+.item-view .cost-group-list { content-visibility: auto; }
+.item-view .cost-group-list[hidden] { display: none; }
+.item-view .cost-empty { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
+.item-view .cost-clear-search-btn { min-height: 40px; padding: 0 16px; border: 1px solid var(--sep); border-radius: 999px; background: var(--card); color: var(--cost-link); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+@media (prefers-reduced-transparency: reduce) {
+  .item-view .cost-filter-bar, .item-view .cost-group-head { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .item-view .cost-filter-bar, .item-view .cost-group-head { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .item-view .cost-filter-bar { border-bottom: 1px solid var(--text-2); }
+  .item-view .cost-search input, .item-view .cost-filter-select { border-color: var(--cost-sub); }
+}
+@media (prefers-reduced-motion: reduce) { .item-view .cost-group-chev { transition: none; } }
 
 /* ── 一覧（季節ごとの角丸リスト＋1行型）── */
-.item-view .cost-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 2px 4px 6px; font-size: 12px; color: var(--text-2); letter-spacing: 0.02em; }
-.item-view .cost-legend span { display: inline-flex; align-items: center; gap: 3px; }
-.item-view .cost-legend .is-season { color: var(--text-2); }
+.item-view .cost-legend { display: flex; flex-wrap: nowrap; gap: 10px; margin: 0 0 2px; padding: 0 4px; overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 11.5px; color: var(--cost-sub); letter-spacing: 0.02em; }
+.item-view .cost-legend::-webkit-scrollbar { display: none; }
+@media (max-width: 520px) { .item-view .cost-legend .cost-legend-hint { display: none; } }
+.item-view .cost-legend span { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.item-view .cost-legend .is-season { color: var(--cost-sub); }
 .item-view .cost-legend .is-money { color: var(--cost-money); font-weight: 700; }
 .item-view .cost-group-list { background: var(--card); border-radius: var(--r); box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
 .item-view .cost-row-wrap + .cost-row-wrap { border-top: 0.5px solid var(--sep); }
-.item-view .cost-row-wrap.owned { background: var(--green-bg); }
+.item-view .cost-row-wrap.owned { background: color-mix(in srgb, var(--green-bg) 55%, transparent); }
 .item-view .cost-row { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 44px; align-items: center; column-gap: 6px; min-height: 60px; padding: 4px 2px 4px 12px; }
 .item-view .cost-row-toggle { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; padding: 0; margin: 0; background: transparent; border: 0; cursor: pointer; border-radius: 0; }
 .item-view .cost-row-toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
@@ -1629,27 +1816,27 @@ function injectStyles() {
 .item-view .cost-item-thumb.img-fallback img { display: none; }
 .item-view .cost-item-thumb-fallback { display: none; color: var(--text-3); }
 .item-view .cost-item-thumb.img-fallback .cost-item-thumb-fallback { display: block; }
-.item-view .cost-owned-mark { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--card); }
+.item-view .cost-owned-mark { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--cost-solid-green); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--card); }
 .item-view .cost-owned-mark .inline-icon { stroke: #fff; stroke-width: 3.2; }
 .item-view .cost-row-info { min-width: 0; }
 .item-view .cost-item-name { display: inline-block; max-width: 100%; vertical-align: top; font-size: 14px; font-weight: 700; line-height: 1.35; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
 .item-view .cost-item-name:hover { color: var(--blue); }
-.item-view .cost-row-sub { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; font-size: 12px; line-height: 1.4; color: var(--text-2); white-space: nowrap; letter-spacing: 0.02em; }
+.item-view .cost-row-sub { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; font-size: 12px; line-height: 1.4; color: var(--cost-sub); white-space: nowrap; letter-spacing: 0.02em; }
 .item-view .cost-row-src { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.item-view .cost-note-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--bg); color: var(--text-2); }
+.item-view .cost-note-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--bg); color: var(--cost-sub); }
 .item-view .cost-row-wrap.owned .cost-note-badge { background: var(--card); }
 .item-view .cost-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .item-view .cost-row-price { width: 78px; text-align: right; font-variant-numeric: tabular-nums; }
-.item-view .cost-price { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; font-size: 15px; font-weight: 800; color: var(--orange-d); white-space: nowrap; letter-spacing: -0.01em; }
+.item-view .cost-price { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; font-size: 15px; font-weight: 800; color: var(--cost-orange-ink); white-space: nowrap; letter-spacing: -0.01em; }
 .item-view .cost-price.money { color: var(--cost-money); }
-.item-view .cost-price.cur-seasonCandle { color: var(--text-2); font-weight: 700; }
+.item-view .cost-price.cur-seasonCandle { color: var(--cost-sub); font-weight: 700; }
 .item-view .cost-price-unit { font-size: 11.5px; font-weight: 700; margin-left: 1px; }
-.item-view .cost-pill { display: inline-block; max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 700; color: var(--text-2); background: var(--bg); border-radius: 999px; padding: 2px 8px; letter-spacing: 0.02em; }
+.item-view .cost-pill { display: inline-block; max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 700; color: var(--cost-sub); background: var(--bg); border-radius: 999px; padding: 2px 8px; letter-spacing: 0.02em; }
 .item-view .cost-row-wrap.owned .cost-pill { background: var(--card); }
 .item-view .cost-row-wrap.open > .cost-row { background: rgba(127,127,127,0.07); }
-.item-view .cost-item-wish-btn { width: 44px; height: 44px; padding: 0; background: none; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); }
+.item-view .cost-item-wish-btn { width: 44px; height: 44px; padding: 0; background: none; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--cost-sub); }
 .item-view .cost-wish-dot { width: 32px; height: 32px; border-radius: 50%; border: 1.5px dashed var(--text-3); display: flex; align-items: center; justify-content: center; }
-.item-view .cost-item-wish-btn.is-wish .cost-wish-dot { background: var(--orange); border: 1.5px solid var(--orange); }
+.item-view .cost-item-wish-btn.is-wish .cost-wish-dot { background: var(--cost-orange-ink); border: 1.5px solid var(--cost-orange-ink); }
 .item-view .cost-item-wish-btn.is-wish .inline-icon { stroke: #fff; }
 .item-view .cost-item-wish-btn:active .cost-wish-dot { transform: scale(0.92); }
 
@@ -1658,43 +1845,42 @@ function injectStyles() {
 @keyframes costDetIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .item-view .cost-detail-list { margin: 0; display: grid; gap: 4px; font-size: 13px; line-height: 1.6; }
 .item-view .cost-detail-list > div { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 8px; }
-.item-view .cost-detail-list dt { color: var(--text-2); font-size: 12px; letter-spacing: 0.02em; padding-top: 1px; }
+.item-view .cost-detail-list dt { color: var(--cost-sub); font-size: 12px; letter-spacing: 0.02em; padding-top: 1px; }
 .item-view .cost-detail-list dd { margin: 0; color: var(--text); }
 .item-view .cost-detail-cost { font-weight: 700; }
-.item-view .cost-detail-cat { margin-left: 6px; font-size: 12px; color: var(--text-2); }
-.item-view .cost-qty-note { display: inline; margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.item-view .cost-detail-cat { margin-left: 6px; font-size: 12px; color: var(--cost-sub); }
+.item-view .cost-qty-note { display: inline; margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--cost-sub); }
 .item-view .cost-item-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.item-view .cost-item-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--text-2); }
-.item-view .cost-item-badge.owned { background: var(--green-bg); color: var(--green-ink, var(--green)); }
-.item-view .cost-item-badge.dye-yes { background: var(--green-bg); color: var(--green-ink, var(--green)); }
-.item-view .cost-item-badge.limited { background: rgba(255,59,48,0.1); color: #D70015; }
-[data-theme="dark"] .item-view .cost-item-badge.limited { color: #FF6961; }
-.item-view .cost-item-note { font-size: 12.5px; color: var(--text-2); margin: 8px 0 0; line-height: 1.65; }
-.item-view .cost-detail-search { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--blue); text-decoration: none; }
+.item-view .cost-item-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: transparent; border: 1px solid currentColor; color: var(--cost-sub); }
+.item-view .cost-item-badge.owned { color: var(--cost-green-ink); }
+.item-view .cost-item-badge.dye-yes { color: var(--cost-green-ink); }
+.item-view .cost-item-badge.limited { color: var(--cost-money); }
+.item-view .cost-item-note { font-size: 12.5px; color: var(--cost-sub); margin: 8px 0 0; line-height: 1.65; }
+.item-view .cost-detail-search { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--cost-link); text-decoration: none; }
 
 .item-view .cost-acquire-group { margin-top: 10px; }
-.item-view .cost-acquire-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; letter-spacing: 0.02em; }
+.item-view .cost-acquire-label { font-size: 12px; color: var(--cost-sub); margin-bottom: 4px; letter-spacing: 0.02em; }
 .item-view .cost-acquire-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
-.item-view .cost-acquire-btn { flex: 1; min-width: 120px; min-height: 44px; font-size: 12.5px; font-weight: 700; padding: 6px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--text-2); border: 1px solid var(--sep); text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-family: inherit; }
-.item-view .cost-acquire-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-.item-view .cost-acquire-btn.active.free { background: var(--green); border-color: var(--green); }
+.item-view .cost-acquire-btn { flex: 1; min-width: 120px; min-height: 44px; font-size: 12.5px; font-weight: 700; padding: 6px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--cost-sub); border: 1px solid var(--sep); text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-family: inherit; }
+.item-view .cost-acquire-btn.active { background: var(--cost-solid); color: #fff; border-color: var(--cost-solid); }
+.item-view .cost-acquire-btn.active.free { background: var(--cost-solid-green); border-color: var(--cost-solid-green); }
 .item-view .cost-acquire-btn.active .inline-icon { stroke: #fff; }
-.item-view .cost-candle-money-input-row, .item-view .cost-quantity-input-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; color: var(--text-2); flex-wrap: wrap; }
+.item-view .cost-candle-money-input-row, .item-view .cost-quantity-input-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; color: var(--cost-sub); flex-wrap: wrap; }
 .item-view .cost-candle-money-input { width: 100px; min-height: 40px; background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
 .item-view .cost-quantity-input { width: 72px; min-height: 40px; background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
-.item-view .cost-quantity-hint { font-size: 12px; color: var(--text-3); }
+.item-view .cost-quantity-hint { font-size: 12px; color: var(--cost-sub); }
 @media (prefers-reduced-motion: reduce) {
   .item-view .cost-row-detail.anim-in { animation: none; }
 }
 @media (prefers-contrast: more) {
-  .item-view .cost-row-wrap + .cost-row-wrap { border-top-color: var(--text-2); }
+  .item-view .cost-row-wrap + .cost-row-wrap { border-top-color: var(--cost-sub); }
   .item-view .cost-pill, .item-view .cost-note-badge { border: 1px solid var(--text-2); }
 }
 
 .item-view .cost-gift-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
 .item-view .cost-summary-toggle-icon { transition: transform 0.15s; flex-shrink: 0; display: inline-flex; }
-.item-view .cost-gift-card .cost-summary-toggle-icon { color: var(--text-2); }
-.item-view .cost-note { font-size: 11.5px; color: var(--text-2); line-height: 1.6; margin: 0; }
+.item-view .cost-gift-card .cost-summary-toggle-icon { color: var(--cost-sub); }
+.item-view .cost-note { font-size: 11.5px; color: var(--cost-sub); line-height: 1.6; margin: 0; }
 .item-view .cost-gift-form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .item-view .cost-gift-form select, .item-view .cost-gift-form input { background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 9px 12px; font-size: 13.5px; font-family: inherit; color: var(--text); width: 100%; }
 .item-view .cost-gift-form input { font-size: 16px; }
@@ -1707,12 +1893,12 @@ function injectStyles() {
 .item-view .cost-gift-picker-row.selected { background: var(--orange-bg); }
 .item-view .cost-gift-picker-row .cost-item-thumb { width: 32px; height: 32px; }
 .item-view .cost-gift-picker-name { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-view .cost-gift-picker-cat { font-size: 10px; color: var(--text-2); background: var(--card); border-radius: 999px; padding: 2px 7px; flex-shrink: 0; white-space: nowrap; }
-.item-view .cost-gift-picker-cost { font-size: 12px; color: var(--text-2); flex-shrink: 0; }
-.item-view .cost-gift-picker-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 12px 0; }
+.item-view .cost-gift-picker-cat { font-size: 10px; color: var(--cost-sub); background: var(--card); border-radius: 999px; padding: 2px 7px; flex-shrink: 0; white-space: nowrap; }
+.item-view .cost-gift-picker-cost { font-size: 12px; color: var(--cost-sub); flex-shrink: 0; }
+.item-view .cost-gift-picker-empty { text-align: center; color: var(--cost-sub); font-size: 12.5px; padding: 12px 0; }
 .item-view .cost-gift-preview { display: none; align-items: center; gap: 10px; }
 .item-view .cost-gift-preview .cost-item-thumb { width: 36px; height: 36px; }
-.item-view .cost-gift-preview-label { font-size: 12.5px; color: var(--text-2); }
+.item-view .cost-gift-preview-label { font-size: 12.5px; color: var(--cost-sub); }
 .item-view .cost-gift-record-thumb { width: 36px; height: 36px; flex-shrink: 0; }
 .item-view .cost-gift-edit-row { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
 .item-view .cost-gift-edit-input { background: var(--card); color: var(--text); border: 1px solid var(--sep); border-radius: 7px; padding: 5px 8px; font-size: 16px; font-family: inherit; flex: 1; min-width: 110px; }
@@ -1726,23 +1912,22 @@ function injectStyles() {
 [data-theme="dark"] .item-view .cost-share-btn { background: #fff; color: #000; }
 [data-theme="dark"] .item-view .cost-share-btn .inline-icon, [data-theme="dark"] .item-view .cost-share-btn svg { stroke: #000; }
 .item-view .cost-gift-form-row > * { flex: 1; min-width: 0; }
-.item-view .cost-gift-add-btn { background: var(--orange); color: #fff; border-radius: var(--r-sm); padding: 10px; font-size: 13.5px; font-weight: 700; text-align: center; cursor: pointer; border: none; font-family: inherit; }
+.item-view .cost-gift-add-btn { background: var(--orange); color: #fff; border-radius: var(--r-sm); min-height: 44px; padding: 10px; font-size: 13.5px; font-weight: 700; text-align: center; cursor: pointer; border: none; font-family: inherit; }
 .item-view .cost-gift-add-btn:active { opacity: 0.85; }
 .item-view .cost-gift-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .item-view .cost-gift-record { background: var(--bg); border-radius: var(--r-sm); padding: 10px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .item-view .cost-gift-record-info { flex: 1; min-width: 160px; font-size: 13px; line-height: 1.5; }
 .item-view .cost-gift-record-info b { font-size: 13.5px; }
-.item-view .cost-gift-record-sub { font-size: 11.5px; color: var(--text-2); margin-top: 2px; }
-.item-view .cost-gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-2); white-space: nowrap; }
-.item-view .cost-gift-remove-btn { color: #FF3B30; padding: 4px; flex-shrink: 0; cursor: pointer; background: none; border: none; }
-[data-theme="dark"] .item-view .cost-gift-remove-btn { color: #FF453A; }
-.item-view .cost-gift-empty { text-align: center; color: var(--text-2); font-size: 12.5px; padding: 14px 0; }
+.item-view .cost-gift-record-sub { font-size: 11.5px; color: var(--cost-sub); margin-top: 2px; }
+.item-view .cost-gift-include-toggle { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--cost-sub); white-space: nowrap; }
+.item-view .cost-gift-remove-btn { color: var(--cost-money); width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; background: none; border: none; }
+.item-view .cost-gift-empty { text-align: center; color: var(--cost-sub); font-size: 12.5px; padding: 14px 0; }
 
 .item-view .cost-candle-pack-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
 .item-view .cost-candle-pack-btn { background: var(--bg); border-radius: var(--r-sm); padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; cursor: pointer; border: none; font-family: inherit; }
 .item-view .cost-candle-pack-btn:active { opacity: 0.8; }
 .item-view .cost-candle-pack-price { font-size: 15px; font-weight: 800; color: var(--orange-d); }
-.item-view .cost-candle-pack-amount { font-size: 12px; color: var(--text-2); display: flex; align-items: center; gap: 4px; }
+.item-view .cost-candle-pack-amount { font-size: 12px; color: var(--cost-sub); display: flex; align-items: center; gap: 4px; }
 .item-view .cost-candle-pack-add { font-size: 11px; color: var(--blue); font-weight: 700; margin-top: 4px; }
 .item-view .cost-candle-summary-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 10px 12px; background: var(--orange-bg); border-radius: var(--r-sm); font-size: 12.5px; color: var(--orange-d); font-weight: 700; }
 
@@ -1759,12 +1944,20 @@ function injectStyles() {
 /* ================================================================
    エクスポート
    ================================================================ */
+let barObserver = null;
 export function mount(container) {
   hostEl = container;
   injectStyles();
   const token = ++mountToken;
+  // 絞り込み・開閉は画面の中だけの状態（開き直したら初期状態に戻す）
+  ownFilter = 'all'; searchQuery = ''; collapsedGroups.clear(); openItems.clear();
 
   hostEl.innerHTML = renderShell();
+  const bar = hostEl.querySelector('#costFilterBar');
+  if (bar && typeof ResizeObserver !== 'undefined') {
+    barObserver = new ResizeObserver(() => { if (hostEl) hostEl.style.setProperty('--cost-bar-h', `${bar.offsetHeight}px`); });
+    barObserver.observe(bar);
+  }
   appendItemFooter(hostEl, 'cost');
   exposeHandlers();
 
@@ -1789,6 +1982,9 @@ export function mount(container) {
 
 export function unmount() {
   mountToken++; // 進行中の画像読み込み待ちを無効化
+  if (barObserver) { barObserver.disconnect(); barObserver = null; }
+  clearTimeout(searchTimer);
+  if (hostEl) hostEl.style.removeProperty('--cost-bar-h');
   removeHandlers();
   clearToasts();
   hostEl = null;

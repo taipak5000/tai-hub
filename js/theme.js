@@ -353,6 +353,9 @@ const TOOL_MAPS = [
     '--bg': p.bg, '--card': p.cardSurface, '--sep': p.sep, '--text': p.text, '--text-2': p.text2, '--text-3': p.text3,
     '--blue': p.accentInk, '--blue-bg': p.accentBg, '--purple': p.accentInk, '--purple-bg': p.accentBg,
     '--tile-btn-bg': p.dark ? 'rgba(60, 60, 60, 0.55)' : 'rgba(255, 255, 255, 0.6)',
+    // アイテム別コスト（cost-view.js）の意味色。色味はそのまま、背景に対して読める濃さにだけ補正した値を使う
+    '--cost-orange-ink': p.orangeInk, '--cost-money': p.redInk, '--cost-green-ink': p.greenInk, '--cost-link': p.accentInk,
+    '--cost-solid': p.accentSolid, '--cost-solid-green': p.greenSolid, '--cost-remain-bg': p.accentSolid,
   })],
   ['.emote-view', p => ({
     '--bg': p.bg, '--card': p.cardSurface, '--sep': p.sep, '--text': p.text, '--text-2': p.text2, '--text-3': p.text3,
