@@ -16,7 +16,7 @@
    カテゴリグリッドの所持数集計にのみ使う。
    ================================================================ */
 import { CURRENT_LANG, trCat, escapeHtml } from '../../js/i18n.js';
-import { getCategoryState, isCountableItem } from '../../js/state.js';
+import { getCategoryState, isCountableItem, getActiveProfile, pfDisplayName } from '../../js/state.js';
 import { CATEGORY_REGISTRY } from './data/categories.js';
 import * as titlesPanel from './titles-panel.js';
 import { mountHistoryChart, unmountHistoryChart } from './history-chart.js';
@@ -267,6 +267,10 @@ function renderShell() {
                    : '達成率を画像にしてXへ投稿できます（画像の保存も同時にできます）',
         })}
         ${featureBtnHtml({
+          id: 'dashShareCardBtn', icon: 'i-image',
+          label: en ? 'Completion Card Image' : '達成率の画像カード',
+        })}
+        ${featureBtnHtml({
           id: 'dashCustomizeShareBtn', icon: 'i-palette',
           label: en ? 'Customize & Share' : 'カスタマイズして共有',
           desc: en ? 'Choose which categories to show, a background theme, and a comment before saving/sharing'
@@ -325,6 +329,26 @@ async function renderCategoryGrid(token) {
 // ダッシュボード上の各「開く」ボタンとサブ機能モジュールの対応表。
 // mount()でこの表を元にリスナーを配線し、unmount()で同じ表を使って
 // 開きっぱなしのモーダルを閉じる（ルート離脱時に後片付けする）。
+// 🖼️ 達成率の画像カード（js/share-card.js。Canvasで描く・着せ替えの色に合わせる）
+const achievementCard = {
+  async open() {
+    const [{ openShareCard, drawAchievementCard }, { currentCounts }] = await Promise.all([import('../../js/share-card.js'), import('../../js/collection-history.js')]);
+    const c = await currentCounts();
+    const en = CURRENT_LANG === 'en';
+    const data = {
+      owned: c.owned, total: c.total, date: new Date(), profile: pfDisplayName(getActiveProfile()),
+      cats: CATEGORY_REGISTRY.filter(x => c.cats[x.key]).map(x => ({ name: en ? x.nameEn : x.name, owned: c.cats[x.key][0], total: c.cats[x.key][1] })),
+    };
+    openShareCard({
+      title: en ? 'Completion card' : '達成率の画像カード',
+      draw: (canvas, size) => drawAchievementCard(canvas, data, size),
+      filename: 'sky-collection',
+      text: en ? `My Sky item collection: ${(c.total ? c.owned / c.total * 100 : 0).toFixed(1)}% #tai_hub` : `Skyのアイテム達成率 ${(c.total ? c.owned / c.total * 100 : 0).toFixed(1)}% #tai_hub`,
+    });
+  },
+  close() { document.getElementById('shareCardOverlay')?.remove(); },
+};
+
 const FEATURE_TRIGGERS = [
   { btnId: 'dashOpenSearchBtn', mod: searchModal, action: 'open' },
   // 「今手に入る未所持アイテム」＝現在開催中のみ＋未所持のみを選んだ状態で検索を開く
@@ -334,6 +358,7 @@ const FEATURE_TRIGGERS = [
   { btnId: 'dashShareOnXBtn', mod: achievementShare, action: 'shareOnX' },
   { btnId: 'dashCustomizeShareBtn', mod: achievementShare, action: 'open' },
   { btnId: 'dashFavShareBtn', mod: favoritesShare, action: 'open' },
+  { btnId: 'dashShareCardBtn', mod: achievementCard, action: 'open' },
 ];
 
 // 「はじめての方へ」の開閉・初回訪問ヒントの閉じるボタン配線
@@ -388,7 +413,7 @@ function teardownFeatureTriggers() {
   triggerListeners = [];
   // 離脱時、開きっぱなしのモーダルがあれば閉じる（close()はどのモーダルも
   // 「開いていなければ何もしない」実装のため、常時呼んでも安全）
-  [searchModal, wishlistCostModal, acquireLogModal, achievementShare, favoritesShare]
+  [searchModal, wishlistCostModal, acquireLogModal, achievementShare, favoritesShare, achievementCard]
     .forEach(mod => { try { mod.close(); } catch (e) { /* no-op */ } });
   try { coordShare.closeSharedCoord(); } catch (e) { /* no-op */ }
 }

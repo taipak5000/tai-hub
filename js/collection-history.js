@@ -37,8 +37,8 @@ async function countableItems(key) {
   return itemsCache.get(key);
 }
 
-/** 今日の分を記録する（同じ日は上書き） */
-export async function recordSnapshot() {
+/** 今の所持数（{ owned, total, cats: { <カテゴリ>: [所持数, 総数] } }）。シェア画像（js/share-card.js）でも使う */
+export async function currentCounts() {
   const cats = {};
   let owned = 0, total = 0;
   for (const c of HISTORY_CATS) {
@@ -48,6 +48,12 @@ export async function recordSnapshot() {
     cats[c.key] = [o, items.length];
     owned += o; total += items.length;
   }
+  return { owned, total, cats };
+}
+
+/** 今日の分を記録する（同じ日は上書き） */
+export async function recordSnapshot() {
+  const { owned, total, cats } = await currentCounts();
   if (!total) return;
   const today = localDate();
   const cutoff = localDate(new Date(Date.now() - KEEP_DAYS * 86400000));

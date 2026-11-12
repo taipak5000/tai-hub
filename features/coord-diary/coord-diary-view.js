@@ -231,7 +231,7 @@ function entryHtml(e) {
       <div class="fr-entry-date">${fmtDate(e.date)}${e.place ? `<span class="cd-place">${escapeHtml(placeName(e.place, CURRENT_LANG))}</span>` : ''}</div>
       ${items.length ? `<div class="cd-items">${items.map(it => `<span class="cd-item">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</span>`).join('')}</div>` : ''}
       ${e.memo ? `<p class="fr-entry-text">${escapeHtml(e.memo).replace(/\n/g, '<br>')}</p>` : ''}
-      <div class="cd-entry-actions"><button type="button" class="fun-btn small cd-post-btn" data-act="post" data-id="${e.id}">${X_ICON}${t('Xでポスト', 'Post on X')}</button></div>
+      <div class="cd-entry-actions"><button type="button" class="fun-btn small cd-post-btn" data-act="post" data-id="${e.id}">${X_ICON}${t('Xでポスト', 'Post on X')}</button><button type="button" class="fun-btn small" data-act="card" data-id="${e.id}"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-image"/></svg>${t('画像カード', 'Image card')}</button></div>
     </div>
     <button type="button" class="fun-icon-btn fr-entry-edit" data-act="edit" data-id="${e.id}" aria-label="${t('編集', 'Edit')}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button>
   </article>`;
@@ -314,6 +314,27 @@ async function postEntry(e) {
   } else if (e.items.length || e.photoId) {
     toast(t('画像を作れませんでした。文章だけで投稿画面を開きました', 'Could not create the image; opened the post with text only'), 4000);
   }
+}
+
+// 🖼️ コーデの画像カード（js/share-card.js。写真＋着ていたアイテムの一覧をCanvasで描く・着せ替えの色に合わせる）
+async function openCoordCard(e) {
+  const [{ openShareCard, drawCoordCard }, { getActiveProfile, pfDisplayName }] = await Promise.all([import('../../js/share-card.js'), import('../../js/state.js')]);
+  let photoUrl = '';
+  if (e.photoId) { try { const b = await getPhoto(e.photoId); if (b) photoUrl = URL.createObjectURL(b); } catch (err) { photoUrl = ''; } }
+  const [y, m, d] = e.date.split('-').map(Number);
+  const data = {
+    title: t(`${m}月${d}日のコーデ`, `Outfit · ${m}/${d}/${y}`),
+    sub: e.place ? placeName(e.place, CURRENT_LANG) : '',
+    photoUrl,
+    items: e.items.map(itemInfo).map(it => ({ name: it.name, img: it.img })),
+    profile: pfDisplayName(getActiveProfile()),
+  };
+  openShareCard({
+    title: t('コーデの画像カード', 'Outfit card'),
+    draw: (canvas, size) => drawCoordCard(canvas, data, size),
+    filename: `coord-${e.date}`,
+    text: buildPostText(e),
+  });
 }
 
 // よく着ているアイテム（全期間で3回以上）
@@ -483,6 +504,7 @@ function onClick(e) {
     if (list.length) { document.getElementById(`cd-${list[0].id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
     openForm(null, btn.dataset.date); return;
   }
+  if (act === 'card') { const entry = doc.entries.find(x => x.id === btn.dataset.id); if (entry) openCoordCard(entry); return; }
   if (act === 'post') { const entry = doc.entries.find(x => x.id === btn.dataset.id); if (entry) postEntry(entry); return; }
   if (act === 'edit') { openForm(doc.entries.find(x => x.id === btn.dataset.id)); return; }
   if (act === 'cancel') { form = null; clearPending(); render(); return; }
