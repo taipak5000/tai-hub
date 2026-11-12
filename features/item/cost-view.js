@@ -284,96 +284,228 @@ function costHtml(cost, quantity) {
   return en ? 'Unknown' : '不明';
 }
 
-function renderItemCard(item) {
+/* ================================================================
+   一覧の1行（タスク3・4・7）
+   通常は「サムネイル・名前・価格・ウィッシュリスト」だけを出し、出典の全文・注釈・バッジ・
+   入手経緯の切替・入力欄は行を押した時の詳細（アコーディオン）に入れる。詳細の中身は開いた
+   行だけ描く（1,280件ぶんの切替UIを常に持たないため）。開いている行は openItems に覚えておき、
+   切替操作で一覧を描き直しても開いたままにする（保存はしない）。
+   ================================================================ */
+const openItems = new Set();     // 詳細を開いている行（itemKey）
+let itemsByKey = new Map();      // 直近の computeAllItems() の結果（行の開閉だけで一覧を作り直さないため）
+function itemKey(item) { return `${item.catKey}/${item.id}`; }
+function domSafe(key) { return key.replace(/[^A-Za-z0-9_-]/g, '_'); }
+
+// 一覧の価格列に出す通貨（数値＋アイコン＋単位。季節キャンドルは合計外だが数値として揃えて出す）
+const PRICE_CURRENCIES = {
+  candle: { icon: 'i-candle', unit: '本' },
+  starCandle: { icon: 'i-star', unit: '本' },
+  heart: { icon: 'i-heart', unit: '個' },
+  seasonCandle: { icon: 'i-star-candle', unit: '本' },
+};
+// 数値でない価格は小さなグレーのピルにする（数値の列の揃いを崩さない）
+function pricePillLabel(type) {
   const en = CURRENT_LANG === 'en';
+  if (type === 'reward') return en ? 'Pass reward' : '報酬';
+  if (type === 'free') return en ? 'Free' : '無料';
+  if (type === 'na') return en ? 'N/A' : '対象外';
+  if (type === 'ticket') return en ? 'Ticket' : 'チケット交換';
+  return en ? 'Unknown' : '不明';
+}
+// 行の価格（所持数が2以上なら合計だけを出す。単価×個数の内訳は詳細の costHtml() で出す）
+function priceCellHtml(cost, quantity) {
+  const en = CURRENT_LANG === 'en';
+  if (!cost) return `<span class="cost-pill">${pricePillLabel('unknown')}</span>`;
+  const qty = (quantity && quantity > 1) ? quantity : 1;
+  if (cost.type === 'money' && typeof cost.value === 'number') {
+    const v = cost.value > 0 ? cost.value * qty : cost.value;
+    return `<span class="cost-price money"><span class="cost-price-num">¥${v.toLocaleString()}</span></span>`;
+  }
+  const cur = PRICE_CURRENCIES[cost.type];
+  if (cur && typeof cost.value === 'number') {
+    const v = (cost.type !== 'seasonCandle' && cost.value > 0) ? cost.value * qty : cost.value;
+    return `<span class="cost-price cur-${cost.type}"><svg class="inline-icon" width="14" height="14"><use href="#${cur.icon}"/></svg><span class="cost-price-num">${v.toLocaleString()}</span>${en ? '' : `<span class="cost-price-unit">${cur.unit}</span>`}</span>`;
+  }
+  return `<span class="cost-pill">${pricePillLabel(cost.type)}</span>`;
+}
+
+// 注釈の短縮形（タスク4）。全文は詳細に1回だけ出す。判定は注釈文（日本語）の文字列で行い、データは変えない。
+// 価格の種類をそのまま説明しているだけの定型文（報酬・チケット・究極の贈り物など）は、価格のピルで分かるので行には出さない。
+const NOTE_BADGES = [
+  [/シーズンパス、¥1300相当）の購入が前提/, () => ['パス代¥1,300込', 'Incl. ¥1,300 pass']],
+  [/^最大(\d+)個まで購入可/, m => [`最大${m[1]}個`, `Max ${m[1]}`]],
+  [/とのセット価格です/, () => ['セット価格', 'Bundle price']],
+  [/再訪した時のキャンドル価格は未確認/, () => ['再訪価格は未確認', 'Revisit price TBD']],
+  [/アドベンチャーパス（ペンダント）を購入していれば/, () => ['パス所持で無料', 'Free with pass']],
+  [/未確認/, () => ['未確認', 'Unconfirmed']],
+];
+const NOTE_SILENT = [
+  /究極の贈り物」のため/, /での交換アイテムです（キャンドル等の通常価格はありません）/, /季節パス（アドベンチャーパス）の報酬で/,
+  /精霊ツリーで無料で受け取れる/, /完全無料アイテム/, /星のキャンドルでの価格です/, /無償配布されたアイテム/, /^元表記は/, /App Store価格帯換算/,
+];
+function noteBadgeText(noteJa) {
+  if (!noteJa) return '';
+  for (const [re, fn] of NOTE_BADGES) {
+    const m = re.exec(noteJa);
+    if (m) { const [ja, en] = fn(m); return t(ja, en); }
+  }
+  if (NOTE_SILENT.some(re => re.test(noteJa))) return '';
+  return t('※注釈あり', '※ Note');
+}
+
+// 行に出す出典。グループ見出しと同じ季節・日々名は省き、「季節精霊・過去」のような種別だけを残す
+function shortSourceText(source, groupName) {
+  const m = /^([^（(]+)(?:[（(](.+)[）)])?$/.exec(source || '');
+  if (m && groupName && m[1].trim() === groupName) {
+    if (!m[2]) return '';
+    return CURRENT_LANG === 'en' ? trEvent(m[2].trim()) : m[2].trim();
+  }
+  return trSource(source || '');
+}
+function catLabelOf(catKey) {
+  return catKey === MUSIC_SHEET_CAT_KEY ? t('楽譜', 'Music Sheets') : trCat(CAT_LABEL_MAP[catKey] || catKey);
+}
+
+// 行に出す価格（従来の renderItemCard と同じ決め方：チケットの復刻入手は復刻の価格、季節中入手は0）
+function rowDisplayCost(item) {
+  if (item.owned && item.isTicketItem) {
+    return item.acquireMode === 'revisit' ? (item.revisitCost || { type: 'unknown' }) : item.cost;
+  }
+  const isFree = item.owned && item.seasonPendantOwned && item.acquireMode === 'inSeason';
+  return isFree ? { ...item.cost, value: 0 } : item.cost;
+}
+function rowNoteObj(item) {
+  return (item.owned && item.isTicketItem && item.acquireMode === 'revisit') ? item.revisitCost : item.cost;
+}
+
+function toggleGroupHtml(labelJa, labelEn, buttonsHtml) {
+  return `<div class="cost-acquire-group"><div class="cost-acquire-label">${t(labelJa, labelEn)}</div><div class="cost-acquire-toggle">${buttonsHtml}</div></div>`;
+}
+function acquireBtn(fk, active, free, onclick, inner) {
+  return `<button type="button" class="cost-acquire-btn ${active ? 'active' : ''} ${active && free ? 'free' : ''}" aria-pressed="${active}" data-fk="${fk}" onclick="${onclick}">${inner}</button>`;
+}
+
+// 詳細（行を押すと開く）。入手経緯の切替・入力欄の機能と保存先は従来どおり
+function renderItemDetail(item) {
+  const en = CURRENT_LANG === 'en';
+  const key = itemKey(item);
   const owned = item.owned;
   const badges = [];
   if (owned) badges.push(`<span class="cost-item-badge owned">${t('所持済み', 'Owned')}</span>`);
   if (item.dye) badges.push(`<span class="cost-item-badge dye-yes">${t('染色〇', 'Dyeable')}</span>`);
   if (item.limited) badges.push(`<span class="cost-item-badge limited">${t('復刻なし', 'No Re-release')}</span>`);
 
-  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + '　Sky')}`;
-
   const showPendantToggle = owned && item.seasonPendantOwned;
   const showTicketToggle = owned && item.isTicketItem;
-
-  let costDisplay, costClass, acquireToggleHtml = '';
+  let acquireToggleHtml = '';
   if (showTicketToggle) {
     const useRevisit = item.acquireMode === 'revisit';
-    const displayCost = useRevisit ? (item.revisitCost || { type: 'unknown' }) : item.cost;
-    costDisplay = costHtml(displayCost, item.quantity);
-    costClass = displayCost.type === 'money' ? 'money' : 'unknown';
-    acquireToggleHtml = `
-      <div class="cost-acquire-toggle">
-        <button type="button" class="cost-acquire-btn ${!useRevisit ? 'active free' : ''}" onclick="window.__costViewSetSeasonAcquire('${item.id}', 'ticket')">${ICON_TICKET} ${t('チケットで入手（0扱い）', 'Obtained via ticket (counts as 0)')}</button>
-        <button type="button" class="cost-acquire-btn ${useRevisit ? 'active' : ''}" onclick="window.__costViewSetSeasonAcquire('${item.id}', 'revisit')"><svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${t('復刻で入手（復刻の価格）', 'Obtained via revisit (revisit price)')}</button>
-      </div>`;
-  } else {
-    costClass = item.cost.type === 'money' ? 'money' : (['unknown', 'na', 'ticket'].includes(item.cost.type) ? 'unknown' : '');
-    const isFree = showPendantToggle && item.acquireMode === 'inSeason';
-    costDisplay = isFree ? costHtml({ ...item.cost, value: 0 }) : costHtml(item.cost, item.quantity);
-    acquireToggleHtml = showPendantToggle ? `
-      <div class="cost-acquire-toggle">
-        <button type="button" class="cost-acquire-btn ${isFree ? 'active free' : ''}" onclick="window.__costViewSetSeasonAcquire('${item.id}', 'inSeason')">${t('季節中に入手（0扱い）', 'Acquired in-season (counts as 0)')}</button>
-        <button type="button" class="cost-acquire-btn ${!isFree ? 'active' : ''}" onclick="window.__costViewSetSeasonAcquire('${item.id}', 'revisit')">${t('季節外・再訪で入手（記載コスト）', 'Acquired out-of-season/revisit (listed cost)')}</button>
-      </div>` : '';
+    acquireToggleHtml = toggleGroupHtml('入手経緯', 'How obtained',
+      acquireBtn(`${key}|ticket`, !useRevisit, true, `window.__costViewSetSeasonAcquire('${item.id}', 'ticket')`, `${ICON_TICKET} ${t('チケット（0）', 'Ticket (0)')}`)
+      + acquireBtn(`${key}|revisit`, useRevisit, false, `window.__costViewSetSeasonAcquire('${item.id}', 'revisit')`, `<svg class="inline-icon" width="14" height="14"><use href="#i-sync"/></svg> ${t('復刻（復刻の価格）', 'Revisit (revisit price)')}`));
+  } else if (showPendantToggle) {
+    const isFree = item.acquireMode === 'inSeason';
+    acquireToggleHtml = toggleGroupHtml('入手経緯', 'How obtained',
+      acquireBtn(`${key}|inSeason`, isFree, true, `window.__costViewSetSeasonAcquire('${item.id}', 'inSeason')`, t('季節中（0）', 'In-season (0)'))
+      + acquireBtn(`${key}|revisit`, !isFree, false, `window.__costViewSetSeasonAcquire('${item.id}', 'revisit')`, t('再訪（記載コスト）', 'Revisit (listed cost)')));
   }
 
-  const moneyOriginToggleHtml = (owned && item.cost.type === 'money') ? `
-    <div class="cost-acquire-toggle">
-      <button type="button" class="cost-acquire-btn ${item.moneyAcquireMode !== 'gift' ? 'active' : ''}" onclick="window.__costViewSetMoneyAcquire('${item.id}', 'self')">${ICON_WALLET} ${t('自分で購入', 'Bought it myself')}</button>
-      <button type="button" class="cost-acquire-btn ${item.moneyAcquireMode === 'gift' ? 'active free' : ''}" onclick="window.__costViewSetMoneyAcquire('${item.id}', 'gift')">${ICON_GIFT} ${t('ギフトでもらった', 'Received as a gift')}</button>
-    </div>` : '';
+  const moneyOriginToggleHtml = (owned && item.cost.type === 'money') ? toggleGroupHtml('支払い', 'Paid by',
+    acquireBtn(`${key}|self`, item.moneyAcquireMode !== 'gift', false, `window.__costViewSetMoneyAcquire('${item.id}', 'self')`, `${ICON_WALLET} ${t('自分で購入', 'Bought it myself')}`)
+    + acquireBtn(`${key}|gift`, item.moneyAcquireMode === 'gift', true, `window.__costViewSetMoneyAcquire('${item.id}', 'gift')`, `${ICON_GIFT} ${t('ギフトでもらった', 'Received as a gift')}`)) : '';
 
   const showCandleMoneyToggle = owned && (item.cost.type === 'candle' || item.cost.type === 'starCandle');
   const isPaidCandle = item.candleMoneyMode === 'paidCandle';
-  const candleMoneyToggleHtml = showCandleMoneyToggle ? `
-    <div class="cost-acquire-toggle">
-      <button type="button" class="cost-acquire-btn ${!isPaidCandle ? 'active' : ''}" onclick="window.__costViewSetCandleMoneyMode('${item.id}', 'normal')"><svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg> ${t('キャンドルで入手', 'Obtained with candles')}</button>
-      <button type="button" class="cost-acquire-btn ${isPaidCandle ? 'active free' : ''}" onclick="window.__costViewSetCandleMoneyMode('${item.id}', 'paidCandle')">${ICON_WALLET} ${t('課金で買ったキャンドルで入手', 'Obtained with paid candles')}</button>
-    </div>
-    ${isPaidCandle ? `
-    <div class="cost-candle-money-input-row">
+  const candleMoneyToggleHtml = showCandleMoneyToggle ? toggleGroupHtml('使ったキャンドル', 'Candles used',
+    acquireBtn(`${key}|normal`, !isPaidCandle, false, `window.__costViewSetCandleMoneyMode('${item.id}', 'normal')`, `<svg class="inline-icon" width="14" height="14"><use href="#i-candle"/></svg> ${t('通常のキャンドル', 'Regular candles')}`)
+    + acquireBtn(`${key}|paidCandle`, isPaidCandle, true, `window.__costViewSetCandleMoneyMode('${item.id}', 'paidCandle')`, `${ICON_WALLET} ${t('課金で買ったキャンドル', 'Paid candles')}`))
+    + (isPaidCandle ? `
+    <label class="cost-candle-money-input-row">
       <span>${t('実額に加算する金額：', 'Amount spent (added to real-money total):')}</span>
-      <span>¥</span><input type="number" min="0" class="cost-candle-money-input" value="${item.candleMoneyYen || ''}" placeholder="0" onchange="window.__costViewSetCandleMoneyYen('${item.id}', this.value)">
-    </div>` : ''}` : '';
+      <span>¥</span><input type="number" min="0" inputmode="numeric" class="cost-candle-money-input" data-fk="${key}|yen" value="${item.candleMoneyYen || ''}" placeholder="0" onchange="window.__costViewSetCandleMoneyYen('${item.id}', this.value)">
+    </label>` : '') : '';
 
-  // 大きい/小さい設置アイテムの所持済みアイテムに限り、所持数の入力欄を出す
   const quantityRowHtml = (owned && item.quantityEligible) ? `
-    <div class="cost-quantity-input-row">
+    <label class="cost-quantity-input-row">
       <span>${t('所持数：', 'Quantity owned:')}</span>
-      <input type="number" min="1" step="1" class="cost-quantity-input" value="${item.quantity}" onchange="window.__costViewSetItemQuantity('${item.id}', this.value)">
-      ${item.quantity > 1 ? `<span class="cost-quantity-hint">${t('（上のコストに反映済み）', '(reflected in the cost above)')}</span>` : ''}
-    </div>` : '';
+      <input type="number" min="1" step="1" inputmode="numeric" class="cost-quantity-input" data-fk="${key}|qty" value="${item.quantity}" onchange="window.__costViewSetItemQuantity('${item.id}', this.value)">
+      ${item.quantity > 1 ? `<span class="cost-quantity-hint">${t('（一覧の価格に反映済み）', '(reflected in the listed cost)')}</span>` : ''}
+    </label>` : '';
+
+  const noteObj = rowNoteObj(item);
+  const noteText = noteObj && (en ? (noteObj.noteEn || noteObj.note) : noteObj.note);
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + '　Sky')}`;
 
   return `
-    <div class="cost-item-card ${owned ? 'owned' : ''}">
-      <div class="cost-item-head">
+    <dl class="cost-detail-list">
+      <div><dt>${t('価格', 'Cost')}</dt><dd class="cost-detail-cost">${costHtml(rowDisplayCost(item), item.quantity)}</dd></div>
+      <div><dt>${t('入手方法', 'Source')}</dt><dd>${escapeHtml(trSource(item.source))}<span class="cost-detail-cat">${escapeHtml(catLabelOf(item.catKey))}</span></dd></div>
+    </dl>
+    ${noteText ? `<p class="cost-item-note">※ ${escapeHtml(noteText)}</p>` : ''}
+    ${badges.length ? `<div class="cost-item-badges">${badges.join('')}</div>` : ''}
+    ${acquireToggleHtml}
+    ${moneyOriginToggleHtml}
+    ${candleMoneyToggleHtml}
+    ${quantityRowHtml}
+    <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="cost-detail-search"><svg class="inline-icon" width="14" height="14"><use href="#i-search"/></svg>${t('Googleで調べる', 'Search on Google')}</a>`;
+}
+
+function renderItemRow(item, groupName) {
+  const key = itemKey(item);
+  const domId = `costDet-${domSafe(key)}`;
+  const isOpen = openItems.has(key);
+  const owned = item.owned;
+  const name = escapeHtml(trItem(item));
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trItem(item) + '　Sky')}`;
+  const sub = [catLabelOf(item.catKey), shortSourceText(item.source, groupName)].filter(Boolean).join(' · ');
+  const badge = noteBadgeText((rowNoteObj(item) || {}).note);
+  const wish = isWishItem(item.catKey, item.id);
+  return `
+    <div class="cost-row-wrap ${owned ? 'owned' : ''} ${isOpen ? 'open' : ''}" data-key="${key}">
+      <div class="cost-row">
+        <button type="button" class="cost-row-toggle" data-key="${key}" data-fk="${key}|row" aria-expanded="${isOpen}" aria-controls="${domId}"
+          aria-label="${t(`${name} の詳細`, `Details: ${name}`)}" onclick="window.__costViewToggleRow(this.dataset.key)"></button>
         <div class="cost-item-thumb ${item.img ? '' : 'img-fallback'}">
-          ${item.img ? `<img src="${item.img}" alt="${escapeHtml(trItem(item))}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
+          ${item.img ? `<img src="${item.img}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('img-fallback')">` : ''}
           <span class="cost-item-thumb-fallback"><svg class="inline-icon" width="18" height="18"><use href="#i-wing"/></svg></span>
+          ${owned ? `<span class="cost-owned-mark"><svg class="inline-icon" width="10" height="10"><use href="#i-check"/></svg></span>` : ''}
         </div>
-        <div class="cost-item-info">
-          <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="cost-item-name">${escapeHtml(trItem(item))}</a>
-          <div class="cost-item-source">${escapeHtml(trSource(item.source))}</div>
+        <div class="cost-row-info">
+          <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="cost-item-name">${name}</a>
+          <div class="cost-row-sub">${owned ? `<span class="cost-vh">${t('所持済み', 'Owned')}</span>` : ''}<span class="cost-row-src">${escapeHtml(sub)}</span>${badge ? `<span class="cost-note-badge">${escapeHtml(badge)}</span>` : ''}</div>
         </div>
-        <div class="cost-item-cost ${costClass}">${costDisplay}</div>
-        <button type="button" class="cost-item-wish-btn ${isWishItem(item.catKey, item.id) ? 'is-wish' : ''}"
+        <div class="cost-row-price">${priceCellHtml(rowDisplayCost(item), item.quantity)}</div>
+        <button type="button" class="cost-item-wish-btn ${wish ? 'is-wish' : ''}" aria-pressed="${wish}"
           onclick="window.__costViewToggleWish('${item.catKey}','${item.id}', this)"
           title="${t('ウィッシュリストに追加', 'Add to wishlist')}"
-          aria-label="${t('ウィッシュリストに追加', 'Add to wishlist')}"><svg class="inline-icon" width="15" height="15"><use href="#i-cart"/></svg></button>
+          aria-label="${t('ウィッシュリストに追加', 'Add to wishlist')}"><span class="cost-wish-dot"><svg class="inline-icon" width="15" height="15"><use href="#i-cart"/></svg></span></button>
       </div>
-      ${badges.length ? `<div class="cost-item-badges">${badges.join('')}</div>` : ''}
-      ${(() => {
-        const noteObj = (showTicketToggle && item.acquireMode === 'revisit') ? item.revisitCost : item.cost;
-        const noteSource = noteObj && (en ? (noteObj.noteEn || noteObj.note) : noteObj.note);
-        return noteSource ? `<div class="cost-item-note">※ ${escapeHtml(noteSource)}</div>` : '';
-      })()}
-      ${acquireToggleHtml}
-      ${moneyOriginToggleHtml}
-      ${candleMoneyToggleHtml}
-      ${quantityRowHtml}
+      <div class="cost-row-detail" id="${domId}" ${isOpen ? '' : 'hidden'}>${isOpen ? renderItemDetail(item) : ''}</div>
     </div>`;
+}
+
+// 行の開閉（一覧全体は描き直さず、その行の詳細だけを差し替える）
+function toggleRow(key) {
+  if (!hostEl) return;
+  const wrap = hostEl.querySelector(`.cost-row-wrap[data-key="${CSS.escape(key)}"]`);
+  const item = itemsByKey.get(key);
+  if (!wrap || !item) return;
+  const det = wrap.querySelector('.cost-row-detail');
+  const btn = wrap.querySelector('.cost-row-toggle');
+  const willOpen = !openItems.has(key);
+  if (willOpen) {
+    openItems.add(key);
+    det.innerHTML = renderItemDetail(item);
+    det.hidden = false;
+    det.classList.add('anim-in');
+  } else {
+    openItems.delete(key);
+    det.hidden = true;
+    det.innerHTML = '';
+    det.classList.remove('anim-in');
+  }
+  wrap.classList.toggle('open', willOpen);
+  btn.setAttribute('aria-expanded', String(willOpen));
 }
 
 /* ================================================================
@@ -398,7 +530,11 @@ function setSumValues(suffix, candle, starCandle, heart, money) {
 
 function renderItems() {
   if (!hostEl) return;
+  // 描き直しでフォーカスが外れないよう、操作中の要素（data-fk）を覚えておき、描き直した後に戻す
+  const active = document.activeElement;
+  const focusKey = active && hostEl.contains(active) && active.dataset ? active.dataset.fk : null;
   const allItems = computeAllItems();
+  itemsByKey = new Map(allItems.map(it => [itemKey(it), it]));
   const ownFilter = hostEl.querySelector('#costOwnFilter')?.value || 'all';
   const costTypeFilter = hostEl.querySelector('#costTypeFilter')?.value || 'all';
   const categoryFilter = hostEl.querySelector('#costCategoryFilter')?.value || 'all';
@@ -430,21 +566,21 @@ function renderItems() {
     if (!seasonGroups[season]) return;
     const gid = `costGrp-${groupIndex++}`;
     html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name">${seasonPendantIconHtml(season, 16, 'i-sparkle')} ${escapeHtml(trEvent(season))}</span><span class="cost-season-group-count">${seasonGroups[season].length}${itemUnit}</span></div>`;
-    html += seasonGroups[season].map(renderItemCard).join('');
+    html += `<div class="cost-group-list">${seasonGroups[season].map(it => renderItemRow(it, season)).join('')}</div>`;
     seasonOptions += `<option value="${gid}">${escapeHtml(trEvent(season))}（${seasonGroups[season].length}）</option>`;
   });
   DAY_ORDER.forEach(day => {
     if (!dayGroups[day]) return;
     const gid = `costGrp-${groupIndex++}`;
     html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name"><svg class="inline-icon" width="14" height="14"><use href="#i-sun"/></svg> ${escapeHtml(trEvent(day))}</span><span class="cost-season-group-count">${dayGroups[day].length}${itemUnit}</span></div>`;
-    html += dayGroups[day].map(renderItemCard).join('');
+    html += `<div class="cost-group-list">${dayGroups[day].map(it => renderItemRow(it, day)).join('')}</div>`;
     dayOptions += `<option value="${gid}">${escapeHtml(trEvent(day))}（${dayGroups[day].length}）</option>`;
   });
   if (otherItems.length) {
     const gid = `costGrp-${groupIndex++}`;
     const otherLabel = t('その他（パック・恒常精霊・ショップなど）', 'Other (Packs, Realm Spirits, Shops, etc.)');
     html += `<div class="cost-season-group-header" id="${gid}"><span class="cost-season-group-name"><svg class="inline-icon" width="14" height="14"><use href="#i-sparkle"/></svg> ${otherLabel}</span><span class="cost-season-group-count">${otherItems.length}${itemUnit}</span></div>`;
-    html += otherItems.map(renderItemCard).join('');
+    html += `<div class="cost-group-list">${otherItems.map(it => renderItemRow(it, null)).join('')}</div>`;
     otherOptions = `<option value="${gid}">${t('その他', 'Other')}（${otherItems.length}）</option>`;
   }
 
@@ -454,6 +590,10 @@ function renderItems() {
 
   const listEl = hostEl.querySelector('#costItemList');
   if (listEl) listEl.innerHTML = html;
+  if (focusKey) {
+    const again = hostEl.querySelector(`[data-fk="${CSS.escape(focusKey)}"]`);
+    if (again) again.focus({ preventScroll: true });
+  }
 
   const jumpSelect = hostEl.querySelector('#costJumpSelect');
   if (jumpSelect) {
@@ -1092,7 +1232,7 @@ function handleToggleWish(catKey, itemId, btn) {
     showToast(t('所持済みのアイテムはウィッシュリストに追加できません', 'Owned items cannot be added to the wishlist'));
     return;
   }
-  if (btn) btn.classList.toggle('is-wish', added);
+  if (btn) { btn.classList.toggle('is-wish', added); btn.setAttribute('aria-pressed', String(added)); }
 }
 
 function showToast(msg) {
@@ -1226,6 +1366,14 @@ function renderShell() {
         </div>
 
         <h2 class="sec-label cost-list-label">${t('アイテムのコスト一覧', 'Item Cost List')}</h2>
+        <p class="cost-legend">
+          <span><svg class="inline-icon" width="13" height="13"><use href="#i-candle"/></svg>${t('キャンドル', 'Candles')}</span>
+          <span><svg class="inline-icon" width="13" height="13"><use href="#i-star"/></svg>${t('星のキャンドル', 'Star Candles')}</span>
+          <span><svg class="inline-icon" width="13" height="13"><use href="#i-heart"/></svg>${t('ハート', 'Hearts')}</span>
+          <span class="is-season"><svg class="inline-icon" width="13" height="13"><use href="#i-star-candle"/></svg>${t('季節キャンドル（合計外）', 'Season Candles (not totaled)')}</span>
+          <span class="is-money">¥ ${t('実額', 'Real money')}</span>
+          <span>${t('行を押すと詳細', 'Tap a row for details')}</span>
+        </p>
         <div id="costItemList"></div>
 
         <p class="sec-label cost-more-label">${t('課金の記録', 'Purchase records')}</p>
@@ -1305,6 +1453,7 @@ const HANDLERS = {
   __costViewRenderItems: () => renderItems(),
   __costViewJumpToGroup: gid => jumpToGroup(gid),
   __costViewToggleAbout: () => toggleAbout(),
+  __costViewToggleRow: key => toggleRow(key),
   __costViewToggleGiftCard: () => toggleGiftCard(),
   __costViewToggleCandleCard: () => toggleCandleCard(),
   __costViewSetGiftDisplayMode: mode => setGiftDisplayMode(mode),
@@ -1393,7 +1542,8 @@ function injectStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-.item-view .cost-wrap { max-width: 720px; margin: 0 auto; }
+.item-view .cost-wrap { max-width: 720px; margin: 0 auto; --cost-money: #E0251B; }
+[data-theme="dark"] .item-view .cost-wrap { --cost-money: #FF6961; }
 @media (min-width: 850px) { .item-view .cost-wrap { max-width: 960px; } }
 
 .item-view .cost-notice-card {
@@ -1460,42 +1610,86 @@ function injectStyles() {
 .item-view .cost-jump-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
 .item-view .cost-jump-select { flex: 1; min-width: 0; background: var(--card); border: none; border-radius: var(--r-sm); padding: 9px 12px; font-size: 13.5px; font-weight: 600; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-family: inherit; }
 
-.item-view .cost-item-card { background: var(--card); border-radius: var(--r); padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-.item-view .cost-item-card.owned { background: var(--green-bg); box-shadow: 0 1px 4px rgba(52,199,89,0.12); }
-.item-view .cost-item-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.item-view .cost-item-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-sm); overflow: hidden; background: var(--bg); display: flex; align-items: center; justify-content: center; }
-.item-view .cost-item-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 12%; display: block; }
+/* ── 一覧（季節ごとの角丸リスト＋1行型）── */
+.item-view .cost-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 2px 4px 6px; font-size: 12px; color: var(--text-2); letter-spacing: 0.02em; }
+.item-view .cost-legend span { display: inline-flex; align-items: center; gap: 3px; }
+.item-view .cost-legend .is-season { color: var(--text-2); }
+.item-view .cost-legend .is-money { color: var(--cost-money); font-weight: 700; }
+.item-view .cost-group-list { background: var(--card); border-radius: var(--r); box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
+.item-view .cost-row-wrap + .cost-row-wrap { border-top: 0.5px solid var(--sep); }
+.item-view .cost-row-wrap.owned { background: var(--green-bg); }
+.item-view .cost-row { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto 44px; align-items: center; column-gap: 6px; min-height: 60px; padding: 4px 2px 4px 12px; }
+.item-view .cost-row-toggle { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; padding: 0; margin: 0; background: transparent; border: 0; cursor: pointer; border-radius: 0; }
+.item-view .cost-row-toggle:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.item-view .cost-row-toggle:active { background: rgba(127,127,127,0.10); }
+.item-view .cost-row > :not(.cost-row-toggle) { position: relative; z-index: 1; pointer-events: none; }
+.item-view .cost-row .cost-item-name, .item-view .cost-row .cost-item-wish-btn { pointer-events: auto; }
+.item-view .cost-item-thumb { width: 36px; height: 36px; flex-shrink: 0; border-radius: var(--r-sm); overflow: visible; background: var(--bg); display: flex; align-items: center; justify-content: center; position: relative; }
+.item-view .cost-item-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 10%; display: block; border-radius: inherit; }
 .item-view .cost-item-thumb.img-fallback img { display: none; }
 .item-view .cost-item-thumb-fallback { display: none; color: var(--text-3); }
 .item-view .cost-item-thumb.img-fallback .cost-item-thumb-fallback { display: block; }
-.item-view .cost-item-info { flex: 1; min-width: 0; }
-.item-view .cost-item-name { font-size: 14.5px; font-weight: 700; color: inherit; }
+.item-view .cost-owned-mark { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--card); }
+.item-view .cost-owned-mark .inline-icon { stroke: #fff; stroke-width: 3.2; }
+.item-view .cost-row-info { min-width: 0; }
+.item-view .cost-item-name { display: inline-block; max-width: 100%; vertical-align: top; font-size: 14px; font-weight: 700; line-height: 1.35; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
 .item-view .cost-item-name:hover { color: var(--blue); }
-.item-view .cost-item-source { font-size: 12px; color: var(--text-2); margin-top: 2px; }
-.item-view .cost-item-cost { font-size: 15px; font-weight: 800; color: var(--orange-d); white-space: nowrap; }
-.item-view .cost-item-cost.money { color: #FF3B30; }
-[data-theme="dark"] .item-view .cost-item-cost.money { color: #FF453A; }
-.item-view .cost-item-cost.unknown { color: var(--text-3); font-size: 13px; font-weight: 600; }
-.item-view .cost-qty-note { display: block; font-size: 10.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; margin-top: 2px; }
-.item-view .cost-item-wish-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--bg); border: 1px solid var(--sep); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); }
-.item-view .cost-item-wish-btn.is-wish { background: var(--orange-bg); border-color: var(--orange-d); color: var(--orange-d); }
-.item-view .cost-item-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.item-view .cost-item-badge { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--text-2); }
-.item-view .cost-item-badge.owned { background: var(--green-bg); color: var(--green); }
-.item-view .cost-item-badge.dye-yes { background: var(--green-bg); color: var(--green); }
-.item-view .cost-item-badge.limited { background: rgba(255,59,48,0.1); color: #FF3B30; }
-[data-theme="dark"] .item-view .cost-item-badge.limited { color: #FF453A; }
-.item-view .cost-item-note { font-size: 11.5px; color: var(--text-2); margin-top: 6px; line-height: 1.5; }
+.item-view .cost-row-sub { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; font-size: 12px; line-height: 1.4; color: var(--text-2); white-space: nowrap; letter-spacing: 0.02em; }
+.item-view .cost-row-src { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.item-view .cost-note-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--bg); color: var(--text-2); }
+.item-view .cost-row-wrap.owned .cost-note-badge { background: var(--card); }
+.item-view .cost-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.item-view .cost-row-price { width: 78px; text-align: right; font-variant-numeric: tabular-nums; }
+.item-view .cost-price { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; font-size: 15px; font-weight: 800; color: var(--orange-d); white-space: nowrap; letter-spacing: -0.01em; }
+.item-view .cost-price.money { color: var(--cost-money); }
+.item-view .cost-price.cur-seasonCandle { color: var(--text-2); font-weight: 700; }
+.item-view .cost-price-unit { font-size: 11.5px; font-weight: 700; margin-left: 1px; }
+.item-view .cost-pill { display: inline-block; max-width: 78px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 700; color: var(--text-2); background: var(--bg); border-radius: 999px; padding: 2px 8px; letter-spacing: 0.02em; }
+.item-view .cost-row-wrap.owned .cost-pill { background: var(--card); }
+.item-view .cost-row-wrap.open > .cost-row { background: rgba(127,127,127,0.07); }
+.item-view .cost-item-wish-btn { width: 44px; height: 44px; padding: 0; background: none; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); }
+.item-view .cost-wish-dot { width: 32px; height: 32px; border-radius: 50%; border: 1.5px dashed var(--text-3); display: flex; align-items: center; justify-content: center; }
+.item-view .cost-item-wish-btn.is-wish .cost-wish-dot { background: var(--orange); border: 1.5px solid var(--orange); }
+.item-view .cost-item-wish-btn.is-wish .inline-icon { stroke: #fff; }
+.item-view .cost-item-wish-btn:active .cost-wish-dot { transform: scale(0.92); }
 
-.item-view .cost-acquire-toggle { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.item-view .cost-acquire-btn { flex: 1; min-width: 130px; font-size: 11px; font-weight: 700; padding: 6px 8px; border-radius: var(--r-sm); background: var(--bg); color: var(--text-2); border: 1px solid var(--sep); text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-family: inherit; }
+.item-view .cost-row-detail { padding: 2px 14px 14px 56px; }
+.item-view .cost-row-detail.anim-in { animation: costDetIn 0.22s ease-out; }
+@keyframes costDetIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.item-view .cost-detail-list { margin: 0; display: grid; gap: 4px; font-size: 13px; line-height: 1.6; }
+.item-view .cost-detail-list > div { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: 8px; }
+.item-view .cost-detail-list dt { color: var(--text-2); font-size: 12px; letter-spacing: 0.02em; padding-top: 1px; }
+.item-view .cost-detail-list dd { margin: 0; color: var(--text); }
+.item-view .cost-detail-cost { font-weight: 700; }
+.item-view .cost-detail-cat { margin-left: 6px; font-size: 12px; color: var(--text-2); }
+.item-view .cost-qty-note { display: inline; margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
+.item-view .cost-item-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.item-view .cost-item-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--text-2); }
+.item-view .cost-item-badge.owned { background: var(--green-bg); color: var(--green-ink, var(--green)); }
+.item-view .cost-item-badge.dye-yes { background: var(--green-bg); color: var(--green-ink, var(--green)); }
+.item-view .cost-item-badge.limited { background: rgba(255,59,48,0.1); color: #D70015; }
+[data-theme="dark"] .item-view .cost-item-badge.limited { color: #FF6961; }
+.item-view .cost-item-note { font-size: 12.5px; color: var(--text-2); margin: 8px 0 0; line-height: 1.65; }
+.item-view .cost-detail-search { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--blue); text-decoration: none; }
+
+.item-view .cost-acquire-group { margin-top: 10px; }
+.item-view .cost-acquire-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; letter-spacing: 0.02em; }
+.item-view .cost-acquire-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+.item-view .cost-acquire-btn { flex: 1; min-width: 120px; min-height: 44px; font-size: 12.5px; font-weight: 700; padding: 6px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--text-2); border: 1px solid var(--sep); text-align: center; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-family: inherit; }
 .item-view .cost-acquire-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 .item-view .cost-acquire-btn.active.free { background: var(--green); border-color: var(--green); }
-.item-view .cost-candle-money-input-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11.5px; color: var(--text-2); flex-wrap: wrap; }
-.item-view .cost-candle-money-input { width: 90px; background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
-.item-view .cost-quantity-input-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11.5px; color: var(--text-2); flex-wrap: wrap; }
-.item-view .cost-quantity-input { width: 64px; background: var(--bg); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
-.item-view .cost-quantity-hint { font-size: 11px; color: var(--text-3); }
+.item-view .cost-acquire-btn.active .inline-icon { stroke: #fff; }
+.item-view .cost-candle-money-input-row, .item-view .cost-quantity-input-row { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; color: var(--text-2); flex-wrap: wrap; }
+.item-view .cost-candle-money-input { width: 100px; min-height: 40px; background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
+.item-view .cost-quantity-input { width: 72px; min-height: 40px; background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm); padding: 5px 8px; font-size: 16px; font-family: inherit; color: var(--text); }
+.item-view .cost-quantity-hint { font-size: 12px; color: var(--text-3); }
+@media (prefers-reduced-motion: reduce) {
+  .item-view .cost-row-detail.anim-in { animation: none; }
+}
+@media (prefers-contrast: more) {
+  .item-view .cost-row-wrap + .cost-row-wrap { border-top-color: var(--text-2); }
+  .item-view .cost-pill, .item-view .cost-note-badge { border: 1px solid var(--text-2); }
+}
 
 .item-view .cost-gift-card { background: var(--card); border-radius: var(--r); padding: 16px; margin-top: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
 .item-view .cost-summary-toggle-icon { transition: transform 0.15s; flex-shrink: 0; display: inline-flex; }
