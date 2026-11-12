@@ -187,6 +187,9 @@ const landingPoint = currentY + project(v);
 - **精霊ツリーの楽譜ノード**: `spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける。
   楽譜だけ旧キー`musicSheets`にしかデータが無い場合があるので、読み書きは`readMusicOwnedRaw()`を通す。
 - **アイテムの詳細シート**（`features/item/item-detail-sheet.js`）: カテゴリ一覧・全アイテムでアイテム名を押すと開く。ほしいもの計画への追加は既存の`wish_<cat>`に書くだけ。
+- **アイテム別コスト**（`features/item/cost-view.js`、`#/item/cost`）: サマリー（残り＝塗りの面／かかった＝淡い面）→stickyなフィルターバー→季節ごとの一覧→課金の記録→「この集計について」の順。
+  一覧の行は名前と価格だけで、入手経緯の切替などは行を押すと開く詳細（開いた行だけ中身を描く。`openItems`）。集計は`computeOwnedBreakdown()`／`computeRemainBreakdown()`が
+  アイテムごとの寄与を記録し、季節の小計はその和（小計の和＝サマリーのアイテム分。プレゼント履歴・キャンドル課金は小計に入らない）。意味色は`--cost-*`（着せ替え中は`TOOL_MAPS`が上書き）。
 - **達成率の記録**（`js/collection-history.js`）: `saveCategoryState()`が送る`hub-collection-changed`で、その日の分を1件だけ記録（`collectionHistory_v1`、365日まで）。
   グラフは`features/item/history-chart.js`（自前のSVG）、ふりかえりにも伸びを出す。
 - **画像カード**（`js/share-card.js`）: 達成率・コーデをCanvasで描く（1200×630／1080×1080、色は`--hub-*`から）。外部の画像は`crossOrigin`で読めた物だけ描く。
