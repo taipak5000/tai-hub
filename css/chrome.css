@@ -251,6 +251,25 @@
   text-decoration: none; color: var(--hub-text); font-size: 14px;
 }
 .pf-drawer-link:hover { background: var(--hub-sep); }
+/* 📌 一覧の行の右端のピン（js/chrome/pin-bar.js）。リンクの中にボタンは置けないので、行で包んで横に並べる */
+.pf-drawer-row { display: flex; align-items: center; gap: 2px; }
+.pf-drawer-row > .pf-drawer-link { flex: 1; min-width: 0; }
+.pf-pin-btn { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 9px; background: none; color: var(--hub-text-3, var(--hub-text-2)); cursor: pointer; opacity: 0.55; }
+.pf-pin-btn:hover { background: var(--hub-sep); opacity: 1; }
+.pf-pin-btn.is-on { color: var(--hub-accent-ink, var(--hub-accent)); opacity: 1; }
+.pf-pin-btn.is-on .inline-icon { fill: currentColor; }
+.pf-pin-btn:active { transform: scale(0.9); }
+/* ピン留めしたツールのショートカット（#app-root の上。何も留めていない時は出さない） */
+#pin-bar-root[hidden] { display: none; }
+.pin-bar { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; padding: calc(10px + env(safe-area-inset-top)) 16px 0; overflow-x: auto; scrollbar-width: none; }
+.pin-bar::-webkit-scrollbar { display: none; }
+.pin-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: 999px; background: var(--hub-card); border: 0.5px solid var(--hub-sep); color: var(--hub-text); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; text-decoration: none; white-space: nowrap; }
+.pin-chip .inline-icon { stroke: var(--hub-text-2); }
+.pin-chip.is-current { background: var(--hub-accent-bg); border-color: var(--hub-accent); color: var(--hub-accent-ink, var(--hub-accent)); }
+.pin-chip.is-current .inline-icon { stroke: currentColor; }
+.pin-chip:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) { .pin-chip:active, .pf-pin-btn:active { transform: none; } }
+@media (prefers-contrast: more) { .pin-chip, .pf-pin-btn { border: 1px solid var(--hub-text-2); } }
 /* 兄弟機能（js/site-links.js の child）: 親のすぐ下に少し字下げし、細い線で親とつなぐ */
 .pf-drawer-link.is-child { position: relative; margin-left: 18px; padding-top: 8px; padding-bottom: 8px; font-size: 13.5px; }
 .pf-drawer-link.is-child::before {
@@ -322,6 +341,8 @@
   html.side-panels-on, html.side-dash-on { --side-left-w: 300px; --side-right-w: 300px; /* 左右を同じ幅にして、本文が画面の中央に来るようにする（2026-11-08） */ --side-bottom: calc(72px + env(safe-area-inset-bottom)); }
   html.side-panels-on #app-root { margin-left: var(--side-left-w); }
   html.side-dash-on #app-root { margin-right: var(--side-right-w); }
+  html.side-panels-on #pin-bar-root { margin-left: var(--side-left-w); }
+  html.side-dash-on #pin-bar-root { margin-right: var(--side-right-w); }
   html.side-panels-on .side-left, html.side-dash-on .side-right {
     display: block; position: fixed; top: var(--update-bar-h, 0px); bottom: var(--side-bottom); z-index: 900;
     overflow-y: auto; overscroll-behavior: contain; background: var(--hub-card); color: var(--hub-text);

@@ -7,6 +7,7 @@ import { CURRENT_LANG, escapeHtml } from '../i18n.js';
 import { navigate } from '../router.js';
 import { initSiteLinks, refreshSiteLinks, getSiteLinks, siteLinkHref, siteLinkName } from '../site-links.js';
 import { refreshToLatest } from '../refresh.js';
+import { pinButtonHtml, togglePin, onPinsChanged, MAX_PINS } from './pin-bar.js';
 import { APP_VERSION, pendingVersions, onUpdateChanged, updateStatus, checkForUpdate } from '../app-update.js';
 
 let siteLinksStarted = false;
@@ -43,6 +44,7 @@ export function init() {
   initSiteLinks();
   refreshSiteLinks().then(changed => { if (changed) renderNav(); }).catch(() => renderNav());
   onUpdateChanged(renderNav); // 新しい版が見つかったら、下の更新ボタンを目立たせる
+  onPinsChanged(renderNav); // ピン留めを変えたら、一覧のピンの状態を描き直す
 }
 
 // 一覧の描画先は .js-tools-nav すべて（引き出し＋ワイド画面の左サイドパネル）
@@ -52,10 +54,12 @@ export function renderNav() {
 
 function linkHtml(s) {
   const { href, hubRoute } = siteLinkHref(s);
-  return `<a class="pf-drawer-link${s.child ? ' is-child' : ''}" href="${href}" data-hub-route="${hubRoute}">
+  const link = `<a class="pf-drawer-link${s.child ? ' is-child' : ''}" href="${href}" data-hub-route="${hubRoute}">
       <svg class="inline-icon" width="19" height="19"><use href="#${s.icon}"/></svg>
       ${s.badgeTest ? `<span class="pf-drawer-badge-test">${t('test', 'test')}</span>` : ''} ${escapeHtml(siteLinkName(s, CURRENT_LANG))}
     </a>`;
+  // 📌 ハブの中のツールには、画面の上へ留めるピンを付ける（js/chrome/pin-bar.js）
+  return hubRoute ? `<div class="pf-drawer-row${s.child ? ' is-child' : ''}">${link}${pinButtonHtml(s.id)}</div>` : link;
 }
 
 // 🧪 test印のツールは一覧の最後にまとめ、見出しを押すと折りたためる（引き出しと左パネルで共通の設定。端末ごと）
@@ -129,6 +133,14 @@ function renderNavInto(nav) {
     refreshToLatest();
   });
   nav.querySelector('.js-hub-recheck')?.addEventListener('click', () => checkForUpdate(true));
+  nav.querySelectorAll('[data-pin]').forEach(b => b.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const r = togglePin(b.dataset.pin);
+    if (r === null) {
+      import('../../features/shared/share-image.js').then(m => m.toast(t(`ピン留めは${MAX_PINS}つまでです。どれかを外してから留めてください`, `You can pin up to ${MAX_PINS} tools. Unpin one first.`), 3200));
+    }
+  }));
   nav.querySelector('.js-hub-changelog')?.addEventListener('click', close); // 引き出しは閉じてからポップアップを開く（開くのは app-update.js）
   nav.querySelectorAll('a[data-hub-route]').forEach(a => {
     const route = a.dataset.hubRoute;
