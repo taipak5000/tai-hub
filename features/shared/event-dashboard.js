@@ -83,6 +83,8 @@
 
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { mountBackupReminder } from '../../js/backup-reminder.js';
+import { collectNotices, isSeen } from '../../js/notices.js';
+import { nsKey } from '../../js/state.js';
 import { allDayEvent, calendarText, downloadIcs, tokyoDateStr } from '../../js/ics.js';
 import { loadFriendsDoc, upcomingAnniversaries, anniversaryTitle } from '../friends/friends-state.js';
 import { pacificFakeToReal, cycleBounds, cycleIndexAt, ptOffsetChanges, ptParts, ptToReal } from '../../js/pacific-time.js';
@@ -701,12 +703,99 @@ function buildHtml(data) {
   const section = (label, body, extra = '') => `<div class="dash-section"><p class="dash-section-label"><span>${label}</span>${extra}</p><div class="dash-list">${body}</div></div>`;
   const resetExtra = `<span class="dash-section-extra">${t('リセットまで', 'Reset in')} ${countdown(nextPacificMidnight())}</span>`;
 
-  return `
-    <div class="dash-section">${calendarHtml(data)}</div>
-    ${section(t('デイリー', 'Daily'), dailyHtml, resetExtra)}
-    ${section(t('今日', 'Today'), list('today') || bucketEmptyMsg)}
-    ${section(t('今週', 'This Week'), list('week') || bucketEmptyMsg)}
-    ${section(t('今月', 'This Month'), seasonErrorRow + (list('month') || (seasonErrored ? '' : bucketEmptyMsg)))}`;
+  const parts = {
+    calendar: () => `<div class="dash-section">${calendarHtml(data)}</div>`,
+    daily: () => section(t('デイリー', 'Daily'), dailyHtml, resetExtra),
+    today: () => section(t('今日', 'Today'), list('today') || bucketEmptyMsg),
+    week: () => section(t('今週', 'This Week'), list('week') || bucketEmptyMsg),
+    month: () => section(t('今月', 'This Month'), seasonErrorRow + (list('month') || (seasonErrored ? '' : bucketEmptyMsg))),
+    notices: () => section(t('お知らせ', 'Notices'), noticesWidgetHtml()),
+    recap: () => section(t('今月のふりかえり', 'This month'), recapWidgetHtml()),
+  };
+  // 並び順と表示（下の「表示を編集」で変えられる。未設定なら今までどおり）
+  const layout = dashLayout();
+  return layout.order.filter(id => !layout.hidden.includes(id) && parts[id]).map(id => parts[id]()).join('');
+}
+
+/* ================================================================
+   🧩 ダッシュボードの並び替えと表示・非表示（2026-11-12）
+   ・保存は端末ごと（sky_hub_dash_layout_v1 = { order: [...], hidden: [...] }）。ダッシュボードはプロフィールに
+     関わらない表示の設定なので、ワイド画面のサイドパネルの設定と同じく端末全体で1つ。
+   ・未設定の時は今までと同じ（カレンダー・デイリー・今日・今週・今月）。「お知らせ」「今月のふりかえり」は
+     新しく足した欄なので、最初は隠してある（表示を編集で出せる）。
+   ・新しい欄を後から足した時は、保存された並びに無い欄を既定の位置（＝隠した状態）で末尾に足す。
+   ================================================================ */
+const LAYOUT_KEY = 'sky_hub_dash_layout_v1';
+const SECTION_DEFS = [
+  { id: 'calendar', ja: 'カレンダー', en: 'Calendar' },
+  { id: 'daily', ja: 'デイリー', en: 'Daily' },
+  { id: 'today', ja: '今日', en: 'Today' },
+  { id: 'week', ja: '今週', en: 'This Week' },
+  { id: 'month', ja: '今月', en: 'This Month' },
+  { id: 'notices', ja: 'お知らせ', en: 'Notices', off: true },
+  { id: 'recap', ja: '今月のふりかえり', en: 'This month', off: true },
+];
+function dashLayout() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)); } catch (e) { saved = null; }
+  const known = SECTION_DEFS.map(d => d.id);
+  const order = (saved && Array.isArray(saved.order) ? saved.order.filter(id => known.includes(id)) : []);
+  const hidden = saved && Array.isArray(saved.hidden) ? saved.hidden.filter(id => known.includes(id)) : SECTION_DEFS.filter(d => d.off).map(d => d.id);
+  SECTION_DEFS.forEach(d => {
+    if (!order.includes(d.id)) { order.push(d.id); if (saved && d.off && !hidden.includes(d.id)) hidden.push(d.id); }
+  });
+  return { order, hidden };
+}
+function saveDashLayout(layout) {
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* noop */ }
+}
+
+// お知らせの欄: 未読のお知らせを3件まで（数えるのは少し重いので1分おきに作り直す）
+let noticesCache = { at: 0, html: '' };
+function noticesWidgetHtml() {
+  if (Date.now() - noticesCache.at < 60000 && noticesCache.html) return noticesCache.html;
+  let html;
+  try {
+    const list = collectNotices().filter(n => !isSeen(n.id));
+    html = list.length
+      ? list.slice(0, 3).map(n => item({ name: escapeHtml(n.title), note: n.body ? escapeHtml(n.body) : '' })).join('')
+        + `<button type="button" class="edb-plain-btn" data-dash-open="notices">${t(list.length > 3 ? `お知らせをすべて見る（${list.length}件）` : 'お知らせを開く', list.length > 3 ? `See all ${list.length} notices` : 'Open notices')}</button>`
+      : `<div class="dash-empty">${t('新しいお知らせはありません', 'No new notices')}</div>`;
+  } catch (e) { html = `<div class="dash-empty">${t('お知らせを読み込めませんでした', 'Could not load notices')}</div>`; }
+  noticesCache = { at: Date.now(), html };
+  return html;
+}
+// 今月のふりかえりの欄: 今月に所持にしたアイテム・エモートの数（features/recap と同じ記録から数える）
+function recapWidgetHtml() {
+  const now = new Date();
+  const inMonth = iso => { const d = new Date(iso); return !isNaN(d) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); };
+  const read = k => { try { return JSON.parse(localStorage.getItem(nsKey(k))) || {}; } catch (e) { return {}; } };
+  const items = Object.values(read('itemAcquireLog_v1')).filter(e => e && inMonth(e.at)).length;
+  const emotes = Object.values(read('emoteAcquireLog_v1')).filter(e => e && inMonth(e.at)).length;
+  return item({ name: t('集めたアイテム', 'Items collected'), time: `${items}` })
+    + item({ name: t('覚えたエモート', 'Emotes learned'), time: `${emotes}` })
+    + `<button type="button" class="edb-plain-btn" data-dash-open="recap">${t('ふりかえりを開く', 'Open Recap')}</button>`;
+}
+
+// 「表示を編集」の欄（一覧は1秒ごとに描き直すが、こちらは押した時だけ描き直す）
+function layoutEditorHtml(open) {
+  const layout = dashLayout();
+  return `<div class="dash-section edb-layout${open ? ' is-open' : ''}">
+    <button type="button" class="edb-layout-toggle" data-layout="toggle" aria-expanded="${open}">
+      <svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-settings"/></svg>${t('表示を編集', 'Customize')}
+    </button>
+    ${open ? `<ul class="edb-layout-list">${layout.order.map((id, i) => {
+      const d = SECTION_DEFS.find(x => x.id === id);
+      const on = !layout.hidden.includes(id);
+      const label = t(d.ja, d.en);
+      return `<li class="edb-layout-row">
+        <label class="edb-layout-name"><input type="checkbox" data-layout="show" data-id="${id}"${on ? ' checked' : ''}> ${escapeHtml(label)}</label>
+        <button type="button" class="edb-layout-move" data-layout="up" data-id="${id}"${i === 0 ? ' disabled' : ''} aria-label="${escapeHtml(t(`${label}を上へ`, `Move ${label} up`))}"><svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-chevron-up"/></svg></button>
+        <button type="button" class="edb-layout-move" data-layout="down" data-id="${id}"${i === layout.order.length - 1 ? ' disabled' : ''} aria-label="${escapeHtml(t(`${label}を下へ`, `Move ${label} down`))}"><svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+      </li>`;
+    }).join('')}</ul>
+    <button type="button" class="edb-plain-btn" data-layout="reset">${t('最初の並びに戻す', 'Reset to default')}</button>` : ''}
+  </div>`;
 }
 
 /* ================================================================
@@ -913,6 +1002,15 @@ function injectStyles() {
 @media (prefers-reduced-motion: reduce) { .dash-calendar-chevron { transition: none; } }
 .dash-cal-bar.half-end { width: 50%; }
 .dash-cal-bar.half-start { width: 50%; justify-self: end; }
+.edb-layout-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 2px; border: 0; background: none; color: var(--hub-text-2); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.edb-layout-toggle .inline-icon { stroke: currentColor; }
+.edb-layout-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.edb-layout-row { display: flex; align-items: center; gap: 4px; padding: 4px 0; border-bottom: 0.5px solid var(--hub-sep); }
+.edb-layout-name { flex: 1; display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13px; color: var(--hub-text); cursor: pointer; }
+.edb-layout-name input { width: 18px; height: 18px; accent-color: var(--hub-accent); margin: 0; }
+.edb-layout-move { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: var(--hub-bg); color: var(--hub-text); cursor: pointer; }
+.edb-layout-move:disabled { opacity: 0.3; cursor: default; }
+.edb-layout-move .inline-icon { stroke: currentColor; }
 .edb-reminder-row { align-items: center; flex-wrap: nowrap; cursor: pointer; }
 .edb-select { flex-shrink: 0; padding: 4px 8px; border: 0.5px solid var(--hub-sep); border-radius: 8px; background: var(--hub-card); color: var(--hub-text); font: inherit; font-size: 12.5px; }
 .edb-plain-btn { display: block; width: 100%; margin-top: 6px; padding: 8px 12px; border: 0.5px solid var(--hub-sep); border-radius: 10px; background: var(--hub-card); color: var(--hub-accent-ink, var(--hub-accent)); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -1161,7 +1259,41 @@ function rerenderBody(body, html) {
 // rootの中身を描画してイベントを結び付ける（一時マウントと常設パネルで共通。
 // IDはすべてroot内でのquerySelectorで引くので、2か所に同時に出ても干渉しない）
 function renderInto(root, withIcs) {
-  root.innerHTML = `<div id="edbBody">${buildHtml(getData())}</div>${withIcs ? icsExportSectionHtml() : ''}${reminderSectionHtml()}`;
+  root.innerHTML = `<div id="edbBody">${buildHtml(getData())}</div>${withIcs ? icsExportSectionHtml() : ''}${reminderSectionHtml()}<div class="edb-layout-host">${layoutEditorHtml(false)}</div>`;
+  // 表示を編集（並び替え・表示切替）。変えたら、出ているダッシュボード（モーダルと常設パネル）をすべて描き直す
+  const host = root.querySelector('.edb-layout-host');
+  host.addEventListener('click', e => {
+    const b = e.target.closest('[data-layout]');
+    if (!b || b.dataset.layout === 'show') return;
+    const layout = dashLayout();
+    const act = b.dataset.layout;
+    if (act === 'toggle') { host.innerHTML = layoutEditorHtml(!host.querySelector('.edb-layout.is-open')); return; }
+    if (act === 'reset') { try { localStorage.removeItem(LAYOUT_KEY); } catch (err) { /* noop */ } }
+    if (act === 'up' || act === 'down') {
+      const i = layout.order.indexOf(b.dataset.id), j = act === 'up' ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= layout.order.length) return;
+      [layout.order[i], layout.order[j]] = [layout.order[j], layout.order[i]];
+      saveDashLayout(layout);
+    }
+    host.innerHTML = layoutEditorHtml(true);
+    host.querySelector(`[data-layout="${act}"][data-id="${b.dataset.id}"]`)?.focus();
+    [containerEl, persistentEl].forEach(tickInto);
+  });
+  host.addEventListener('change', e => {
+    const c = e.target.closest('[data-layout="show"]');
+    if (!c) return;
+    const layout = dashLayout();
+    layout.hidden = c.checked ? layout.hidden.filter(x => x !== c.dataset.id) : [...layout.hidden, c.dataset.id];
+    saveDashLayout(layout);
+    [containerEl, persistentEl].forEach(tickInto);
+  });
+  // お知らせ・ふりかえりの欄のボタン
+  root.addEventListener('click', e => {
+    const b = e.target.closest('[data-dash-open]');
+    if (!b || !root.contains(b)) return;
+    if (b.dataset.dashOpen === 'notices') import('../../js/chrome/notice-modal.js').then(m => m.open());
+    if (b.dataset.dashOpen === 'recap') { document.getElementById('dashModalOverlay')?.classList.remove('open'); location.hash = '#/recap/month'; }
+  });
   mountBackupReminder(root); // しばらくバックアップしていない時だけ、先頭に控えめな帯（js/backup-reminder.js）
 
   const cb = root.querySelector('#edbReminderCheckbox');
