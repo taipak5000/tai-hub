@@ -18,6 +18,7 @@ import * as sidePanels from './side-panels.js';
 import { getActiveTheme, wipeWallpapers, PRESETS, sameLook } from '../theme.js';
 import { ROUTES } from '../router-registry.js';
 import { homeIconLabel } from './home-icon.js';
+import { recordBackup } from '../backup-reminder.js';
 
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
@@ -51,7 +52,8 @@ let overlayEl = null;
 let cardEl = null;
 let studio = null; // 着せ替え画面のモジュール（開いた時に読み込む）
 
-export function open() {
+/** opts.focus === 'backup' なら「データのバックアップ」の欄までスクロールして目立たせる（ダッシュボードの帯から開いた時） */
+export function open(opts) {
   if (studio) studio.unmount(); // Escなどで着せ替え画面のまま閉じられていた場合の後始末
   document.getElementById('settingsModalOverlay')?.remove();
   studio = null;
@@ -65,6 +67,15 @@ export function open() {
   document.body.appendChild(overlayEl);
   renderMain();
   requestAnimationFrame(() => overlayEl.classList.add('open'));
+  if (opts && opts.focus === 'backup') {
+    setTimeout(() => {
+      const row = document.getElementById('settingsBackupRow');
+      if (!row) return;
+      row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      row.classList.add('is-focus');
+      setTimeout(() => row.classList.remove('is-focus'), 1800);
+    }, 320);
+  }
 }
 
 // 設定一覧（シートの中身）を描く。着せ替え画面から戻ってきた時にも使う
@@ -125,7 +136,7 @@ function renderMain() {
           <input type="checkbox" id="settingsShowTitlesCheckbox"${getShowTitlesEnabled() ? ' checked' : ''}>
         </label>
       </div>
-      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div class="settings-row settings-backup-row" id="settingsBackupRow" style="flex-direction:column;align-items:stretch;gap:8px;">
         <span>${t('データのバックアップ', 'Data Backup')}</span>
         <div style="display:flex;gap:8px;">
           <button type="button" class="pf-icon-btn" id="settingsExportBtn" style="flex:1;">${t('書き出し', 'Export')}</button>
@@ -152,6 +163,7 @@ function renderMain() {
   document.getElementById('settingsShowTitlesCheckbox').addEventListener('change', e => setShowTitlesEnabled(e.target.checked));
   document.getElementById('settingsExportBtn').addEventListener('click', () => {
     const count = exportAllData();
+    recordBackup();
     document.getElementById('settingsStatus').textContent = t(`書き出しました（${count}件のキー）。`, `Exported (${count} keys).`);
   });
   document.getElementById('settingsImportInput').addEventListener('change', onImportFileSelected);

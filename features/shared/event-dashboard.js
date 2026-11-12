@@ -82,6 +82,7 @@
    ================================================================ */
 
 import { CURRENT_LANG } from '../../js/i18n.js';
+import { mountBackupReminder } from '../../js/backup-reminder.js';
 import { pacificFakeToReal, cycleBounds, cycleIndexAt, ptOffsetChanges, ptParts, ptToReal } from '../../js/pacific-time.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, CANDLE_BONUS_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES,
@@ -1114,6 +1115,7 @@ function rerenderBody(body, html) {
 // IDはすべてroot内でのquerySelectorで引くので、2か所に同時に出ても干渉しない）
 function renderInto(root, withIcs) {
   root.innerHTML = `<div id="edbBody">${buildHtml(getData())}</div>${withIcs ? icsExportSectionHtml() : ''}${reminderSectionHtml()}`;
+  mountBackupReminder(root); // しばらくバックアップしていない時だけ、先頭に控えめな帯（js/backup-reminder.js）
 
   const cb = root.querySelector('#edbReminderCheckbox');
   const sel = root.querySelector('#edbReminderMinutes');

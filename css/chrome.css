@@ -215,6 +215,10 @@
 
 /* ── 設定モーダル ── */
 .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--hub-sep); }
+/* ダッシュボードの「バックアップする」から開いた時、バックアップの欄を少しの間だけ目立たせる（js/backup-reminder.js） */
+.settings-backup-row { border-radius: 10px; transition: background-color 0.4s ease, box-shadow 0.4s ease; }
+.settings-backup-row.is-focus { background: var(--hub-accent-bg); box-shadow: 0 0 0 8px var(--hub-accent-bg); }
+@media (prefers-reduced-motion: reduce) { .settings-backup-row { transition: none; } }
 .settings-row:last-child { border-bottom: 0; }
 .settings-btn { border: 0; background: var(--hub-sep); color: var(--hub-text); border-radius: 10px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .settings-btn.active { background: var(--hub-accent); color: #fff; }
