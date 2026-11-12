@@ -12,6 +12,21 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.12',
+    title: { ja: '達成率の推移・画像カード・ピン留めなどを追加', en: 'Completion graph, image cards, pinned tools and more' },
+    date: '2026-11-12',
+    items: [
+      { type: 'new', ja: 'アイテム所持管理で、アイテムの名前を押すと詳細が開くようにしました。価格の確認、ほしいもの計画への追加、名前での検索ができます。', en: 'Item Tracker: tap an item name to see its price, add it to your Wishlist Plan, or search for it.', route: 'item' },
+      { type: 'new', ja: 'アイテム所持管理に「達成率の推移」を追加しました。チェックを変えた日ごとに達成率を記録して、グラフで見られます。ふりかえりにも、その期間の伸びが出ます。', en: 'Item Tracker: a graph of your completion rate over time, also summarized in Recap.', route: 'item' },
+      { type: 'new', ja: '達成率とコーデ日記を、そのまま投稿できる画像カード（横長・正方形）にできるようにしました。色は今の着せ替えに合わせます。', en: 'Save your completion rate or an outfit as an image card (wide or square) in your theme colors.' },
+      { type: 'new', ja: 'ダッシュボードの季節・イベント・旅の精霊・フレンドの記念日を、カレンダーアプリに追加できるようにしました。まとめて書き出すこともできます。', en: 'Add dashboard events, spirits and friend anniversaries to your calendar app, one by one or all at once.' },
+      { type: 'improve', ja: 'ダッシュボードの欄を並び替えたり、隠したりできるようにしました。「お知らせ」と「今月のふりかえり」の欄も選べます。', en: 'Rearrange or hide dashboard sections, and add Notices or This Month sections.' },
+      { type: 'new', ja: 'よく使うツールを4つまでピン留めして、画面の上からすぐ開けるようにしました（「他のツール」の一覧のピンから）。', en: 'Pin up to four tools to the top of the screen from the Other Tools list.' },
+      { type: 'new', ja: '着せ替えに、草原・雨林・峡谷・捨てられた地・書庫・天界をイメージした見本を追加しました。', en: 'New realm-inspired themes: Prairie, Forest, Valley, Wasteland, Vault and Heaven.' },
+      { type: 'improve', ja: 'しばらくバックアップしていない時に、ダッシュボードでお知らせするようにしました。', en: 'The dashboard now reminds you when you haven’t backed up for a while.' },
+    ],
+  },
+  {
     version: '2026.11.11',
     title: { ja: 'いたずらな日々の終了日時を修正', en: 'Days of Mischief end time fixed' },
     date: '2026-11-11',

@@ -186,6 +186,14 @@ const landingPoint = currentY + project(v);
   （元の`<select>`は隠して残し、選び直すと`change`を起こす。値は`eventSet(selectEl)`で受け取る。空＝すべて）。
 - **精霊ツリーの楽譜ノード**: `spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける。
   楽譜だけ旧キー`musicSheets`にしかデータが無い場合があるので、読み書きは`readMusicOwnedRaw()`を通す。
+- **アイテムの詳細シート**（`features/item/item-detail-sheet.js`）: カテゴリ一覧・全アイテムでアイテム名を押すと開く。ほしいもの計画への追加は既存の`wish_<cat>`に書くだけ。
+- **達成率の記録**（`js/collection-history.js`）: `saveCategoryState()`が送る`hub-collection-changed`で、その日の分を1件だけ記録（`collectionHistory_v1`、365日まで）。
+  グラフは`features/item/history-chart.js`（自前のSVG）、ふりかえりにも伸びを出す。
+- **画像カード**（`js/share-card.js`）: 達成率・コーデをCanvasで描く（1200×630／1080×1080、色は`--hub-*`から）。外部の画像は`crossOrigin`で読めた物だけ描く。
+- **カレンダー書き出し**（`js/ics.js`）: ダッシュボードの各予定は日本時間の日付で終日の予定にする。記念日は端末の日付のまま。
+- **ダッシュボードの並び**（`sky_hub_dash_layout_v1`、端末ごと）: 欄を足す時は`event-dashboard.js`の`SECTION_DEFS`と`parts`の両方に足す。
+- **バックアップのリマインド**（`js/backup-reminder.js`）・**はじめての案内**（`js/onboarding.js`）: どちらもダッシュボードの先頭に出す。案内は記録が何も無いプロフィールにだけ。
+- **ピン留め**（`js/chrome/pin-bar.js`、`sky_hub_pinned_tools`、最大4つ）: 「他のツール」の一覧のピンで留め、`#app-root`の上に並べる。
 - アクセント色を**文字**に使う時は`--hub-accent`ではなく`--hub-accent-ink`を使う（着せ替え中は背景に対して4.5:1を保証した色が入る）。
 
 ## 更新履歴と「新しいバージョンがあります」
