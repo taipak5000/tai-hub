@@ -666,7 +666,10 @@ function buildHtml(data) {
     // 精霊団など名前の付いた来訪（season-data.js の labelJa/labelEn）はその名前で出す
     const label = schedule && schedule.labelJa ? escapeHtml(t(schedule.labelJa, schedule.labelEn || schedule.labelJa)) : t('再訪精霊', 'Revisit Spirit');
     const plain = label.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    push(rv.target, item({ name: label, state: rv.active ? t('帰るまで', 'Leaves in') : t('来訪まで', 'Arrives in'), time: countdown(rv.target),
+    // 精霊団の顔ぶれ（spiritsJa/spiritsEn）が分かっていれば、名前の下に並べる
+    const members = schedule && Array.isArray(schedule.spiritsJa) && schedule.spiritsJa.length
+      ? escapeHtml((CURRENT_LANG === 'en' && Array.isArray(schedule.spiritsEn) && schedule.spiritsEn.length ? schedule.spiritsEn : schedule.spiritsJa).join(t('・', ', '))) : '';
+    push(rv.target, item({ name: label, state: rv.active ? t('帰るまで', 'Leaves in') : t('来訪まで', 'Arrives in'), time: countdown(rv.target), note: members || undefined,
       ics: { id: `revisit-${rv.active ? 'leave' : 'arrive'}-${rv.target.getTime()}`, summary: rv.active ? t(`${plain} 帰る日`, `${plain} leaves`) : t(`${plain} 来訪`, `${plain} arrives`), at: rv.target } }));
   });
   const edenTarget = nextEdenResetTarget();

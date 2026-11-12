@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.12.4',
+    version: '2026.11.12.5',
     title: { ja: '達成率の推移・画像カード・ピン留めなどを追加、アイテム別コストを見やすく', en: 'Completion graph, image cards, pinned tools, clearer Item Costs' },
     date: '2026-11-12',
     items: [
+      { type: 'improve', ja: '11/13から来る「来訪する精霊団」の顔ぶれ（そっと覗く郵便屋・ハグ好きの隠者・のんびり屋の音楽家・一生懸命な舞台美術家）を、お知らせとダッシュボードに出すようにしました。「待っている」精霊が混じっていればお知らせで教えます。アイテムの「今手に入る」絞り込みにも、4人のアイテムが入ります。', en: 'The Traveling Spirit Group arriving 11/13 (Peeking Postman, Bearhug Hermit, Mellow Musician, Frantic Stagehand) now appears in Notices and the dashboard, including your waitlist and “available now” filters.', route: 'tai-revisit' },
       { type: 'improve', ja: 'アイテム別コストを見やすくしました。残りコストと、かかったコストを最初から並べて表示し、一覧は1行ずつのコンパクトな形にしました（行を押すと入手経緯の切り替えなどが開きます）。アイテム名での検索、季節ごとの小計と折りたたみも追加しています。上のボタンから、プレゼント履歴・キャンドル課金へすぐ移動できます。', en: 'Item Costs is easier to read: remaining and spent totals side by side, compact rows (tap for details), name search, per-season subtotals you can collapse, and shortcuts to Gift and Candle purchase records.', route: 'item', sub: 'cost' },
       { type: 'new', ja: 'アイテム所持管理で、アイテムの名前を押すと詳細が開くようにしました。価格の確認、ほしいもの計画への追加、名前での検索ができます。', en: 'Item Tracker: tap an item name to see its price, add it to your Wishlist Plan, or search for it.', route: 'item' },
       { type: 'new', ja: 'アイテム所持管理に「達成率の推移」を追加しました。チェックを変えた日ごとに達成率を記録して、グラフで見られます。ふりかえりにも、その期間の伸びが出ます。', en: 'Item Tracker: a graph of your completion rate over time, also summarized in Recap.', route: 'item' },

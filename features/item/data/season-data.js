@@ -86,11 +86,31 @@ export const REVISIT_SPIRIT_SCHEDULES = [
     intervalDays: 14,
   },
   {
-    // 来訪する精霊団（日本時間 2026/11/13 17:00 〜 11/27 16:59:59）。来る精霊とアイテムは未発表。
-    // 分かったら items（と分かれば spiritJa/spiritEn）を書き足す。labelJa/labelEn はお知らせ・ダッシュボードに出す名前
+    // 来訪する精霊団（日本時間 2026/11/13 17:00 〜 11/27 16:59:59）。labelJa/labelEn はお知らせ・ダッシュボードに出す名前。
+    // 複数の精霊が一緒に来る時は spiritsJa/spiritsEn に並べる（spiritsEn は「待っている」印との照合に使う）。
+    // items は各精霊の精霊ツリーでキャンドルで買えるアイテム
     labelJa: '来訪する精霊団',
     labelEn: 'Traveling Spirit Group',
-    items: [],
+    spiritsJa: ['そっと覗く郵便屋', 'ハグ好きの隠者', 'のんびり屋の音楽家', '一生懸命な舞台美術家'],
+    spiritsEn: ['Peeking Postman', 'Bearhug Hermit', 'Mellow Musician', 'Frantic Stagehand'],
+    items: [
+      // そっと覗く郵便屋（夢かなう季節）
+      { catKey: 'shoes', id: 'shoes_001' },
+      { catKey: 'outfit', id: 'outfit_010' },
+      { catKey: 'mask', id: 'mask_036' },
+      { catKey: 'cape', id: 'cape_045' },
+      // ハグ好きの隠者（夢かなう季節）
+      { catKey: 'hairstyle', id: 'hairstyle_068' },
+      { catKey: 'head_accessory', id: 'head_accessory_003' },
+      { catKey: 'outfit', id: 'outfit_076' },
+      // のんびり屋の音楽家（表現者たちの季節）
+      { catKey: 'hairstyle', id: 'hairstyle_094' },
+      { catKey: 'mask', id: 'mask_059' },
+      { catKey: 'cape', id: 'cape_066' },
+      // 一生懸命な舞台美術家（表現者たちの季節）
+      { catKey: 'hairstyle', id: 'hairstyle_092' },
+      { catKey: 'mask', id: 'mask_056' },
+    ],
     start: '2026-11-13T00:00:00-08:00',
     end: '2026-11-26T23:59:59-08:00',
   },

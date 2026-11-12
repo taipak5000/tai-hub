@@ -114,8 +114,14 @@ export function collectNotices(nowDate = new Date()) {
     if (!w) return;
     if (!w.active && w.start - now > 7 * DAY) return;
     const knownSpirit = !w.unknownSpirit;
-    const name = knownSpirit ? (CURRENT_LANG === 'en' ? s.spiritEn : s.spiritJa) : null;
-    const waiting = knownSpirit && s.spiritEn && waitlist.has(s.spiritEn);
+    // 精霊団のように複数の精霊が一緒に来る時は spiritsJa/spiritsEn。待っている精霊が混じっていれば、その精霊の名前で知らせる
+    const groupJa = Array.isArray(s.spiritsJa) ? s.spiritsJa : [];
+    const groupEn = Array.isArray(s.spiritsEn) ? s.spiritsEn : [];
+    const waitIdx = knownSpirit ? groupEn.findIndex(en => waitlist.has(en)) : -1;
+    const name = !knownSpirit ? null
+      : waitIdx >= 0 ? (CURRENT_LANG === 'en' ? groupEn[waitIdx] : (groupJa[waitIdx] || groupEn[waitIdx]))
+      : (CURRENT_LANG === 'en' ? s.spiritEn : s.spiritJa);
+    const waiting = knownSpirit && (waitIdx >= 0 || (s.spiritEn && waitlist.has(s.spiritEn)));
     const wishItems = knownSpirit ? (s.items || []).filter(it => getWishIds(it.catKey).includes(String(it.id)) && !isItemOwned(it.catKey, it.id)) : [];
     const when = w.active ? t(`終了まで${daysLeftText(w.end - now)}（${fmtDate(w.end)}まで）`, `Ends in ${daysLeftText(w.end - now)} (until ${fmtDate(w.end)})`)
       : t(`${fmtDate(w.start)}から`, `From ${fmtDate(w.start)}`);
@@ -125,6 +131,7 @@ export function collectNotices(nowDate = new Date()) {
     else if (s.labelJa) title = w.active ? t(`「${s.labelJa}」が来ています`, `${s.labelEn || s.labelJa} is here`) : t(`「${s.labelJa}」がもうすぐ来ます`, `${s.labelEn || s.labelJa} arrives soon`);
     else title = t('次の旅の精霊がもうすぐ来ます', 'The next traveling spirit arrives soon');
     let body = when;
+    if (knownSpirit && groupJa.length) body += '\n' + (CURRENT_LANG === 'en' ? (groupEn.length ? groupEn : groupJa) : groupJa).join(t('・', ', '));
     if (wishItems.length) body += t(`\n欲しいものリストのアイテムが${wishItems.length}つ手に入ります`, `\n${wishItems.length} item(s) on your wishlist are available`);
     out.push({
       id: `revisit:${si}:${dateKey(w.start)}${waiting ? ':w' : ''}${wishItems.length ? ':i' : ''}`,
