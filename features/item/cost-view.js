@@ -658,7 +658,11 @@ function renderItems() {
       `<option value="">${t('ジャンプ', 'Jump to')}</option>` +
       (seasonOptions ? `<optgroup label="${t('季節', 'Seasons')}">${seasonOptions}</optgroup>` : '') +
       (dayOptions ? `<optgroup label="${t('日々', 'Days')}">${dayOptions}</optgroup>` : '') +
-      (otherOptions ? `<optgroup label="${t('その他', 'Other')}">${otherOptions}</optgroup>` : '');
+      (otherOptions ? `<optgroup label="${t('その他', 'Other')}">${otherOptions}</optgroup>` : '') +
+      `<optgroup label="${t('下のメニュー', 'Sections below')}">`
+        + `<option value="sec:gift">${t('課金アイテムプレゼント履歴', 'Gift Purchase History')}</option>`
+        + `<option value="sec:candle">${t('キャンドル課金', 'Candle Purchases')}</option>`
+        + `<option value="sec:about">${t('この集計について', 'About these costs')}</option></optgroup>`;
   }
   updateFilterControls();
 
@@ -707,8 +711,35 @@ function updateFilterControls() {
   }
 }
 
+// 一覧の下にある「課金の記録」「この集計について」へ移動する。閉じていれば開いてから移る
+const SECTION_TARGETS = {
+  gift: ['#costGiftCard', '#costGiftBody', () => toggleGiftCard()],
+  candle: ['#costCandleCard', '#costCandleBody', () => toggleCandleCard()],
+  about: ['#costAboutCard', '#costAboutBody', () => toggleAbout()],
+};
+function jumpToSection(name) {
+  const target = SECTION_TARGETS[name];
+  if (!target || !hostEl) return;
+  const [cardSel, bodySel, open] = target;
+  const body = hostEl.querySelector(bodySel);
+  if (body && body.style.display === 'none') open();
+  const card = hostEl.querySelector(cardSel);
+  if (!card) return;
+  // 間の一覧は画面に入るまで高さが見積もり（content-visibility）なので、一度で飛んでから描かれた高さで合わせ直す
+  card.scrollIntoView({ block: 'start' });
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (card.isConnected) card.scrollIntoView({ block: 'start' }); }));
+  const head = card.querySelector('.cost-collapse-head');
+  if (head) head.focus({ preventScroll: true });
+}
+
 function jumpToGroup(gid) {
   if (!gid || !hostEl) return;
+  if (gid.startsWith('sec:')) {
+    jumpToSection(gid.slice(4));
+    const js = hostEl.querySelector('#costJumpSelect');
+    if (js) js.value = '';
+    return;
+  }
   const el = hostEl.querySelector(`#${gid}`);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const jumpSelect = hostEl.querySelector('#costJumpSelect');
@@ -1442,6 +1473,12 @@ function renderShell() {
           </div>
         </section>
 
+        <nav class="cost-section-nav" aria-label="${t('下のメニューへ移動', 'Jump to sections below')}">
+          <button type="button" class="cost-section-chip" onclick="window.__costViewJumpToSection('gift')">${ICON_GIFT}<span>${t('プレゼント履歴', 'Gift history')}</span></button>
+          <button type="button" class="cost-section-chip" onclick="window.__costViewJumpToSection('candle')"><svg class="inline-icon" width="15" height="15"><use href="#i-candle"/></svg><span>${t('キャンドル課金', 'Candle purchases')}</span></button>
+          <button type="button" class="cost-section-chip" onclick="window.__costViewJumpToSection('about')"><svg class="inline-icon" width="15" height="15"><use href="#i-warning"/></svg><span>${t('集計について', 'About')}</span></button>
+        </nav>
+
         <div class="cost-filter-bar" id="costFilterBar">
           <div class="cost-search">
             <svg class="inline-icon" width="16" height="16" aria-hidden="true"><use href="#i-search"/></svg>
@@ -1493,7 +1530,7 @@ function renderShell() {
         <div id="costItemList"></div>
 
         <p class="sec-label cost-more-label">${t('課金の記録', 'Purchase records')}</p>
-        <div class="cost-gift-card">
+        <div class="cost-gift-card" id="costGiftCard">
           ${collapseHeadHtml('window.__costViewToggleGiftCard()', 'costGiftToggleIcon', `${ICON_GIFT} ${t('課金アイテムプレゼント履歴', 'Gift Purchase History')}`, 'costGiftBody')}
           <div id="costGiftBody" style="display:none;">
             <p class="cost-note">${t('相手にプレゼントするために購入した課金アイテムを記録できます。実額の合計に加算するかは1件ずつ任意で選べます。', 'Record real-money items you bought to gift to another player. You can optionally include each one in the real-money total above.')}</p>
@@ -1525,7 +1562,7 @@ function renderShell() {
           </div>
         </div>
 
-        <div class="cost-gift-card">
+        <div class="cost-gift-card" id="costCandleCard">
           ${collapseHeadHtml('window.__costViewToggleCandleCard()', 'costCandleToggleIcon', `<svg class="inline-icon" width="20" height="20"><use href="#i-candle"/></svg> ${t('キャンドル課金', 'Candle Purchases')}`, 'costCandleBody')}
           <div id="costCandleBody" style="display:none;">
             <p class="cost-note">${t('常時ショップで購入できるキャンドルパックの購入回数を記録できます。上の実額の合計に含めるかは任意で選べます。', 'Record how many times you bought the candle packs that are always available in the shop. You can optionally include the total in the real-money total above.')}</p>
@@ -1542,7 +1579,7 @@ function renderShell() {
           </div>
         </div>
 
-        <div class="cost-gift-card cost-about-card">
+        <div class="cost-gift-card cost-about-card" id="costAboutCard">
           ${collapseHeadHtml('window.__costViewToggleAbout()', 'costAboutToggleIcon', `<svg class="inline-icon" width="16" height="16"><use href="#i-warning"/></svg> ${t('この集計について', 'About these costs')}`, 'costAboutBody')}
           <div id="costAboutBody" class="cost-about-body" style="display:none;">
           ${en
@@ -1570,6 +1607,7 @@ const HANDLERS = {
   __costViewJumpToGroup: gid => jumpToGroup(gid),
   __costViewToggleAbout: () => toggleAbout(),
   __costViewToggleRow: key => toggleRow(key),
+  __costViewJumpToSection: name => jumpToSection(name),
   __costViewToggleGroup: gkey => toggleGroup(gkey),
   __costViewToggleAllGroups: () => toggleAllGroups(),
   __costViewSetOwnFilter: v => setOwnFilter(v),
@@ -1734,6 +1772,18 @@ function injectStyles() {
 .item-view .cost-collapse-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 44px; padding: 0; margin: -4px 0; background: none; border: 0; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; text-align: left; cursor: pointer; }
 .item-view .cost-collapse-head > span:first-child { display: flex; align-items: center; gap: 6px; }
 .item-view .cost-more-label { margin-top: 28px; }
+.item-view .cost-gift-card { scroll-margin-top: calc(var(--update-bar-h, 0px) + 12px); }
+.item-view .cost-section-nav { display: flex; gap: 4px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; }
+.item-view .cost-section-nav::-webkit-scrollbar { display: none; }
+.item-view .cost-section-chip {
+  flex: 1 0 auto; min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding: 0 5px;
+  background: var(--card); border: 1px solid var(--sep); border-radius: 999px; color: var(--cost-link); cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+}
+.item-view .cost-section-chip .inline-icon, .item-view .cost-section-chip svg { stroke: currentColor; flex-shrink: 0; }
+.item-view .cost-section-chip:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .item-view .cost-section-chip:active { transform: none; opacity: 0.7; } }
+@media (prefers-contrast: more) { .item-view .cost-section-chip { border-color: var(--text-2); } }
 /* ── フィルターバー（sticky）と季節の見出し（sticky・小計つき・折りたたみ）──
    スクロールはページ全体。上端の「新しいバージョン」の帯（--update-bar-h）の下に留め、
    見出しはさらにフィルターバーの高さ（--cost-bar-h。ResizeObserverで実測）ぶん下に留める。 */
