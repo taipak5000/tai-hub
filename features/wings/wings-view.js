@@ -203,12 +203,14 @@ function renderShell() {
       </button>
     </div>
 
-    <div class="notice-card">
-      ${t(
+    <!-- 使い方・注意は1行の要約だけ出し、全文は「詳細」で開く（開閉は保存しない） -->
+    <details class="notice-card wg-intro">
+      <summary><span class="wg-intro-summary">${t('精霊と光の子からもらった光の翼を記録します', 'Track the Winged Light you have collected')}</span><span class="wg-intro-more">${t('詳細', 'Details')}<svg class="inline-icon" width="12" height="12"><use href="#i-chevron-down"/></svg></span></summary>
+      <div class="wg-intro-body">${t(
         '再訪精霊から初回にもらえる<b>光の翼</b>（星のキャンドル2本）を記録します。ケープレベルには、原罪で転生した時の1枚を足しています。',
         'Track the <b>Winged Light</b> you get the first time a Revisit Spirit returns (2 Star Candles). Cape Level includes the 1 you get from reincarnating at Eye of Eden.',
-      )}
-    </div>
+      )}</div>
+    </details>
 
     <div class="summary-card">
       <div class="summary-title">${t('光の翼の合計', 'Total Winged Light')}</div>
@@ -237,16 +239,14 @@ function renderShell() {
       <div class="cape-pips" id="wgCapePips"></div>
     </div>
 
+    <!-- 比較・共有はケープカードの下に1行でまとめる（機能と開く先は従来どおり） -->
+    <div class="share-btn-row compact">
+      <button type="button" class="share-btn customize" id="wgCompareBtn">${t('プロフィール<wbr>を比較', 'Compare Profiles')}</button>
+      <button type="button" class="share-btn twitter" id="wgShareXBtn">${t('Xで画像を<wbr>共有', 'Share image on X')}</button>
+      <button type="button" class="share-btn customize" id="wgShareCustomizeBtn">${t('カスタマイズ<wbr>して共有', 'Customize & share')}</button>
+    </div>
+
     ${titlesSlotHtml('wings')}
-
-    <div class="share-btn-row">
-      <button type="button" class="share-btn customize" id="wgCompareBtn">${t('プロフィールを比較', 'Compare Profiles')}</button>
-    </div>
-
-    <div class="share-btn-row">
-      <button type="button" class="share-btn twitter" id="wgShareXBtn">${t('Xで画像を共有', 'Share image on X')}</button>
-      <button type="button" class="share-btn customize" id="wgShareCustomizeBtn">${t('カスタマイズして共有', 'Customize & share')}</button>
-    </div>
 
     <div class="mode-tabs">
       <button type="button" class="mode-tab active" id="wgTabWings" data-mode="wings">${t('精霊の羽', 'Spirit Wings')}</button>
