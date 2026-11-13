@@ -241,6 +241,15 @@
 .wings-view .spirit-opt-label { flex: 1; min-width: 0; }
 .wings-view .spirit-opt-date { flex-shrink: 0; font-size: 10.5px; color: var(--text-2); white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; }
 .wings-view .spirit-opt.warn { background: var(--red-bg); }
+/* ✓ 所持済みの行（判定は所持の有無だけ。日時の無い旧データも同じ見た目）。光の子タイルの青枠＋✓と同じ青の系統で、
+   未所持の行がいちばんはっきり見えるよう、所持済みは背景をごく薄く・文字を一段落とす */
+.wings-view .spirit-opt.owned { background: color-mix(in srgb, var(--blue-bg) 60%, transparent); }
+.wings-view .spirit-opt.owned:hover { background: var(--blue-bg); }
+.wings-view .spirit-opt.owned .spirit-opt-label { color: var(--text-2); }
+.wings-view .spirit-opt.owned .spirit-opt-date {
+  color: var(--blue); background: var(--blue-bg); border-radius: 999px; padding: 2px 8px 2px 6px; font-weight: 700;
+}
+.wings-view .spirit-opt.owned .spirit-opt-date .inline-icon { stroke: currentColor; color: currentColor; stroke-width: 3; vertical-align: -1px; }
 .wings-view .spirit-opt.warn .spirit-opt-label { color: var(--red); font-weight: 600; }
 /* ⌨️ 矢印キーでの季節精霊/恒常精霊リスト移動時に、今どの行を指しているか示すハイライト */
 .wings-view .spirit-opt.kb-nav-selected { outline: 2px solid var(--blue); outline-offset: -2px; background: var(--blue-bg); }

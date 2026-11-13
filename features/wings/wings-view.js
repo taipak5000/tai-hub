@@ -571,16 +571,15 @@ function renderRevisitOrderList(tracker, endingSoon) {
   });
   if (!rows.length) return '';
   const html = rows.map(({ season, sp, val, last }) => {
-    const dateStr = formatObtainedDate(S.wingObtainedAt(val));
     const warnThis = !val && endingSoon && endingSoon.seasonJa === season.ja;
     const sub = last
       ? t(`${L(season)}・最終再訪 ${formatRevisitDate(last)}`, `${L(season)} · Last revisit ${formatRevisitDate(last)}`)
       : t(`${L(season)}・まだ再訪なし`, `${L(season)} · Not revisited yet`);
     return `
-      <label class="spirit-opt${warnThis ? ' warn' : ''}" data-season="${escapeAttr(season.ja)}" data-spirit="${escapeAttr(sp.ja)}">
+      <label class="spirit-opt${val ? ' owned' : ''}${warnThis ? ' warn' : ''}" data-season="${escapeAttr(season.ja)}" data-spirit="${escapeAttr(sp.ja)}">
         <input type="checkbox" ${val ? 'checked' : ''}>
         <span class="spirit-opt-label">${escapeHtml(L(sp))}<span class="wg-spirit-sub">${escapeHtml(sub)}</span></span>
-        ${dateStr ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${dateStr}に獲得`, `Obtained on ${dateStr}`))}"><svg class="inline-icon" width="12" height="12"><use href="#i-calendar"/></svg> ${escapeHtml(dateStr)}</span>` : ''}
+        ${ownedMarkHtml(val)}
       </label>`;
   }).join('');
   return `
@@ -758,6 +757,19 @@ function markAllLightChildren() {
 }
 
 /* ================================================================
+   ✓ 所持済みの印（精霊の行の右端）。判定は所持の有無（truthy）だけで行い、
+   日時（at）があれば日付、旧データ（true＝日時不明）なら「取得済み」と出す
+   ================================================================ */
+function ownedMarkHtml(val) {
+  if (!val) return '';
+  const dateStr = formatObtainedDate(S.wingObtainedAt(val));
+  const check = '<svg class="inline-icon" width="11" height="11"><use href="#i-check"/></svg>';
+  return dateStr
+    ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${dateStr}に獲得`, `Obtained on ${dateStr}`))}">${check} ${escapeHtml(dateStr)}</span>`
+    : `<span class="spirit-opt-date" title="${escapeAttr(t('獲得日は記録されていません', 'Date not recorded'))}">${check} ${t('取得済み', 'Owned')}</span>`;
+}
+
+/* ================================================================
    称号ロック解除の日付表示・光の子ラベルのEN生成
    ================================================================ */
 function formatObtainedDate(iso) {
@@ -875,13 +887,12 @@ function render() {
 
     const spiritsHtml = visibleSpirits.map(sp => {
       const val = checked[sp.ja];
-      const dateStr = formatObtainedDate(S.wingObtainedAt(val));
       const warnThis = seasonEndingSoon && !val;
       return `
-      <label class="spirit-opt${warnThis ? ' warn' : ''}" data-season="${escapeAttr(season.ja)}" data-spirit="${escapeAttr(sp.ja)}">
+      <label class="spirit-opt${val ? ' owned' : ''}${warnThis ? ' warn' : ''}" data-season="${escapeAttr(season.ja)}" data-spirit="${escapeAttr(sp.ja)}">
         <input type="checkbox" ${val ? 'checked' : ''}>
         <span class="spirit-opt-label">${escapeHtml(L(sp))}</span>
-        ${dateStr ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${dateStr}に獲得`, `Obtained on ${dateStr}`))}"><svg class="inline-icon" width="12" height="12"><use href="#i-calendar"/></svg> ${escapeHtml(dateStr)}</span>` : ''}
+        ${ownedMarkHtml(val)}
       </label>`;
     }).join('');
 
@@ -930,21 +941,19 @@ function render() {
 
       if (spiritSearchQuery && !spiritMatchesSearch(L(sp.name))) return '';
 
-      const t1Date = formatObtainedDate(S.wingObtainedAt(state.tier1));
-      const t2Date = formatObtainedDate(S.wingObtainedAt(state.tier2));
       const t1Unit = sp.t1 === 1 ? '' : 's';
       const t2Unit = sp.t2 === 1 ? '' : 's';
       const tier1Opt = (!permFilterUnowned || !t1Owned) ? `
-      <label class="spirit-opt" data-spirit="${escapeAttr(sp.name.ja)}" data-tier="tier1">
+      <label class="spirit-opt${t1Owned ? ' owned' : ''}" data-spirit="${escapeAttr(sp.name.ja)}" data-tier="tier1">
         <input type="checkbox" ${t1Owned ? 'checked' : ''}>
         <span class="spirit-opt-label">${escapeHtml(L(sp.name))}${t(`（Tier1・星のキャンドル${sp.t1}本）`, ` (Tier 1 · ${sp.t1} Star Candle${t1Unit})`)}</span>
-        ${t1Date ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${t1Date}に獲得`, `Obtained on ${t1Date}`))}"><svg class="inline-icon" width="12" height="12"><use href="#i-calendar"/></svg> ${escapeHtml(t1Date)}</span>` : ''}
+        ${ownedMarkHtml(state.tier1)}
       </label>` : '';
       const tier2Opt = (sp.t2 && (!permFilterUnowned || !t2Owned)) ? `
-      <label class="spirit-opt" data-spirit="${escapeAttr(sp.name.ja)}" data-tier="tier2">
+      <label class="spirit-opt${t2Owned ? ' owned' : ''}" data-spirit="${escapeAttr(sp.name.ja)}" data-tier="tier2">
         <input type="checkbox" ${t2Owned ? 'checked' : ''}>
         <span class="spirit-opt-label">${escapeHtml(L(sp.name))}${t(`（Tier2・星のキャンドル${sp.t2}本）`, ` (Tier 2 · ${sp.t2} Star Candle${t2Unit})`)}</span>
-        ${t2Date ? `<span class="spirit-opt-date" title="${escapeAttr(t(`${t2Date}に獲得`, `Obtained on ${t2Date}`))}"><svg class="inline-icon" width="12" height="12"><use href="#i-calendar"/></svg> ${escapeHtml(t2Date)}</span>` : ''}
+        ${t2Owned ? ownedMarkHtml(state.tier2) : ''}
       </label>` : '';
       return tier1Opt + tier2Opt;
     }).join('');
