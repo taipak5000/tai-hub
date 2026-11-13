@@ -168,8 +168,8 @@ function renderModalHtml() {
 
       <div class="wcm-hint">
         ${en
-          ? 'Add items using the cart button on each category page or the Item Cost page. Items you mark as owned are automatically excluded from the totals.'
-          : '各カテゴリページや「アイテム別コスト」ページのカートボタンで追加できます。入手済みにしたアイテムは自動で合計から外れます。'}
+          ? 'Add items using the cart button on each category page or the Total Spent & Real Money page. Items you mark as owned are automatically excluded from the totals.'
+          : '各カテゴリページや「累計消費コスト・実額」ページのカートボタンで追加できます。入手済みにしたアイテムは自動で合計から外れます。'}
       </div>
 
       <div id="wcmBody"><!-- JS --></div>
@@ -299,8 +299,8 @@ function render() {
   const rows = getWishRows();
   if (rows.length === 0) {
     bodyEl.innerHTML = `<div class="wcm-empty">${en
-      ? 'Your wishlist is empty.<br>Add items using the cart button on each category page or the Item Cost page.'
-      : 'ウィッシュリストは空です。<br>各カテゴリページや「アイテム別コスト」ページのカートボタンで追加できます。'}</div>`;
+      ? 'Your wishlist is empty.<br>Add items using the cart button on each category page or the Total Spent & Real Money page.'
+      : 'ウィッシュリストは空です。<br>各カテゴリページや「累計消費コスト・実額」ページのカートボタンで追加できます。'}</div>`;
     return;
   }
 

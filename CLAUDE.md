@@ -190,7 +190,7 @@ const landingPoint = currentY + project(v);
 - **精霊ツリーの楽譜ノード**: `spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける。
   楽譜だけ旧キー`musicSheets`にしかデータが無い場合があるので、読み書きは`readMusicOwnedRaw()`を通す。
 - **アイテムの詳細シート**（`features/item/item-detail-sheet.js`）: カテゴリ一覧・全アイテムでアイテム名を押すと開く。ほしいもの計画への追加は既存の`wish_<cat>`に書くだけ。
-- **アイテム別コスト**（`features/item/cost-view.js`、`#/item/cost`）: サマリー（残り＝塗りの面／かかった＝淡い面）→stickyなフィルターバー→季節ごとの一覧→課金の記録→「この集計について」の順。
+- **累計消費コスト・実額**（旧アイテム別コスト。`features/item/cost-view.js`、`#/item/cost`）: サマリー（残り＝塗りの面／かかった＝淡い面）→stickyなフィルターバー→季節ごとの一覧→課金の記録→「この集計について」の順。
   一覧の行は名前と価格だけで、入手経緯の切替などは行を押すと開く詳細（開いた行だけ中身を描く。`openItems`）。集計は`computeOwnedBreakdown()`／`computeRemainBreakdown()`が
   アイテムごとの寄与を記録し、季節の小計はその和（小計の和＝サマリーのアイテム分。プレゼント履歴・キャンドル課金は小計に入らない）。意味色は`--cost-*`（着せ替え中は`TOOL_MAPS`が上書き）。
 - **達成率の記録**（`js/collection-history.js`）: `saveCategoryState()`が送る`hub-collection-changed`で、その日の分を1件だけ記録（`collectionHistory_v1`、365日まで）。
@@ -214,7 +214,7 @@ const landingPoint = currentY + project(v);
   （`body`の先頭に差し込み`position:sticky`）。お知らせと、関連ツール一覧の下のバージョン欄にも出る。`service-worker.js`は`?fresh`付きの要求を素通しにする。
   新しい版で開いた最初の1回は「Ver.… に更新しました」のトーストを出す（`sky_hub_seen_version`）。
 
-## アイテム別コストの価格データ（`features/item/data/cost-data.js`）
+## 累計消費コスト・実額の価格データ（`features/item/data/cost-data.js`）
 
 - `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル）／`reward`（季節パスの報酬＝「報酬」）／
   `free`（精霊ツリーで無料＝「無料」）／`na`／`unknown`。`seasonCandle`・`reward`・`free`はキャンドルの合計に入れない（表示とフィルターだけ）。

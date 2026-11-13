@@ -1437,7 +1437,7 @@ function renderShell() {
     <div class="item-view">
       <div class="cost-wrap">
         <a href="#/item" class="back-link">${en ? '&larr; Back to Category List' : '&larr; カテゴリ一覧へ戻る'}</a>
-        <h1 class="item-large-title">${en ? 'Item Costs' : 'アイテム別コスト'}</h1>
+        <h1 class="item-large-title">${en ? 'Total Spent & Real Money' : '累計消費コスト・実額'}</h1>
 
         <section class="cost-summary" aria-label="${t('コストの合計', 'Cost totals')}">
           <div class="cost-sum-sec remain">

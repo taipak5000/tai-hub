@@ -241,7 +241,7 @@ function renderShell() {
       <div class="dash-feature-row">
         ${featureBtnHtml({
           href: '#/item/cost', icon: 'i-coin',
-          label: en ? 'Item Cost Breakdown' : 'アイテム別コスト',
+          label: en ? 'Total Spent & Real Money' : '累計消費コスト・実額',
           desc: en ? 'Check the actual acquisition cost of owned items (Candles, Wax, Hearts, real currency)'
                    : '所持アイテムの実際の入手コスト（キャンドル・星のキャンドル・ハート・実額）を確認できます',
         })}

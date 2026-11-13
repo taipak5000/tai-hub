@@ -40,7 +40,7 @@ export const COST_ICONS = { coin: ICON_COIN, candle: ICON_CANDLE, star: ICON_STA
 function t(ja, en) { return CURRENT_LANG === 'en' ? en : ja; }
 
 function brandHtml() {
-  return `<div class="ish-exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px">${ICON_COIN}</svg>${t('アイテム別コスト管理', 'Item Cost Tracker')}</div>`;
+  return `<div class="ish-exp-brand"><svg width="13" height="13" viewBox="0 0 24 24" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:3px">${ICON_COIN}</svg>${t('累計消費コスト・実額', 'Total Spent & Real Money')}</div>`;
 }
 function dateHtml() {
   const d = new Date();
@@ -99,7 +99,7 @@ export function shareCostSummary(vals, giftMoney) {
     ${dateHtml()}`);
   const text = t(`Skyのアイテム収集にかかったコストはこちら！\n\n${SITE_URL}\n${COST_SHARE_HASHTAG}`,
     `Here's my Sky item collection cost so far!\n\n${SITE_URL}\n${COST_SHARE_HASHTAG}`);
-  return share(build, t('アイテム別コスト', 'Item Cost'), text);
+  return share(build, t('累計消費コスト・実額', 'Total Spent & Real Money'), text);
 }
 
 /* ── 共通: 行リスト＋合計のカード ── */

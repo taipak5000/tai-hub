@@ -90,7 +90,7 @@ const itemEntry = {
   },
   title(sub) {
     if (!sub || sub.startsWith('coord=')) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
-    if (sub === 'cost') return CURRENT_LANG === 'en' ? 'Cost Calculator - tai-hub' : 'コスト集計 - tai-hub';
+    if (sub === 'cost') return CURRENT_LANG === 'en' ? 'Total Spent & Real Money - tai-hub' : '累計消費コスト・実額 - tai-hub';
     if (sub === 'all') return CURRENT_LANG === 'en' ? 'All Items - tai-hub' : '全アイテム一覧 - tai-hub';
     const cat = CATEGORY_REGISTRY.find(c => c.key === sub);
     if (cat) return `${CURRENT_LANG === 'en' ? cat.nameEn : cat.name} - tai-hub`;
