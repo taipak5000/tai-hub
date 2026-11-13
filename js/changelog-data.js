@@ -12,13 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.13.2',
-    title: { ja: 'キャンドル計算機に節目の目安を追加、目標日の判定を修正', en: 'Milestones in candle calculators, target-date check fixed' },
+    version: '2026.11.13.3',
+    title: { ja: 'キャンドル計算機に節目の目安、羽トラッカーを見やすく', en: 'Candle calculator milestones, easier-to-read Wing Tracker' },
     date: '2026-11-13',
     items: [
       { type: 'fix', ja: 'ノマキャン計算機の目標日の判定が、ハートを送る分を差し引かずに「間に合う」と出ていたのを直しました。「今のペースだと何日頃に届くか」も出るようになり、「ペースを設定に反映」ボタンもハートの分を上乗せした本数を入れます。', en: 'Candle Calculator: the target-date check now accounts for hearts you send, shows when you would reach the goal at your current pace, and the “apply pace” button includes the heart cost.', route: 'tai-nomacan' },
       { type: 'new', ja: 'ノマキャン計算機と星のキャンドル計算機に、25%・50%・75%・達成の節目まで「あと何本・いつ頃か」の目安を出すようにしました（星のキャンドルは羽のペースだけで計算します）。', en: 'Candle Calculator and Ascended Candle Calculator now show when you’ll reach 25%, 50%, 75% and your goal.', route: 'tai-nomacan' },
       { type: 'new', ja: '星のキャンドル計算機の目標日に、シーズン終了日・イベント終了日・1週間後などをワンタップで入れるボタンを付けました。', en: 'Ascended Candle Calculator: quick buttons for the target date (season end, event end, in 1 week, etc.).', route: 'star-candle' },
+      { type: 'improve', ja: '羽トラッカーを見やすくしました。取得済みの精霊は行の色と✓で分かるようにし、季節・地方ごとと全体に進捗バーを付けました。恒常精霊と光の子も地方ごとに折りたためるようになり、開閉は次に開いた時も残ります（コンプリート済みの所は最初から畳んでおきます）。上の説明と共有ボタンもコンパクトにしました。', en: 'Wing Tracker is easier to scan: owned spirits are marked, progress bars per season/realm and overall, collapsible Regular Spirit and Children of Light sections that remember their state, and a more compact top.', route: 'wings' },
       { type: 'improve', ja: 'アイテム所持管理の「アイテム別コスト」を「累計消費コスト・実額」に名前を変えました。', en: 'Item Tracker: “Item Costs” is now called “Total Spent & Real Money”.', route: 'item', sub: 'cost' },
     ],
   },
