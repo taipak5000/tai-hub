@@ -41,7 +41,7 @@
 
 import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { getActiveProfileId, ensureProfilesInit, pfDisplayName } from '../../js/state.js';
+import { getActiveProfileId, ensureProfilesInit, pfDisplayName, nsKey } from '../../js/state.js';
 import { SEASON_SPIRITS } from './data/season-spirits.js';
 import { REALM_SPIRITS, CAPE_LEVELS } from './data/realm-spirits.js';
 import { LIGHT_CHILDREN } from './data/light-children.js';
@@ -72,7 +72,63 @@ let seasonFilterUnowned = false;
 let permFilterUnowned = false;
 let lightChildrenFilterUnowned = false;
 let spiritSearchQuery = '';
-const seasonCollapsedIds = new Set();
+
+/* ── 📂 季節カード・恒常の地方カード・光の子の地方ブロックの開閉状態 ──
+   保存先は nsKey('wingsUiState_v1') だけ（プロフィールごと。既存のトラッカーのキーには相乗りしない）。
+   形: { season: {季節名ja: bool}, realm: {地方名ja: bool}, lightRealm: {地方名ja: bool} }、true＝開いている。
+   まだ保存の無いセクションは「ページを開いた時点で100%のものだけ畳む」を既定にする
+   （開いた時点の状態で決めるので、作業中に最後の1体をチェックしても急に畳まれない）。 */
+const UI_STATE_RAW_KEY = 'wingsUiState_v1';
+const UI_GROUPS = ['season', 'realm', 'lightRealm'];
+let uiState = { season: {}, realm: {}, lightRealm: {} };
+let completeAtMount = { season: new Set(), realm: new Set(), lightRealm: new Set() };
+function loadUiState() {
+  const out = { season: {}, realm: {}, lightRealm: {} };
+  try {
+    const d = JSON.parse(localStorage.getItem(nsKey(UI_STATE_RAW_KEY)));
+    if (d && typeof d === 'object') {
+      UI_GROUPS.forEach(g => {
+        if (d[g] && typeof d[g] === 'object') Object.keys(d[g]).forEach(k => { if (typeof d[g][k] === 'boolean') out[g][k] = d[g][k]; });
+      });
+    }
+  } catch (_) { /* 読めない時は既定の開閉で表示する */ }
+  return out;
+}
+function saveUiState() {
+  try { localStorage.setItem(nsKey(UI_STATE_RAW_KEY), JSON.stringify(uiState)); } catch (_) { /* 保存できなくても今回の表示は切り替える */ }
+}
+// ページを開いた時点で100%のセクション（＝保存が無い時に畳んでおくもの）を控える
+function snapshotCompleteSections() {
+  const tracker = S.loadTracker(), perm = S.loadPermTracker(), lc = S.loadLightChildrenTracker();
+  const snap = { season: new Set(), realm: new Set(), lightRealm: new Set() };
+  SEASON_SPIRITS.forEach(({ season, spirits }) => {
+    const c = tracker[season.ja] || {};
+    if (spirits.length && spirits.every(sp => c[sp.ja])) snap.season.add(season.ja);
+  });
+  REALM_SPIRITS.forEach(({ realm, spirits }) => {
+    if (spirits.every(sp => { const st = perm[sp.name.ja] || {}; return st.tier1 && (!sp.t2 || st.tier2); })) snap.realm.add(realm.ja);
+  });
+  LIGHT_CHILDREN.forEach(({ realm, areas }) => {
+    if (areas.every(({ children }) => children.every(ch => lc[ch.id]))) snap.lightRealm.add(realm.ja);
+  });
+  return snap;
+}
+function isSectionOpen(group, ja) {
+  const saved = uiState[group][ja];
+  if (typeof saved === 'boolean') return saved;
+  return !completeAtMount[group].has(ja);
+}
+function setSectionOpen(group, ja, open) {
+  uiState[group][ja] = open;
+  saveUiState();
+}
+function toggleSection(group, ja) {
+  setSectionOpen(group, ja, !isSectionOpen(group, ja));
+  render();
+}
+function sectionToggleBtnHtml(group, ja, open) {
+  return `<button type="button" class="season-toggle-btn" data-toggle-group="${group}" data-toggle-name="${escapeAttr(ja)}" aria-expanded="${open ? 'true' : 'false'}" title="${escapeAttr(t(open ? '折りたたむ' : '展開する', open ? 'Collapse' : 'Expand'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg></button>`;
+}
 // 季節精霊一覧の並び順（'season'=季節順 / 'revisit'=最新再訪順）。これだけは端末に保存して次回も引き継ぐ
 const SORT_MODE_KEY = 'wingsSeasonSortMode_v1';
 let seasonSortMode = (() => { try { return localStorage.getItem(SORT_MODE_KEY) === 'revisit' ? 'revisit' : 'season'; } catch (e) { return 'season'; } })();
@@ -93,6 +149,8 @@ export function mount(container /* , sub */) {
   document.addEventListener('keydown', boundKbNavKeydown);
 
   S.recordCompletionSnapshotIfNeeded();
+  uiState = loadUiState();
+  completeAtMount = snapshotCompleteSections();
   render();
 }
 
@@ -609,7 +667,7 @@ function jumpToSeason(value) {
     containerEl.querySelector('#wgSearchClearBtn').style.display = 'none';
     needsRerender = true;
   }
-  if (seasonCollapsedIds.has(entry.season.ja)) { seasonCollapsedIds.delete(entry.season.ja); needsRerender = true; }
+  if (!isSectionOpen('season', entry.season.ja)) { setSectionOpen('season', entry.season.ja, true); needsRerender = true; }
   if (needsRerender) render();
   const el = containerEl.querySelector('#wg-season-card-' + idx);
   if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -627,7 +685,7 @@ function onSeasonListChange(e) {
 }
 function onSeasonListClick(e) {
   const toggleBtn = e.target.closest('.season-toggle-btn');
-  if (toggleBtn) { toggleSeasonCard(toggleBtn.dataset.season); return; }
+  if (toggleBtn) { toggleSection(toggleBtn.dataset.toggleGroup, toggleBtn.dataset.toggleName); return; }
   const areaBtn = e.target.closest('.area-btn');
   if (areaBtn) { setSeasonSpirits(areaBtn.dataset.season, areaBtn.dataset.checked === '1'); }
 }
@@ -639,10 +697,6 @@ function onSpiritToggle(season, spirit, isChecked) {
   S.saveTracker(tracker);
   render();
   showToast(t('保存しました', 'Saved'));
-}
-function toggleSeasonCard(seasonJa) {
-  if (seasonCollapsedIds.has(seasonJa)) seasonCollapsedIds.delete(seasonJa); else seasonCollapsedIds.add(seasonJa);
-  render();
 }
 function setSeasonSpirits(seasonJa, checked) {
   const found = SEASON_SPIRITS.find(s => s.season.ja === seasonJa);
@@ -669,6 +723,8 @@ function onRealmListChange(e) {
   onPermToggle(label.dataset.spirit, label.dataset.tier, input.checked);
 }
 function onRealmListClick(e) {
+  const toggleBtn = e.target.closest('.season-toggle-btn');
+  if (toggleBtn) { toggleSection(toggleBtn.dataset.toggleGroup, toggleBtn.dataset.toggleName); return; }
   const areaBtn = e.target.closest('.area-btn');
   if (!areaBtn) return;
   setRealmSpirits(areaBtn.dataset.realm, areaBtn.dataset.checked === '1');
@@ -711,6 +767,8 @@ function onLightChildrenListChange(e) {
   onLightChildToggle(input.dataset.id, input.checked);
 }
 function onLightChildrenListClick(e) {
+  const toggleBtn = e.target.closest('.season-toggle-btn');
+  if (toggleBtn) { toggleSection(toggleBtn.dataset.toggleGroup, toggleBtn.dataset.toggleName); return; }
   const areaBtn = e.target.closest('.area-btn');
   if (!areaBtn) return;
   setAreaChildren(areaBtn.dataset.ids.split(','), areaBtn.dataset.checked === '1');
@@ -896,7 +954,7 @@ function render() {
     if (spiritSearchQuery && !visibleSpirits.length) return '';
 
     const seasonEndingSoon = (!complete && endingSoon && endingSoon.seasonJa === season.ja) ? endingSoon : null;
-    const collapsed = !spiritSearchQuery && seasonCollapsedIds.has(season.ja);
+    const collapsed = !spiritSearchQuery && !isSectionOpen('season', season.ja); // 検索中は一時的に開く
 
     const spiritsHtml = visibleSpirits.map(sp => {
       const val = checked[sp.ja];
@@ -916,7 +974,7 @@ function render() {
           <div class="season-head-actions">
             <span class="season-sub-badge ${complete ? 'complete' : ''}">${gotCount} / ${spirits.length} ${t('体', '')}</span>
             ${seasonEndingSoon ? `<span class="season-sub-badge warn" title="${escapeAttr(t('この季節はまもなく終了します。再訪でしか手に入らない光の翼を見逃さないようご注意ください。', 'This season is ending soon. Do not miss out on Winged Light only available through Revisit before it closes for good.'))}"><svg class="inline-icon warn" width="12" height="12"><use href="#i-warning"/></svg> ${t(`終了まであと${seasonEndingSoon.daysLeft}日`, `Ends in ${seasonEndingSoon.daysLeft}d`)}</span>` : ''}
-            <button type="button" class="season-toggle-btn" data-season="${escapeAttr(season.ja)}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${escapeAttr(t(collapsed ? '展開する' : '折りたたむ', collapsed ? 'Expand' : 'Collapse'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg></button>
+            ${sectionToggleBtnHtml('season', season.ja, !collapsed)}
           </div>
         </div>
         ${progressBarHtml(gotCount, spirits.length)}
@@ -977,19 +1035,24 @@ function render() {
 
     if (permFilterUnowned && complete) return '';
     if (spiritSearchQuery && !spiritsHtml.trim()) return '';
+    const realmOpen = !!spiritSearchQuery || isSectionOpen('realm', realm.ja); // 検索中は一時的に開く
 
     return `
       <div class="season-card">
         <div class="season-head">
           <div class="season-name">${escapeHtml(L(realm))}</div>
-          <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmMax} ${t('枚', '')}</span>
+          <div class="season-head-actions">
+            <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmMax} ${t('枚', '')}</span>
+            ${sectionToggleBtnHtml('realm', realm.ja, realmOpen)}
+          </div>
         </div>
         ${progressBarHtml(realmGot, realmMax)}
+        ${realmOpen ? `
         <div class="area-actions" style="margin: 8px 0 0;">
           <button type="button" class="area-btn" data-realm="${escapeAttr(realm.ja)}" data-checked="1">${t('全選択', 'Select all')}</button>
           <button type="button" class="area-btn" data-realm="${escapeAttr(realm.ja)}" data-checked="0">${t('リセット', 'Reset')}</button>
         </div>
-        <div class="spirit-list">${spiritsHtml}</div>
+        <div class="spirit-list">${spiritsHtml}</div>` : ''}
       </div>`;
   }).join('');
   containerEl.querySelector('#wgRealmList').innerHTML = realmHtml
@@ -1070,15 +1133,19 @@ function renderLightChildren() {
 
     if (lightChildrenFilterUnowned && complete) return '';
     if (spiritSearchQuery && !areasHtml.trim()) return '';
+    const lcOpen = !!spiritSearchQuery || isSectionOpen('lightRealm', realm.ja); // 検索中は一時的に開く
 
     return `
-      <div class="realm-block">
+      <div class="realm-block${lcOpen ? '' : ' collapsed'}">
         <div class="season-head">
           <div class="season-name">${escapeHtml(L(realm))}</div>
-          <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmTotal} ${t('体', '')}</span>
+          <div class="season-head-actions">
+            <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmTotal} ${t('体', '')}</span>
+            ${sectionToggleBtnHtml('lightRealm', realm.ja, lcOpen)}
+          </div>
         </div>
         ${progressBarHtml(realmGot, realmTotal)}
-        ${areasHtml}
+        ${lcOpen ? areasHtml : ''}
       </div>`;
   }).join('');
 
