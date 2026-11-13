@@ -83,13 +83,14 @@ function loadOwned() {
   CATS.forEach(c => {
     const d = maps[c.key];
     const ownedIds = d.itemOwned || {};
+    const favIds = d.itemFav || {}; // アイテム所持管理の「お気に入り」（☆）。選ぶ時に各カテゴリの先頭へ出す
     if (catalog) {
-      Object.keys(ownedIds).forEach(id => { const it = catalog[`${c.key}:${id}`]; if (ownedIds[id] && it) out[it.k] = it; });
+      Object.keys(ownedIds).forEach(id => { const it = catalog[`${c.key}:${id}`]; if (ownedIds[id] && it) out[it.k] = { ...it, fav: !!favIds[id] }; });
     } else {
       (Array.isArray(d.ownedItems) ? d.ownedItems : []).forEach(it => {
         if (it && it.id && ownedIds[it.id]) {
           const name = CURRENT_LANG === 'en' ? (it.nameEn || it.name) : it.name;
-          out[`${c.key}:${it.id}`] = { k: `${c.key}:${it.id}`, cat: c, id: it.id, name, img: it.img, key: norm(`${it.name} ${it.nameEn || ''} ${c.name} ${c.nameEn}`) };
+          out[`${c.key}:${it.id}`] = { k: `${c.key}:${it.id}`, cat: c, id: it.id, name, img: it.img, fav: !!favIds[it.id], key: norm(`${it.name} ${it.nameEn || ''} ${c.name} ${c.nameEn}`) };
         }
       });
     }
@@ -391,13 +392,17 @@ const EXCLUSIVE_CATS = ['portable_item', 'small_placeable', 'large_placeable'];
 function catLabel(c) { return CURRENT_LANG === 'en' ? (c.nameEn || c.name) : c.name; }
 function tileHtml(it, selected) {
   const name = escapeHtml(it.name);
-  return `<button type="button" class="cdw-tile${selected ? ' selected' : ''}" data-act="wear" data-cat="${it.cat.key}" data-key="${escapeHtml(it.k)}" title="${name}" aria-label="${name}" aria-pressed="${selected}">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.parentNode.title.slice(0,4)}))">` : `<span>${escapeHtml(it.name.slice(0, 4))}</span>`}</button>`;
+  const favMark = it.fav ? `<svg class="inline-icon cdw-fav" width="12" height="12" aria-hidden="true"><use href="#i-star"/></svg>` : '';
+  const label = it.fav ? `${name}（${t('お気に入り', 'Favorite')}）` : name;
+  return `<button type="button" class="cdw-tile${selected ? ' selected' : ''}${it.fav ? ' fav' : ''}" data-act="wear" data-cat="${it.cat.key}" data-key="${escapeHtml(it.k)}" title="${label}" aria-label="${label}" aria-pressed="${selected}">${favMark}${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:this.parentNode.title.slice(0,4)}))">` : `<span>${escapeHtml(it.name.slice(0, 4))}</span>`}</button>`;
 }
 function wearRowsHtml() {
   const q = norm(form.query);
   return CATS.map(c => {
     const picked = [...form.items].filter(k => k.startsWith(c.key + ':'));
     const list = Object.values(owned).filter(it => it.cat.key === c.key && (!q || it.key.includes(q)));
+    // お気に入り（アイテム所持管理の☆）を先頭に。それ以外の並びは今までどおり（sortは安定なので元の順を保つ）
+    list.sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
     // 所持から外れたアイテムでも、選んである分は先頭に出して外せるようにする
     picked.forEach(k => { if (!list.some(it => it.k === k)) { const [cat, id] = k.split(':'); const it = itemInfo({ cat, id }); list.unshift({ ...it, k, cat: c }); } });
     if (q && !list.length) return '';
