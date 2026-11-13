@@ -265,12 +265,16 @@ function closePreview() {
    返す関数、または既にdocument.bodyへ追加済みの要素を返す関数のどちらでも
    よい（このファイル内ではbuildCardFn自身がappendまで行う設計にしている）。
    ================================================================ */
+let exportBusy = false;
 export async function exportShareImage(buildCardFn, filenameBase, opts = {}) {
   const en = CURRENT_LANG === 'en';
   const { shareText, successToast = (en ? 'Shared!' : '共有しました！') } = opts;
-  showShareToast(en ? 'Generating image…' : '画像を生成中…');
+  if (exportBusy) return; // 作っている途中の二度押しは無視する（インジケーターが出ている）
+  exportBusy = true;
+  const busy = showBusyIndicator(en ? 'Creating image…' : '画像を作っています…');
   let card = null;
   try {
+    await nextPaint(); // インジケーターを先に描かせてから重い処理に入る
     await ensureHtml2Canvas();
     card = buildCardFn();
     const attribution = document.createElement('div');
@@ -278,7 +282,13 @@ export async function exportShareImage(buildCardFn, filenameBase, opts = {}) {
     attribution.textContent = '© Sky: Children of the Light Icons by contributors of the Sky: Children of the Light wiki';
     card.appendChild(attribution);
 
-    const canvas = await window.html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true });
+    // ⚡ html2canvas は既定でページ全体を複製してから描く。累計消費コスト・実額のように要素が数万あるページでは
+    // それだけで十数秒かかっていた（実測: 約18秒→約0.1秒）。カードとその祖先、見た目に要る<head>のスタイルと
+    // body直下のアイコン定義（<svg>のスプライト）・<style>・<link>以外は複製しない
+    const keep = el => el.contains(card) || card.contains(el) || !!el.closest('head')
+      || (el.parentElement === document.body && /^(svg|style|link)$/i.test(el.tagName));
+    const canvas = await window.html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, logging: false, ignoreElements: el => !keep(el) });
+    busy.remove();
     const filename = sanitizeFilename(filenameBase) + '.png';
 
     const shareResult = await tryShareImage(canvas, filename, shareText);
@@ -294,7 +304,28 @@ export async function exportShareImage(buildCardFn, filenameBase, opts = {}) {
     showShareToast(en ? 'Failed to save the image' : '画像の保存に失敗しました');
   } finally {
     if (card) card.remove();
+    busy.remove();
+    exportBusy = false;
   }
+}
+
+// 次の描画まで待つ（直後の同期処理で、インジケーターの表示が遅れないように）
+function nextPaint() {
+  return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+/* ⏳ 画像を作っている間の表示（終わるまで出しっぱなし。トーストと同じ位置・同じ見た目に回るアイコンを添える）。
+   並行して見える知らせなので、画面は暗くせず操作も止めない */
+function showBusyIndicator(msg) {
+  injectShareSharedStyles();
+  const el = document.createElement('div');
+  el.className = 'ish-busy';
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.innerHTML = '<span class="ish-busy-spin" aria-hidden="true"></span><span></span>';
+  el.lastElementChild.textContent = msg;
+  document.body.appendChild(el);
+  return { remove() { el.remove(); } };
 }
 
 /* ================================================================
@@ -423,6 +454,23 @@ export function injectShareSharedStyles() {
   pointer-events: none; max-width: calc(100vw - 32px); text-align: center;
 }
 .ish-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.ish-busy {
+  position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; background: rgba(28,28,30,0.92); color: #fff; font-size: 13px; font-weight: 600;
+  padding: 10px 18px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 1301; pointer-events: none;
+  max-width: calc(100vw - 32px); animation: ishBusyIn 0.2s ease both;
+}
+.ish-busy-spin {
+  width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  animation: ishBusySpin 0.8s linear infinite;
+}
+@keyframes ishBusyIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes ishBusySpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ish-busy { animation: none; }
+  .ish-busy-spin { animation: ishBusySpin 2.4s linear infinite; }
+}
+@media (prefers-contrast: more) { .ish-busy { background: #000; border: 1px solid #fff; } }
 `;
   document.head.appendChild(style);
 }

@@ -12,7 +12,7 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.13.5',
+    version: '2026.11.13.6',
     title: { ja: 'キャンドル計算機に節目の目安、羽トラッカーを見やすく', en: 'Candle calculator milestones, easier-to-read Wing Tracker' },
     date: '2026-11-13',
     items: [
@@ -22,6 +22,7 @@ export const CHANGELOG = [
       { type: 'improve', ja: '羽トラッカーを見やすくしました。取得済みの精霊は行の色と✓で分かるようにし、季節・地方ごとと全体に進捗バーを付けました。恒常精霊と光の子も地方ごとに折りたためるようになり、開閉は次に開いた時も残ります（コンプリート済みの所は最初から畳んでおきます）。上の説明と共有ボタンもコンパクトにしました。', en: 'Wing Tracker is easier to scan: owned spirits are marked, progress bars per season/realm and overall, collapsible Regular Spirit and Children of Light sections that remember their state, and a more compact top.', route: 'wings' },
       { type: 'improve', ja: 'コーデ日記で着ていたアイテムを選ぶ時、アイテム所持管理でお気に入り（☆）にしたアイテムを各カテゴリの先頭に並べ、星の印を付けました。', en: 'Outfit Diary: your favorite (☆) items from the Item Tracker now come first when picking what you wore.', route: 'coord-diary' },
       { type: 'improve', ja: 'アイテム所持管理の「達成率の推移」のグラフを、見出しを押して開け閉めできるようにしました。最初は閉じていて、開いておくと次に来た時も開いたままになります。', en: 'Item Tracker: the Completion Over Time graph now starts collapsed; tap the heading to open it (your choice is remembered).', route: 'item' },
+      { type: 'fix', ja: '累計消費コスト・実額の共有ボタンを押してから画像ができるまで、十数秒かかって止まったように見えていたのを直しました（1秒かからなくなりました）。アイテム所持管理のほかの共有も速くなっています。画像を作っている間は「画像を作っています…」と表示します。', en: 'Sharing from Total Spent & Real Money no longer takes 10+ seconds; other Item Tracker shares are faster too, and a “Creating image…” indicator shows while it works.', route: 'item', sub: 'cost' },
       { type: 'improve', ja: 'アイテム所持管理の「アイテム別コスト」を「累計消費コスト・実額」に名前を変えました。「アルティメットギフト」の表記も「究極の贈り物」にそろえています。', en: 'Item Tracker: “Item Costs” is now called “Total Spent & Real Money”.', route: 'item', sub: 'cost' },
     ],
   },
