@@ -86,6 +86,12 @@
 @media (prefers-reduced-motion: reduce) { .item-view .feature-btn { transition: none; } }
 /* コーデ機能は元サイトと同じ2列 */
 .item-view .dash-feature-grid { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* 📈 達成率の推移（既定は閉じる。見出しを押して開く） */
+.item-view .dash-history-summary { display: flex; align-items: center; gap: 4px; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.item-view .dash-history-summary::-webkit-details-marker { display: none; }
+.item-view .dash-history-summary .inline-icon { stroke: currentColor; color: currentColor; fill: none; transition: transform 0.15s ease; }
+.item-view .dash-history-fold[open] > .dash-history-summary .inline-icon { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .item-view .dash-history-summary .inline-icon { transition: none; } }
 .item-view .dash-feature-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
 .item-view .dash-feature-row .feature-btn { margin-bottom: 0; }
 /* 「季節・イベントでアイテムを検索」のカードの右側に「今手に入る未所持アイテム」を並べる（狭い画面では下に回す） */

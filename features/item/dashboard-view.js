@@ -202,8 +202,11 @@ function renderShell() {
 
       <div id="dashTitlesPanel"></div>
 
-      <p class="sec-label">${en ? 'Completion Over Time' : '達成率の推移'}</p>
-      <div id="dashHistoryChart"></div>
+      <!-- 達成率の推移はグラフが大きいので、既定は閉じておく（開いた/閉じたは端末ごとに覚える） -->
+      <details class="dash-history-fold" id="dashHistoryFold"${historyFoldOpen() ? ' open' : ''}>
+        <summary class="sec-label dash-history-summary">${en ? 'Completion Over Time' : '達成率の推移'}<svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+        <div id="dashHistoryChart"></div>
+      </details>
 
       <p class="sec-label">${en ? 'All Items' : '全アイテム'}</p>
       ${featureBtnHtml({
@@ -430,6 +433,16 @@ export function mount(container) {
   setupIntroCard();
   titlesPanel.mount(hostEl.querySelector('#dashTitlesPanel'));
   mountHistoryChart(hostEl.querySelector('#dashHistoryChart'));
+  const fold = hostEl.querySelector('#dashHistoryFold');
+  fold.addEventListener('toggle', () => {
+    try { localStorage.setItem(HISTORY_FOLD_KEY, fold.open ? '1' : '0'); } catch (e) { /* 保存できなくても開閉はできる */ }
+  });
+}
+
+// 「達成率の推移」の開閉（端末ごとの表示の好み。記録データには関係しない）。まだ選んでいない時は閉じておく
+const HISTORY_FOLD_KEY = 'sky_item_history_open_v1';
+function historyFoldOpen() {
+  try { return localStorage.getItem(HISTORY_FOLD_KEY) === '1'; } catch (e) { return false; }
 }
 
 export function unmount() {
