@@ -41,3 +41,23 @@ export function formatDateValue(d) {
 }
 
 export function pad2(n) { return String(n).padStart(2, '0'); }
+
+// 進捗の節目（25/50/75/100%）ごとに「あと何本・週あたりペースであと何週間・
+// いつ頃か」を返す純粋計算（表示専用、保存データには触れない）。
+// すでに過ぎた節目は含めない。perWeek<=0 のときは weeks/dateMs を null にする。
+export const MILESTONE_PCTS = [25, 50, 75, 100];
+export function computeWeeklyMilestones(current, target, perWeek, nowMs) {
+  current = Math.max(0, current || 0);
+  target = Math.max(0, target || 0);
+  if (target <= 0 || current >= target) return [];
+  const now = isFinite(nowMs) ? nowMs : Date.now();
+  const out = [];
+  for (const pct of MILESTONE_PCTS) {
+    const atAmount = Math.ceil(target * pct / 100);
+    if (atAmount <= current) continue;
+    const remaining = Math.round((atAmount - current) * 100) / 100;
+    const weeks = perWeek > 0 ? Math.ceil(remaining / perWeek) : null;
+    out.push({ pct, atAmount, remaining, weeks, dateMs: weeks !== null ? now + weeks * 7 * 86400000 : null });
+  }
+  return out;
+}

@@ -938,6 +938,22 @@ function renderPaceSuggestion() {
 /* ================================================================
    🧮 本体の計算・結果カード
    ================================================================ */
+// 進捗の節目（25/50/75/100%）までの目安を結果カード内に小さく出す。
+// 実質ペース（ハート消費を差し引いた1日あたり）がプラスの時だけ日付つきで表示する。
+function milestonesHtml(current, effectiveTarget, totalDaily) {
+  if (!(totalDaily > 0)) return '';
+  const list = S.computeMilestones(current, effectiveTarget, totalDaily, Date.now());
+  if (!list.length) return '';
+  const rows = list.map((m) => {
+    const vars = { pct: m.pct, at: S.fmt(m.atAmount), remaining: S.fmt(m.remaining), date: m.dateMs ? S.jpDateShort(new Date(m.dateMs)) : '' };
+    const key = m.pct === 100
+      ? (m.dateMs ? 'result.milestoneGoalRowTemplate' : 'result.milestoneGoalRowNoDateTemplate')
+      : (m.dateMs ? 'result.milestoneRowTemplate' : 'result.milestoneRowNoDateTemplate');
+    return '<div class="milestone-row">' + t(key, vars) + '</div>';
+  }).join('');
+  return '<div class="milestone-box"><div class="milestone-heading">' + t('result.milestonesHeading') + '</div>' + rows + '</div>';
+}
+
 function update() {
   const target = Math.max(0, parseFloat(els.target.value) || 0);
   const plannedUsage = Math.max(0, parseFloat(els.plannedUsage.value) || 0);
@@ -970,12 +986,16 @@ function update() {
 
   let hasTargetDate = false;
   let targetDateObj = null;
-  let requiredDailyPace = 0;
+  let requiredDailyPace = 0; // 1日に純増が必要な本数（ネット）
+  let requiredGrossPace = 0;  // スライダー（集めペース）として必要な本数（ハート消費を上乗せ）
   if (els.targetDate.value && remaining > 0) {
     targetDateObj = new Date(els.targetDate.value + 'T23:59:59');
     if (!isNaN(targetDateObj.getTime())) {
       const msUntilTarget = targetDateObj.getTime() - new Date().getTime();
-      if (msUntilTarget > 0) { hasTargetDate = true; requiredDailyPace = remaining / (msUntilTarget / 86400000); }
+      if (msUntilTarget > 0) {
+        const pace = S.targetDatePace(remaining, msUntilTarget / 86400000, heartCost);
+        if (pace) { hasTargetDate = true; requiredDailyPace = pace.requiredNet; requiredGrossPace = pace.requiredGross; }
+      }
     }
   }
 
@@ -999,19 +1019,34 @@ function update() {
       '<p class="state-message achieved">' + t('result.achieved') + '</p>' +
       '<p class="breakdown">' + t('result.achievedBreakdown', { current: S.fmt(current), target: S.fmt(effectiveTarget), usageNote, currentUnit: t(S.isOnePlural(current) ? 'goal.unitOne' : 'goal.unit'), targetUnit: t(S.isOnePlural(effectiveTarget) ? 'goal.unitOne' : 'goal.unit') }) + '</p>';
   } else if (hasTargetDate) {
-    const isOnPace = dailyRate >= requiredDailyPace;
-    const neededPaceClamped = Math.max(0, Math.min(25, Math.ceil(requiredDailyPace)));
+    // 判定は必ず実質ペース（集めペース − ハート消費）で行う。消費前のペースで判定すると
+    // ハートを送っている場合に「間に合う」と誤って表示されてしまうため。
+    const isOnPace = totalDaily >= requiredDailyPace;
+    const neededPaceClamped = Math.max(0, Math.min(25, Math.ceil(requiredGrossPace)));
+    let etaLine = '';
+    if (totalDaily > 0) {
+      const etaDays = Math.ceil(remaining / totalDaily);
+      const etaDate = new Date(Date.now() + etaDays * 86400000);
+      const startOfDayMs = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const diffDays = Math.round((startOfDayMs(etaDate) - startOfDayMs(targetDateObj)) / 86400000);
+      etaLine = '<p class="stat-line">' + t('result.etaAtCurrentPaceTemplate', { date: S.jpDateShort(etaDate) }) +
+        (diffDays < 0 ? t(Math.abs(diffDays) === 1 ? 'result.etaEarlyTemplateOne' : 'result.etaEarlyTemplate', { n: Math.abs(diffDays) })
+          : diffDays > 0 ? t(diffDays === 1 ? 'result.etaLateTemplateOne' : 'result.etaLateTemplate', { n: diffDays })
+          : t('result.etaSameDay')) + '</p>';
+    }
     html =
       '<div class="hero-stat">' + t(S.isOnePlural(requiredDailyPace) ? 'result.heroDailyPaceTemplateOne' : 'result.heroDailyPaceTemplate', { n: S.fmt(requiredDailyPace) }) + '</div>' +
       '<p class="stat-line">' + t('result.paceNeededByTemplate', { date: S.jpDate(targetDateObj) }) + '</p>' +
       '<p class="stat-line">' + t(S.isOnePlural(remaining) ? 'result.remainingLineTemplateOne' : 'result.remainingLineTemplate', { remaining: S.fmt(remaining), usageNote }) + '</p>' +
+      etaLine +
       '<div class="target-date-box">' +
-        t(dailyRate === 1 ? 'result.currentPaceLabelTemplateOne' : 'result.currentPaceLabelTemplate', { n: S.fmt(dailyRate) }) +
+        t(totalDaily === 1 ? 'result.currentPaceLabelTemplateOne' : 'result.currentPaceLabelTemplate', { n: S.fmt(totalDaily) }) +
         '<span class="' + (isOnPace ? 'pace-ok' : 'pace-warn') + '">' +
-        (isOnPace ? t('result.paceOk') : t(S.isOnePlural(requiredDailyPace - dailyRate) ? 'result.paceWarnTemplateOne' : 'result.paceWarnTemplate', { n: S.fmt(requiredDailyPace - dailyRate) })) +
+        (isOnPace ? t('result.paceOk') : t(S.isOnePlural(requiredDailyPace - totalDaily) ? 'result.paceWarnTemplateOne' : 'result.paceWarnTemplate', { n: S.fmt(requiredDailyPace - totalDaily) })) +
         '</span>' +
         (isOnPace ? '' : '<br><button type="button" class="apply-required-pace-btn" id="nmApplyRequiredPaceBtn" data-pace="' + neededPaceClamped + '">' + t('result.applyRequiredPaceBtnTemplate', { n: neededPaceClamped }) + '</button>') +
       '</div>' +
+      milestonesHtml(current, effectiveTarget, totalDaily) +
       '<p class="breakdown">' + dailyLine + '<br>' + t('result.progressLineTemplate', { pct: Math.round(progressPct) }) + '</p>' +
       '<p class="note">' + t('result.footnoteTargetDate') + '</p>';
   } else if (totalDaily <= 0) {
@@ -1030,6 +1065,7 @@ function update() {
       (weeksNeeded > 0 ? '<p class="stat-line">' + t(weeksNeeded === 1 ? 'result.aboutWeeksTemplateOne' : 'result.aboutWeeksTemplate', { n: S.fmt(weeksNeeded) }) + '</p>' : '') +
       '<p class="stat-line">' + goalDateLineHtml + '</p>' +
       '<p class="stat-line">' + t(S.isOnePlural(remaining) ? 'result.remainingLineTemplateOne' : 'result.remainingLineTemplate', { remaining: S.fmt(remaining), usageNote }) + '</p>' +
+      milestonesHtml(current, effectiveTarget, totalDaily) +
       '<p class="breakdown">' + dailyLine + '<br>' + t('result.progressLineTemplate', { pct: Math.round(progressPct) }) + '</p>' +
       '<p class="note">' + t('result.footnoteDaily') + '</p>';
   }

@@ -43,10 +43,11 @@
    ================================================================ */
 import { nsKey } from '../../js/state.js';
 import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
-import { CURRENT_LANG } from '../../js/i18n.js';
+import { CURRENT_LANG, trEvent } from '../../js/i18n.js';
 import { t } from './data/i18n-star-candle.js';
 import { TITLES } from './data/titles.js';
-import { fmt, jpDate, weekdayLabel, monthYearLabel, formatDateValue } from './date-utils.js';
+import { fmt, jpDate, weekdayLabel, monthYearLabel, formatDateValue, computeWeeklyMilestones } from './date-utils.js';
+import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, isSeasonStarted } from '../item/data/season-data.js';
 import * as Forecast from './star-candle-forecast.js';
 
 // 元のI18N辞書のうち、header/footer等「呼び出し箇所が少ない自前文言」向けの
@@ -113,6 +114,7 @@ export function mount(container) {
 
   loadState();
   refreshDateTrigger(); // 目標日の表示はloadState()より前に作られるので、読み込んだ値で作り直す
+  renderDateQuickPresets();
   update();
 
   const ctx = {
@@ -234,6 +236,7 @@ function renderShell() {
               </div>
             </div>
             <input type="date" id="scTargetDate" style="display:none" tabindex="-1" aria-hidden="true">
+            <div class="sc-date-quick-presets" id="scDateQuickPresets"></div>
           </div>
         </section>
 
@@ -457,6 +460,20 @@ function syncCurrentToSharedCurrency() {
 /* ================================================================
    結果カード：達成までの週数・達成予定日の計算と描画
    ================================================================ */
+// 進捗の節目（25/50/75/100%）までの目安。週ペース（羽−リサイズドリンク）が
+// プラスの時だけ表示する。赤闇の報酬は含まない前提をタイトルに明記する
+// （赤闇込みの試算は既存の「達成予定日」ボックスが担う）。
+function scMilestonesHtml(current, target, totalWeekly) {
+  if (!(totalWeekly > 0)) return '';
+  const list = computeWeeklyMilestones(current, target, totalWeekly, Date.now());
+  if (!list.length) return '';
+  const rows = list.map((m) => {
+    const vars = { pct: m.pct, at: fmt(m.atAmount), remaining: fmt(m.remaining), weeks: m.weeks, date: m.dateMs ? jpDate(new Date(m.dateMs)) : '' };
+    return '<div class="sc-milestone-row">' + t(m.pct === 100 ? 'result.milestoneGoalRowTemplate' : 'result.milestoneRowTemplate', vars) + '</div>';
+  }).join('');
+  return '<div class="sc-milestone-box"><div class="sc-milestone-heading">' + t('result.milestonesHeading') + '</div>' + rows + '</div>';
+}
+
 function update() {
   const target = Math.max(0, parseFloat(els.target.value) || 0);
   const current = Math.max(0, parseFloat(els.current.value) || 0);
@@ -551,6 +568,7 @@ function update() {
       `<p class="sc-stat-line">${goalDateLineHtml}</p>` +
       `<p class="sc-stat-line">${t('result.remainingLine', { remaining: fmt(remaining) })}</p>` +
       targetDateInfo + shardEstimateInfo +
+      scMilestonesHtml(current, target, totalWeekly) +
       `<p class="sc-breakdown">${t('result.progressLine', { weeklyLine, pct: Math.round(progressPct) })}</p>` +
       `<p class="sc-note">${t('result.footnote')}</p>`;
   }
@@ -607,10 +625,59 @@ function wireEvents() {
 
   wireDatePicker();
 
+  const presetsEl = containerEl.querySelector('#scDateQuickPresets');
+  if (presetsEl) {
+    presetsEl.addEventListener('click', (ev) => {
+      const btn = ev.target.closest ? ev.target.closest('.sc-date-quick-preset-btn') : null;
+      if (!btn) return;
+      els.targetDate.value = btn.getAttribute('data-date');
+      els.targetDate.dispatchEvent(new Event('input', { bubbles: true }));
+      refreshDateTrigger();
+    });
+  }
+
   const notifyShardToggleEl = containerEl.querySelector('#scNotifyShardToggle');
   const notifyGoalToggleEl = containerEl.querySelector('#scNotifyGoalToggle');
   notifyShardToggleEl.addEventListener('change', () => notifySetEnabled(NOTIFY_SHARD_ENABLED_KEY, notifyShardToggleEl, notifyShardToggleEl.checked));
   notifyGoalToggleEl.addEventListener('change', () => notifySetEnabled(NOTIFY_GOAL_ENABLED_KEY, notifyGoalToggleEl, notifyGoalToggleEl.checked));
+}
+
+/* ================================================================
+   目標日クイックピック（ノマキャン計算機と同じ候補の出し方）
+   シーズン終了日・次回アップデート日・開催中イベント終了日に、相対日付
+   （1週間後/2週間後/1ヶ月後）を添える。候補データは item の season-data を
+   そのまま使う（このツール側に複製は持たない）。
+   ================================================================ */
+function renderDateQuickPresets() {
+  const wrap = containerEl.querySelector('#scDateQuickPresets');
+  if (!wrap) return;
+  const now = new Date();
+  const presets = [];
+  if (CURRENT_SEASON && CURRENT_SEASON.endDate && isSeasonStarted(CURRENT_SEASON)) {
+    const seasonEnd = new Date(CURRENT_SEASON.endDate);
+    if (!isNaN(seasonEnd.getTime()) && seasonEnd > now) presets.push({ label: t('goal.presetSeasonEnd'), dateStr: formatDateValue(seasonEnd) });
+  }
+  if (NEXT_UPDATE && NEXT_UPDATE.date) {
+    const nu = new Date(NEXT_UPDATE.date);
+    if (!isNaN(nu.getTime()) && nu > now) presets.push({ label: t('goal.presetNextUpdate'), dateStr: formatDateValue(nu) });
+  }
+  (EVENT_SCHEDULE || []).forEach((ev) => {
+    const end = new Date(ev.end);
+    const start = ev.start ? new Date(ev.start) : null;
+    if (now <= end && (!start || now >= start) && end > now) {
+      presets.push({ label: t('goal.presetEventEndTemplate', { name: trEvent(ev.name) }), dateStr: formatDateValue(end) });
+    }
+  });
+  presets.push({ label: t('goal.presetOneWeek'), dateStr: formatDateValue(new Date(now.getTime() + 7 * 86400000)) });
+  presets.push({ label: t('goal.presetTwoWeeks'), dateStr: formatDateValue(new Date(now.getTime() + 14 * 86400000)) });
+  const oneMonthLater = new Date(now);
+  const oneMonthTargetDay = oneMonthLater.getDate();
+  oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+  if (oneMonthLater.getDate() !== oneMonthTargetDay) oneMonthLater.setDate(0);
+  presets.push({ label: t('goal.presetOneMonth'), dateStr: formatDateValue(oneMonthLater) });
+
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  wrap.innerHTML = presets.map((p) => '<button type="button" class="sc-date-quick-preset-btn" data-date="' + p.dateStr + '">' + esc(p.label) + '</button>').join('');
 }
 
 /* ================================================================

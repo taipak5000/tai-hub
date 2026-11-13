@@ -176,6 +176,42 @@ export function goalComputeSummary(g, current, globalDailyRate, heartsToSend) {
 }
 
 /* ================================================================
+   🧭 節目（マイルストーン）・目標日ペースの純粋計算
+   どちらも保存データには一切触れない表示専用の計算。
+   ================================================================ */
+export const MILESTONE_PCTS = [25, 50, 75, 100];
+// 進捗の節目（25/50/75/100%）ごとに「あと何本・今の実質ペース（ハート消費を
+// 差し引いた1日あたり）であと何日・いつ頃か」を返す。すでに過ぎた節目は含めない。
+// perDay<=0 のときは days/dateMs を null にして「本数だけ」の節目を返す。
+export function computeMilestones(current, effectiveTarget, perDay, nowMs) {
+  current = Math.max(0, current || 0);
+  effectiveTarget = Math.max(0, effectiveTarget || 0);
+  if (effectiveTarget <= 0 || current >= effectiveTarget) return [];
+  const now = isFinite(nowMs) ? nowMs : Date.now();
+  const out = [];
+  for (const pct of MILESTONE_PCTS) {
+    const atAmount = Math.ceil(effectiveTarget * pct / 100);
+    if (atAmount <= current) continue;
+    const remaining = Math.round((atAmount - current) * 100) / 100;
+    const days = perDay > 0 ? Math.ceil(remaining / perDay) : null;
+    out.push({ pct, atAmount, remaining, days, dateMs: days !== null ? now + days * 86400000 : null });
+  }
+  return out;
+}
+// 目標日までに必要なペース。requiredNet は「1日に純増しなければならない本数」で、
+// ハート送信などで毎日消費する分がある場合は、集めペース（スライダー）自体は
+// その分を上乗せした requiredGross が必要になる。達成可否の判定は必ず
+// 実質ペース（集めペース − 毎日の消費）>= requiredNet で行うこと
+// （消費を引く前のペースで判定すると、間に合わないのに「間に合う」と出てしまう）。
+export function targetDatePace(remaining, daysUntil, heartCostPerDay) {
+  remaining = Math.max(0, remaining || 0);
+  if (!isFinite(daysUntil) || daysUntil <= 0 || remaining <= 0) return null;
+  const requiredNet = remaining / daysUntil;
+  const cost = Math.max(0, heartCostPerDay || 0);
+  return { requiredNet, requiredGross: requiredNet + cost, heartCost: cost };
+}
+
+/* ================================================================
    💾 本体の入力状態(所持本数・集めペース・ハート送信数)
    ================================================================ */
 export function loadCalcState() {

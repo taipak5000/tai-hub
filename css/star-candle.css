@@ -316,6 +316,15 @@
 .star-candle-view .sc-pace-ok { color: var(--gold-light); }
 .star-candle-view .sc-pace-warn { color: var(--crimson-light); }
 .star-candle-view .sc-pace-note { margin-top: 4px; font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+.star-candle-view .sc-date-quick-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.star-candle-view .sc-date-quick-preset-btn {
+  padding: 7px 12px; border: 1px solid var(--card-border); border-radius: 999px; background: rgba(255,255,255,0.06);
+  color: var(--gold-light); font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.star-candle-view .sc-date-quick-preset-btn:hover { filter: brightness(1.15); }
+.star-candle-view .sc-date-quick-preset-btn:active { transform: scale(0.97); }
+.star-candle-view .sc-milestone-box { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px dashed var(--card-border); font-size: 12.5px; color: var(--lavender); line-height: 1.8; text-align: left; }
+.star-candle-view .sc-milestone-heading { font-weight: 700; color: var(--cream); font-size: 12px; letter-spacing: 0.04em; }
 .star-candle-view .sc-shard-estimate-box { margin: 10px 0; padding: 10px 12px; border-radius: 10px; background: rgba(196,87,75,0.12); border: 1px solid rgba(196,87,75,0.4); font-size: 13px; color: var(--lavender); line-height: 1.7; text-align: left; }
 .star-candle-view .sc-shard-estimate-box strong { color: var(--crimson-light); font-weight: 700; }
 

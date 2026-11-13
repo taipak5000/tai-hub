@@ -12,6 +12,16 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.13',
+    title: { ja: 'キャンドル計算機に節目の目安を追加、目標日の判定を修正', en: 'Milestones in candle calculators, target-date check fixed' },
+    date: '2026-11-13',
+    items: [
+      { type: 'fix', ja: 'ノマキャン計算機の目標日の判定が、ハートを送る分を差し引かずに「間に合う」と出ていたのを直しました。「今のペースだと何日頃に届くか」も出るようになり、「ペースを設定に反映」ボタンもハートの分を上乗せした本数を入れます。', en: 'Candle Calculator: the target-date check now accounts for hearts you send, shows when you would reach the goal at your current pace, and the “apply pace” button includes the heart cost.', route: 'tai-nomacan' },
+      { type: 'new', ja: 'ノマキャン計算機と星のキャンドル計算機に、25%・50%・75%・達成の節目まで「あと何本・いつ頃か」の目安を出すようにしました（星のキャンドルは羽のペースだけで計算します）。', en: 'Candle Calculator and Ascended Candle Calculator now show when you’ll reach 25%, 50%, 75% and your goal.', route: 'tai-nomacan' },
+      { type: 'new', ja: '星のキャンドル計算機の目標日に、シーズン終了日・イベント終了日・1週間後などをワンタップで入れるボタンを付けました。', en: 'Ascended Candle Calculator: quick buttons for the target date (season end, event end, in 1 week, etc.).', route: 'star-candle' },
+    ],
+  },
+  {
     version: '2026.11.12.6',
     title: { ja: '達成率の推移・画像カード・ピン留めなどを追加、アイテム別コストを見やすく', en: 'Completion graph, image cards, pinned tools, clearer Item Costs' },
     date: '2026-11-12',

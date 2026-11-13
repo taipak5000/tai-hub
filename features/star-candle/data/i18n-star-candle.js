@@ -33,6 +33,12 @@ export const SC_I18N = {
     prevMonth: { ja: '前の月', en: 'Previous month' },
     nextMonth: { ja: '次の月', en: 'Next month' },
     clearSelection: { ja: '選択をクリア', en: 'Clear selection' },
+    presetSeasonEnd: { ja: 'シーズン終了日', en: 'Season End' },
+    presetNextUpdate: { ja: '次回アップデート日', en: 'Next Update' },
+    presetEventEndTemplate: { ja: '{name}終了日', en: '{name} End' },
+    presetOneWeek: { ja: '1週間後', en: 'In 1 Week' },
+    presetTwoWeeks: { ja: '2週間後', en: 'In 2 Weeks' },
+    presetOneMonth: { ja: '1ヶ月後', en: 'In 1 Month' },
   },
   weekly: {
     heading: { ja: '週の集め方', en: 'Weekly Gains' },
@@ -76,6 +82,9 @@ export const SC_I18N = {
     remainingLine: { ja: '残り　<strong>{remaining}本</strong>', en: 'Remaining: <strong>{remaining} candles</strong>' },
     progressLine: { ja: '{weeklyLine}<br>進捗 {pct}%', en: '{weeklyLine}<br>Progress {pct}%' },
     footnote: { ja: '※7日ごとの獲得ペースをもとにした目安です。実際の日付とは前後する場合があります。', en: '*This is an estimate based on your gain rate over each 7-day period. The actual date may differ.' },
+    milestonesHeading: { ja: '節目までの目安（羽ペースのみ・赤闇は含まない）', en: 'Milestones (feather pace only, Red Shards not included)' },
+    milestoneRowTemplate: { ja: '{pct}%（{at}本）まで あと{remaining}本 ・ あと{weeks}週間（{date}頃）', en: '{pct}% ({at} candles): {remaining} to go · {weeks} more week(s) (around {date})' },
+    milestoneGoalRowTemplate: { ja: '達成（{at}本）まで あと{remaining}本 ・ あと{weeks}週間（{date}頃）', en: 'Goal ({at} candles): {remaining} to go · {weeks} more week(s) (around {date})' },
   },
   notify: {
     heading: { ja: '通知', en: 'Notifications' },
