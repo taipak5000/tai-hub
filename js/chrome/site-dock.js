@@ -12,6 +12,17 @@ import * as noticeModal from './notice-modal.js';
 import { unseenCount, onNoticesChanged } from '../notices.js';
 import { onUpdateChanged } from '../app-update.js';
 
+// ドックの各ボタンと、それが開く画面。開いているかは押した時点の画面（オーバーレイのクラス）から調べる
+// （✕・外側のタップ・Escなど、ドック以外の閉じ方があるので、状態を別に持たない）
+const overlayHas = (id, cls) => () => !!document.getElementById(id)?.classList.contains(cls);
+const DOCK_TARGETS = [
+  { btn: 'dockProfileBtn', mod: pfModal, isOpen: overlayHas('pfModalOverlay', 'open') },
+  { btn: 'dockDashboardBtn', mod: dashModal, isOpen: overlayHas('dashModalOverlay', 'open') },
+  { btn: 'dockNoticeBtn', mod: noticeModal, isOpen: overlayHas('noticeModalOverlay', 'open') },
+  { btn: 'dockToolsBtn', mod: toolsDrawer, isOpen: overlayHas('toolsDrawerOverlay', 'show') },
+  { btn: 'dockSettingsBtn', mod: settingsModal, isOpen: overlayHas('settingsModalOverlay', 'open') },
+];
+
 export function render(mountEl) {
   toolsDrawer.init();
   mountEl.innerHTML = `
@@ -38,11 +49,14 @@ export function render(mountEl) {
       </button>
     </nav>`;
 
-  document.getElementById('dockProfileBtn').addEventListener('click', () => pfModal.open());
-  document.getElementById('dockDashboardBtn').addEventListener('click', () => dashModal.open());
-  document.getElementById('dockToolsBtn').addEventListener('click', () => toolsDrawer.open());
-  document.getElementById('dockSettingsBtn').addEventListener('click', () => settingsModal.open());
-  document.getElementById('dockNoticeBtn').addEventListener('click', () => noticeModal.open());
+  // 同じボタンをもう一度押すと閉じる。別のボタンを押した時は、開いている画面を閉じてから開く（2枚重ねない）
+  DOCK_TARGETS.forEach(({ btn, mod, isOpen }) => {
+    document.getElementById(btn).addEventListener('click', () => {
+      if (isOpen()) { mod.close(); return; }
+      DOCK_TARGETS.forEach(o => { if (o.mod !== mod && o.isOpen()) o.mod.close(); });
+      mod.open();
+    });
+  });
 
   // 🔔 未読のお知らせの数。起動直後の描画を邪魔しないよう少し待ってから数え、ツールの移動・画面へ戻った時・
   // 10分ごと（来訪の開始や日付の変わり目）に数え直す
