@@ -166,6 +166,10 @@ function renderShell() {
           <div class="summary-item-sub">${t('光の翼1枚 = 星のキャンドル2本（季節精霊の場合）', '1 Winged Light = 2 Star Candles (for Seasonal Spirits)')}</div>
         </div>
       </div>
+      <div class="wg-summary-progress">
+        <div class="wg-summary-progress-head"><span>${t('全体のコンプリート率', 'Overall completion')}</span><b id="wgSumOverallPct">0%</b></div>
+        <div class="wg-progress on-dark" id="wgSumOverallBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span style="width:0%"></span></div>
+      </div>
     </div>
 
     <div class="cape-card">
@@ -757,6 +761,15 @@ function markAllLightChildren() {
 }
 
 /* ================================================================
+   📶 セクションの進捗バー（数字のバッジはそのまま残し、見出しの下に細く添える）
+   ================================================================ */
+function progressBarHtml(got, total) {
+  const pct = total > 0 ? Math.round((got / total) * 100) : 0;
+  const complete = total > 0 && got >= total;
+  return `<div class="wg-progress${complete ? ' complete' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${got}" aria-label="${escapeAttr(t(`${got} / ${total}`, `${got} of ${total}`))}"><span style="width:${pct}%"></span></div>`;
+}
+
+/* ================================================================
    ✓ 所持済みの印（精霊の行の右端）。判定は所持の有無（truthy）だけで行い、
    日時（at）があれば日付、旧データ（true＝日時不明）なら「取得済み」と出す
    ================================================================ */
@@ -906,6 +919,7 @@ function render() {
             <button type="button" class="season-toggle-btn" data-season="${escapeAttr(season.ja)}" aria-expanded="${collapsed ? 'false' : 'true'}" title="${escapeAttr(t(collapsed ? '展開する' : '折りたたむ', collapsed ? 'Expand' : 'Collapse'))}"><svg class="inline-icon" width="13" height="13"><use href="#i-chevron-down"/></svg></button>
           </div>
         </div>
+        ${progressBarHtml(gotCount, spirits.length)}
         ${collapsed ? '' : `
         <div class="area-actions" style="margin: 8px 0 0;">
           <button type="button" class="area-btn" data-season="${escapeAttr(season.ja)}" data-checked="1">${t('全選択', 'Select all')}</button>
@@ -970,6 +984,7 @@ function render() {
           <div class="season-name">${escapeHtml(L(realm))}</div>
           <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmMax} ${t('枚', '')}</span>
         </div>
+        ${progressBarHtml(realmGot, realmMax)}
         <div class="area-actions" style="margin: 8px 0 0;">
           <button type="button" class="area-btn" data-realm="${escapeAttr(realm.ja)}" data-checked="1">${t('全選択', 'Select all')}</button>
           <button type="button" class="area-btn" data-realm="${escapeAttr(realm.ja)}" data-checked="0">${t('リセット', 'Reset')}</button>
@@ -995,6 +1010,13 @@ function render() {
   containerEl.querySelector('#wgSumFeathersPerm').textContent = `${permFeathers} / ${permTotal}`;
   containerEl.querySelector('#wgSumPermCandles').textContent = `${permCandles.toLocaleString()}`;
   containerEl.querySelector('#wgSumLightChildren').textContent = `${lightChildrenGot} / ${lightChildrenTotal}`;
+  // 全体のコンプリート率は wings-state.js の computeOverallCompletionPct() を正とする（同じ計算を複製しない）
+  const overallPct = S.computeOverallCompletionPct({ seasonFeathers, seasonSpiritsTotal, permFeathers, permTotal, lightChildrenGot, lightChildrenTotal });
+  containerEl.querySelector('#wgSumOverallPct').textContent = `${overallPct}%`;
+  const overallBar = containerEl.querySelector('#wgSumOverallBar');
+  overallBar.setAttribute('aria-valuenow', String(overallPct));
+  overallBar.classList.toggle('complete', overallPct >= 100);
+  overallBar.firstElementChild.style.width = `${overallPct}%`;
 
   renderCapeLevels(totalAll);
   checkAndUnlockTitles();
@@ -1055,6 +1077,7 @@ function renderLightChildren() {
           <div class="season-name">${escapeHtml(L(realm))}</div>
           <span class="season-sub-badge ${complete ? 'complete' : ''}">${realmGot} / ${realmTotal} ${t('体', '')}</span>
         </div>
+        ${progressBarHtml(realmGot, realmTotal)}
         ${areasHtml}
       </div>`;
   }).join('');
