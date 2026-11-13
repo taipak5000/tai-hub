@@ -67,7 +67,7 @@ export const GENERIC_ITEM_IMG = {
   'Duet Bow': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/b/b4/Duets-Guide-Action-icon.png',
   'Side Hug': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/9/9b/Reassuring-Ranger-Action-icon-Credit-Morybel.png/revision/latest/scale-to-width-down/51',
   'Cradle Carry': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/d/d5/Feudal-Lord-Action-icon.png/revision/latest/scale-to-width-down/51',
-  // Stage 4: ふたつの灯火の季節 前編（Vault Elder's Lantern）のアルティメット報酬
+  // Stage 4: ふたつの灯火の季節 前編（Vault Elder's Lantern）の究極の贈り物
   'The Two Embers - Part 1 Ultimate Pendant': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/2/22/Season-of-Ember-P1-Pendant.png/revision/latest/scale-to-width-down/51',
   'Two Embers - Part 1 Ultimate Hair Accessory': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/f/fa/Vault-Elder-Lantern-Ultimate-Constellation-Hairpiece-icon.png/revision/latest/scale-to-width-down/51',
   'Two Embers - Part 1 Ultimate Cape': 'https://static.wikia.nocookie.net/sky-children-of-the-light/images/0/0b/Vault-Elder-Lantern-Ultimate-Cape-icon.png/revision/latest/scale-to-width-down/51',

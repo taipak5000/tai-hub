@@ -102,7 +102,7 @@ export const SEASON_NAME_EN = {
   '季節の存在': 'Season Manifestation',
   '季節の案内人・究極の贈り物': 'Season Guide (Ultimate Gift)',
   '季節の案内人': 'Season Guide',
-  'アルティメットギフト': 'Ultimate Gift',
+  '究極の贈り物': 'Ultimate Gift',
   'アドベンチャーパス': 'Adventure Pass',
   'ペンダント': 'Pendant',
   'デイズ限定': 'Days-event Exclusive',

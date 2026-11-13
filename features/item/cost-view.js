@@ -221,7 +221,7 @@ function computeAllItems() {
     });
   });
 
-  // 季節のペンダント（ネックレスの季節アルティメットギフト）を所持している季節を集計
+  // 季節のペンダント（ネックレスの季節究極の贈り物）を所持している季節を集計
   const pendantOwnedSeasons = new Set();
   all.forEach(item => {
     if (item.catKey === 'necklace' && item.name.includes('ペンダント') && item.owned) {
