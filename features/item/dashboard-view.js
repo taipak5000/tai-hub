@@ -27,6 +27,7 @@ import * as coordShare from './coord/coord-share.js';
 import { appendItemFooter } from './item-footer.js';
 import * as achievementShare from './share/achievement-share.js';
 import * as favoritesShare from './share/favorites-share.js';
+import * as closetLink from './share/closet-link.js';
 
 const STYLE_ID = 'item-dashboard-view-styles';
 
@@ -289,12 +290,19 @@ function renderShell() {
       })}
 
       <p class="sec-label">${en ? 'Coord Features' : 'コーデ機能'}</p>
+      <div class="dash-feature-row">
+      ${featureBtnHtml({
+        id: 'dashClosetLinkBtn', icon: 'i-link',
+        label: en ? 'Share Your Closet as a Link' : '手持ちアイテムをURLで共有',
+        desc: en ? 'Let a friend browse what you own and send back a coord made from it' : '持っているアイテムを他の人が見られるリンクにして、コーデを組んでもらえます',
+      })}
       ${featureBtnHtml({
         href: '#/coord-diary', icon: 'i-hanger',
         label: en ? 'Outfit Diary' : 'コーデ日記',
         desc: en ? 'Random Coord, My Coord and Closet Collage have moved here, next to your outfit log'
                  : 'ランダムコーデ・マイコーデ・クローゼットコラージュは、コーデ日記へ引っ越しました',
       })}
+      </div>
     </div>
     </div>`;
 }
@@ -362,6 +370,7 @@ const FEATURE_TRIGGERS = [
   { btnId: 'dashCustomizeShareBtn', mod: achievementShare, action: 'open' },
   { btnId: 'dashFavShareBtn', mod: favoritesShare, action: 'open' },
   { btnId: 'dashShareCardBtn', mod: achievementCard, action: 'open' },
+  { btnId: 'dashClosetLinkBtn', mod: closetLink, action: 'openShareModal' },
 ];
 
 // 「はじめての方へ」の開閉・初回訪問ヒントの閉じるボタン配線
@@ -416,7 +425,7 @@ function teardownFeatureTriggers() {
   triggerListeners = [];
   // 離脱時、開きっぱなしのモーダルがあれば閉じる（close()はどのモーダルも
   // 「開いていなければ何もしない」実装のため、常時呼んでも安全）
-  [searchModal, wishlistCostModal, acquireLogModal, achievementShare, favoritesShare, achievementCard]
+  [searchModal, wishlistCostModal, acquireLogModal, achievementShare, favoritesShare, achievementCard, closetLink]
     .forEach(mod => { try { mod.close(); } catch (e) { /* no-op */ } });
   try { coordShare.closeSharedCoord(); } catch (e) { /* no-op */ }
 }

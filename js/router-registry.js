@@ -44,11 +44,15 @@ const itemEntry = {
     let targetKey;
     let cat = null;
     let sharedCoordSub = null; // コーデの共有リンク（#/item/coord=<code>）: ダッシュボードの上にプレビューを出す
+    let sharedClosetSub = null; // 手持ちアイテムの共有リンク（#/item/closet=<code>）: 同じくダッシュボードの上に開く
     if (!sub) {
       targetKey = 'dashboard';
     } else if (sub.startsWith('coord=')) {
       targetKey = 'dashboard';
       sharedCoordSub = sub;
+    } else if (sub.startsWith('closet=')) {
+      targetKey = 'dashboard';
+      sharedClosetSub = sub;
     } else if (sub === 'cost') {
       targetKey = 'cost';
     } else if (sub === 'all') {
@@ -83,13 +87,18 @@ const itemEntry = {
         if (myToken === itemToken) m.openSharedCoordFromRoute(sharedCoordSub);
       });
     }
+    if (sharedClosetSub) {
+      import('../features/item/share/closet-link.js').then(m => {
+        if (myToken === itemToken) m.openSharedClosetFromRoute(sharedClosetSub);
+      });
+    }
   },
   unmount() {
     itemToken++; // 進行中のmount()（動的import待ち等）を無効化
     Object.values(itemMods).forEach(mod => mod && mod.unmount && mod.unmount());
   },
   title(sub) {
-    if (!sub || sub.startsWith('coord=')) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
+    if (!sub || sub.startsWith('coord=') || sub.startsWith('closet=')) return CURRENT_LANG === 'en' ? 'Item Collection Tracker - tai-hub' : 'アイテム所持管理 - tai-hub';
     if (sub === 'cost') return CURRENT_LANG === 'en' ? 'Total Spent & Real Money - tai-hub' : '累計消費コスト・実額 - tai-hub';
     if (sub === 'all') return CURRENT_LANG === 'en' ? 'All Items - tai-hub' : '全アイテム一覧 - tai-hub';
     const cat = CATEGORY_REGISTRY.find(c => c.key === sub);

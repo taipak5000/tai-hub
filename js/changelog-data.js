@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.14',
+    title: { ja: '手持ちアイテムをURLで共有', en: 'Share your closet as a link' },
+    date: '2026-11-14',
+    items: [
+      { type: 'new', ja: 'アイテム所持管理で、持っているアイテムの一覧をURLで共有できるようにしました（「コーデ機能」の「手持ちアイテムをURLで共有」から）。開いた人はあなたの手持ちをカテゴリごとに見られて、その中からアイテムを選んでコーデを組み、リンクで送り返せます。送り返されたコーデは、持っているアイテムに✓が付いて表示されます。', en: 'Item Tracker: share the items you own as a link. Friends can browse your closet, put a coord together from it, and send it back as a link.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.13.7',
     title: { ja: 'キャンドル計算機に節目の目安、羽トラッカーを見やすく', en: 'Candle calculator milestones, easier-to-read Wing Tracker' },
     date: '2026-11-13',

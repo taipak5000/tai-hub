@@ -189,6 +189,9 @@ const landingPoint = currentY + project(v);
   （元の`<select>`は隠して残し、選び直すと`change`を起こす。値は`eventSet(selectEl)`で受け取る。空＝すべて）。
 - **精霊ツリーの楽譜ノード**: `spirit-catalog-state.js`の`linkMusicNodes()`が実行時に楽譜（`gameItems_music_sheet`）へ紐づける。
   楽譜だけ旧キー`musicSheets`にしかデータが無い場合があるので、読み書きは`readMusicOwnedRaw()`を通す。
+- **手持ちアイテムの共有リンク**（`features/item/share/closet-link.js`、`#/item/closet=<code>`）: 所持アイテムの一覧をURLの`#`以降に詰める（サーバーは使わない）。
+  IDを「番号×8＋枝番」の差分にして deflate-raw で圧縮し base64url にする（全所持1,200件ほどで約250文字）。カテゴリ番号は`CAT_CODES`の位置なので**並べ替え・削除は禁止、足すのは末尾だけ**
+  （作ったURLが読めなくなる）。開いた側は閲覧専用で保存データに書き込まず、選んだアイテムは既存のコーデのリンク（`shareCoordLink()`）で送り返す。
 - **アイテムの詳細シート**（`features/item/item-detail-sheet.js`）: カテゴリ一覧・全アイテムでアイテム名を押すと開く。ほしいもの計画への追加は既存の`wish_<cat>`に書くだけ。
 - **累計消費コスト・実額**（旧アイテム別コスト。`features/item/cost-view.js`、`#/item/cost`）: サマリー（残り＝塗りの面／かかった＝淡い面）→stickyなフィルターバー→季節ごとの一覧→課金の記録→「この集計について」の順。
   一覧の行は名前と価格だけで、入手経緯の切替などは行を押すと開く詳細（開いた行だけ中身を描く。`openItems`）。集計は`computeOwnedBreakdown()`／`computeRemainBreakdown()`が
