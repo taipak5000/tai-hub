@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.14',
-    title: { ja: '手持ちアイテムをURLで共有', en: 'Share your closet as a link' },
+    version: '2026.11.14.2',
+    title: { ja: '手持ちアイテムをURLで共有、思慮深き座長の再訪予想', en: 'Share your closet as a link, Thoughtful Director visit' },
     date: '2026-11-14',
     items: [
+      { type: 'improve', ja: '11/19 17:00〜11/23 16:59 に再訪すると予想されている「思慮深き座長」を、再訪精霊データベースとお知らせに載せました。来訪中は、アイテム所持管理の「現在開催中」の絞り込みにマスク・石琴・ケープが入ります（11/18(水)に確定予定です）。', en: 'Thoughtful Director is expected to visit 11/19–11/23 (to be confirmed 11/18); its mask, Xylophone and cape appear in the “available now” filter while it is here.', route: 'tai-revisit' },
       { type: 'new', ja: 'アイテム所持管理で、持っているアイテムの一覧をURLで共有できるようにしました（「コーデ機能」の「手持ちアイテムをURLで共有」から）。開いた人はあなたの手持ちをカテゴリごとに見られて、その中からアイテムを選んでコーデを組み、リンクで送り返せます。送り返されたコーデは、持っているアイテムに✓が付いて表示されます。', en: 'Item Tracker: share the items you own as a link. Friends can browse your closet, put a coord together from it, and send it back as a link.', route: 'item' },
     ],
   },
