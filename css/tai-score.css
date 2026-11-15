@@ -93,7 +93,7 @@
 .tai-score-view .card { background: var(--card); border-radius: var(--r); padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); margin-bottom: 14px; }
 .tai-score-view .card p { font-size: 13px; line-height: 1.8; color: var(--text); }
 .tai-score-view .card a { color: var(--pink-d); text-decoration: underline; text-underline-offset: 2px; }
-.tai-score-view .hint { font-size: 12px; color: var(--text-2); line-height: 1.7; }
+.tai-score-view .hint { font-size: 12.5px; color: var(--text-2); line-height: 1.7; }
 
 /* ── ヒーローバナー ── */
 .tai-score-view .banner {
@@ -129,6 +129,17 @@
   .tai-score-view .banner-nums { gap: 16px; }
   .tai-score-view .bnum-val { font-size: 22px; }
 }
+/* 数字2つ＋説明1行にまとめた低いバナー（ライブラリの曲リストを上へ寄せるため） */
+.tai-score-view .banner.banner-compact { padding: 12px 14px; margin-top: 0; }
+.tai-score-view .banner-compact .banner-inner { gap: 12px; }
+.tai-score-view .banner-compact .banner-icon-wrap { width: 44px; height: 44px; border-width: 1.5px; }
+.tai-score-view .banner-compact .banner-icon { font-size: 20px; display: inline-flex; }
+.tai-score-view .banner-compact .banner-icon .inline-icon { stroke: #fff; color: #fff; }
+.tai-score-view .banner-compact .banner-nums { gap: 16px; flex-wrap: wrap; row-gap: 2px; }
+.tai-score-view .banner-compact .bnum { display: flex; align-items: baseline; gap: 5px; }
+.tai-score-view .banner-compact .bnum-val { font-size: 22px; letter-spacing: -0.02em; }
+.tai-score-view .banner-compact .bnum-lbl { font-size: 12px; margin-top: 0; letter-spacing: 0.02em; opacity: 0.88; }
+.tai-score-view .banner-desc { font-size: 12.5px; line-height: 1.5; margin-top: 4px; opacity: 0.92; letter-spacing: 0.02em; }
 
 /* ── ページ見出し ── */
 
@@ -143,8 +154,27 @@
 .tai-score-view .view-section.active { display: block; }
 
 /* ── ライブラリ ── */
-.tai-score-view .lib-toolbar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-.tai-score-view .lib-toolbar .lib-search { flex-basis: 100%; }
+.tai-score-view .lib-toolbar { display: flex; gap: 8px; margin-top: 12px; }
+.tai-score-view .lib-toolbar .lib-search { min-width: 0; }
+.tai-score-view .lib-toolbar .new-song-btn { flex-shrink: 0; }
+.tai-score-view .new-song-btn:active, .tai-score-view .lib-import-btn:active, .tai-score-view .song-card-del:active { transform: scale(0.97); }
+/* 2段目: 使う頻度の低い「読み込む」「全曲書き出し」は小さめのボタンに */
+.tai-score-view .lib-toolbar-sub { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.tai-score-view .lib-sub-btn { background: var(--card); border: 1px solid var(--sep); color: var(--text-2); }
+/* ほかの形式から作る（音声・動画／楽譜画像／MIDI） */
+.tai-score-view .lib-import { margin-top: 12px; background: var(--card); border-radius: var(--r-sm); box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; }
+.tai-score-view .lib-import-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: 0.03em; padding: 9px 12px 3px; }
+.tai-score-view .lib-import-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  padding: 8px 12px; min-height: 40px; color: var(--text); border-top: 1px solid var(--sep);
+}
+.tai-score-view .lib-import-label + .lib-import-btn { border-top: 0; }
+.tai-score-view .lib-import-btn .inline-icon { flex-shrink: 0; }
+.tai-score-view .lib-import-name { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.tai-score-view .lib-import-desc { font-size: 12.5px; color: var(--text-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .tai-score-view .new-song-btn:active, .tai-score-view .lib-import-btn:active, .tai-score-view .song-card-del:active { transform: none; opacity: 0.7; }
+}
 .tai-score-view .lib-search {
   flex: 1; background: var(--card); border: 1.5px solid var(--sep); border-radius: var(--r-sm);
   padding: 10px 12px; font-size: 16px; color: var(--text);
@@ -156,36 +186,35 @@
 }
 .tai-score-view .new-song-btn.secondary { background: var(--card); color: var(--text); border: 1px solid var(--sep); }
 .tai-score-view .lib-sort-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.tai-score-view .lib-sort-row select { flex: 1 1 0; min-width: 0; }
+.tai-score-view .lib-sort-row .mini-btn { background: var(--card); border: 1px solid var(--sep); color: var(--text-2); white-space: nowrap; }
 .tai-score-view .lib-sort-row label { font-size: 12.5px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
 .tai-score-view .lib-sort-row select {
-  flex: 1; background: var(--card); border: 1.5px solid var(--sep); border-radius: var(--r-sm);
+  background: var(--card); border: 1.5px solid var(--sep); border-radius: var(--r-sm);
   padding: 8px 10px; font-size: 13px; font-weight: 600; color: var(--text);
 }
 .tai-score-view .lib-sort-row select:focus { outline: none; border-color: var(--pink); }
 .tai-score-view .lib-sort-row .mini-btn { flex-shrink: 0; }
-.tai-score-view .test-feature-details { margin-top: 10px; }
-.tai-score-view .test-feature-summary {
-  cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--text-2);
-  padding: 8px 12px; background: var(--card); border: 1px solid var(--sep); border-radius: var(--r-sm);
-  list-style: none; display: flex; align-items: center; gap: 6px; user-select: none;
-}
-.tai-score-view .test-feature-summary::-webkit-details-marker { display: none; }
-.tai-score-view .test-feature-summary::before {
-  content: ''; display: inline-block; width: 9px; height: 9px;
-  background-color: var(--text-3);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 6l6 6-6 6' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 6l6 6-6 6' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  -webkit-mask-size: contain; mask-size: contain;
-  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  transition: transform 0.15s;
-}
-.tai-score-view .test-feature-details[open] .test-feature-summary::before { transform: rotate(90deg); }
-.tai-score-view .test-feature-body { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .tai-score-view .song-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
 .tai-score-view .song-card { background: var(--card); border-radius: var(--r); padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); }
-.tai-score-view .song-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tai-score-view .song-card { cursor: pointer; }
+.tai-score-view .song-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.tai-score-view .song-card-name { flex: 1; min-width: 0; }
+/* 削除は「開く」「複製」から離して右上の小さなアイコンに（押し間違い防止） */
+.tai-score-view .song-card-del {
+  flex-shrink: 0; width: 32px; height: 32px; margin: -5px -5px 0 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; color: var(--text-2);
+}
+.tai-score-view .song-card-del .inline-icon { stroke: var(--text-2); color: var(--text-2); }
+.tai-score-view .song-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.tai-score-view .song-chip {
+  display: inline-flex; align-items: baseline; gap: 4px; background: var(--bg); color: var(--text);
+  font-size: 12.5px; font-weight: 600; padding: 3px 8px; border-radius: 7px; font-variant-numeric: tabular-nums;
+}
+.tai-score-view .song-chip-k { color: var(--text-2); font-weight: 600; letter-spacing: 0.02em; }
+.tai-score-view .song-card-results { margin-top: 7px; font-size: 12.5px; color: var(--text-2); line-height: 1.6; }
 .tai-score-view .song-card-name { font-size: 15px; font-weight: 700; overflow-wrap: break-word; word-break: break-word; }
-.tai-score-view .song-card-meta { font-size: 12px; color: var(--text-2); margin-top: 3px; }
+.tai-score-view .song-card-meta { font-size: 12.5px; color: var(--text-2); margin-top: 3px; }
 .tai-score-view .song-card-btns { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .tai-score-view .mini-btn {
   background: var(--bg); color: var(--text); font-size: 12.5px; font-weight: 600;

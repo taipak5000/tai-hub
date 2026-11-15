@@ -38,7 +38,7 @@
 import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { t } from './data/i18n-score.js';
-import { PITCHES, INSTRUMENT_LABELS } from './data/constants.js';
+import { PITCHES, INSTRUMENT_LABELS, instrumentLabel } from './data/constants.js';
 import * as S from './tai-score-state.js';
 import * as A from './tai-score-audio.js';
 import {
@@ -156,28 +156,24 @@ function renderShell() {
       <div>
         <header class="tool-nav-head"><h1><svg class="inline-icon" width="19" height="19"><use href="#i-music-note"/></svg> ${CURRENT_LANG === 'en' ? 'Sheet Music Maker' : '楽譜づくり'}</h1></header>
 
-        <div class="banner">
+        <div class="banner banner-compact">
           <div class="banner-inner">
-            <div class="banner-icon-wrap"><span class="banner-icon"><svg class="inline-icon" width="28" height="28"><use href="#i-sheet-music"/></svg></span></div>
+            <div class="banner-icon-wrap"><span class="banner-icon"><svg class="inline-icon" width="20" height="20"><use href="#i-sheet-music"/></svg></span></div>
             <div class="banner-text">
-              <div class="banner-title">${escapeHtml(t('heroBannerTitle'))}</div>
               <div class="banner-nums">
-                <div>
-                  <div class="bnum-val" id="heroSongsVal">--</div>
-                  <div class="bnum-lbl">${escapeHtml(t('heroSongsLabel'))}</div>
+                <div class="bnum">
+                  <span class="bnum-val" id="heroSongsVal">--</span>
+                  <span class="bnum-lbl">${escapeHtml(t('heroSongsLabel'))}</span>
                 </div>
-                <div>
-                  <div class="bnum-val" style="opacity:.72" id="heroPracticeVal">--</div>
-                  <div class="bnum-lbl">${escapeHtml(t('heroPracticeLabel'))}</div>
+                <div class="bnum">
+                  <span class="bnum-val" id="heroPracticeVal">--</span>
+                  <span class="bnum-lbl">${escapeHtml(t('heroPracticeLabel'))}</span>
                 </div>
               </div>
+              <div class="banner-desc">${escapeHtml(t('heroIntroShort'))}</div>
             </div>
           </div>
         </div>
-
-        <div class="card" style="margin-top:14px;"><p>${t('introText')}</p></div>
-
-        ${titlesSlotHtml('score', 'in-score')}
 
         <div class="view-tabs">
           <button type="button" class="view-tab active" id="tabLibraryBtn" data-act="switch-view" data-view="library">${escapeHtml(t('tabLibrary'))}</button>
@@ -187,19 +183,31 @@ function renderShell() {
 
         <section class="view-section active" id="viewLibrary">
           <div class="lib-toolbar">
-            <input type="search" class="lib-search" id="librarySearch" placeholder="${escapeHtml(t('librarySearchPlaceholder'))}">
-            <button type="button" class="new-song-btn secondary" data-act="open-modal" data-modal="importModal">${escapeHtml(t('btnImport'))}</button>
-            <button type="button" class="new-song-btn secondary" data-act="export-library-text">${escapeHtml(t('btnExportAllText'))}</button>
+            <input type="search" class="lib-search" id="librarySearch" placeholder="${escapeHtml(t('librarySearchPlaceholder'))}" aria-label="${escapeHtml(t('librarySearchPlaceholder'))}">
             <button type="button" class="new-song-btn" data-act="create-new-song">${escapeHtml(t('btnNewSong'))}</button>
           </div>
-          <details class="test-feature-details">
-            <summary class="test-feature-summary">${escapeHtml(t('testFeaturesLabel'))}</summary>
-            <div class="test-feature-body">
-              <button type="button" class="new-song-btn secondary" data-act="open-audio-import">${escapeHtml(t('btnAudioImport'))}</button>
-              <button type="button" class="new-song-btn secondary" data-act="open-image-import">${escapeHtml(t('btnImageImport'))}</button>
-              <button type="button" class="new-song-btn secondary" data-act="open-midi-import">${escapeHtml(t('btnMidiImport'))}</button>
-            </div>
-          </details>
+          <div class="lib-toolbar-sub">
+            <button type="button" class="mini-btn lib-sub-btn" data-act="open-modal" data-modal="importModal">${escapeHtml(t('btnImport'))}</button>
+            <button type="button" class="mini-btn lib-sub-btn" data-act="export-library-text">${escapeHtml(t('btnExportAllText'))}</button>
+          </div>
+          <div class="lib-import" role="group" aria-labelledby="libImportLabel">
+            <div class="lib-import-label" id="libImportLabel">${escapeHtml(t('importOtherLabel'))}</div>
+            <button type="button" class="lib-import-btn" data-act="open-audio-import">
+              <svg class="inline-icon" width="18" height="18"><use href="#i-music-note"/></svg>
+              <span class="lib-import-name">${escapeHtml(t('btnAudioImport'))}</span>
+              <span class="lib-import-desc">${escapeHtml(t('audioImportShort'))}</span>
+            </button>
+            <button type="button" class="lib-import-btn" data-act="open-image-import">
+              <svg class="inline-icon" width="18" height="18"><use href="#i-image"/></svg>
+              <span class="lib-import-name">${escapeHtml(t('btnImageImport'))}</span>
+              <span class="lib-import-desc">${escapeHtml(t('imageImportShort'))}</span>
+            </button>
+            <button type="button" class="lib-import-btn" data-act="open-midi-import">
+              <svg class="inline-icon" width="18" height="18"><use href="#i-sheet-music"/></svg>
+              <span class="lib-import-name">${escapeHtml(t('btnMidiImport'))}</span>
+              <span class="lib-import-desc">${escapeHtml(t('midiImportShort'))}</span>
+            </button>
+          </div>
           <div class="lib-sort-row">
             <label>${escapeHtml(t('librarySortLabel'))}</label>
             <select id="librarySortSelect">
@@ -211,6 +219,7 @@ function renderShell() {
             <button type="button" class="mini-btn" data-act="clear-library-filters">${escapeHtml(t('clearLibraryFiltersBtn'))}</button>
           </div>
           <div class="song-list" id="songList"></div>
+          ${titlesSlotHtml('score', 'in-score')}
         </section>
 
         <section class="view-section" id="viewEditor"></section>
@@ -595,22 +604,35 @@ function renderLibrary() {
         <button type="button" class="mini-btn primary" data-act="open-modal" data-modal="importModal">${escapeHtml(t('importModalTitle'))}</button></div>`;
     return;
   }
+  const dateOf = ts => { const d = new Date(ts); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`; };
+  const chip = (label, value) => `<span class="song-chip"><span class="song-chip-k">${escapeHtml(label)}</span>${escapeHtml(String(value))}</span>`;
   container.innerHTML = songs.map(s => {
-    const noteCount = S.songNoteCount(s);
-    const d = new Date(s.updatedAt);
-    const dateStr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+    const name = s.name || t('untitledSong');
+    const chips = [
+      chip('BPM', s.bpm),
+      s.pitch ? chip(t('pitchLabel'), s.pitch) : '',
+      s.instrument ? chip(t('chipInstrument'), INSTRUMENT_LABELS[s.instrument] ? t('instrument' + s.instrument) : instrumentLabel(s.instrument)) : '',
+      chip(t('chipFrames'), s.frames.length),
+      chip(t('chipNotes'), S.songNoteCount(s)),
+      chip(t('chipUpdated'), dateOf(s.updatedAt)),
+    ].join('');
+    const results = [];
+    const pr = s.lastPracticeResult;
+    const tr = s.lastTestResult;
+    if (pr && pr.at) results.push(t('lastPracticeResultText', { date: dateOf(pr.at) }));
+    if (tr && tr.at) results.push(t(tr.mistakes === 0 ? 'lastTestResultTextNoMistake' : 'lastTestResultText', { date: dateOf(tr.at), count: tr.mistakes }));
+    // カード本体のタップでも開く（中のボタンは closest('[data-act]') が先に拾うので競合しない）
     return `
-      <div class="song-card" data-song-id="${s.id}">
+      <div class="song-card" data-song-id="${s.id}" data-act="open-editor" data-id="${s.id}">
         <div class="song-card-head">
-          <div>
-            <div class="song-card-name">${escapeHtml(s.name || t('untitledSong'))}</div>
-            <div class="song-card-meta">${escapeHtml(t('songCardMeta', { frames: s.frames.length, notes: noteCount, bpm: s.bpm, date: dateStr }))}</div>
-          </div>
+          <div class="song-card-name">${escapeHtml(name)}</div>
+          <button type="button" class="song-card-del" data-act="delete-song" data-id="${s.id}" title="${escapeHtml(t('deleteBtn'))}" aria-label="${escapeHtml(t('deleteSongAria', { name }))}"><svg class="inline-icon" width="16" height="16"><use href="#i-trash"/></svg></button>
         </div>
+        <div class="song-chips">${chips}</div>
+        ${results.length ? `<div class="song-card-results">${results.map(r => `<div>${escapeHtml(r)}</div>`).join('')}</div>` : ''}
         <div class="song-card-btns">
           <button type="button" class="mini-btn primary" data-act="open-editor" data-id="${s.id}">${escapeHtml(t('openBtn'))}</button>
           <button type="button" class="mini-btn" data-act="duplicate-song" data-id="${s.id}">${escapeHtml(t('duplicateBtn'))}</button>
-          <button type="button" class="mini-btn danger" data-act="delete-song" data-id="${s.id}">${escapeHtml(t('deleteBtn'))}</button>
         </div>
       </div>`;
   }).join('');
@@ -659,7 +681,7 @@ function focusLibraryRowNear(index) {
   const cards = document.querySelectorAll('#songList .song-card');
   if (cards.length === 0) { focusLibraryFallback(); return; }
   const card = cards[Math.max(0, Math.min(index, cards.length - 1))];
-  const btn = card.querySelector('.mini-btn.danger') || card.querySelector('.mini-btn');
+  const btn = card.querySelector('.song-card-del') || card.querySelector('.mini-btn');
   if (btn) btn.focus(); else focusLibraryFallback();
 }
 function focusSongCardButton(songId, selector) {

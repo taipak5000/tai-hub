@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.15',
+    title: { ja: '楽譜づくりのライブラリを見やすく', en: 'Easier-to-read Sheet Music Maker library' },
+    date: '2026-11-15',
+    items: [
+      { type: 'improve', ja: '楽譜づくりの最初の画面を整理しました。上の案内を低くして曲の一覧がすぐ見えるようにし、「音声・動画から作る」「楽譜画像から作る」「MIDIから作る」を折りたたみの外へ出しました。曲のカードには調・楽器と前回の練習・試験の結果が出て、カードのどこを押しても開けます。削除は右上の小さなボタンに移しました（保存済みの曲はそのままです）。', en: 'Sheet Music Maker: a tidier library screen. Songs appear sooner, the audio/video, sheet image and MIDI importers are always visible, and song cards show key, instrument and your last practice/test results. Tap anywhere on a card to open it.', route: 'tai-score' },
+    ],
+  },
+  {
     version: '2026.11.14.2',
     title: { ja: '手持ちアイテムをURLで共有、思慮深き座長の再訪予想', en: 'Share your closet as a link, Thoughtful Director visit' },
     date: '2026-11-14',
