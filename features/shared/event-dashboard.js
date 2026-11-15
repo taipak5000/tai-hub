@@ -608,7 +608,9 @@ const shardDot = (isRed, dim) => `<span class="dash-item-dot${isRed ? ' is-red' 
 function buildHtml(data) {
   const now = new Date();
   icsList = [];
-  const dailyRows = [];
+  // デイリーの各項目は id を付けて集め、「表示を編集」で隠したもの（dailyHidden）を除いて出す
+  const dailyParts = [];
+  const dailyRows = { push: (id, html) => dailyParts.push({ id, html }) };
   const shard = shardInfo();
   if (shard.hasShard) {
     const colorLabel = shard.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard');
@@ -621,7 +623,7 @@ function buildHtml(data) {
       return `<span class="dash-shard-time${past ? ' past' : ''}${isActive ? ' active' : ''}">${formatShardRange(occ)}${isActive ? `<span class="dash-shard-active">${t('出現中', 'Active')}</span>` : ''}</span>`;
     }).join('');
     const soon = soonestFuture(shard.occurrences) || nextShardTime();
-    dailyRows.push(item({
+    dailyRows.push('shard', item({
       dot: shardDot(shard.isRed),
       name: `${colorLabel} <span class="dash-item-sub">${where}</span>`,
       state: active ? t('終了まで', 'Ends in') : soon ? t('次まで', 'Next in') : '',
@@ -630,7 +632,7 @@ function buildHtml(data) {
     }));
   } else {
     const nextShard = nextShardTime();
-    dailyRows.push(item({ dot: shardDot(false, true), name: t('闇の破片なし', 'No shards today'), state: nextShard ? t('次まで', 'Next in') : '', time: nextShard ? countdown(nextShard) : '' }));
+    dailyRows.push('shard', item({ dot: shardDot(false, true), name: t('闇の破片なし', 'No shards today'), state: nextShard ? t('次まで', 'Next in') : '', time: nextShard ? countdown(nextShard) : '' }));
   }
   // 次のデイリー（太平洋時間0時の切り替わり後）の闇の破片
   const tomorrowShard = shardInfoForOffset(1);
@@ -638,17 +640,18 @@ function buildHtml(data) {
     const colorLabel = tomorrowShard.isRed ? t('赤闇', 'Red Shard') : t('黒闇', 'Black Shard');
     const where = `${srLabel(tomorrowShard.realm)}・${t(tomorrowShard.location.ja, tomorrowShard.location.en)}`;
     const times = tomorrowShard.occurrences.map(occ => `<span class="dash-shard-time">${formatShardRange(occ)}</span>`).join('');
-    dailyRows.push(item({ dot: shardDot(tomorrowShard.isRed, true), name: `${t('翌日', 'Next day')}：${colorLabel} <span class="dash-item-sub">${where}</span>`, note: `<span class="dash-shard-times">${times}</span>` }));
+    dailyRows.push('shardNext', item({ dot: shardDot(tomorrowShard.isRed, true), name: `${t('翌日', 'Next day')}：${colorLabel} <span class="dash-item-sub">${where}</span>`, note: `<span class="dash-shard-times">${times}</span>` }));
   } else {
-    dailyRows.push(item({ dot: shardDot(false, true), name: t('翌日：闇の破片なし', 'Next day: no shards') }));
+    dailyRows.push('shardNext', item({ dot: shardDot(false, true), name: t('翌日：闇の破片なし', 'Next day: no shards') }));
   }
   // 大キャンドルとクエストキャンドルは同じ時刻に切り替わるので、残り時間は見出しに1回だけ出す
-  dailyRows.push(item({ name: `${t('大キャンドル', 'Grand Candle')} <b>${srLabel(grandCandleRealm())}</b>` }));
-  dailyRows.push(item({ name: `${t('クエスト・シーズンキャンドル', 'Quest & Season Candle')} <b>${srLabel(grandCandleRealm(-2, QUEST_CANDLE_ANCHOR_DATE, QUEST_CANDLE_ANCHOR_REALM_IDX))}</b>` }));
-  dailyRows.push(item({ name: t('ウニ焼き', 'Geyser'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(5)) }));
-  dailyRows.push(item({ name: t('パン焼き', 'Bread Baking'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(35)) }));
-  dailyRows.push(item({ name: t('亀闇', 'Turtle Darkness'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(50)) }));
-  const dailyHtml = dailyRows.join('');
+  dailyRows.push('grand', item({ name: `${t('大キャンドル', 'Grand Candle')} <b>${srLabel(grandCandleRealm())}</b>` }));
+  dailyRows.push('quest', item({ name: `${t('クエスト・シーズンキャンドル', 'Quest & Season Candle')} <b>${srLabel(grandCandleRealm(-2, QUEST_CANDLE_ANCHOR_DATE, QUEST_CANDLE_ANCHOR_REALM_IDX))}</b>` }));
+  dailyRows.push('geyser', item({ name: t('ウニ焼き', 'Geyser'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(5)) }));
+  dailyRows.push('bread', item({ name: t('パン焼き', 'Bread Baking'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(35)) }));
+  dailyRows.push('turtle', item({ name: t('亀闇', 'Turtle Darkness'), state: t('次まで', 'Next in'), time: countdown(nextEvenHourEvent(50)) }));
+  const dailyHidden = dashLayout().dailyHidden;
+  const dailyHtml = dailyParts.filter(r => !dailyHidden.includes(r.id)).map(r => r.html).join('');
 
   const bucketRows = { today: [], week: [], month: [] };
   const push = (target, html) => bucketRows[bucketFor(target)].push({ at: target.getTime(), html });
@@ -739,6 +742,17 @@ const SECTION_DEFS = [
   { id: 'notices', ja: 'お知らせ', en: 'Notices', off: true },
   { id: 'recap', ja: '今月のふりかえり', en: 'This month', off: true },
 ];
+// デイリーの欄の中身（「表示を編集」で1つずつ出す・隠すを選べる。隠した id を dailyHidden に持つ。未設定＝すべて表示）。
+// 項目を足す時は、ここと buildHtml() の dailyRows.push('<id>', …) の両方に足す。
+const DAILY_DEFS = [
+  { id: 'shard', ja: '今日の闇の破片', en: 'Today’s shard' },
+  { id: 'shardNext', ja: '翌日の闇の破片', en: 'Next day’s shard' },
+  { id: 'grand', ja: '大キャンドル', en: 'Grand Candle' },
+  { id: 'quest', ja: 'クエスト・シーズンキャンドル', en: 'Quest & Season Candle' },
+  { id: 'geyser', ja: 'ウニ焼き', en: 'Geyser' },
+  { id: 'bread', ja: 'パン焼き', en: 'Bread Baking' },
+  { id: 'turtle', ja: '亀闇', en: 'Turtle Darkness' },
+];
 function dashLayout() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(LAYOUT_KEY)); } catch (e) { saved = null; }
@@ -748,7 +762,9 @@ function dashLayout() {
   SECTION_DEFS.forEach(d => {
     if (!order.includes(d.id)) { order.push(d.id); if (saved && d.off && !hidden.includes(d.id)) hidden.push(d.id); }
   });
-  return { order, hidden };
+  const dailyKnown = DAILY_DEFS.map(d => d.id);
+  const dailyHidden = saved && Array.isArray(saved.dailyHidden) ? saved.dailyHidden.filter(id => dailyKnown.includes(id)) : [];
+  return { order, hidden, dailyHidden };
 }
 function saveDashLayout(layout) {
   try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { /* noop */ }
@@ -796,7 +812,7 @@ function layoutEditorHtml(open) {
         <label class="edb-layout-name"><input type="checkbox" data-layout="show" data-id="${id}"${on ? ' checked' : ''}> ${escapeHtml(label)}</label>
         <button type="button" class="edb-layout-move" data-layout="up" data-id="${id}"${i === 0 ? ' disabled' : ''} aria-label="${escapeHtml(t(`${label}を上へ`, `Move ${label} up`))}"><svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-chevron-up"/></svg></button>
         <button type="button" class="edb-layout-move" data-layout="down" data-id="${id}"${i === layout.order.length - 1 ? ' disabled' : ''} aria-label="${escapeHtml(t(`${label}を下へ`, `Move ${label} down`))}"><svg class="inline-icon" width="14" height="14" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
-      </li>`;
+      </li>${id === 'daily' ? `<li class="edb-layout-sub${on ? '' : ' is-off'}"><ul class="edb-layout-sublist" aria-label="${escapeHtml(t('デイリーに出す項目', 'Items shown in Daily'))}">${DAILY_DEFS.map(x => `<li><label class="edb-layout-name"><input type="checkbox" data-layout="daily" data-id="${x.id}"${layout.dailyHidden.includes(x.id) ? '' : ' checked'}${on ? '' : ' disabled'}> ${escapeHtml(t(x.ja, x.en))}</label></li>`).join('')}</ul></li>` : ''}`;
     }).join('')}</ul>
     <button type="button" class="edb-plain-btn" data-layout="reset">${t('最初の並びに戻す', 'Reset to default')}</button>` : ''}
   </div>`;
@@ -1014,6 +1030,10 @@ function injectStyles() {
 .edb-layout-name input { width: 18px; height: 18px; accent-color: var(--hub-accent); margin: 0; }
 .edb-layout-move { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: var(--hub-bg); color: var(--hub-text); cursor: pointer; }
 .edb-layout-move:disabled { opacity: 0.3; cursor: default; }
+.edb-layout-sub { padding: 0 0 4px 26px; border-bottom: 0.5px solid var(--hub-sep); }
+.edb-layout-sub.is-off { opacity: 0.45; }
+.edb-layout-sublist { list-style: none; margin: 0; padding: 0; }
+.edb-layout-sublist .edb-layout-name { min-height: 32px; font-size: 12.5px; letter-spacing: 0.02em; color: var(--hub-text-2); }
 .edb-layout-move .inline-icon { stroke: currentColor; }
 .edb-reminder-row { align-items: center; flex-wrap: nowrap; cursor: pointer; }
 .edb-select { flex-shrink: 0; padding: 4px 8px; border: 0.5px solid var(--hub-sep); border-radius: 8px; background: var(--hub-card); color: var(--hub-text); font: inherit; font-size: 12.5px; }
@@ -1268,7 +1288,7 @@ function renderInto(root, withIcs) {
   const host = root.querySelector('.edb-layout-host');
   host.addEventListener('click', e => {
     const b = e.target.closest('[data-layout]');
-    if (!b || b.dataset.layout === 'show') return;
+    if (!b || b.dataset.layout === 'show' || b.dataset.layout === 'daily') return;
     const layout = dashLayout();
     const act = b.dataset.layout;
     if (act === 'toggle') { host.innerHTML = layoutEditorHtml(!host.querySelector('.edb-layout.is-open')); return; }
@@ -1284,11 +1304,17 @@ function renderInto(root, withIcs) {
     [containerEl, persistentEl].forEach(tickInto);
   });
   host.addEventListener('change', e => {
-    const c = e.target.closest('[data-layout="show"]');
+    const c = e.target.closest('[data-layout="show"], [data-layout="daily"]');
     if (!c) return;
     const layout = dashLayout();
-    layout.hidden = c.checked ? layout.hidden.filter(x => x !== c.dataset.id) : [...layout.hidden, c.dataset.id];
+    const key = c.dataset.layout === 'daily' ? 'dailyHidden' : 'hidden';
+    layout[key] = c.checked ? layout[key].filter(x => x !== c.dataset.id) : [...layout[key], c.dataset.id];
     saveDashLayout(layout);
+    // デイリーの欄そのものを出す・隠すと、その下の項目のチェックが選べる・選べないに変わるので編集欄を描き直す
+    if (c.dataset.id === 'daily' && key === 'hidden') {
+      host.innerHTML = layoutEditorHtml(true);
+      host.querySelector('[data-layout="show"][data-id="daily"]')?.focus();
+    }
     [containerEl, persistentEl].forEach(tickInto);
   });
   // お知らせ・ふりかえりの欄のボタン

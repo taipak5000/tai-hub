@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.15.2',
-    title: { ja: '楽譜づくりのライブラリを見やすく、舞い踊る表現者の再訪', en: 'Easier-to-read Sheet Music Maker library, Dancing Performer visit' },
+    version: '2026.11.15.3',
+    title: { ja: '楽譜づくりのライブラリを見やすく、舞い踊る表現者の再訪、デイリーの項目を選べるように', en: 'Sheet Music Maker library, Dancing Performer visit, pick your Daily items' },
     date: '2026-11-15',
     items: [
+      { type: 'improve', ja: 'ダッシュボードの「デイリー」に出す項目を選べるようにしました。「表示を編集」のデイリーの下で、闇の破片（今日・翌日）・大キャンドル・クエスト・シーズンキャンドル・ウニ焼き・パン焼き・亀闇を1つずつ出す・隠すにできます。', en: 'Dashboard: choose which items appear under Daily (shards, Grand Candle, Quest & Season Candle, Geyser, Bread Baking, Turtle Darkness) from “Customize”.' },
       { type: 'improve', ja: '11/26 17:00〜12/3 16:59 に特別に再訪する「舞い踊る表現者」を、再訪精霊データベースとお知らせに載せました。来訪中は、アイテム所持管理の「現在開催中」の絞り込みにヘアスタイル・マスク・ケープが入ります。', en: 'Dancing Performer returns for a special visit from Nov 26 to Dec 3 (JST). It’s now in the Returning Spirits database and Notices, and its hair, mask and cape appear under “Happening now” in the Item Tracker during the visit.', route: 'tai-revisit' },
       { type: 'improve', ja: '楽譜づくりの最初の画面を整理しました。上の案内を低くして曲の一覧がすぐ見えるようにし、「音声・動画から作る」「楽譜画像から作る」「MIDIから作る」を折りたたみの外へ出しました。曲のカードには調・楽器と前回の練習・試験の結果が出て、カードのどこを押しても開けます。削除は右上の小さなボタンに移しました（保存済みの曲はそのままです）。', en: 'Sheet Music Maker: a tidier library screen. Songs appear sooner, the audio/video, sheet image and MIDI importers are always visible, and song cards show key, instrument and your last practice/test results. Tap anywhere on a card to open it.', route: 'tai-score' },
     ],

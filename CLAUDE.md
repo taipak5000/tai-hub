@@ -201,6 +201,7 @@ const landingPoint = currentY + project(v);
 - **画像カード**（`js/share-card.js`）: 達成率・コーデをCanvasで描く（1200×630／1080×1080、色は`--hub-*`から）。外部の画像は`crossOrigin`で読めた物だけ描く。
 - **カレンダー書き出し**（`js/ics.js`）: ダッシュボードの各予定は日本時間の日付で終日の予定にする。記念日は端末の日付のまま。
 - **ダッシュボードの並び**（`sky_hub_dash_layout_v1`、端末ごと）: 欄を足す時は`event-dashboard.js`の`SECTION_DEFS`と`parts`の両方に足す。
+  デイリーの欄の中身は1つずつ隠せる（同じキーの`dailyHidden`）。項目を足す時は`DAILY_DEFS`と`buildHtml()`の`dailyRows.push('<id>', …)`の両方に足す。
 - **バックアップのリマインド**（`js/backup-reminder.js`）・**はじめての案内**（`js/onboarding.js`）: どちらもダッシュボードの先頭に出す。案内は記録が何も無いプロフィールにだけ。
 - **ピン留め**（`js/chrome/pin-bar.js`、`sky_hub_pinned_tools`、最大4つ）: 「他のツール」の一覧のピンで留め、`#app-root`の上に並べる。
 - アクセント色を**文字**に使う時は`--hub-accent`ではなく`--hub-accent-ink`を使う（着せ替え中は背景に対して4.5:1を保証した色が入る）。
