@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.16',
+    title: { ja: 'ほしいもの計画で、精霊のツリーから選べるように', en: 'Wishlist Plan: pick from a spirit tree' },
+    date: '2026-11-16',
+    items: [
+      { type: 'new', ja: 'ほしいもの計画に「精霊のツリーから選ぶ」を足しました。再訪・精霊団の精霊のツリーで欲しいアイテムを押すと、そこまでの通り道にある祝福（魔法）やハートなども合わせて、あと何本・いつ頃かを計算します。欲しいものに入れてあるアイテムの行にも「通り道も計算する」ボタンが出ます。解放は今までどおり精霊ツリー管理で行い、解放した分は計画から自動で外れます。', en: 'Wishlist Plan: “Pick from a spirit tree” lets you tap the items you want on a returning spirit’s tree and counts the blessings and hearts on the way there, too.', route: 'wish-plan' },
+    ],
+  },
+  {
     version: '2026.11.15.3',
     title: { ja: '楽譜づくりのライブラリを見やすく、舞い踊る表現者の再訪、デイリーの項目を選べるように', en: 'Sheet Music Maker library, Dancing Performer visit, pick your Daily items' },
     date: '2026-11-15',

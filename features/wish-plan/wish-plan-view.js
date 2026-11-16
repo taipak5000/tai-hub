@@ -13,6 +13,10 @@
          グループは作る時にチェックでアイテムを選ぶ（1つのアイテムを複数のグループに入れられる）。
          「計算に入れない」印は表示（すべて・各グループ）ごとに別々に持つ。計算は表示中の一覧のうち、印の付いていないものだけ。
    キャンドル以外（課金・チケット・価格不明）のアイテムは、順番には並べるが本数の計算からは外す。
+
+   - 精霊のツリーから選んだ分（wishPlanTrees_v1。tree-pick.js）は、精霊ごとに1行（key は 'tree:<guid>'）。
+     通り道の祝福・ハートなども合わせたキャンドルとハートの両方を数える。欲しいものの中に同じツリーのアイテムがあれば、
+     そのアイテムの行は「ツリーの行に入っている」として二重に数えない。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey, getWishIds, removeWishItem, getCategoryState, saveCategoryState, recordItemAcquire } from '../../js/state.js';
@@ -22,6 +26,7 @@ import { CATEGORY_REGISTRY } from '../item/data/categories.js';
 import { CURRENT_SEASON } from '../item/data/season-data.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
 import { toast } from '../shared/share-image.js';
+import { loadS, loadTreePlans, saveTreePlans, buildTreeRows, itemTreeIndex, planNodes, costText, pickerHtml, spiritResultsHtml } from './tree-pick.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const ORDER_KEY = 'wishPlanOrder_v1';
@@ -68,6 +73,8 @@ let settings = null;
 let token = 0;
 let confirmId = null;
 let getConfirmId = null; // 「手に入れた」を一度押して確認待ちの行
+let S = null; // 精霊ツリー管理の状態モジュール（読み込めたら入る。tree-pick.js の loadS）
+let pick = null; // 「精霊のツリーから選ぶ」を開いている間だけ { step, q, guid, targets:Set }
 
 function readJson(key, fb) { try { const v = JSON.parse(localStorage.getItem(nsKey(key))); return v == null ? fb : v; } catch (e) { return fb; } }
 function writeJson(key, v) { try { localStorage.setItem(nsKey(key), JSON.stringify(v)); } catch (e) { /* noop */ } }
@@ -75,7 +82,7 @@ function writeJson(key, v) { try { localStorage.setItem(nsKey(key), JSON.stringi
 export function mount(container) {
   injectStylesheet();
   containerEl = container;
-  confirmId = null; groupEdit = null; groupDelConfirm = false;
+  confirmId = null; groupEdit = null; groupDelConfirm = false; pick = null;
   loadGroups();
   const s = readJson(SETTINGS_KEY, {});
   settings = {
@@ -85,13 +92,21 @@ export function mount(container) {
   };
   container.innerHTML = `<div class="wish-plan-view fun-view"><div class="fun-wrap"><div class="rc-loading"><span class="rt-spinner"></span></div></div></div>`;
   const my = ++token;
-  Promise.all([import('../item/data/cost-data.js'), import('../item/data/music-sheets-data.js')]).then(([c, m]) => {
+  // ほかのツールで解放・所持が変わっているかもしれないので、ツリーの解放状況は開くたびに読み直す
+  const useS = mod => { S = mod; S.invalidateUnlockedMapCache(); S.invalidateExternalOwnCache(); };
+  if (S) useS(S);
+  // ツリーの計画がある時は、行の順番が崩れないようツリーのデータを待ってから描く。無い時は後から読む（通り道の案内に使う）
+  const hasPlans = Object.keys(loadTreePlans()).length > 0;
+  Promise.all([import('../item/data/cost-data.js'), import('../item/data/music-sheets-data.js'), hasPlans && !S ? loadS().catch(() => null) : null]).then(([c, m, st]) => {
     if (my !== token || !containerEl) return;
     costData = c.ITEM_COST_DATA; music = m.MUSIC_SHEETS;
+    if (st) useS(st);
     buildRows(); render();
     root().addEventListener('click', onClick);
     root().addEventListener('change', onChange);
+    root().addEventListener('input', onInput);
     loadImages(my);
+    if (!S) loadS().then(mod => { if (my !== token || !containerEl) return; useS(mod); buildRows(); if (!pick) render(); }).catch(() => { /* ツリーが読めなくても表は使える */ });
   });
 }
 export function unmount() { token++; containerEl = null; }
@@ -112,6 +127,7 @@ function buildRows() {
       if (e) list.push({ key: `${cat.key}:${id}`, cat, id, name: CURRENT_LANG === 'en' ? (e.nameEn || e.name) : e.name, cost: e.cost || { type: 'unknown' }, source: e.source || '' });
     });
   });
+  if (S) list.push(...buildTreeRows(S));
   const order = readJson(ORDER_KEY, []);
   const pos = new Map((Array.isArray(order) ? order : []).map((k, i) => [k, i]));
   rows = list.map((r, i) => ({ r, i })).sort((a, b) => {
@@ -123,7 +139,7 @@ function buildRows() {
 function saveOrder() { writeJson(ORDER_KEY, rows.map(r => r.key)); }
 
 async function loadImages(my) {
-  const cats = [...new Set(rows.filter(r => r.cat.key !== 'music_sheet').map(r => r.cat.key))];
+  const cats = [...new Set(rows.filter(r => r.cat.key !== 'music_sheet' && !r.tree).map(r => r.cat.key))];
   for (const key of cats) {
     try {
       const mod = await import(`../item/data/items/${key}.js`);
@@ -190,6 +206,7 @@ function deadlineDate() {
 }
 function fmtDate(d) { return t(`${d.getMonth() + 1}月${d.getDate()}日`, `${d.getMonth() + 1}/${d.getDate()}`); }
 function costLabel(c) {
+  if (c.type === 'tree') return '';
   if (c.type === 'candle') return t(`キャンドル ${c.value}`, `${c.value} candles`);
   if (c.type === 'heart') return t(`ハート ${c.value}`, `${c.value} hearts`);
   if (c.type === 'money') return c.value ? t(`課金 ${Number(c.value).toLocaleString()}円`, `Paid ¥${Number(c.value).toLocaleString()}`) : t('課金', 'Paid');
@@ -212,23 +229,44 @@ function render() {
   const now = new Date();
   const vis = visibleRows();
   const counted = vis.filter(r => !offSet().has(r.key));
+  // ツリーの行（計算に入れているもの）がこれから解放するアイテム。同じアイテムの行は二重に数えない
+  const covered = new Map();
+  counted.forEach(row => { if (row.tree) row.plan.nodes.forEach(x => { if (x.node.itemCatKey && x.node.itemCostId) covered.set(`${x.node.itemCatKey}:${x.node.itemCostId}`, row); }); });
+  const treeIdx = S ? itemTreeIndex(S) : null;
   const lines = vis.map((row, idx) => {
     let status = '', cls = '';
     const off = offSet().has(row.key);
+    const cover = !row.tree && covered.get(row.key);
+    const cc = row.tree ? row.cost.c : row.cost.type === 'candle' ? Number(row.cost.value) || 0 : 0;
+    const hh = row.tree ? row.cost.h : row.cost.type === 'heart' ? Number(row.cost.value) || 0 : 0;
     if (off) { status = t('計算に入れていません', 'Not included in the plan'); cls = 'off'; }
-    else if (row.cost.type === 'candle' || row.cost.type === 'heart') {
-      const isC = row.cost.type === 'candle';
-      if (isC) cumC += Number(row.cost.value) || 0; else cumH += Number(row.cost.value) || 0;
-      const need = isC ? cumC - cur.candle : cumH - cur.heart;
-      if (need <= 0) { status = t('今のぶんで手に入ります', 'Affordable now'); cls = 'ok'; }
-      else if (isC) {
-        const days = Math.ceil(need / perDay);
-        const when = new Date(now.getTime() + days * DAY);
-        const inTime = !dl || when <= dl;
-        status = t(`あと${need}本・${fmtDate(when)}ごろ（${days}日後）`, `${need} more · around ${fmtDate(when)} (${days}d)`);
-        cls = inTime ? 'soon' : 'late';
-      } else { status = t(`あとハート${need}`, `${need} more hearts`); cls = 'soon'; }
+    else if (cover) { status = t(`「${cover.name}」の行でまとめて数えています`, `Counted in “${cover.name}”`); cls = 'other'; }
+    else if (row.tree || row.cost.type === 'candle' || row.cost.type === 'heart') {
+      cumC += cc; cumH += hh;
+      const needCandle = cc ? Math.max(0, cumC - cur.candle) : 0;
+      const needHeart = hh ? Math.max(0, cumH - cur.heart) : 0;
+      if (!needCandle && !needHeart) { status = row.tree && !cc && !hh ? t('本数の計算には入りません', 'Not counted in candles') : t('今のぶんで手に入ります', 'Affordable now'); cls = row.tree && !cc && !hh ? 'other' : 'ok'; }
+      else {
+        const parts = [];
+        cls = 'soon';
+        if (needCandle) {
+          const days = Math.ceil(needCandle / perDay);
+          const when = new Date(now.getTime() + days * DAY);
+          parts.push(t(`あと${needCandle}本・${fmtDate(when)}ごろ（${days}日後）`, `${needCandle} more · around ${fmtDate(when)} (${days}d)`));
+          if (dl && when > dl) cls = 'late';
+        }
+        if (needHeart) parts.push(t(`あとハート${needHeart}`, `${needHeart} more hearts`));
+        status = parts.join(t('／', ' / '));
+      }
     } else { status = t('本数の計算には入りません', 'Not counted in candles'); cls = 'other'; }
+    // アイテムの行: ツリーの通り道にまだ解放していないノードがあれば、ツリーで計算する入口を出す
+    let pathHint = '';
+    if (!row.tree && !cover && treeIdx && treeIdx.has(row.key)) {
+      const hit = treeIdx.get(row.key);
+      const p = planNodes(S, hit.spirit, [hit.node.guid]);
+      const extra = costText(p.pathCost);
+      if (p.nodes.length > 1) pathHint = `<button type="button" class="wp-path-btn" data-act="tp-for" data-guid="${escapeHtml(hit.spirit.guid)}"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-tree"/></svg>${extra ? t(`通り道も計算する（＋${extra}）`, `Count the way there (+${extra})`) : t('ツリーで通り道も計算する', 'Count the way there')}</button>`;
+    }
     const first = idx === 0, last = idx === vis.length - 1;
     const inGroups = grp.groups.filter(g => g.items.includes(row.key)).map(g => g.name);
     const groupSel = inGroups.length ? `<div class="wp-in-groups">${inGroups.map(n => `<span>${escapeHtml(n)}</span>`).join('')}</div>` : '';
@@ -238,15 +276,18 @@ function render() {
       <span class="wp-thumb" data-img-key="${escapeHtml(row.key)}">${thumbSrc(row) ? `<img src="${escapeHtml(thumbSrc(row))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}</span>
       <div class="wp-main">
         <div class="wp-name">${escapeHtml(row.name)}</div>
-        <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(costLabel(row.cost))}</div>
+        <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(row.tree ? (costText(row.plan.cost) || t('交換するものなし', 'Nothing to pay')) : costLabel(row.cost))}</div>
+        ${row.tree ? treeDetailHtml(row) : ''}
         <div class="wp-status">${escapeHtml(status)}</div>
         ${groupSel}
-        <div class="wp-get-row"><button type="button" class="wp-get-btn${getConfirmId === row.key ? ' is-confirm' : ''}" data-act="get" data-key="${escapeHtml(row.key)}">${getConfirmId === row.key ? escapeHtml(getConfirmLabel(row)) : `<svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-check"/></svg>${t('手に入れた', 'Got it')}`}</button></div>
+        ${row.tree ? `<div class="wp-get-row"><button type="button" class="wp-path-btn" data-act="tp-edit" data-key="${escapeHtml(row.key)}"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-edit"/></svg>${t('選び直す', 'Change')}</button><button type="button" class="wp-path-btn" data-act="tp-catalog" data-key="${escapeHtml(row.key)}"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-tree"/></svg>${t('精霊ツリー管理で解放する', 'Unlock in Spirit Tree Catalog')}</button></div>`
+        : `${pathHint ? `<div class="wp-get-row">${pathHint}</div>` : ''}
+        <div class="wp-get-row"><button type="button" class="wp-get-btn${getConfirmId === row.key ? ' is-confirm' : ''}" data-act="get" data-key="${escapeHtml(row.key)}">${getConfirmId === row.key ? escapeHtml(getConfirmLabel(row)) : `<svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-check"/></svg>${t('手に入れた', 'Got it')}`}</button></div>`}
       </div>
       <div class="wp-move">
         <button type="button" class="fun-icon-btn" data-act="up" data-key="${escapeHtml(row.key)}"${first ? ' disabled' : ''} aria-label="${t('上へ', 'Move up')}"><svg class="inline-icon" width="14" height="14" style="transform:rotate(180deg)"><use href="#i-chevron-down"/></svg></button>
         <button type="button" class="fun-icon-btn" data-act="down" data-key="${escapeHtml(row.key)}"${last ? ' disabled' : ''} aria-label="${t('下へ', 'Move down')}"><svg class="inline-icon" width="14" height="14"><use href="#i-chevron-down"/></svg></button>
-        <button type="button" class="fun-icon-btn${confirmId === row.key ? ' is-confirm' : ''}" data-act="remove" data-key="${escapeHtml(row.key)}" aria-label="${confirmId === row.key ? t('もう一度押すと外します', 'Tap again to remove') : t('欲しいものから外す', 'Remove from wishlist')}"><svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg></button>
+        <button type="button" class="fun-icon-btn${confirmId === row.key ? ' is-confirm' : ''}" data-act="remove" data-key="${escapeHtml(row.key)}" aria-label="${confirmId === row.key ? t('もう一度押すと外します', 'Tap again to remove') : (row.tree ? t('計画から外す', 'Remove from plan') : t('欲しいものから外す', 'Remove from wishlist'))}"><svg class="inline-icon" width="14" height="14"><use href="#i-close"/></svg></button>
       </div>
     </li>`;
   }).join('');
@@ -272,6 +313,8 @@ function render() {
       </div>
     </section>
 
+    ${pick && S ? pickerHtml(S, pick) : `<div class="wp-tree-entry"><button type="button" class="fun-btn" data-act="tp-open"><svg class="inline-icon" width="15" height="15" aria-hidden="true"><use href="#i-tree"/></svg>${t('精霊のツリーから選ぶ', 'Pick from a spirit tree')}</button><p class="fun-hint">${t('再訪・精霊団の精霊は、通り道の祝福（魔法）やハートも合わせて計算できます。', 'For returning spirits, this also counts the blessings and hearts on the way.')}</p></div>`}
+
     ${rows.length ? groupBarHtml(vis, counted) : ''}
     ${rows.length && !vis.length ? `<p class="fun-hint wp-empty-group">${t('このグループにはまだアイテムがありません。「名前・アイテムを編集」から入れるアイテムを選んでください。', 'No items in this group yet. Use “Edit group” to choose items.')}</p>` : ''}
     ${vis.length ? `<section class="wp-result">
@@ -281,8 +324,90 @@ function render() {
     </section>
     <ol class="wp-list">${lines}</ol>
     <p class="fun-hint">${t('左のチェックを外すと、そのアイテムは計算に入りません。↑↓で順番を入れ替えられます。所持にしたアイテムは自動で一覧から外れます。', 'Uncheck an item to leave it out of the plan. Reorder with ↑↓. Items you mark as owned drop off automatically.')}</p>`
-    : (rows.length ? '' : `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-cart"/></svg><p>${t('欲しいものリストが空です。アイテム所持管理で、欲しいアイテムのリボンを押して追加してください。', 'Your wishlist is empty. Add items from the item tracker.')}</p><button type="button" class="fun-btn" data-act="go-item">${t('アイテム所持管理を開く', 'Open item tracker')}</button></div>`)}
+    : (rows.length ? '' : `<div class="fun-empty"><svg class="inline-icon" width="30" height="30"><use href="#i-cart"/></svg><p>${t('欲しいものリストが空です。アイテム所持管理で欲しいアイテムのリボンを押すか、上の「精霊のツリーから選ぶ」で追加してください。', 'Your wishlist is empty. Add items from the item tracker.')}</p><button type="button" class="fun-btn" data-act="go-item">${t('アイテム所持管理を開く', 'Open item tracker')}</button></div>`)}
   </div>`;
+}
+
+// ツリーの行の内訳（欲しいもの／通り道）
+function treeDetailHtml(row) {
+  const nm = x => `${S.itemDisplayName(x.node, row.spirit)}${costText(x.node.cost) ? `（${costText(x.node.cost)}）` : ''}`;
+  const want = row.plan.nodes.filter(x => x.target).map(nm);
+  const path = row.plan.nodes.filter(x => !x.target).map(nm);
+  return `<div class="wp-tree-detail"><p><b>${t('欲しいもの', 'Wanted')}</b>${escapeHtml(want.join(t('、', ', ')))}</p>${path.length ? `<p><b>${t('通り道', 'On the way')}</b>${escapeHtml(path.join(t('、', ', ')))}</p>` : ''}</div>`;
+}
+
+/* ---- 精霊のツリーから選ぶ（描画は tree-pick.js） ---- */
+function openPicker(guid, extraTargets) {
+  const start = () => {
+    if (!containerEl) return;
+    if (guid && S.spiritByGuid[guid]) {
+      // 保存してある選択に、欲しいものに入っている同じツリーのアイテムを足した状態から始める
+      const targets = new Set(loadTreePlans()[guid] || []);
+      (extraTargets || []).forEach(g => targets.add(g));
+      const wishKeys = new Set(rows.filter(r => !r.tree).map(r => r.key));
+      S.spiritByGuid[guid].nodes.forEach(n => { if (n.itemCatKey && wishKeys.has(`${n.itemCatKey}:${n.itemCostId}`) && !S.isNodeUnlocked(n)) targets.add(n.guid); });
+      pick = { step: 'tree', q: '', guid, targets };
+    } else pick = { step: 'spirit', q: '', guid: null, targets: new Set() };
+    render();
+    root().querySelector('[data-tp]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (pick.step === 'spirit') root().querySelector('[data-tp-q]')?.focus({ preventScroll: true });
+    S.ensureNodeImageMapsLoaded(() => { if (pick && pick.step === 'tree' && containerEl) refreshPicker(); });
+  };
+  if (S) { start(); return; }
+  toast(t('ツリーを読み込んでいます…', 'Loading spirit trees…'));
+  const my = token;
+  loadS().then(mod => { if (my !== token || !containerEl) return; S = mod; buildRows(); start(); })
+    .catch(() => toast(t('ツリーを読み込めませんでした。通信を確かめて、もう一度お試しください', 'Could not load spirit trees. Please try again.')));
+}
+// 選ぶ画面だけを描き直す（ページ全体を描き直すとスクロール位置が動くため）
+function refreshPicker() {
+  const el = root() && root().querySelector('[data-tp]');
+  if (!el || !pick) return;
+  const x = el.querySelector('.wp-tp-scroll')?.scrollLeft || 0;
+  el.outerHTML = pickerHtml(S, pick);
+  const sc = root().querySelector('.wp-tp-scroll'); if (sc) sc.scrollLeft = x;
+}
+function onPickAction(act, btn) {
+  if (act === 'tp-open') { openPicker(null); return true; }
+  if (act === 'tp-for') { openPicker(btn.dataset.guid); return true; }
+  if (act === 'tp-edit') { openPicker(btn.dataset.key.slice(5)); return true; }
+  if (act === 'tp-catalog') { navigate('spirit-catalog', btn.dataset.key.slice(5)); return true; }
+  if (!act.startsWith('tp-')) return false;
+  if (!pick || !S) return true;
+  if (act === 'tp-close') { pick = null; render(); return true; }
+  if (act === 'tp-back') { pick = { step: 'spirit', q: '', guid: null, targets: new Set() }; refreshPicker(); return true; }
+  if (act === 'tp-spirit') { openPicker(btn.dataset.guid); return true; }
+  const spirit = S.spiritByGuid[pick.guid];
+  if (!spirit) return true;
+  if (act === 'tp-node') {
+    const g = btn.dataset.guid;
+    if (pick.targets.has(g)) pick.targets.delete(g); else pick.targets.add(g);
+    refreshPicker();
+    root().querySelector(`[data-act="tp-node"][data-guid="${CSS.escape(g)}"]`)?.focus({ preventScroll: true });
+    return true;
+  }
+  if (act === 'tp-all') { pick.targets = new Set(spirit.nodes.filter(n => !S.isChecklistExcludedNode(n) && !S.isNodeUnlocked(n)).map(n => n.guid)); refreshPicker(); return true; }
+  if (act === 'tp-none') { pick.targets = new Set(); refreshPicker(); return true; }
+  if (act === 'tp-save') {
+    const plans = loadTreePlans();
+    const targets = planNodes(S, spirit, pick.targets).targets;
+    const had = !!plans[spirit.guid];
+    if (targets.length) plans[spirit.guid] = targets; else delete plans[spirit.guid];
+    saveTreePlans(plans);
+    const name = S.spiritName(spirit);
+    pick = null; saveOrder(); buildRows(); saveOrder(); render();
+    toast(targets.length ? t(`「${name}」のツリーを計画に入れました`, `Added ${name}’s tree to your plan`) : had ? t(`「${name}」のツリーを計画から外しました`, `Removed ${name}’s tree from your plan`) : t('何も選ばれていません', 'Nothing selected'));
+    if (targets.length) root().querySelector(`[data-act="tp-edit"][data-key="tree:${CSS.escape(spirit.guid)}"]`)?.closest('.wp-row')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    return true;
+  }
+  return true;
+}
+function onInput(e) {
+  // 精霊をさがす欄は、結果だけ差し替える（入力欄を描き直すとフォーカスが外れる）
+  if (!e.target.matches('[data-tp-q]') || !pick || !S) return;
+  pick.q = e.target.value;
+  const box = root().querySelector('.wp-tp-results');
+  if (box) box.innerHTML = spiritResultsHtml(S, pick.q);
 }
 
 // グループのタブ（すべて・各グループ・＋グループを作る）と、選んでいるグループの名前の変更・削除、表示中をまとめて計算に入れる／外す
@@ -367,6 +492,7 @@ function onClick(e) {
   const { act, key } = btn.dataset;
   if (act === 'go-item') { navigate('item', ''); return; }
   if (onGroupAction(act, btn)) return;
+  if (onPickAction(act, btn)) return;
   if (act === 'dl-season' || act === 'dl-date') {
     settings.deadline = act === 'dl-season' ? 'season' : 'date';
     if (settings.deadline === 'date' && !settings.date) {
@@ -399,6 +525,8 @@ function onClick(e) {
     const row = rows[i];
     acquireRow(row).then(spent => {
       rows = rows.filter(r => r.key !== row.key); saveOrder();
+      // 手に入れたアイテムがツリーの行に入っていれば、その行の中身も減らす
+      if (S) { S.invalidateExternalOwnCache(); buildRows(); }
       if (containerEl) render();
       toast(spent ? t(`「${row.name}」を所持にしました（${spent}）`, `Marked “${row.name}” as owned (${spent})`) : t(`「${row.name}」を所持にしました`, `Marked “${row.name}” as owned`));
     }).catch(() => toast(t('所持にできませんでした。もう一度お試しください', 'Could not mark as owned. Please try again.')));
@@ -407,6 +535,12 @@ function onClick(e) {
   if (act === 'remove') {
     if (confirmId !== key) { confirmId = key; render(); setTimeout(() => { if (confirmId === key && containerEl) { confirmId = null; render(); } }, 3500); return; }
     confirmId = null;
+    if (rows[i].tree) {
+      const plans = loadTreePlans(); delete plans[rows[i].id]; saveTreePlans(plans);
+      rows.splice(i, 1); saveOrder(); render();
+      toast(t('ツリーを計画から外しました', 'Removed the tree from your plan'));
+      return;
+    }
     removeWishItem(rows[i].cat.key, rows[i].id);
     rows.splice(i, 1); saveOrder(); render();
     toast(t('欲しいものから外しました', 'Removed from wishlist'));
