@@ -184,6 +184,8 @@ const landingPoint = currentY + project(v);
 - **コーデ日記**（`features/coord-diary/`）: 写真はフォト日記と同じIndexedDB。着ていたアイテムはカテゴリごとに所持アイテムのアイコンから1つ選ぶ
   （`wearRowsHtml()`。選び直しは`refreshWearRows()`でその欄だけ描き直す）。シーズンアルバム（`season-album.js`）は季節（`features/shared/season-dates.js`）と
   日々（`features/shared/event-dates.js`）ごとに並べる。新しい季節・日々が始まったら、この2つのファイルの末尾に足す。撮影お題ガチャは`photo-gacha.js`。
+- **楽譜づくりの譜面ビュー**（`features/tai-score/tai-score-sheet.js`）: 曲の全マスを全画面で折り返して並べる（列は4の倍数＝`fitColumns()`）。空いている15か所の印は
+  `.sheet-dots::before`の mask 1枚で描き、鳴る音だけを要素にする（数千マスでも軽く保つため）。大きさと「空のマスを詰める」は`taiScoreSheetPrefs_v1`。
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`）: 全ツールの称号をここに集める。各ツールの画面には`js/titles.js`の`titlesLinkHtml(ツール)`の
   小さな案内だけを出す。獲得の判定・記録は各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`（ツールに称号を足したらここにも足す）。
 - **試作中の機能**（`features/lab/`）: 今は無い。作る時はルートを`lab-*`で`hidden: true`にし、入口はデイリーチェックシート単体のページの「試作中の機能」だけにする。

@@ -51,6 +51,7 @@ import * as P from './tai-score-perf.js';
 import * as AudioImport from './import/audio-import.js';
 import * as ImageImport from './import/image-import.js';
 import * as MidiImport from './import/midi-import.js';
+import * as Sheet from './tai-score-sheet.js';
 
 const STYLE_LINK_ID = 'tai-score-view-styles';
 const ICON_SPRITE_ID = 'tai-score-icon-sprite';
@@ -102,6 +103,7 @@ function recoverFullSongCodeFromHash() {
 }
 
 export function unmount() {
+  Sheet.teardown();
   E.stopPlayback();
   A.cancelCountIn();
   resetToastQueue();
@@ -236,6 +238,7 @@ function renderShell() {
     ${renderPerfOverlay()}
     ${renderComposeOverlay()}
     ${renderComposeToolsModal()}
+    ${Sheet.renderSheetOverlay()}
 
     <footer>
       <span>${escapeHtml(t('footerDisclaimer'))}</span><br>
@@ -425,6 +428,7 @@ function renderComposeOverlay() {
       <div class="compose-header-actions">
         <button type="button" class="transport-btn primary" id="playBtn" data-act="toggle-playback">${escapeHtml(t('playBtn'))}</button>
         <button type="button" class="transport-btn" id="stopBtn" data-act="stop-playback" style="display:none;">${escapeHtml(t('stopBtn'))}</button>
+        <button type="button" class="compose-tools-btn" data-act="open-sheet-current" title="${escapeHtml(t('sheetOpenTitle'))}" aria-label="${escapeHtml(t('sheetOpenTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-sheet-music"/></svg></button>
         <button type="button" class="compose-tools-btn" data-act="open-modal" data-modal="composeToolsModal" title="${escapeHtml(t('composeToolsBtnTitle'))}" aria-label="${escapeHtml(t('composeToolsModalTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-hammer"/></svg></button>
       </div>
     </div>
@@ -638,6 +642,7 @@ function renderLibrary() {
         ${results.length ? `<div class="song-card-results">${results.map(r => `<div>${escapeHtml(r)}</div>`).join('')}</div>` : ''}
         <div class="song-card-btns">
           <button type="button" class="mini-btn primary" data-act="open-editor" data-id="${s.id}">${escapeHtml(t('openBtn'))}</button>
+          <button type="button" class="mini-btn" data-act="open-sheet" data-id="${s.id}">${escapeHtml(t('sheetViewBtn'))}</button>
           <button type="button" class="mini-btn" data-act="duplicate-song" data-id="${s.id}">${escapeHtml(t('duplicateBtn'))}</button>
         </div>
       </div>`;
@@ -670,14 +675,36 @@ function createNewSong() {
   announceNewTitles(S.recordSongCreated());
   openEditor(RT.currentSong.id);
 }
-function openEditor(id) {
+function openEditor(id, frameIndex) {
   const songs = S.loadSongs();
   const song = songs.find(s => s.id === id);
   if (!song) return;
   RT.currentSong = song;
-  RT.selectedFrameIndex = 0;
+  RT.selectedFrameIndex = frameIndex || 0;
   switchView('editor');
   E.renderEditor();
+  if (frameIndex) scrollEditorToFrame(frameIndex);
+}
+function scrollEditorToFrame(fi) {
+  const box = document.getElementById('frameBox_' + fi);
+  if (box) box.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+/* 譜面ビュー（tai-score-sheet.js）。ライブラリからは保存済みの曲を、作曲モードからは編集中の曲を見せる。
+   「このマスを編集」は、ライブラリからならその曲をそのマスで開き、作曲モードからならそのマスを選び直す。 */
+function openSheetForSong(id) {
+  const song = S.loadSongs().find(s => s.id === id);
+  if (!song) return;
+  Sheet.open(song, 0, fi => openEditor(id, fi));
+}
+function openSheetForCurrent() {
+  if (!RT.currentSong) return;
+  E.stopPlayback();
+  Sheet.open(RT.currentSong, RT.selectedFrameIndex, fi => {
+    RT.selectedFrameIndex = fi;
+    E.renderFrameStrip();
+    E.renderBigGrid();
+    scrollEditorToFrame(fi);
+  });
 }
 function focusLibraryFallback() {
   const first = document.querySelector('#songList .mini-btn') || document.getElementById('librarySearch');
@@ -1141,6 +1168,7 @@ function wireStaticEvents() {
   $('audioFileInput').addEventListener('change', onAudioFileSelected);
   $('imageFileInput').addEventListener('change', onImageFilesSelected);
   $('midiFileInput').addEventListener('change', onMidiFileSelected);
+  $('sheetCollapseToggle').addEventListener('change', e => Sheet.onCollapseChange(e.target.checked));
 
   $('songNameInput').addEventListener('input', () => E.onSongMetaChange());
   $('songPitchInput').addEventListener('change', () => E.onSongMetaChange());
@@ -1188,7 +1216,10 @@ function onContainerClick(e) {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const act = el.dataset.act;
+  if (act.startsWith('sheet-') && Sheet.handleClick(act, el)) return;
   switch (act) {
+    case 'open-sheet': openSheetForSong(el.dataset.id); break;
+    case 'open-sheet-current': openSheetForCurrent(); break;
     case 'switch-view': switchView(el.dataset.view); break;
     case 'open-free-mode': P.openFreeMode(); break;
     case 'open-modal': openModal(el.dataset.modal); break;
@@ -1268,6 +1299,7 @@ function onContainerClick(e) {
    ================================================================ */
 const NON_TEXT_INPUT_TYPES = ['checkbox', 'radio', 'range', 'color', 'button', 'submit', 'reset', 'file', 'image', 'hidden'];
 function handleGlobalKeydown(e) {
+  if (Sheet.handleKeydown(e)) return; // 譜面ビューが開いている間はそちらが受け持つ
   if (e.repeat) return;
   if (E.captureKeyForBinding(e)) return; // キー割り当て待ち中
 
