@@ -593,7 +593,8 @@
 .tai-score-view .sheet-seg-btn[aria-pressed="true"] { background: var(--pink-btn); color: #fff; }
 .tai-score-view .sheet-collapse { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; font-size: 13px; color: var(--text); cursor: pointer; }
 .tai-score-view .sheet-collapse input { accent-color: var(--pink); width: 16px; height: 16px; margin: 0; }
-.tai-score-view .sheet-edit-btn { margin-left: auto; padding: 7px 12px; }
+.tai-score-view .sheet-print-btn { margin-left: auto; padding: 7px 12px; }
+.tai-score-view .sheet-edit-btn { padding: 7px 12px; }
 .tai-score-view .sheet-body {
   flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
   /* 列の数は4の倍数（16分音符のグリッドなら4マス＝1拍）。tai-score-sheet.js が幅から --sheet-cols を決める */
@@ -645,6 +646,35 @@
 @media (prefers-contrast: more) {
   .tai-score-view .sheet-cell { border-color: var(--text-2); }
   .tai-score-view .sheet-cell.rest .sheet-dots::before { opacity: 1; }
+}
+
+/* ── 譜面ビューの印刷（#sheetPrintRoot は body の直下。tai-score-sheet.js の printSheet()）
+   画面では常に隠し、印刷の間（body.sheet-printing）だけ、ほかの要素を隠してこれだけを出す。色はテーマに関係なく白地 ── */
+.sheet-print-root { display: none; }
+@media print {
+  @page { size: A4 portrait; margin: 12mm 10mm; }
+  body.sheet-printing > *:not(#sheetPrintRoot) { display: none !important; }
+  body.sheet-printing { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  body.sheet-printing .sheet-print-root {
+    display: block; color: #1C1C1E; background: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .sheet-print-root .sp-head { margin: 0 0 5mm; padding-bottom: 2.5mm; border-bottom: 0.4mm solid #1C1C1E; }
+  .sheet-print-root .sp-title { margin: 0; font-size: 18pt; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  .sheet-print-root .sp-meta { margin: 1.5mm 0 0; font-size: 9pt; color: #48484A; letter-spacing: 0.02em; }
+  .sheet-print-root .sp-rows { display: flex; flex-direction: column; gap: 1.6mm; }
+  .sheet-print-root .sp-row { display: grid; grid-template-columns: repeat(var(--sp-cols), minmax(0, 1fr)); gap: 0 1.6mm; break-inside: avoid; page-break-inside: avoid; }
+  .sheet-print-root .sp-unit { display: flex; flex-direction: column; min-width: 0; }
+  .sheet-print-root .sp-lbl { display: flex; justify-content: space-between; height: 3mm; font-size: 6.5pt; font-weight: 700; line-height: 3mm; color: #48484A; letter-spacing: 0.02em; }
+  .sheet-print-root .sp-cell { padding: 1.2mm; border: 0.25mm solid #C7C7CC; border-radius: 1.6mm; }
+  .sheet-print-root .sp-cell.beat { border-left: 0.6mm solid #636366; }
+  .sheet-print-root .sp-cell svg { display: block; width: 100%; height: auto; }
+  .sheet-print-root .sp-off { fill: #D8D8DC; }
+  .sheet-print-root .sp-on { fill: #C8003C; }
+  .sheet-print-root .sp-bpm { color: #0040DD; }
+  .sheet-print-root .sp-rest { flex: 1; margin: 22% 0; display: flex; align-items: center; justify-content: center; border: 0.25mm dashed #C7C7CC; border-radius: 99mm; font-size: 7pt; color: #48484A; white-space: nowrap; overflow: hidden; }
+  .sheet-print-root .sp-foot { margin-top: 6mm; font-size: 7.5pt; color: #8E8E93; text-align: right; }
 }
 
 /* ── 作曲モード（全画面オーバーレイ） ── */

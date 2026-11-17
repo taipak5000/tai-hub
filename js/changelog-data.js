@@ -12,11 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.17.3',
-    title: { ja: '楽譜づくりに譜面ビュー、複数の楽器のMIDIの読み込み、ロイヤリティクラブのポイントの合計', en: 'Sheet view and multi-instrument MIDI in Sheet Music Maker, Loyalty Club points totalled' },
+    version: '2026.11.17.4',
+    title: { ja: '楽譜づくりに譜面ビュー（印刷・PDF保存つき）、複数の楽器のMIDIの読み込み、ロイヤリティクラブのポイントの合計', en: 'Sheet view and multi-instrument MIDI in Sheet Music Maker, Loyalty Club points totalled' },
     date: '2026-11-17',
     items: [
-      { type: 'new', ja: '楽譜づくりに「譜面を見る」を足しました。曲の全部のマスを、編集の道具なしで画面いっぱいに並べて見られます（4マスごとに番号）。マスの大きさは小・中・大、空のマスを「休み×3」のように詰めることもできます。選んだマスから再生でき、「このマスを編集」でそのマスの編集へ移れます。ライブラリの曲と、作成画面の上のボタンから開きます。', en: 'Sheet Music Maker: new "View sheet" shows every frame of a song across the whole screen without the editing tools (numbered every 4 frames). Choose S/M/L frame size, collapse empty frames into "Rest ×3", play from the selected frame, and jump to "Edit this frame". Open it from a song in the library or the button at the top of the editor.', route: 'tai-score' },
+      { type: 'new', ja: '楽譜づくりに「譜面を見る」を足しました。曲の全部のマスを、編集の道具なしで画面いっぱいに並べて見られます（4マスごとに番号）。マスの大きさは小・中・大、空のマスを「休み×3」のように詰めることもできます。選んだマスから再生でき、「このマスを編集」でそのマスの編集へ移れます。「印刷・PDF」で白地の譜面を印刷でき、印刷の画面で「PDFに保存」を選べばPDFにもなります（1行のマス数は大きさの設定で16・12・8マス）。ライブラリの曲と、作成画面の上のボタンから開きます。', en: 'Sheet Music Maker: new "View sheet" shows every frame of a song across the whole screen without the editing tools (numbered every 4 frames). Choose S/M/L frame size, collapse empty frames into "Rest ×3", play from the selected frame, jump to "Edit this frame", and print it or save it as a PDF ("Print / PDF"; 16, 12 or 8 frames per row by size). Open it from a song in the library or the button at the top of the editor.', route: 'tai-score' },
       { type: 'improve', ja: '累計消費コスト・実額で、ロイヤリティクラブ（ウェブショップ）のアイテムに使ったポイントと、残りを集めるのに要るポイントを合計するようにしました（4アイテムで計230ポイント）。これまでは「対象外」として数えていませんでした。通貨の絞り込みにも「ロイヤリティクラブのポイント」を足しています。', en: 'Total Spent & Real Money now totals the Loyalty Club (web shop) points you have used and the points still needed (230 points across four items). They were previously shown as N/A. A "Loyalty Club points" currency filter was added too.', route: 'item', sub: 'cost' },
       { type: 'improve', ja: '楽譜づくりの「MIDIから作る」で、ピアノ・ギター・ストリングス・ベースのように複数の楽器が入ったMIDIは、使うパートを選べるようにしました（ベースなどの低音は最初は外れています）。最初の音の前の無音を詰め、曲名には楽器名ではなくファイル名を使います。端末によって.midファイルが選べなかった問題も直しました。', en: 'Sheet Music Maker: when a MIDI file contains several instruments (piano, guitar, strings, bass…), you can now choose which parts to use (low parts like bass start unchecked). Leading silence is trimmed, the song is named after the file instead of an instrument, and .mid files that some devices would not let you pick can now be selected.', route: 'tai-score' },
     ],

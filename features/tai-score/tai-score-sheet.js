@@ -54,6 +54,7 @@ export function renderSheetOverlay() {
         <input type="checkbox" id="sheetCollapseToggle">
         <span>${escapeHtml(t('sheetCollapseLabel'))}</span>
       </label>
+      <button type="button" class="transport-btn sheet-print-btn" data-act="sheet-print" title="${escapeHtml(t('sheetPrintTitle'))}"><svg class="inline-icon" width="15" height="15"><use href="#ts-i-print"/></svg>${escapeHtml(t('sheetPrintBtn'))}</button>
       <button type="button" class="transport-btn sheet-edit-btn" data-act="sheet-edit">${escapeHtml(t('sheetEditBtn'))}</button>
     </div>
     <div class="sheet-body" id="sheetBody"></div>
@@ -142,6 +143,7 @@ export function open(targetSong, startFrame, editHandler) {
 export function close() {
   if (!isOpen()) return;
   stop();
+  cleanupPrint();
   $('sheetOverlay').classList.remove('open');
   trapPop('sheetOverlay');
   song = null;
@@ -207,6 +209,7 @@ export function handleClick(act, el) {
     case 'sheet-play': if (playing) stop(); else play(); return true;
     case 'sheet-cell': if (!playing) select(+el.dataset.frame, { scroll: false }); else { stop(); select(+el.dataset.frame, { scroll: false }); } return true;
     case 'sheet-size': { const p = loadPrefs(); p.size = el.dataset.size; savePrefs(p); renderBody(); scrollToCell(selected, false); return true; }
+    case 'sheet-print': printSheet(); return true;
     case 'sheet-edit': { const fi = selected; const h = onEdit; close(); if (h) h(fi); return true; }
     default: return false;
   }
@@ -233,8 +236,97 @@ export function handleKeydown(e) {
   return true; // 開いている間は、後ろの作曲モードへキー（音の入力など）を渡さない
 }
 
+/* ================================================================
+   印刷・PDF保存。画面の譜面ビューはスクロールする全画面の重なりなので、そのままでは見えている所しか
+   印刷されない。印刷用の譜面（#sheetPrintRoot）を body の直下に作り、印刷の間だけ body に
+   .sheet-printing を付けて、ほかの要素を隠す（css/tai-score.css の @media print）。
+   ・色は画面のテーマに関係なく白地。鳴る音は濃い色、空いている所は薄い灰色（白黒の印刷でも見分けられる）。
+   ・空いている15か所の印は <symbol> 1つを <use> で使い回す（背景色は印刷で消えることがあるのでSVGで描く）。
+   ・1行のマス数は大きさの設定から（小=16・中=12・大=8。4の倍数）。行の途中でページが切れないようにする。
+   ・「空のマスを詰める」がオンなら、印刷でも詰める。
+   ================================================================ */
+const PRINT_COLS = { s: 16, m: 12, l: 8 };
+const GRID_SYMBOL = (() => {
+  let g = '';
+  for (let i = 0; i < 15; i++) {
+    const cx = (i % 5) * 10 + 5, cy = Math.floor(i / 5) * 10 + 5;
+    g += (i % 5) % 2 === 1 ? `<path d="M${cx} ${cy - 3.6} ${cx + 3.6} ${cy} ${cx} ${cy + 3.6} ${cx - 3.6} ${cy}z"/>` : `<circle cx="${cx}" cy="${cy}" r="3.6"/>`;
+  }
+  return g;
+})();
+function printNoteShapes(frame) {
+  return frame.map(i => {
+    const cx = (i % 5) * 10 + 5, cy = Math.floor(i / 5) * 10 + 5;
+    return (i % 5) % 2 === 1 ? `<path d="M${cx} ${cy - 4.4} ${cx + 4.4} ${cy} ${cx} ${cy + 4.4} ${cx - 4.4} ${cy}z"/>` : `<circle cx="${cx}" cy="${cy}" r="4"/>`;
+  }).join('');
+}
+function buildPrintHtml() {
+  const { size, collapse } = loadPrefs();
+  const cols = PRINT_COLS[size];
+  // 並べる単位（マス、または詰めた休み）を作ってから、cols個ずつの行に分ける
+  const units = [];
+  const frames = song.frames;
+  for (let fi = 0; fi < frames.length; fi++) {
+    const frame = frames[fi] || [];
+    if (collapse && !frame.length && S.frameBpmOverride(song, fi) === null) {
+      let end = fi;
+      while (end + 1 < frames.length && !(frames[end + 1] || []).length && S.frameBpmOverride(song, end + 1) === null) end++;
+      if (end > fi) { units.push({ rest: true, from: fi, to: end }); fi = end; continue; }
+    }
+    units.push({ fi, frame });
+  }
+  const unitHtml = u => {
+    // 番号の行も同じ箱の中に置く（箱の外へはみ出させると、改ページで番号だけ前のページに残る）
+    if (u.rest) return `<div class="sp-unit"><div class="sp-lbl"></div><div class="sp-rest">${escapeHtml(t('sheetRestRun', { n: u.to - u.from + 1 }))}</div></div>`;
+    const bpmOv = S.frameBpmOverride(song, u.fi);
+    return `<div class="sp-unit"><div class="sp-lbl">`
+      + `<span>${u.fi % 4 === 0 ? u.fi + 1 : ''}</span>`
+      + (bpmOv !== null ? `<span class="sp-bpm">♩${bpmOv}</span>` : '')
+      + `</div><div class="sp-cell${u.fi % 4 === 0 ? ' beat' : ''}">`
+      + `<svg viewBox="0 0 50 30" aria-hidden="true"><use href="#spGrid" class="sp-off"/><g class="sp-on">${printNoteShapes(u.frame)}</g></svg></div></div>`;
+  };
+  let rows = '';
+  for (let i = 0; i < units.length; i += cols) {
+    rows += `<div class="sp-row" style="--sp-cols:${cols}">${units.slice(i, i + cols).map(unitHtml).join('')}</div>`;
+  }
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  return `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="spGrid" viewBox="0 0 50 30">${GRID_SYMBOL}</symbol></defs></svg>
+    <header class="sp-head">
+      <h1 class="sp-title">${escapeHtml(song.name || t('untitledSong'))}</h1>
+      <p class="sp-meta">${escapeHtml($('sheetMeta').textContent)}${song.pitch ? ` ・ ${escapeHtml(t('pitchLabel'))} ${escapeHtml(song.pitch)}` : ''}</p>
+    </header>
+    <div class="sp-rows">${rows}</div>
+    <footer class="sp-foot">${escapeHtml(t('sheetPrintFooter', { date: dateStr }))}</footer>`;
+}
+function cleanupPrint() {
+  document.body.classList.remove('sheet-printing');
+  const root = document.getElementById('sheetPrintRoot');
+  if (root) root.remove();
+  window.removeEventListener('afterprint', cleanupPrint);
+}
+export function printSheet() {
+  if (!song) return;
+  stop();
+  cleanupPrint();
+  const root = document.createElement('div');
+  root.id = 'sheetPrintRoot';
+  root.className = 'sheet-print-root';
+  root.innerHTML = buildPrintHtml();
+  document.body.appendChild(root);
+  document.body.classList.add('sheet-printing');
+  // 印刷の画面を閉じたら片付ける。iOSのSafariは print() が印刷の終わりを待たずに戻ることがあるので、
+  // タイマーでは消さない（afterprint・次の印刷・譜面ビューを閉じた時に片付ける。画面では常に隠れている）
+  window.addEventListener('afterprint', cleanupPrint);
+  const prevTitle = document.title;
+  document.title = song.name || prevTitle; // PDFに保存する時のファイル名の候補になる
+  const restoreTitle = () => { document.title = prevTitle; window.removeEventListener('afterprint', restoreTitle); };
+  window.addEventListener('afterprint', restoreTitle);
+  window.print();
+}
+
 // unmount時の後始末
 export function teardown() {
-  stop(); song = null; onEdit = null;
+  stop(); song = null; onEdit = null; cleanupPrint();
   if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
 }
