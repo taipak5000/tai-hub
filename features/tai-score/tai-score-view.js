@@ -361,7 +361,13 @@ function renderMidiImportModal() {
         <button type="button" class="modal-close" data-act="close-midi-import"><span class="icon-chip" style="width:22px; height:22px;"><svg class="inline-icon" width="16" height="16"><use href="#i-close"/></svg></span></button>
       </div>
       <div class="hint">${escapeHtml(t('midiImportHint'))}</div>
-      <input type="file" id="midiFileInput" accept=".mid,.midi,audio/midi,audio/x-midi">
+      <!-- 端末によっては.midの種類（MIME）が分からず選べなくなるため、選べる種類は絞らない（中身の先頭で判定する） -->
+      <input type="file" id="midiFileInput">
+      <div id="midiImportParts" class="midi-parts" style="display:none;">
+        <div class="hint midi-parts-hint">${escapeHtml(t('midiPartsHint'))}</div>
+        <div class="midi-parts-list" id="midiPartsList" role="group" aria-label="${escapeHtml(t('midiPartsHint'))}"></div>
+        <button type="button" class="action-btn primary" data-act="midi-build-song">${escapeHtml(t('midiBuildBtn'))}</button>
+      </div>
       <div id="midiImportStatus" class="status-msg"></div>
     </div>
   </div>`;
@@ -1038,39 +1044,65 @@ async function startImageAnalysis() {
 /* ================================================================
    MIDIファイルから楽譜を作成
    ================================================================ */
-function closeMidiImportModal() { closeModal('midiImportModal'); }
+let midiPending = null; // パートを選んでいる間のファイル（{ midi, fileName }）
+function closeMidiImportModal() { midiPending = null; closeModal('midiImportModal'); }
+function resetMidiParts() {
+  midiPending = null;
+  const box = document.getElementById('midiImportParts');
+  if (box) box.style.display = 'none';
+  const list = document.getElementById('midiPartsList');
+  if (list) list.innerHTML = '';
+}
 function openMidiImportModal() {
   document.getElementById('midiFileInput').value = '';
+  resetMidiParts();
   const statusEl = document.getElementById('midiImportStatus');
   statusEl.textContent = '';
   statusEl.className = 'status-msg';
   openModal('midiImportModal');
 }
+function midiFail(statusEl, e) {
+  statusEl.className = 'status-msg err';
+  statusEl.textContent = t(e && e.midiUserMessage ? e.midiUserMessage : 'midiParseFailed');
+}
+function midiFinish(midi, fileName, partIds, statusEl) {
+  const { song, tempoAdjusted } = MidiImport.buildSongFromMidi(midi, fileName, t, partIds);
+  const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '');
+  finishImport(song, statusEl, note, 'midiImportModal');
+}
 async function onMidiFileSelected(event) {
   const file = event.target.files[0];
   event.target.value = '';
   if (!file) return;
+  resetMidiParts();
   const statusEl = document.getElementById('midiImportStatus');
   statusEl.className = 'status-msg';
   statusEl.textContent = t('midiConvertingText');
-  await new Promise(resolve => setTimeout(resolve, 0));
-
-  const reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      const { song, tempoAdjusted } = await MidiImport.convertMidiFile(reader.result, file.name, t);
-      const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '');
-      finishImport(song, statusEl, note, 'midiImportModal');
-    } catch (e) {
-      statusEl.className = 'status-msg err';
-      statusEl.textContent = t(e && e.midiUserMessage ? e.midiUserMessage : 'midiParseFailed');
-    }
-  };
-  reader.onerror = () => {
-    statusEl.className = 'status-msg err';
-    statusEl.textContent = t('midiParseFailed');
-  };
-  reader.readAsArrayBuffer(file);
+  let buf;
+  try { buf = await file.arrayBuffer(); } catch (e) { midiFail(statusEl, e); return; }
+  try {
+    const { midi, parts } = MidiImport.inspectMidiFile(buf, t);
+    // パートが1つだけならそのまま作る（従来どおり）
+    if (parts.length === 1) { midiFinish(midi, file.name, null, statusEl); return; }
+    // 複数の楽器が入っている時は、使うパートを選んでもらう（低音のパートは既定で外す）
+    midiPending = { midi, fileName: file.name };
+    document.getElementById('midiPartsList').innerHTML = parts.map(p => `
+      <label class="midi-part-row">
+        <input type="checkbox" value="${escapeHtml(p.id)}" ${p.defaultOn ? 'checked' : ''}>
+        <span class="midi-part-name">${escapeHtml(p.label)}</span>
+        <span class="midi-part-meta">${escapeHtml(t('midiPartNotes', { n: p.noteCount }))}${p.isBass ? escapeHtml(t('midiPartBass')) : ''}</span>
+      </label>`).join('');
+    document.getElementById('midiImportParts').style.display = '';
+    statusEl.textContent = t('midiPartsFound', { n: parts.length });
+  } catch (e) { midiFail(statusEl, e); }
+}
+function onMidiBuildSong() {
+  if (!midiPending) return;
+  const statusEl = document.getElementById('midiImportStatus');
+  const ids = [...document.querySelectorAll('#midiPartsList input[type=checkbox]:checked')].map(el => el.value);
+  if (!ids.length) { statusEl.className = 'status-msg err'; statusEl.textContent = t('midiNoPartSelected'); return; }
+  try { midiFinish(midiPending.midi, midiPending.fileName, ids, statusEl); midiPending = null; }
+  catch (e) { midiFail(statusEl, e); }
 }
 
 /* ================================================================
@@ -1169,6 +1201,7 @@ function onContainerClick(e) {
     case 'close-audio-import': closeAudioImportModal(); break;
     case 'close-image-import': closeImageImportModal(); break;
     case 'close-midi-import': closeMidiImportModal(); break;
+    case 'midi-build-song': onMidiBuildSong(); break;
     case 'start-audio-analysis': startAudioAnalysis(); break;
     case 'cancel-audio-analysis': cancelAudioAnalysis(); break;
     case 'start-image-analysis': startImageAnalysis(); break;

@@ -5,7 +5,15 @@
    外部ライブラリは使わず、ArrayBufferのバイト列からフォーマット0/1/2の
    SMFを直接パースする（ヘッダーチャンク＋MTrkチャンク群、可変長数値
    （VLQ）のデルタタイム、ランニングステータス、テンポ／トラック名の
-   メタイベントに対応）。
+   メタイベントに対応）。RIFFで包んだMIDI（.rmi）も中のSMFを取り出して読む。
+
+   演奏の録音や音声から自動で書き起こしたMIDI（例: ピアノ＋ギター＋ストリングス＋ベースの
+   複数トラックで、音の位置が拍にそろっていないもの）も読めるように、次のようにしている:
+   ・inspectMidiFile() がトラック（＋チャンネル）ごとの「パート」を一覧にし、画面で使うパートを選べる。
+     低音のパート（ベース系の音色・平均の音高が低いもの）は既定で外す（2オクターブに折り返すと伴奏で埋まるため）。
+   ・最初の音の前の無音を詰め、グリッドは最初の音を起点に合わせる（拍頭が0tickでないファイルでずれないように）。
+   ・曲名は先頭トラック（フォーマット1ではテンポ等を持つ指揮トラック）の名前か、ファイル名から取る。
+     楽器のトラック名（「Acoustic Piano」など）は曲名にしない。
    ================================================================ */
 import { midiToSkyIndex } from './image-import.js';
 import { genId } from '../tai-score-state.js';
@@ -33,6 +41,25 @@ function readVarLen(bytes, pos, limit) {
 }
 function decodeMidiText(byteSubarray) {
   try { return new TextDecoder('utf-8').decode(byteSubarray).trim(); } catch (e) { return ''; }
+}
+
+// RIFF形式のMIDI（RMID）なら、中の"data"チャンクのSMFを取り出す
+function unwrapRiffMidi(bytes) {
+  const tag = (pos) => String.fromCharCode(bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]);
+  if (bytes.length < 20 || tag(0) !== 'RIFF' || tag(8) !== 'RMID') return bytes;
+  let pos = 12;
+  while (pos + 8 <= bytes.length) {
+    const len = (bytes[pos + 4] | (bytes[pos + 5] << 8) | (bytes[pos + 6] << 16) | (bytes[pos + 7] << 24)) >>> 0;
+    if (tag(pos) === 'data') return bytes.subarray(pos + 8, Math.min(bytes.length, pos + 8 + len));
+    pos += 8 + len + (len & 1);
+  }
+  return bytes;
+}
+// MIDIでないファイル（音声・動画など）を選んだ時に、別の読み込み方を案内するための判定
+function looksLikeAudioOrVideo(bytes) {
+  const s = String.fromCharCode(...bytes.subarray(0, 12));
+  return s.startsWith('ID3') || (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) || s.startsWith('OggS') || s.startsWith('fLaC')
+    || (s.startsWith('RIFF') && s.slice(8, 12) === 'WAVE') || s.slice(4, 8) === 'ftyp' || (bytes[0] === 0x1A && bytes[1] === 0x45);
 }
 
 function parseMidiHeader(bytes) {
@@ -94,7 +121,8 @@ function parseMidiTrackEvents(bytes, start, end) {
       if (pos >= end) break;
       const d1 = bytes[pos++];
       if (type === 0xC0 || type === 0xD0) {
-        // プログラムチェンジ／チャンネルアフタータッチ：データ1バイトのみ
+        // プログラムチェンジ／チャンネルアフタータッチ：データ1バイトのみ。音色はパートの既定選択に使う
+        if (type === 0xC0) events.push({ tick, type: 'program', program: d1, channel });
       } else {
         if (pos >= end) break;
         const d2 = bytes[pos++];
@@ -108,7 +136,10 @@ function parseMidiTrackEvents(bytes, start, end) {
 }
 
 function parseMidiFile(arrayBuffer) {
-  const bytes = new Uint8Array(arrayBuffer);
+  const bytes = unwrapRiffMidi(new Uint8Array(arrayBuffer));
+  if (!(bytes[0] === 0x4D && bytes[1] === 0x54 && bytes[2] === 0x68 && bytes[3] === 0x64) && looksLikeAudioOrVideo(bytes)) {
+    throw midiError('midiNotMidiFile');
+  }
   const header = parseMidiHeader(bytes);
   const tracks = [];
   let pos = header.headerEnd;
@@ -121,7 +152,7 @@ function parseMidiFile(arrayBuffer) {
     pos = dataEnd;
   }
   if (tracks.length === 0) throw midiError('midiParseFailed');
-  return { ticksPerQuarter: header.ticksPerQuarter, smpte: header.smpte, tracks };
+  return { format: header.format, ticksPerQuarter: header.ticksPerQuarter, smpte: header.smpte, tracks };
 }
 
 function mapMidiNoteToSkyIndex(midiNote) { return midiToSkyIndex(midiNote); }
@@ -146,33 +177,76 @@ function averageMidiTempo(tempoEvents, endTick) {
   return total > 0 ? weighted / total : points[0].usPerQuarter;
 }
 
-function midiToSong(midi, fileName, t) {
+// トラック（＋チャンネル）ごとのパート一覧。フォーマット0は1トラックに全チャンネルが入るので、チャンネルで分ける。
+// channel 9（表記上のMIDIチャンネル10）はGM規格上のドラム専用チャンネルのため対象外。
+function collectParts(midi) {
+  const parts = new Map();
+  midi.tracks.forEach((events, trackIndex) => {
+    let trackName = '';
+    const programByCh = {};
+    events.forEach(ev => {
+      if (ev.type === 'trackName' && !trackName && ev.text) trackName = ev.text;
+      else if (ev.type === 'program' && programByCh[ev.channel] === undefined) programByCh[ev.channel] = ev.program;
+      else if (ev.type === 'noteOn' && ev.channel !== 9 && ev.note >= 0 && ev.note <= 127) {
+        const id = `${trackIndex}:${ev.channel}`;
+        if (!parts.has(id)) parts.set(id, { id, trackIndex, channel: ev.channel, trackName: '', program: null, notes: [] });
+        parts.get(id).notes.push({ tick: ev.tick, note: ev.note });
+      }
+    });
+    parts.forEach(p => {
+      if (p.trackIndex !== trackIndex) return;
+      p.trackName = trackName;
+      if (programByCh[p.channel] !== undefined) p.program = programByCh[p.channel];
+    });
+  });
+  const list = [...parts.values()];
+  list.forEach(p => {
+    p.noteCount = p.notes.length;
+    p.avgNote = p.notes.reduce((a, n) => a + n.note, 0) / Math.max(1, p.notes.length);
+    // GMの32〜39番はベース系の音色。音色が分からなくても平均の音高がE2付近より低ければ低音のパートとみなす
+    p.isBass = (p.program !== null && p.program >= 32 && p.program <= 39) || p.avgNote < 45;
+  });
+  // 低音のパートは既定で外す。ただし低音のパートしか無い時は全部使う
+  const hasMelodic = list.some(p => !p.isBass);
+  list.forEach(p => { p.defaultOn = hasMelodic ? !p.isBass : true; });
+  return list;
+}
+
+// 曲名: 先頭トラックの名前（フォーマット1では指揮トラック。楽器名のトラックとは別）か、ファイル名。
+// ファイル名の「.solo-piano」のような後ろの区切りも外す（例: recording-20261115.solo-piano.mid → recording-20261115）。
+function songNameFor(midi, fileName, t) {
+  const firstName = (midi.tracks[0] || []).find(ev => ev.type === 'trackName' && ev.text);
+  const firstHasNotes = (midi.tracks[0] || []).some(ev => ev.type === 'noteOn');
+  if (firstName && (midi.format === 0 || !firstHasNotes || midi.tracks.length === 1)) {
+    const nm = firstName.text.trim();
+    // フォーマット0や1トラックだけのファイルでは、トラック名が楽器名のことも多い
+    if (nm && !(midi.tracks.length === 1 && /piano|guitar|bass|string|violin|flute|synth|organ|harp|track/i.test(nm))) return nm;
+  }
+  const base = (fileName || '').replace(/\.(mid|midi|rmi|kar|smf)$/i, '').replace(/(\.[A-Za-z][\w-]*)+$/, '').trim();
+  return base || t('midiDefaultSongName');
+}
+
+function midiToSong(midi, fileName, t, partIds) {
   let ticksPerQuarter = midi.ticksPerQuarter;
   if (!ticksPerQuarter) {
     const ticksPerSecond = midi.smpte.framesPerSecond * midi.smpte.ticksPerFrame;
     ticksPerQuarter = Math.max(1, Math.round(ticksPerSecond * 0.5));
   }
 
-  let trackName = '';
   const tempoEvents = [];
-  const noteOnEvents = [];
-  midi.tracks.forEach(events => {
-    events.forEach(ev => {
-      if (ev.type === 'tempo') {
-        tempoEvents.push({ tick: ev.tick, usPerQuarter: ev.usPerQuarter });
-      } else if (ev.type === 'trackName') {
-        if (!trackName && ev.text) trackName = ev.text;
-      } else if (ev.type === 'noteOn' && ev.channel !== 9 && ev.note >= 0 && ev.note <= 127) {
-        // channel 9（表記上のMIDIチャンネル10）はGM規格上のドラム専用チャンネルのため対象外
-        noteOnEvents.push({ tick: ev.tick, note: ev.note });
-      }
-    });
-  });
+  midi.tracks.forEach(events => events.forEach(ev => {
+    if (ev.type === 'tempo') tempoEvents.push({ tick: ev.tick, usPerQuarter: ev.usPerQuarter });
+  }));
+  const parts = collectParts(midi);
+  const useIds = partIds ? new Set(partIds) : new Set(parts.filter(p => p.defaultOn).map(p => p.id));
+  const noteOnEvents = parts.filter(p => useIds.has(p.id)).flatMap(p => p.notes);
   if (noteOnEvents.length === 0) throw midiError('midiNoNotesFound');
 
   tempoEvents.sort((a, b) => a.tick - b.tick);
-  const maxTick = noteOnEvents.reduce((m, ev) => Math.max(m, ev.tick), 0);
-  const usPerQuarter = averageMidiTempo(tempoEvents, maxTick);
+  // 最初の音の前の無音を詰める（録音由来のMIDIは頭に数百tickの「間」があることが多い）。グリッドもここを起点にする
+  const firstTick = noteOnEvents.reduce((m, ev) => Math.min(m, ev.tick), Infinity);
+  const maxTick = noteOnEvents.reduce((m, ev) => Math.max(m, ev.tick), 0) - firstTick;
+  const usPerQuarter = averageMidiTempo(tempoEvents, maxTick + firstTick);
 
   // 16分音符ぶんのグリッドへスナップ。曲が長い／密な場合やテンポが安全範囲
   // （40〜999 BPM）を超える場合は8分音符→4分音符→2分音符の順に粗くする。
@@ -195,7 +269,7 @@ function midiToSong(midi, fileName, t) {
   const frameNotes = new Map();
   noteOnEvents.forEach(ev => {
     const skyIndex = mapMidiNoteToSkyIndex(ev.note);
-    const frameIndex = Math.round(ev.tick / gridTicks);
+    const frameIndex = Math.round((ev.tick - firstTick) / gridTicks);
     if (!frameNotes.has(frameIndex)) frameNotes.set(frameIndex, new Set());
     frameNotes.get(frameIndex).add(skyIndex);
   });
@@ -209,14 +283,35 @@ function midiToSong(midi, fileName, t) {
 
   const tempoAdjusted = rawBpm > BPM_MAX || rawBpm < BPM_MIN;
   const bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(rawBpm)));
-  const name = (trackName && trackName.trim())
-    || (fileName ? fileName.replace(/\.[^.]+$/, '').trim() : '')
-    || t('midiDefaultSongName');
+  const name = songNameFor(midi, fileName, t);
 
   return {
-    song: { id: genId(), name: name || t('midiDefaultSongName'), bpm, pitch: 'C', instrument: 'Harp', frames, updatedAt: Date.now() },
+    song: { id: genId(), name, bpm, pitch: 'C', instrument: 'Harp', frames, updatedAt: Date.now() },
     tempoAdjusted,
   };
+}
+
+// 画面でパートを選ぶための下調べ。戻り値: { midi, parts: [{ id, label, noteCount, isBass, defaultOn }] }
+// label はトラック名（無ければ「トラックn」）。同じトラックに複数チャンネルがある時はチャンネル番号を添える。
+export function inspectMidiFile(arrayBuffer, t) {
+  const midi = parseMidiFile(arrayBuffer);
+  const parts = collectParts(midi);
+  if (parts.length === 0) throw midiError('midiNoNotesFound');
+  const perTrack = {};
+  parts.forEach(p => { perTrack[p.trackIndex] = (perTrack[p.trackIndex] || 0) + 1; });
+  return {
+    midi,
+    parts: parts.map(p => ({
+      id: p.id,
+      label: (p.trackName || t('midiTrackLabel', { n: p.trackIndex + 1 })) + (perTrack[p.trackIndex] > 1 ? ` (ch ${p.channel + 1})` : ''),
+      noteCount: p.noteCount, isBass: p.isBass, defaultOn: p.defaultOn,
+    })),
+  };
+}
+
+// inspectMidiFile() の結果から、選んだパートだけで楽譜を作る
+export function buildSongFromMidi(midi, fileName, t, partIds) {
+  return midiToSong(midi, fileName, t, partIds);
 }
 
 // t: i18n-score.jsのt(key,vars)（曲名デフォルト値の生成に使う）。
