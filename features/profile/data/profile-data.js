@@ -39,9 +39,9 @@ export const PROFILE = {
   bioEn: "I usually build and publish whatever websites I feel like I need myself.\nI enjoy efficiency tricks and the occasional small glitch technique.\nI'd love to be friends with anyone who wears the smirking Scout mask.",
 
   // 「もっと知りたい人向け」を押すと表示される追加情報（空欄なら非表示になります）
-  extraInfo: 'Sky以外に、モンストやイナクロもプレイしている方仲良くしてくれると嬉しいです\n切り絵の作成やイラストを描いたりと、いろんなことに手を出しています！',
+  extraInfo: 'Sky以外では、イナイレ・恋深・モンストをそこそこやっています。同じゲームをしている方と仲良くなれたら嬉しいです\nK-POPが好きです。第二世代のアイドルがメインですが、最近のアイドルも好きで、最近はH2Hを聴いています\n切り絵の作成やイラストを描いたりと、いろんなことに手を出しています！',
   // ▼ 英語表示用（空欄ならextraInfoが代わりに表示されます）
-  extraInfoEn: "Besides Sky, I'd be happy to get along with anyone who also plays Monster Strike or Inazuma Eleven Climax.\nI also dabble in a bunch of other things, like paper cutting art and illustration!",
+  extraInfoEn: "Besides Sky, I play Inazuma Eleven, Love and Deepspace, and Monster Strike fairly often. I'd be happy to get along with anyone who plays them too.\nI love K-pop. Second-generation idols are my main love, but I like recent idols too, and lately I've been listening to H2H.\nI also dabble in a bunch of other things, like paper cutting art and illustration!",
 
   // 写真を使いたい場合はここにファイル名やURLを入れてください
   avatarImage: 'https://pbs.twimg.com/profile_images/2056923572296437760/EnPe2tws_400x400.jpg',
