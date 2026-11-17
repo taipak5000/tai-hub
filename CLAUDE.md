@@ -224,7 +224,8 @@ const landingPoint = currentY + project(v);
 ## 累計消費コスト・実額の価格データ（`features/item/data/cost-data.js`）
 
 - `cost.type`は`candle`／`heart`／`starCandle`（星のキャンドル）／`money`（円）／`ticket`／`seasonCandle`（季節キャンドル）／`reward`（季節パスの報酬＝「報酬」）／
-  `free`（精霊ツリーで無料＝「無料」）／`na`／`unknown`。`seasonCandle`・`reward`・`free`はキャンドルの合計に入れない（表示とフィルターだけ）。
+  `free`（精霊ツリーで無料＝「無料」）／`point`（ロイヤリティクラブ＝ウェブショップのポイント）／`na`／`unknown`。`seasonCandle`・`reward`・`free`はキャンドルの合計に入れない（表示とフィルターだけ）。
+  `point`は4通貨とは別に合計し、サマリーの下の1行（`setPointRow()`。0の時は隠す）と季節ごとの小計に出す。
 - 「不明」を埋める時は SkyGame-Data（npm `skygame-data`）の`nodes`（精霊ツリー）・`itemLists`（ショップ）・`iaps`（課金パック）と英語名で突き合わせる。
   対応: `c`→candle、`h`→heart、`ac`→starCandle、`ec`→ticket、`sc`→seasonCandle。価格の無いノードは、アイテムの`group`が`SeasonPass`なら`reward`、それ以外は`free`。
   課金パックのドル→円: 1.99→260・2.99→400・3.99→530・4.99→650・6.99→900・9.99→1300・11.99→1550・14.99→1950・17.99→2380・19.99→2600・24.99→3300・29.99→3900。

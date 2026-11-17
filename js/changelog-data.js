@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.17',
+    title: { ja: '累計消費コストで、ロイヤリティクラブのポイントを合計するように', en: 'Total Spent: Loyalty Club points are now totalled' },
+    date: '2026-11-17',
+    items: [
+      { type: 'improve', ja: '累計消費コスト・実額で、ロイヤリティクラブ（ウェブショップ）のアイテムに使ったポイントと、残りを集めるのに要るポイントを合計するようにしました（4アイテムで計230ポイント）。これまでは「対象外」として数えていませんでした。通貨の絞り込みにも「ロイヤリティクラブのポイント」を足しています。', en: 'Total Spent & Real Money now totals the Loyalty Club (web shop) points you have used and the points still needed (230 points across four items). They were previously shown as N/A. A "Loyalty Club points" currency filter was added too.', route: 'item', sub: 'cost' },
+    ],
+  },
+  {
     version: '2026.11.16',
     title: { ja: 'ほしいもの計画で、精霊のツリーから選べるように', en: 'Wishlist Plan: pick from a spirit tree' },
     date: '2026-11-16',

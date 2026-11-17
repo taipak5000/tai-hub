@@ -276,6 +276,8 @@ function costHtml(cost, quantity) {
   }
   // 季節キャンドルの価格（季節の開催中の価格。キャンドル・星のキャンドルとは別の通貨なので、合計には入れない）
   if (cost.type === 'seasonCandle') return `<svg class="inline-icon" width="15" height="15"><use href="#i-star-candle"/></svg> ${en ? `${cost.value} Season Candles` : `季節キャンドル ${cost.value}本`}`;
+  // ロイヤリティクラブ（ウェブショップ）のポイント。キャンドルとは別の通貨として合計する
+  if (cost.type === 'point') return `<svg class="inline-icon" width="15" height="15"><use href="#i-gem"/></svg> ${en ? `${cost.value} Loyalty Club points` : `ロイヤリティクラブ ${cost.value}ポイント`}`;
   // 季節パスの報酬・精霊ツリーで無料（価格が無いことが分かっているもの。合計には入れない）
   if (cost.type === 'reward') return en ? 'Season Pass reward' : '報酬';
   if (cost.type === 'free') return en ? 'Free' : '無料';
@@ -302,6 +304,7 @@ const PRICE_CURRENCIES = {
   starCandle: { icon: 'i-star', unit: '本' },
   heart: { icon: 'i-heart', unit: '個' },
   seasonCandle: { icon: 'i-star-candle', unit: '本' },
+  point: { icon: 'i-gem', unit: 'pt' },
 };
 // 数値でない価格は小さなグレーのピルにする（数値の列の揃いを崩さない）
 function pricePillLabel(type) {
@@ -341,7 +344,7 @@ const NOTE_BADGES = [
 ];
 const NOTE_SILENT = [
   /究極の贈り物」のため/, /での交換アイテムです（キャンドル等の通常価格はありません）/, /季節パス（アドベンチャーパス）の報酬で/,
-  /精霊ツリーで無料で受け取れる/, /完全無料アイテム/, /星のキャンドルでの価格です/, /無償配布されたアイテム/, /^元表記は/, /App Store価格帯換算/,
+  /精霊ツリーで無料で受け取れる/, /ポイントで引き換えるアイテムです/, /完全無料アイテム/, /星のキャンドルでの価格です/, /無償配布されたアイテム/, /^元表記は/, /App Store価格帯換算/,
 ];
 function noteBadgeText(noteJa) {
   if (!noteJa) return '';
@@ -523,6 +526,15 @@ function setSumValues(suffix, candle, starCandle, heart, money) {
   put('Heart', sumValueHtml(heart, '個'));
   put('Money', `¥${money.toLocaleString()}`);
 }
+// ロイヤリティクラブ（ウェブショップ）のポイント。4通貨の枠とは別の1行で出し、0の時は行ごと隠す
+function setPointRow(suffix, point) {
+  if (!hostEl) return;
+  const row = hostEl.querySelector(`#costSumPointRow${suffix}`);
+  if (!row) return;
+  row.style.display = point > 0 ? 'flex' : 'none';
+  const el = row.querySelector('b');
+  if (el) el.innerHTML = sumValueHtml(point, 'pt');
+}
 
 /* ── 一覧の絞り込み・グループの開閉（画面の中だけの状態。保存はしない）── */
 let ownFilter = 'all';            // 'all' | 'owned' | 'notOwned'
@@ -542,16 +554,17 @@ function subtotalPartsHtml(c) {
   if (c.candle) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-candle"/></svg>${c.candle.toLocaleString()}</span>`);
   if (c.starCandle) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-star"/></svg>${c.starCandle.toLocaleString()}</span>`);
   if (c.heart) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-heart"/></svg>${c.heart.toLocaleString()}</span>`);
+  if (c.point) parts.push(`<span><svg class="inline-icon" width="12" height="12"><use href="#i-gem"/></svg>${c.point.toLocaleString()}</span>`);
   if (c.money) parts.push(`<span class="is-money">¥${c.money.toLocaleString()}</span>`);
   return parts.join('');
 }
 function groupSubtotal(groupItems, ob, rb) {
-  const own = { candle: 0, starCandle: 0, heart: 0, money: 0 };
-  const rem = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+  const own = { candle: 0, starCandle: 0, heart: 0, point: 0, money: 0 };
+  const rem = { candle: 0, starCandle: 0, heart: 0, point: 0, money: 0 };
   groupItems.forEach(item => {
     const o = ob.per.get(item), r = rb.per.get(item);
-    if (o) { own.candle += o.candle; own.starCandle += o.starCandle; own.heart += o.heart; own.money += o.money; }
-    if (r) { rem.candle += r.candle; rem.starCandle += r.starCandle; rem.heart += r.heart; rem.money += r.money; }
+    if (o) { own.candle += o.candle; own.starCandle += o.starCandle; own.heart += o.heart; own.point += o.point; own.money += o.money; }
+    if (r) { rem.candle += r.candle; rem.starCandle += r.starCandle; rem.heart += r.heart; rem.point += r.point; rem.money += r.money; }
   });
   return { own, rem };
 }
@@ -753,12 +766,12 @@ let lastOwnedCount = 0, lastTotalItemCount = 0; // 共有画像（コスト集�
 // セット価格は従来どおり、items の並び（カテゴリ順）で最初に数えたアイテムに1回分だけ付く。
 function computeOwnedBreakdown(items) {
   const per = new Map();
-  const r = { per, candle: 0, starCandle: 0, heart: 0, money: 0, ownedCount: 0, giftReceivedCount: 0, giftReceivedMoneySum: 0, paidCandleCount: 0, paidCandleMoneySum: 0 };
+  const r = { per, candle: 0, starCandle: 0, heart: 0, point: 0, money: 0, ownedCount: 0, giftReceivedCount: 0, giftReceivedMoneySum: 0, paidCandleCount: 0, paidCandleMoneySum: 0 };
   const countedSetIds = new Set();
   items.forEach(item => {
     if (!item.owned) return;
     r.ownedCount++;
-    const c = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+    const c = { candle: 0, starCandle: 0, heart: 0, point: 0, money: 0 };
     per.set(item, c);
     if (item.seasonPendantOwned && item.acquireMode === 'inSeason') return; // 季節中入手扱いのためコスト計算から除外
     if (item.isTicketItem && item.acquireMode !== 'revisit') return; // チケットで入手扱い（0）のためコスト計算から除外
@@ -768,6 +781,7 @@ function computeOwnedBreakdown(items) {
     if (cost.type === 'candle' && typeof cost.value === 'number') c.candle += cost.value * qty;
     else if (cost.type === 'starCandle' && typeof cost.value === 'number') c.starCandle += cost.value * qty;
     else if (cost.type === 'heart' && typeof cost.value === 'number') c.heart += cost.value * qty;
+    else if (cost.type === 'point' && typeof cost.value === 'number') c.point += cost.value * qty; // ロイヤリティクラブのポイント
 
     // 課金で購入したキャンドルで入手したと申告されたアイテムは、キャンドル本数の集計は変えず、
     // 申告された実額も別途「実額」の集計に加算する（この申告額は自己申告の合計額のため、
@@ -790,14 +804,14 @@ function computeOwnedBreakdown(items) {
       c.money += cost.value * qty;
     }
   });
-  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.money += c.money; });
+  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.point += c.point; r.money += c.money; });
   return r;
 }
 
 // 未所持アイテムの集計（従来の renderRemainingSummary() と同じ判定。アイテムごとの寄与も記録する）
 function computeRemainBreakdown(items) {
   const per = new Map();
-  const r = { per, candle: 0, starCandle: 0, heart: 0, money: 0, remainCount: 0 };
+  const r = { per, candle: 0, starCandle: 0, heart: 0, point: 0, money: 0, remainCount: 0 };
   const ownedSetIds = new Set();
   const countedNotOwnedSetIds = new Set();
   // セットの一部を既に所持している場合、残りのピースに追加コストはかからない
@@ -805,12 +819,13 @@ function computeRemainBreakdown(items) {
   items.forEach(item => {
     if (item.owned) return;
     r.remainCount++;
-    const c = { candle: 0, starCandle: 0, heart: 0, money: 0 };
+    const c = { candle: 0, starCandle: 0, heart: 0, point: 0, money: 0 };
     per.set(item, c);
     const cost = item.cost;
     if (cost.type === 'candle' && typeof cost.value === 'number') c.candle += cost.value;
     else if (cost.type === 'starCandle' && typeof cost.value === 'number') c.starCandle += cost.value;
     else if (cost.type === 'heart' && typeof cost.value === 'number') c.heart += cost.value;
+    else if (cost.type === 'point' && typeof cost.value === 'number') c.point += cost.value;
     else if (cost.type === 'money' && typeof cost.value === 'number') {
       if (cost.setId) {
         if (ownedSetIds.has(cost.setId)) return;
@@ -820,7 +835,7 @@ function computeRemainBreakdown(items) {
       c.money += cost.value;
     }
   });
-  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.money += c.money; });
+  per.forEach(c => { r.candle += c.candle; r.starCandle += c.starCandle; r.heart += c.heart; r.point += c.point; r.money += c.money; });
   return r;
 }
 
@@ -851,6 +866,7 @@ function renderSummary(items, ob) {
   lastOwnedCount = ownedCount;
   lastTotalItemCount = items.length;
   setSumValues('', candleSum, starCandleSum, heartSum, moneySum);
+  setPointRow('', ob.point);
   setText('#costOwnedCount', t(`所持 ${ownedCount.toLocaleString()} / ${items.length.toLocaleString()}件`, `${ownedCount.toLocaleString()} / ${items.length.toLocaleString()} owned`));
 
   const giftRow = hostEl.querySelector('#costSummaryGiftRow');
@@ -916,6 +932,7 @@ function notifyTitlesCheck() {
 function renderRemainingSummary(items, rb) {
   const candleSum = rb.candle, starCandleSum = rb.starCandle, heartSum = rb.heart, moneySum = rb.money, remainCount = rb.remainCount;
   setSumValues('Remain', candleSum, starCandleSum, heartSum, moneySum);
+  setPointRow('Remain', rb.point);
   setText('#costRemainCount', t(`未所持 ${remainCount.toLocaleString()}件`, `${remainCount.toLocaleString()} not owned`));
   const hintEl = hostEl.querySelector('#costSummaryHintRemain');
   if (hintEl) {
@@ -1422,6 +1439,11 @@ function sumGridHtml(suffix) {
       <div class="cost-sum-value" id="costSum${c.key}${suffix}">${c.key === 'Money' ? '¥0' : `0${t(`<span class="cost-unit">${c.unit}</span>`, '')}`}</div>
     </div>`).join('')}</div>`;
 }
+function pointRowHtml(suffix) {
+  return `<div class="cost-summary-gift-row cost-sum-point-row" id="costSumPointRow${suffix}" style="display:none;">
+      <span><svg class="inline-icon" width="14" height="14"><use href="#i-gem"/></svg> ${t('ロイヤリティクラブのポイント', 'Loyalty Club points')}</span><b>0</b>
+    </div>`;
+}
 
 // 折りたたみ（課金の記録・この集計について）の見出しボタン
 function collapseHeadHtml(onclick, iconId, labelHtml, bodyId) {
@@ -1446,6 +1468,7 @@ function renderShell() {
               <span class="cost-sum-count" id="costRemainCount"></span>
             </div>
             ${sumGridHtml('Remain')}
+            ${pointRowHtml('Remain')}
           </div>
           <div class="cost-sum-sec spent">
             <div class="cost-sum-head">
@@ -1453,6 +1476,7 @@ function renderShell() {
               <span class="cost-sum-count" id="costOwnedCount"></span>
             </div>
             ${sumGridHtml('')}
+            ${pointRowHtml('')}
             <div class="cost-summary-gift-row" id="costSummaryGiftRow" style="display:none;">
               <span>${ICON_GIFT} ${t('プレゼント分（実額とは別）', 'Gift purchases (shown separately)')}</span><b id="costSummaryGiftMoney">¥0</b>
             </div>
@@ -1503,6 +1527,7 @@ function renderShell() {
               <option value="starCandle">${t('星のキャンドル', 'Star Candles')}</option>
               <option value="heart">${t('ハート', 'Hearts')}</option>
               <option value="seasonCandle">${t('季節キャンドル', 'Season Candles (seasonal price)')}</option>
+              <option value="point">${t('ロイヤリティクラブのポイント', 'Loyalty Club points')}</option>
               <option value="reward">${t('報酬', 'Rewards')}</option>
               <option value="free">${t('無料', 'Free')}</option>
               <option value="money">${t('実額', 'Real Money')}</option>
@@ -1524,6 +1549,7 @@ function renderShell() {
           <span><svg class="inline-icon" width="13" height="13"><use href="#i-star"/></svg>${t('星のキャンドル', 'Star Candles')}</span>
           <span><svg class="inline-icon" width="13" height="13"><use href="#i-heart"/></svg>${t('ハート', 'Hearts')}</span>
           <span class="is-season"><svg class="inline-icon" width="13" height="13"><use href="#i-star-candle"/></svg>${t('季節キャンドル', 'Season Candles')}</span>
+          <span><svg class="inline-icon" width="13" height="13"><use href="#i-gem"/></svg>${t('ポイント', 'Points')}</span>
           <span class="is-money">¥ ${t('実額', 'Real money')}</span>
           <span class="cost-legend-hint">${t('行を押すと詳細', 'Tap a row for details')}</span>
         </p>
@@ -1585,10 +1611,12 @@ function renderShell() {
           ${en
             ? `Costs are compiled from the <a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki (English)</a>'s "Source" and "Cost" tables for each item.<br>
           There are four currencies: <b>Candles</b> (the basic currency for most items), <b>Season Candles</b> (a special currency used for Nesting Workshop furniture and some permanent items), <b>Hearts</b>, and <b>Real Money (JPY)</b>. Real-money amounts are converted to Japanese App Store price tiers (the wiki lists USD, so tier prices are converted to their real JPY equivalents). Some real-money items are priced as a bundle with another item (noted where applicable) &mdash; owning multiple items in the same bundle only adds that bundle's price once to the total.<br>
+          Loyalty Club items (web shop) are redeemed with <b>Loyalty Club points</b>; those points are totalled on their own line under the four currencies.<br>
           Covers all 12 categories (Shoes, Necklace, Large Placeable Items, Outfit, Hairstyle, Face Accessory, Head Accessory, Hair Accessory, Props, Mask, Small Placeable Items, Cape) plus Music Sheets. Items are grouped by season/day rather than by category.<br>
           <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> The costs listed here are approximate estimates only.</b> Actual amounts may differ due to how wiki data, bundle pricing, and currency rounding are interpreted. No accuracy is guaranteed &mdash; please use this as a reference only.`
             : `<a href="https://sky-children-of-the-light.fandom.com/wiki/Shoes" target="_blank" rel="noopener noreferrer">Sky: Children of the Light Wiki（英語版）</a>の「入手方法(Source)」「コスト(Cost)」の一覧表を基に、各アイテムの実際の入手コストをまとめています。<br>
           通貨は<b>キャンドル</b>（通常アイテムの基本通貨）・<b>星のキャンドル</b>（巣づくり工房の家具や一部の恒常アイテムで使う特別な通貨）・<b>ハート</b>・<b>実額（円）</b>の4種類があります。実額は日本のAppストア価格帯を基にした円換算です（Wikiは米ドル表記のため、Tierごとの実際の円価格に置き換えています）。実額のアイテムは、他のアイテムとのセット価格になっている場合があります（その場合は注記しています）。セット内の複数アイテムを所持済みにしても、合計額にはセット価格が1回分のみ加算されます。<br>
+          ロイヤリティクラブ（ウェブショップ）のアイテムは<b>ロイヤリティクラブのポイント</b>で引き換えます。使ったポイント・残りのポイントは、4つの通貨の下に別の行で合計します。<br>
           全12カテゴリ（シューズ・ネックレス・大きい設置アイテム・アウトフィット・ヘアスタイル・フェイスアクセサリー・ヘッドアクセサリー・ヘアアクセサリー・持ち物アイテム・マスク・小さい設置アイテム・ケープ）に加え、楽譜にも対応しています。カテゴリ分けはせず、季節・日々ごとにまとめて表示しています。<br>
           <b><svg class="inline-icon" width="14" height="14"><use href="#i-warning"/></svg> ここに記載しているコストはあくまで目安・概算です。</b>Wikiの情報やセット価格の解釈、円換算の丸めなどにより、実際の金額と差が生じる場合があります。正確な金額の保証はできませんので、参考程度にご利用ください。`}
           </div>
@@ -1747,6 +1775,10 @@ function injectStyles() {
 .item-view .cost-summary-gift-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); font-size: 13px; }
 .item-view .cost-summary-gift-row span { display: flex; align-items: center; gap: 5px; }
 .item-view .cost-summary-gift-row b { font-variant-numeric: tabular-nums; }
+.item-view .cost-sum-sec.remain .cost-sum-point-row { border-top-color: rgba(255,255,255,0.28); }
+.item-view .cost-sum-sec.remain .cost-sum-point-row .inline-icon { stroke: #fff; }
+.item-view .cost-sum-point-row b { white-space: nowrap; }
+.item-view .cost-sum-point-row b .cost-unit { display: inline; }
 .item-view .cost-sum-excl { flex: 1; min-width: 0; font-size: 12.5px; color: var(--cost-sub); font-weight: 600; line-height: 1.45; }
 .item-view .cost-sum-more { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; color: var(--cost-link); font-weight: 600; }
 .item-view .cost-share-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }

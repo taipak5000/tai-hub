@@ -64,6 +64,7 @@ function priceLabel(c) {
   if (c.type === 'ticket') return t('チケット', 'Tickets');
   if (c.type === 'reward') return t('報酬', 'Reward');
   if (c.type === 'free') return t('無料', 'Free');
+  if (c.type === 'point') return t(`ロイヤリティクラブ ${c.value}ポイント`, `${c.value} Loyalty Club points`);
   if (c.type === 'na') return t('交換なし', 'Not purchasable');
   return t('不明', 'Unknown');
 }

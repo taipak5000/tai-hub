@@ -282,6 +282,7 @@ function costHtml(cost) {
     case 'reward': return `<span class="wcm-cost unknown">${en ? 'Season Pass reward' : '報酬'}</span>`;
     case 'free': return `<span class="wcm-cost unknown">${en ? 'Free' : '無料'}</span>`;
     case 'ticket': return `<span class="wcm-cost unknown">${en ? 'Ticket exchange' : 'チケット交換'}</span>`;
+    case 'point': return `<span class="wcm-cost unknown">${en ? `${cost.value} Loyalty Club points` : `ロイヤリティクラブ ${cost.value}ポイント`}</span>`;
     case 'na': return `<span class="wcm-cost unknown">${en ? 'Pass/Ultimate item' : 'パス・究極系'}</span>`;
     default: return `<span class="wcm-cost unknown">${en ? 'Unknown' : '価格不明'}</span>`;
   }
