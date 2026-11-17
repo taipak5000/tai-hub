@@ -12,11 +12,12 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.17',
-    title: { ja: '累計消費コストで、ロイヤリティクラブのポイントを合計するように', en: 'Total Spent: Loyalty Club points are now totalled' },
+    version: '2026.11.17.2',
+    title: { ja: 'ロイヤリティクラブのポイントを合計、楽譜づくりで複数の楽器のMIDIを読み込めるように', en: 'Loyalty Club points totalled, multi-instrument MIDI in Sheet Music Maker' },
     date: '2026-11-17',
     items: [
       { type: 'improve', ja: '累計消費コスト・実額で、ロイヤリティクラブ（ウェブショップ）のアイテムに使ったポイントと、残りを集めるのに要るポイントを合計するようにしました（4アイテムで計230ポイント）。これまでは「対象外」として数えていませんでした。通貨の絞り込みにも「ロイヤリティクラブのポイント」を足しています。', en: 'Total Spent & Real Money now totals the Loyalty Club (web shop) points you have used and the points still needed (230 points across four items). They were previously shown as N/A. A "Loyalty Club points" currency filter was added too.', route: 'item', sub: 'cost' },
+      { type: 'improve', ja: '楽譜づくりの「MIDIから作る」で、ピアノ・ギター・ストリングス・ベースのように複数の楽器が入ったMIDIは、使うパートを選べるようにしました（ベースなどの低音は最初は外れています）。最初の音の前の無音を詰め、曲名には楽器名ではなくファイル名を使います。端末によって.midファイルが選べなかった問題も直しました。', en: 'Sheet Music Maker: when a MIDI file contains several instruments (piano, guitar, strings, bass…), you can now choose which parts to use (low parts like bass start unchecked). Leading silence is trimmed, the song is named after the file instead of an instrument, and .mid files that some devices would not let you pick can now be selected.', route: 'tai-score' },
     ],
   },
   {
