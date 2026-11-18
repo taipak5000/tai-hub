@@ -52,6 +52,11 @@ export function renderEditor() {
   const noScrollToggle = document.getElementById('noScrollToggle');
   if (noScrollToggle) noScrollToggle.checked = S.noScrollDuringPlaybackEnabled();
   if (RT.selectedFrameIndex >= song.frames.length) RT.selectedFrameIndex = Math.max(0, song.frames.length - 1);
+  RT.selection = null;
+  RT.rangeMode = false;
+  const autoAdvanceToggle = document.getElementById('autoAdvanceToggle');
+  if (autoAdvanceToggle) autoAdvanceToggle.checked = S.autoAdvanceEnabled();
+  applyRangeModeButton();
   applyInputMode();
   applyTimelineView();
   renderFrameStrip();
@@ -257,22 +262,23 @@ function frameColumnGutterHtml() {
   return `<div class="column-pitch-gutter">${rowsHtml}</div>`;
 }
 
-export function renderFrameStrip() {
-  const strip = document.getElementById('frameStrip');
-  const song = RT.currentSong;
-  const view = S.getTimelineView();
+function frameBoxHtml(song, fi, view) {
+  const frame = song.frames[fi];
   const columnMode = view === 'column';
   const staffMode = !columnMode && S.getInputMode() === 'staff';
-  strip.className = 'frame-strip compose-timeline view-' + view;
-  strip.innerHTML = (columnMode ? frameColumnGutterHtml() : '') + song.frames.map((frame, fi) => {
-    const bpmOv = S.frameBpmOverride(song, fi);
-    const isSelected = fi === RT.selectedFrameIndex;
-    const showIndex = !columnMode || isSelected || fi % 4 === 0;
-    const cls = ['frame-box',
-      isSelected && 'selected',
-      staffMode && 'staff-mode',
-      columnMode && 'column-mode'].filter(Boolean).join(' ');
-    return `
+  const bpmOv = S.frameBpmOverride(song, fi);
+  const isSelected = fi === RT.selectedFrameIndex;
+  const sel = RT.selection;
+  const inSel = !!sel && fi >= Math.min(sel.anchor, sel.focus) && fi <= Math.max(sel.anchor, sel.focus);
+  const showIndex = !columnMode || isSelected || fi % 4 === 0;
+  const cls = ['frame-box',
+    isSelected && 'selected',
+    inSel && 'in-sel',
+    frame.length === 0 && 'is-empty',
+    fi % 4 === 0 && 'beat-start',
+    staffMode && 'staff-mode',
+    columnMode && 'column-mode'].filter(Boolean).join(' ');
+  return `
     <div class="${cls}" id="frameBox_${fi}" data-act="select-frame" data-frame="${fi}">
       ${showIndex ? `<span class="frame-index">${fi + 1}</span>` : ''}
       <button type="button" class="frame-del-btn" data-act="delete-frame" data-frame="${fi}"><svg class="inline-icon" width="12" height="12"><use href="#i-close"/></svg></button>
@@ -287,30 +293,176 @@ export function renderFrameStrip() {
       ${bpmOv !== null ? `<span class="frame-bpm-badge" title="${escapeHtml(t('frameBpmBadgeTitle', { bpm: bpmOv }))}"><svg class="inline-icon" width="10" height="10"><use href="#ts-i-clock"/></svg>${bpmOv}</span>` : ''}
     </div>
   `;
-  }).join('') + `<button type="button" class="add-frame-btn" data-act="add-frame">＋</button>`;
 }
 
-export function selectFrame(fi) {
-  RT.selectedFrameIndex = fi;
+export function renderFrameStrip() {
+  const strip = document.getElementById('frameStrip');
+  const song = RT.currentSong;
+  const view = S.getTimelineView();
+  strip.className = 'frame-strip compose-timeline view-' + view;
+  strip.innerHTML = (view === 'column' ? frameColumnGutterHtml() : '')
+    + song.frames.map((_, fi) => frameBoxHtml(song, fi, view)).join('')
+    + `<button type="button" class="add-frame-btn" data-act="add-frame" title="${escapeHtml(t('addFrameTitle'))}" aria-label="${escapeHtml(t('addFrameTitle'))}">＋</button>`;
+  updateEditPos();
+}
+// 1マスだけ描き直す（音を1つ押すたびに数千マスを描き直さないため）。無ければ全体を描き直す
+function refreshFrameBox(fi) {
+  const song = RT.currentSong;
+  const el = document.getElementById('frameBox_' + fi);
+  if (!song || !song.frames[fi]) { if (el) renderFrameStrip(); return; }
+  if (!el) { renderFrameStrip(); return; }
+  const wasPlaying = el.classList.contains('playing');
+  el.outerHTML = frameBoxHtml(song, fi, S.getTimelineView());
+  if (wasPlaying) document.getElementById('frameBox_' + fi)?.classList.add('playing');
+}
+// 選んでいるマスが譜面の見えている範囲から外れていたら、そこまでスクロールする
+function revealSelectedFrame() {
+  const el = document.getElementById('frameBox_' + RT.selectedFrameIndex);
+  const strip = document.getElementById('frameStrip');
+  if (!el || !strip) return;
+  const er = el.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+  const out = er.top < sr.top || er.bottom > sr.bottom || er.left < sr.left || er.right > sr.right;
+  if (out) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function updateEditPos() {
+  const song = RT.currentSong;
+  const pos = document.getElementById('editPos');
+  if (!song) return;
+  if (pos) {
+    const sel = editRange();
+    pos.textContent = RT.selection
+      ? t('editPosRange', { a: sel.start + 1, b: sel.end + 1, total: song.frames.length })
+      : t('editPos', { n: RT.selectedFrameIndex + 1, total: song.frames.length });
+  }
+  const nextLabel = document.getElementById('editNextLabel');
+  if (nextLabel) nextLabel.textContent = RT.selectedFrameIndex >= song.frames.length - 1 ? t('addFrameShort') : t('nextFrameShort');
+}
+
+// 選択範囲（範囲選択モード・Shift+クリック・Shift+矢印）。無ければ今のマス1つ
+function editRange() {
+  const sel = RT.selection;
+  if (!sel) return { start: RT.selectedFrameIndex, end: RT.selectedFrameIndex };
+  return { start: Math.min(sel.anchor, sel.focus), end: Math.max(sel.anchor, sel.focus) };
+}
+function applyRangeModeButton() {
+  document.querySelectorAll('.range-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', !!RT.rangeMode);
+    btn.setAttribute('aria-pressed', RT.rangeMode ? 'true' : 'false');
+  });
+}
+export function toggleRangeMode() {
+  RT.rangeMode = !RT.rangeMode;
+  RT.selection = RT.rangeMode ? { anchor: RT.selectedFrameIndex, focus: RT.selectedFrameIndex } : null;
+  applyRangeModeButton();
   renderFrameStrip();
+  if (RT.rangeMode) showToast(t('rangeModeOnToast'));
+}
+export function selectAllFrames() {
+  const song = RT.currentSong;
+  if (!song) return;
+  RT.selection = { anchor: 0, focus: song.frames.length - 1 };
+  renderFrameStrip();
+}
+function clearSelection() {
+  if (!RT.selection && !RT.rangeMode) return false;
+  RT.selection = null;
+  RT.rangeMode = false;
+  applyRangeModeButton();
+  return true;
+}
+
+// 譜面のマスを押した時。範囲選択モード中かShiftを押しながらなら、範囲を広げる
+export function onFrameClick(fi, shift) {
+  if (RT.rangeMode || shift) {
+    const anchor = RT.selection ? RT.selection.anchor : RT.selectedFrameIndex;
+    RT.selection = { anchor, focus: fi };
+    RT.selectedFrameIndex = fi;
+    renderFrameStrip();
+    renderBigGrid();
+    return;
+  }
+  const hadSel = clearSelection();
+  selectFrame(fi, { rerender: hadSel });
+}
+// キーボードでの移動（Shiftを押しながらなら範囲を広げる）
+export function jumpToFrame(fi, shift) {
+  if (!RT.currentSong) return;
+  if (shift) {
+    const anchor = RT.selection ? RT.selection.anchor : RT.selectedFrameIndex;
+    RT.selection = { anchor, focus: fi };
+    RT.selectedFrameIndex = fi;
+    renderFrameStrip();
+    renderBigGrid();
+    revealSelectedFrame();
+    return;
+  }
+  const hadSel = !RT.rangeMode && clearSelection();
+  if (RT.rangeMode) RT.selection = { anchor: RT.selection ? RT.selection.anchor : fi, focus: fi };
+  selectFrame(fi, { rerender: hadSel || RT.rangeMode });
+}
+
+export function selectFrame(fi, opts = {}) {
+  const prev = RT.selectedFrameIndex;
+  cancelAutoAdvance();
+  RT.selectedFrameIndex = fi;
+  if (opts.rerender || S.getTimelineView() === 'column') renderFrameStrip(); // 縦列は選んだマスにだけ番号が付くので全体を描き直す
+  else { refreshFrameBox(prev); refreshFrameBox(fi); updateEditPos(); }
   renderBigGrid();
+  revealSelectedFrame();
   // クリック（や矢印キー）でマスへ移動した時、そのマスに入っている音を鳴らして内容を確認しやすくする
   const song = RT.currentSong;
-  if (song && song.frames[fi]) A.playFrame(song.frames[fi], song.pitch, song.instrument);
+  if (!opts.silent && song && song.frames[fi]) A.playFrame(song.frames[fi], song.pitch, song.instrument);
 }
 export function selectPrevFrame() {
   if (!RT.currentSong || RT.selectedFrameIndex <= 0) return;
-  selectFrame(RT.selectedFrameIndex - 1);
+  jumpToFrame(RT.selectedFrameIndex - 1, false);
 }
 export function selectNextFrame() {
   if (!RT.currentSong || RT.selectedFrameIndex >= RT.currentSong.frames.length - 1) return;
-  selectFrame(RT.selectedFrameIndex + 1);
+  jumpToFrame(RT.selectedFrameIndex + 1, false);
+}
+// 次のマスへ。最後のマスなら新しいマスを足して進む（入力を止めずに書き進められるように）
+export function nextOrAddFrame(opts = {}) {
+  const song = RT.currentSong;
+  if (!song) return;
+  if (RT.selectedFrameIndex >= song.frames.length - 1) {
+    pushEditHistory();
+    song.frames.push([]);
+    clearSelection();
+    RT.selectedFrameIndex = song.frames.length - 1;
+    persistCurrentSong();
+    renderFrameStrip();
+    renderBigGrid();
+    revealSelectedFrame();
+    updatePracticeRangeBounds(false);
+    return;
+  }
+  const hadSel = clearSelection();
+  selectFrame(RT.selectedFrameIndex + 1, { rerender: hadSel, silent: opts.silent });
+}
+
+/* ── 「入力したら次へ」: 音を入れると少し待って次のマスへ進む。待つ間に押した音は同じマス（和音）に入る ── */
+const AUTO_ADVANCE_DELAY = 160;
+export function setAutoAdvance(on) {
+  S.setAutoAdvanceEnabled(on);
+  if (!on) cancelAutoAdvance();
+}
+function cancelAutoAdvance() {
+  clearTimeout(RT.autoAdvanceTimer);
+  RT.autoAdvanceTimer = null;
+}
+function scheduleAutoAdvance() {
+  if (RT.autoAdvanceTimer) return; // 和音の受付中（最初の音から数える）
+  RT.autoAdvanceTimer = setTimeout(() => {
+    RT.autoAdvanceTimer = null;
+    nextOrAddFrame({ silent: true });
+  }, AUTO_ADVANCE_DELAY);
 }
 
 /* ================================================================
    音符・マスの編集のUndo/Redo
    ================================================================ */
-const EDIT_HISTORY_LIMIT = 20;
+const EDIT_HISTORY_LIMIT = 200;
 function snapshotCurrentSong() {
   return {
     frames: JSON.parse(JSON.stringify(RT.currentSong.frames)),
@@ -346,6 +498,8 @@ export function undoEdit() {
   RT.currentSong.frames = prev.frames;
   RT.currentSong.bpmOverrides = prev.bpmOverrides;
   RT.selectedFrameIndex = Math.min(prev.selectedFrameIndex, RT.currentSong.frames.length - 1);
+  cancelAutoAdvance();
+  clearSelection();
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
@@ -362,6 +516,8 @@ export function redoEdit() {
   RT.currentSong.frames = next.frames;
   RT.currentSong.bpmOverrides = next.bpmOverrides;
   RT.selectedFrameIndex = Math.min(next.selectedFrameIndex, RT.currentSong.frames.length - 1);
+  cancelAutoAdvance();
+  clearSelection();
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
@@ -372,27 +528,37 @@ export function redoEdit() {
 }
 
 export function toggleNote(noteIndex) {
-  pushEditHistory();
-  const frame = RT.currentSong.frames[RT.selectedFrameIndex];
+  const song = RT.currentSong;
+  if (!song) return;
+  if (RT.isPlaying) stopPlayback(); // 再生中に入力したら止めて、押したマスに入れる
+  // 和音の受付中に押した音は、同じマスへの追加としてまとめて1回で元に戻せるようにする
+  if (!RT.autoAdvanceTimer) pushEditHistory();
+  const frame = song.frames[RT.selectedFrameIndex];
   const pos = frame.indexOf(noteIndex);
-  if (pos >= 0) frame.splice(pos, 1); else frame.push(noteIndex);
+  const added = pos < 0;
+  if (added) frame.push(noteIndex); else frame.splice(pos, 1);
   persistCurrentSong();
   renderBigGrid();
-  renderFrameStrip();
-  A.playNote(noteIndex, RT.currentSong.pitch, RT.currentSong.instrument);
+  refreshFrameBox(RT.selectedFrameIndex);
+  A.playNote(noteIndex, song.pitch, song.instrument);
+  if (added && S.autoAdvanceEnabled() && !RT.selection) scheduleAutoAdvance();
 }
 export function addFrame() {
   pushEditHistory();
   RT.currentSong.frames.push([]);
+  clearSelection();
   RT.selectedFrameIndex = RT.currentSong.frames.length - 1;
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
+  revealSelectedFrame();
   updatePracticeRangeBounds(false);
 }
 export function deleteFrame(fi) {
   if (RT.currentSong.frames.length <= 1) { showToast(t('lastFrameCannotDelete')); return; }
+  cancelAutoAdvance();
   pushEditHistory();
+  clearSelection();
   RT.currentSong.frames.splice(fi, 1);
   S.shiftBpmOverridesForDelete(RT.currentSong, fi);
   if (fi < RT.selectedFrameIndex) RT.selectedFrameIndex--;
@@ -402,10 +568,10 @@ export function deleteFrame(fi) {
   renderBigGrid();
   updatePracticeRangeBounds(false);
 }
-export function deleteFrameRange() {
+export function deleteFrameRange(range = editRange()) {
   const song = RT.currentSong;
   if (!song) return;
-  const range = getPracticeRange();
+  cancelAutoAdvance();
   const count = range.end - range.start + 1;
   if (count >= song.frames.length) { showToast(t('cannotDeleteAllFrames')); return; }
   pushEditHistory();
@@ -416,19 +582,38 @@ export function deleteFrameRange() {
   if (RT.selectedFrameIndex > range.end) RT.selectedFrameIndex -= count;
   else if (RT.selectedFrameIndex >= range.start) RT.selectedFrameIndex = range.start;
   if (RT.selectedFrameIndex >= song.frames.length) RT.selectedFrameIndex = song.frames.length - 1;
+  clearSelection();
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
   updatePracticeRangeBounds(false);
   showToast(t('frameRangeDeletedToast', { count }));
 }
+// 選択範囲（無ければ今のマス）の音を消す。マスは残す（休符になる）
+export function clearFrameRange() {
+  const song = RT.currentSong;
+  if (!song) return;
+  cancelAutoAdvance();
+  const range = editRange();
+  let any = false;
+  for (let i = range.start; i <= range.end; i++) if (song.frames[i] && song.frames[i].length) any = true;
+  if (!any) return;
+  pushEditHistory();
+  for (let i = range.start; i <= range.end; i++) song.frames[i] = [];
+  persistCurrentSong();
+  if (range.start === range.end) refreshFrameBox(range.start); else renderFrameStrip();
+  renderBigGrid();
+  if (range.end > range.start) showToast(t('frameRangeClearedToast', { count: range.end - range.start + 1 }));
+}
 export function insertBlankFrameAfter(fi) {
   const song = RT.currentSong;
   if (!song) return;
   pushEditHistory();
   const at = fi + 1;
+  cancelAutoAdvance();
   song.frames.splice(at, 0, []);
   S.shiftBpmOverridesForInsert(song, at, 1);
+  clearSelection();
   RT.selectedFrameIndex = at;
   persistCurrentSong();
   renderFrameStrip();
@@ -463,7 +648,7 @@ export function onFrameBpmOverrideToggle(checked) {
   }
   persistCurrentSong();
   renderFrameBpmRow();
-  renderFrameStrip();
+  refreshFrameBox(RT.selectedFrameIndex);
 }
 export function onFrameBpmOverrideValueChange(val) {
   const song = RT.currentSong;
@@ -475,16 +660,15 @@ export function onFrameBpmOverrideValueChange(val) {
   song.bpmOverrides[RT.selectedFrameIndex] = bpm;
   persistCurrentSong();
   renderFrameBpmRow();
-  renderFrameStrip();
+  refreshFrameBox(RT.selectedFrameIndex);
 }
 
 /* ================================================================
    フレーム範囲のコピー＆ペースト
    ================================================================ */
-export function copyFrameRange() {
+export function copyFrameRange(range = editRange()) {
   const song = RT.currentSong;
   if (!song) return;
-  const range = getPracticeRange();
   const frames = song.frames.slice(range.start, range.end + 1).map(f => f.slice());
   const bpmOverrides = {};
   if (song.bpmOverrides) {
@@ -501,8 +685,10 @@ export function copyFrameRange() {
 export function pasteFrameRange() {
   const song = RT.currentSong;
   if (!song || !RT.frameClipboard || RT.frameClipboard.frames.length === 0) return;
+  cancelAutoAdvance();
   pushEditHistory();
-  const at = RT.selectedFrameIndex + 1;
+  const at = editRange().end + 1;
+  clearSelection();
   const copied = RT.frameClipboard.frames.map(f => f.slice());
   song.frames.splice(at, 0, ...copied);
   S.shiftBpmOverridesForInsert(song, at, copied.length);
@@ -514,6 +700,7 @@ export function pasteFrameRange() {
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
+  revealSelectedFrame();
   updatePracticeRangeBounds(false);
   showToast(t('frameRangePastedToast', { count: copied.length }));
 }
@@ -621,15 +808,16 @@ export function stopPlayback() {
 }
 function highlightPlayingFrame(i) {
   clearPlayingHighlight();
+  const prevEl = document.getElementById('frameBox_' + RT.selectedFrameIndex);
+  if (prevEl) prevEl.classList.remove('selected');
   const el = document.getElementById('frameBox_' + i);
   if (el) {
-    el.classList.add('playing');
+    el.classList.add('playing', 'selected');
     if (!S.noScrollDuringPlaybackEnabled()) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
   RT.selectedFrameIndex = i;
   renderBigGrid();
-  document.querySelectorAll('.frame-box').forEach(b => b.classList.remove('selected'));
-  if (el) el.classList.add('selected');
+  updateEditPos();
 }
 function clearPlayingHighlight() {
   document.querySelectorAll('.frame-box.playing').forEach(b => b.classList.remove('playing'));

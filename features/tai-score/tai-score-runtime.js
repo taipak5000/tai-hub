@@ -16,6 +16,9 @@ export const RT = {
   containerEl: null,
   currentSong: null,      // 編集中の曲（保存前はライブラリに存在しない場合もある）
   selectedFrameIndex: 0,
+  selection: null,        // 範囲選択 { anchor, focus }（マスの番号）| null
+  rangeMode: false,       // 範囲選択モード（タッチ操作用。Shiftの代わり）
+  autoAdvanceTimer: null, // 「入力したら次へ」の待ち時間
   keyBindings: null,      // 15要素のキー配列（マウント時にstate.loadKeyBindings()で初期化）
   capturingKeyIndex: null,
   editHistory: [],
@@ -46,6 +49,10 @@ export const RT = {
 export function resetRuntimeForMount() {
   RT.currentSong = null;
   RT.selectedFrameIndex = 0;
+  RT.selection = null;
+  RT.rangeMode = false;
+  clearTimeout(RT.autoAdvanceTimer);
+  RT.autoAdvanceTimer = null;
   RT.capturingKeyIndex = null;
   RT.editHistory = [];
   RT.redoHistory = [];

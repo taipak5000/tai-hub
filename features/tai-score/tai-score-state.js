@@ -30,6 +30,7 @@ export const KEY_BINDINGS_KEY = () => nsKey('taiScoreKeyBindings_v1');
 export const LIBRARY_SORT_KEY = () => nsKey('taiScoreLibrarySort_v1');
 export const INPUT_MODE_KEY = () => nsKey('taiScoreInputMode_v1');
 export const TIMELINE_VIEW_KEY = () => nsKey('taiScoreTimelineView_v1');
+export const AUTO_ADVANCE_KEY = () => nsKey('taiScoreAutoAdvance_v1');
 export const FRAME_CLIPBOARD_KEY = () => nsKey('taiScoreFrameClipboard_v1');
 export const FREE_PLAY_INSTRUMENT_KEY = () => nsKey('taiScoreFreePlayInstrument_v1');
 export const METRONOME_KEY = () => nsKey('taiScoreMetronomeEnabled_v1');
@@ -185,6 +186,14 @@ export function getTimelineView() {
   return localStorage.getItem(TIMELINE_VIEW_KEY()) === 'column' ? 'column' : 'tile';
 }
 export function setTimelineView(view) { localStorage.setItem(TIMELINE_VIEW_KEY(), view); }
+
+/* ── 「入力したら次へ」（音を入れたら次のマスへ進む）。既定はオフ ── */
+export function autoAdvanceEnabled() {
+  try { return localStorage.getItem(AUTO_ADVANCE_KEY()) === '1'; } catch (e) { return false; }
+}
+export function setAutoAdvanceEnabled(on) {
+  try { localStorage.setItem(AUTO_ADVANCE_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
+}
 
 /* ================================================================
    フレーム単位のテンポ変化（bpmOverrides）

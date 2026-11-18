@@ -142,6 +142,10 @@ const LOCAL_SPRITE_HTML = `<svg id="${ICON_SPRITE_ID}" style="position:absolute;
 <symbol id="ts-i-download" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.094) translate(-12 -12)"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></g></symbol>
 <symbol id="ts-i-stop" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M6 6h12v12H6Z"/></symbol>
 <symbol id="ts-i-print" viewBox="0 0 24 24"><path d="M7 9V4.5h10V9"/><path d="M7 17H5.5A1.5 1.5 0 0 1 4 15.5v-5A1.5 1.5 0 0 1 5.5 9h13a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 14h10v6H7Z"/></symbol>
+<symbol id="ts-i-range" viewBox="0 0 24 24"><path d="M8 5H5v14h3M16 5h3v14h-3"/><path d="M9.5 12h5"/></symbol>
+<symbol id="ts-i-paste" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9Z"/><path d="M15 5.5h2.5A1.5 1.5 0 0 1 19 7v12a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V7a1.5 1.5 0 0 1 1.5-1.5H9"/><path d="M12 10.5v6M9.5 14l2.5 2.5 2.5-2.5"/></symbol>
+<symbol id="ts-i-insert" viewBox="0 0 24 24"><path d="M4.5 6.5h5v11h-5ZM14.5 6.5h5v11h-5Z"/><path d="M12 3.5v17" stroke-dasharray="2 2"/></symbol>
+<symbol id="ts-i-eraser" viewBox="0 0 24 24"><path d="M15.5 4.5l4 4-9 9h-4l-2-2a1.4 1.4 0 0 1 0-2Z"/><path d="M10 9l5 5M10.5 19.5H20"/></symbol>
 <symbol id="ts-i-hammer" viewBox="0 0 24 24"><g transform="translate(12 12) scale(1.389) translate(-11.5 -12.1)"><path d="M14.8 6.2l3 3-2.1 2.1-3-3Z"/><path d="M12.7 8.3l-7.5 7.5v2.2h2.2l7.5-7.5Z"/></g></symbol>
 </defs></svg>`;
 function injectLocalIconSprite() {
@@ -443,17 +447,11 @@ function renderComposeOverlay() {
           <button type="button" class="timeline-view-tab" data-view="tile" data-act="set-timeline-view" title="${escapeHtml(t('timelineViewTileTitle'))}">${escapeHtml(t('timelineViewTile'))}</button>
           <button type="button" class="timeline-view-tab" data-view="column" data-act="set-timeline-view" title="${escapeHtml(t('timelineViewColumnTitle'))}">${escapeHtml(t('timelineViewColumn'))}</button>
         </div>
-        <button type="button" class="mini-btn undo-edit-btn" data-act="undo-edit" disabled>${escapeHtml(t('undoEditBtn'))}</button>
       </div>
     </div>
     <div class="frame-strip compose-timeline view-tile" id="frameStrip"></div>
 
     <div class="compose-input-row compose-input-area">
-      <div class="compose-side-rail rail-left">
-        <button type="button" class="rail-btn" data-act="select-prev-frame" title="${escapeHtml(t('railPrevFrameTitle'))}" aria-label="${escapeHtml(t('railPrevFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-chevron-left"/></svg></button>
-        <button type="button" class="rail-btn undo-edit-btn" data-act="undo-edit" disabled title="${escapeHtml(t('undoEditBtnTitle'))}" aria-label="${escapeHtml(t('undoEditBtnTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-undo"/></svg></button>
-        <button type="button" class="rail-btn danger" data-act="delete-frame-range" title="${escapeHtml(t('railDeleteRangeTitle'))}" aria-label="${escapeHtml(t('railDeleteRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-trash"/></svg></button>
-      </div>
       <div class="current-frame-card">
         <div class="current-frame-head">
           <div class="current-frame-label">${escapeHtml(t('currentFrameLabel'))}</div>
@@ -482,11 +480,28 @@ function renderComposeOverlay() {
           <div class="piano-hint">${escapeHtml(t('staffClickHint'))}</div>
         </div>
       </div>
-      <div class="compose-side-rail rail-right">
-        <button type="button" class="rail-btn" data-act="select-next-frame" title="${escapeHtml(t('railNextFrameTitle'))}" aria-label="${escapeHtml(t('railNextFrameTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-chevron-right"/></svg></button>
-        <button type="button" class="rail-btn redo-edit-btn" data-act="redo-edit" disabled title="${escapeHtml(t('redoEditBtnTitle'))}" aria-label="${escapeHtml(t('redoEditBtnTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-redo"/></svg></button>
-        <button type="button" class="rail-btn" data-act="copy-frame-range" title="${escapeHtml(t('railCopyRangeTitle'))}" aria-label="${escapeHtml(t('railCopyRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-duplicate"/></svg></button>
-        <button type="button" class="rail-btn paste-frame-btn" data-act="paste-frame-range" disabled title="${escapeHtml(t('railPasteRangeTitle'))}" aria-label="${escapeHtml(t('railPasteRangeTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-download"/></svg></button>
+    </div>
+
+    <div class="compose-edit-bar" role="toolbar" aria-label="${escapeHtml(t('editBarLabel'))}">
+      <div class="edit-bar-nav">
+        <button type="button" class="edit-nav-btn" data-act="select-prev-frame" title="${escapeHtml(t('railPrevFrameTitle'))} (←)" aria-label="${escapeHtml(t('railPrevFrameTitle'))}"><svg class="inline-icon" width="18" height="18"><use href="#i-chevron-left"/></svg></button>
+        <span class="edit-pos" id="editPos" aria-live="polite"></span>
+        <label class="auto-advance-toggle" title="${escapeHtml(t('autoAdvanceTitle'))}">
+          <input type="checkbox" id="autoAdvanceToggle">
+          <span>${escapeHtml(t('autoAdvanceLabel'))}</span>
+        </label>
+        <button type="button" class="edit-nav-btn primary" data-act="next-or-add-frame" title="${escapeHtml(t('nextOrAddTitle'))} (Enter)" aria-label="${escapeHtml(t('nextOrAddTitle'))}"><span class="edit-next-label" id="editNextLabel">${escapeHtml(t('nextFrameShort'))}</span><svg class="inline-icon" width="18" height="18"><use href="#i-chevron-right"/></svg></button>
+      </div>
+      <div class="edit-bar-tools">
+        <button type="button" class="edit-tool-btn undo-edit-btn" data-act="undo-edit" disabled title="${escapeHtml(t('undoEditBtnTitle'))} (Ctrl+Z)" aria-label="${escapeHtml(t('undoEditBtnTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-undo"/></svg></button>
+        <button type="button" class="edit-tool-btn redo-edit-btn" data-act="redo-edit" disabled title="${escapeHtml(t('redoEditBtnTitle'))} (Ctrl+Y)" aria-label="${escapeHtml(t('redoEditBtnTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-redo"/></svg></button>
+        <span class="edit-bar-sep" aria-hidden="true"></span>
+        <button type="button" class="edit-tool-btn range-mode-btn" data-act="toggle-range-mode" aria-pressed="false" title="${escapeHtml(t('rangeModeTitle'))} (Shift+←→)" aria-label="${escapeHtml(t('rangeModeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-range"/></svg><span class="edit-tool-label">${escapeHtml(t('rangeModeShort'))}</span></button>
+        <button type="button" class="edit-tool-btn" data-act="copy-frame-range" title="${escapeHtml(t('copyEditRangeTitle'))} (Ctrl+C)" aria-label="${escapeHtml(t('copyEditRangeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-duplicate"/></svg></button>
+        <button type="button" class="edit-tool-btn paste-frame-btn" data-act="paste-frame-range" disabled title="${escapeHtml(t('railPasteRangeTitle'))} (Ctrl+V)" aria-label="${escapeHtml(t('railPasteRangeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-paste"/></svg></button>
+        <button type="button" class="edit-tool-btn" data-act="insert-frame-here" title="${escapeHtml(t('insertFrameAfterTitle'))} (Insert)" aria-label="${escapeHtml(t('insertFrameAfterTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-insert"/></svg></button>
+        <button type="button" class="edit-tool-btn" data-act="clear-frame-range" title="${escapeHtml(t('clearEditRangeTitle'))} (Backspace)" aria-label="${escapeHtml(t('clearEditRangeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#ts-i-eraser"/></svg></button>
+        <button type="button" class="edit-tool-btn danger" data-act="delete-frame-range" title="${escapeHtml(t('deleteEditRangeTitle'))} (Shift+Delete)" aria-label="${escapeHtml(t('deleteEditRangeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#i-trash"/></svg></button>
       </div>
     </div>
 
@@ -535,7 +550,7 @@ function renderComposeToolsModal() {
           <span class="range-sep">〜</span>
           <input type="number" id="practiceRangeEnd" min="1" value="1">
           <span class="range-unit">${escapeHtml(t('rangeUnit'))}</span>
-          <button type="button" class="mini-btn" data-act="copy-frame-range">${escapeHtml(t('copyFrameRangeBtn'))}</button>
+          <button type="button" class="mini-btn" data-act="copy-practice-range">${escapeHtml(t('copyFrameRangeBtn'))}</button>
         </div>
         <label class="metronome-row">
           <input type="checkbox" id="loopRangeToggle">
@@ -1178,6 +1193,7 @@ function wireStaticEvents() {
   $('bpmNumber').addEventListener('input', e => E.onBpmChange(e.target.value, 'number'));
   $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value));
   $('frameBpmOverrideToggle').addEventListener('change', e => E.onFrameBpmOverrideToggle(e.target.checked));
+  $('autoAdvanceToggle').addEventListener('change', e => E.setAutoAdvance(e.target.checked));
   $('frameBpmOverrideValue').addEventListener('change', e => E.onFrameBpmOverrideValueChange(e.target.value));
   $('metronomeToggle').addEventListener('change', e => S.setMetronomeEnabled(e.target.checked));
   $('loopRangeToggle').addEventListener('change', e => {
@@ -1273,7 +1289,7 @@ function onContainerClick(e) {
     case 'set-timeline-view': E.setTimelineView(el.dataset.view); break;
     case 'set-input-mode': E.setInputMode(el.dataset.mode); break;
     case 'toggle-note': E.toggleNote(parseInt(el.dataset.note, 10)); break;
-    case 'select-frame': E.selectFrame(parseInt(el.dataset.frame, 10)); break;
+    case 'select-frame': E.onFrameClick(parseInt(el.dataset.frame, 10), e.shiftKey); break;
     case 'delete-frame': e.stopPropagation(); E.deleteFrame(parseInt(el.dataset.frame, 10)); break;
     case 'insert-frame-after': e.stopPropagation(); E.insertBlankFrameAfter(parseInt(el.dataset.frame, 10)); break;
     case 'add-frame': E.addFrame(); break;
@@ -1281,6 +1297,11 @@ function onContainerClick(e) {
     case 'select-next-frame': E.selectNextFrame(); break;
     case 'delete-frame-range': E.deleteFrameRange(); break;
     case 'copy-frame-range': E.copyFrameRange(); break;
+    case 'copy-practice-range': E.copyFrameRange(E.getPracticeRange()); break;
+    case 'next-or-add-frame': E.nextOrAddFrame(); break;
+    case 'toggle-range-mode': E.toggleRangeMode(); break;
+    case 'insert-frame-here': E.insertBlankFrameAfter(RT.selectedFrameIndex); break;
+    case 'clear-frame-range': E.clearFrameRange(); break;
     case 'paste-frame-range': E.pasteFrameRange(); break;
     case 'tap-tempo': E.tapTempo(); break;
     case 'compose-tools-switch': {
@@ -1301,31 +1322,61 @@ function onContainerClick(e) {
 const NON_TEXT_INPUT_TYPES = ['checkbox', 'radio', 'range', 'color', 'button', 'submit', 'reset', 'file', 'image', 'hidden'];
 function handleGlobalKeydown(e) {
   if (Sheet.handleKeydown(e)) return; // 譜面ビューが開いている間はそちらが受け持つ
-  if (e.repeat) return;
+  if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
   if (E.captureKeyForBinding(e)) return; // キー割り当て待ち中
 
   const activeEl = document.activeElement;
   const activeTag = activeEl && activeEl.tagName;
   const isTextInput = activeTag === 'INPUT' && NON_TEXT_INPUT_TYPES.indexOf((activeEl.type || '').toLowerCase()) === -1;
   const isTyping = isTextInput || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
 
   const anyOverlayOpen = () => !!RT.containerEl.querySelector('.modal-overlay.open');
-  if (!isTyping && !anyOverlayOpen()) {
-    const idx = RT.keyBindings.indexOf(S.normalizeKeyEvent(e));
-    if (idx >= 0) {
-      if (RT.perfMode && document.getElementById('perfOverlay').classList.contains('open')) {
-        P.onPerfKeyPress(idx);
-        e.preventDefault();
-      } else if (RT.currentSong && document.getElementById('viewEditor').classList.contains('active')) {
-        E.toggleNote(idx);
-        e.preventDefault();
-      }
+  const perfOpen = RT.perfMode && document.getElementById('perfOverlay').classList.contains('open');
+  const composing = !perfOpen && RT.currentSong && document.getElementById('composeOverlay')?.classList.contains('open');
+  if (isTyping || anyOverlayOpen()) return;
+
+  // 作曲中のショートカット（ほかの楽譜作成サイトと同じ割り当て）
+  if (composing) {
+    const mod = e.metaKey || e.ctrlKey;
+    const k = e.key.toLowerCase();
+    if (mod && !e.altKey) {
+      const hasTextSel = !!(window.getSelection && String(window.getSelection()));
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); E.undoEdit(); return; }
+      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); E.redoEdit(); return; }
+      if (k === 'c' && !hasTextSel) { e.preventDefault(); E.copyFrameRange(); return; }
+      if (k === 'x' && !hasTextSel) { e.preventDefault(); E.copyFrameRange(); E.deleteFrameRange(); return; }
+      if (k === 'v') { e.preventDefault(); E.pasteFrameRange(); return; }
+      if (k === 'a') { e.preventDefault(); E.selectAllFrames(); return; }
       return;
     }
-    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && RT.currentSong && document.getElementById('viewEditor').classList.contains('active')) {
+    if (e.altKey) return;
+    if (e.key === ' ') { e.preventDefault(); E.togglePlayback(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); E.nextOrAddFrame(); return; }
+    if (e.key === 'Insert') { e.preventDefault(); E.insertBlankFrameAfter(RT.selectedFrameIndex); return; }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
-      if (e.key === 'ArrowLeft') E.selectPrevFrame(); else E.selectNextFrame();
+      if (e.shiftKey) E.deleteFrameRange(); else E.clearFrameRange();
+      return;
+    }
+    if (e.key === 'Home') { e.preventDefault(); E.jumpToFrame(0, e.shiftKey); return; }
+    if (e.key === 'End') { e.preventDefault(); E.jumpToFrame(RT.currentSong.frames.length - 1, e.shiftKey); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const fi = RT.selectedFrameIndex + (e.key === 'ArrowLeft' ? -1 : 1);
+      E.jumpToFrame(Math.max(0, Math.min(RT.currentSong.frames.length - 1, fi)), e.shiftKey);
+      return;
+    }
+  }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  const idx = RT.keyBindings.indexOf(S.normalizeKeyEvent(e));
+  if (idx >= 0) {
+    if (perfOpen) {
+      P.onPerfKeyPress(idx);
+      e.preventDefault();
+    } else if (composing) {
+      E.toggleNote(idx);
+      e.preventDefault();
     }
   }
 }
