@@ -7,6 +7,7 @@
        アイテム所持管理の「欲しいもの」に入れたアイテムが来訪で手に入るなら名前を挙げる
      - 季節の終了・開始が近い（7日以内）／イベントの終了・開始が近い（3日以内）／次回アップデート（7日以内）
      - フレンドの記念日（7日以内。features/friends）
+     - 創作物管理ツールで期限が近い創作物（残り3日以内。features/share/share-deadlines.js）
      - 週替わりビンゴの新しい週（ビンゴを使ったことがある人だけ）
      - 新しく獲得した称号（前に称号一覧を開いた時より増えていたら。js/titles.js）
      - 年末年始の「一年のふりかえり」
@@ -22,6 +23,7 @@ import { loadFriendsDoc, upcomingAnniversaries, anniversaryTitle } from '../feat
 import { hasBingoData, loadBingo, weekKeyAt } from '../features/bingo/bingo-state.js';
 import { titleTotals, titlesSeenCount } from './titles.js';
 import { pendingVersions } from './app-update.js';
+import { expiringSoonCreations } from '../features/share/share-deadlines.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
 const DAY = 86400000;
@@ -177,6 +179,28 @@ export function collectNotices(nowDate = new Date()) {
     const title = anniversaryTitle(a, t);
     out.push({ id: `anniv:${a.key}`, icon: 'i-heart', tone: 'pink', priority: a.inDays === 0 ? 0 : 1, sortAt: a.date, title, body: whenTxt, route: 'friends', routeLabel: t('フレンド記念日', 'Friend anniversaries') });
   });
+
+  // 創作物の期限（残り3日以内）。idに「いちばん早い期限の日・件数・段階」を入れ、
+  // 置き直して顔ぶれが変わった時や、最終日（今日消える）になった時にもう一度未読として出す
+  try {
+    const soon = expiringSoonCreations(now);
+    if (soon.length) {
+      const first = soon[0];
+      const stage = first.days === 0 ? 'today' : first.days === 1 ? 'tomorrow' : 'soon';
+      const dayTxt = d => d === 0 ? t('今日', 'today') : d === 1 ? t('明日', 'tomorrow') : t(`${d}日後`, `in ${d} days`);
+      const label = first.memo ? t(`「${first.memo.length > 24 ? first.memo.slice(0, 24) + '…' : first.memo}」`, `"${first.memo.length > 24 ? first.memo.slice(0, 24) + '…' : first.memo}"`) : '';
+      const title = soon.length === 1
+        ? (label ? t(`創作物${label}が${dayTxt(first.days)}消えます`, `Your creation ${label} disappears ${dayTxt(first.days)}`) : t(`創作物が${dayTxt(first.days)}消えます`, `A creation disappears ${dayTxt(first.days)}`))
+        : t(`期限が近い創作物が${soon.length}件あります`, `${soon.length} creations are expiring soon`);
+      const more = soon.length > 1 ? (label ? t(`いちばん早いのは${label}で、${dayTxt(first.days)}消えます。`, `The first, ${label}, disappears ${dayTxt(first.days)}. `) : t(`いちばん早いものは${dayTxt(first.days)}消えます。`, `The first disappears ${dayTxt(first.days)}. `)) : '';
+      out.push({
+        id: `share-soon:${dateKey(first.expiry)}:${soon.length}:${stage}`,
+        icon: 'i-pin', tone: 'warm', priority: first.days === 0 ? 0 : 1, sortAt: first.expiry,
+        title, body: more + t('残したいものは置き直しておきましょう', 'Re-place the ones you want to keep.'),
+        route: 'share', sub: 'soon', routeLabel: t('創作物管理ツール', 'Creation Manager'),
+      });
+    }
+  } catch (e) { /* 読めなくてもほかのお知らせは出す */ }
 
   // 週替わりビンゴ
   if (hasBingoData()) {

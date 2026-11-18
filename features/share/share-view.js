@@ -78,6 +78,7 @@
 import { titlesLinkHtml } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { nsKey } from '../../js/state.js';
+import { notifyChanged } from '../../js/notices.js';
 
 const STYLE_LINK_ID = 'share-view-styles';
 const ICON_SPRITE_ID = 'share-icon-sprite';
@@ -601,7 +602,7 @@ const TEMPLATE = `
    一括操作・.ics書き出し等）。テーマ/言語/サイドバー/プロフィール表示は
    前述の理由によりここでは扱わない。
    ================================================================ */
-function buildSetup(Vue) {
+function buildSetup(Vue, opts = {}) {
   const { ref, computed, onMounted, watch, nextTick } = Vue;
 
   return function setup() {
@@ -649,6 +650,7 @@ function buildSetup(Vue) {
       }
       currentData.placedItems = placedItems.value;
       localStorage.setItem(nsKey('sky_tracker_storage'), JSON.stringify(currentData));
+      notifyChanged(); // お知らせの「期限が近い創作物」とドックの件数を数え直す
     };
 
     const getDaysLeft = (placedDate) => {
@@ -1107,6 +1109,8 @@ function buildSetup(Vue) {
       }
       checkTitles();
       saveTitles();
+      // お知らせから開いた時（#/share/soon）は、期限間近の項目だけを選んだ状態にする
+      if (opts.sub === 'soon') focusExpiringSoon();
     });
 
     watch(placedItems, () => { save(); }, { deep: true });
@@ -1139,7 +1143,7 @@ function buildSetup(Vue) {
 let app = null;
 let mountToken = 0;
 
-export async function mount(container) {
+export async function mount(container, sub) {
   const myToken = ++mountToken;
   injectStylesheet();
   injectLocalIconSprite();
@@ -1152,7 +1156,7 @@ export async function mount(container) {
 
   const Vue = window.Vue;
   app = Vue.createApp({
-    setup: buildSetup(Vue),
+    setup: buildSetup(Vue, { sub }),
     template: TEMPLATE,
   });
   app.mount('#share-vue-root');

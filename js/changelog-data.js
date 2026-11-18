@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.18',
+    title: { ja: '創作物の期限が近づいたらお知らせ', en: 'Notices for expiring creations' },
+    date: '2026-11-18',
+    items: [
+      { type: 'improve', ja: '創作物管理ツールで消えるまで3日以内になった創作物を、画面下の「お知らせ」で知らせるようにしました（一時停止中のものは除きます）。いちばん早く消える創作物の名前と日にちが出て、「創作物管理ツール」を押すと期限間近の創作物だけを選んだ状態で開くので、そのまま一括で置き直せます。最終日にはもう一度お知らせします。', en: 'Creation Manager: creations within 3 days of disappearing now show up in Notices (paused ones excluded). Opening it from the notice selects just the expiring creations so you can re-place them in one go. You get another reminder on the last day.', route: 'share' },
+    ],
+  },
+  {
     version: '2026.11.17.4',
     title: { ja: '楽譜づくりに譜面ビュー（印刷・PDF保存つき）、複数の楽器のMIDIの読み込み、ロイヤリティクラブのポイントの合計', en: 'Sheet view and multi-instrument MIDI in Sheet Music Maker, Loyalty Club points totalled' },
     date: '2026-11-17',
