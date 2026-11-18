@@ -357,6 +357,13 @@
   background: var(--pink-btn); color: #fff; font-size: 8.5px; font-weight: 700;
   border-radius: 8px; padding: 1px 5px; line-height: 1.3; white-space: nowrap; pointer-events: none;
 }
+.tai-score-view .frame-len-badge {
+  position: absolute; bottom: -8px; right: -6px;
+  background: var(--blue); color: #fff; font-size: 9px; font-weight: 800;
+  border-radius: 8px; padding: 1px 5px; line-height: 1.3; white-space: nowrap; pointer-events: none;
+}
+.tai-score-view .frame-box.len-short .frame-len-badge { background: var(--orange, #FF9500); }
+.tai-score-view .frame-box.column-mode .frame-len-badge { bottom: -9px; right: 50%; transform: translateX(50%); font-size: 7.5px; padding: 0 3px; }
 .tai-score-view .add-frame-btn {
   width: 82px; min-height: 64px; align-self: stretch; flex-shrink: 0; border: 2px dashed var(--sep); border-radius: 12px; background: transparent; cursor: pointer;
   display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 26px;
@@ -381,6 +388,14 @@
   --col-sep-stroke: var(--sep); --col-off-fill: var(--note-off);
 }
 .tai-score-view .frame-column-svg { width: 100%; height: auto; display: block; }
+/* 縦列表示で長いマスは、拍数ぶん横に伸ばし、伸びた部分に音が続いていることを示す線を引く */
+.tai-score-view .frame-box.column-mode.len-long { width: calc(38px * var(--len, 1)); }
+.tai-score-view .frame-box.column-mode.len-long .frame-column-svg { width: 32px; }
+.tai-score-view .frame-box.column-mode.len-long:not(.is-empty) {
+  background-image: linear-gradient(var(--note-on), var(--note-on));
+  background-size: calc(100% - 42px) 3px; background-position: right 5px center; background-repeat: no-repeat;
+}
+.tai-score-view .frame-box.column-mode.len-long.selected:not(.is-empty) { background-image: linear-gradient(#fff, #fff); }
 .tai-score-view .frame-box.column-mode .frame-index {
   top: auto; bottom: -9px; left: 50%; transform: translateX(-50%);
   font-size: 8px; padding: 0 3px; background: transparent; color: var(--text-2);
@@ -412,6 +427,17 @@
   width: 100%; max-width: 680px;
 }
 .tai-score-view .current-frame-label { font-size: 12.5px; color: var(--text-2); font-weight: 600; margin-bottom: 10px; line-height: 1.5; }
+.tai-score-view .frame-len-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tai-score-view .frame-len-label { font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: 0.02em; flex-shrink: 0; cursor: help; }
+.tai-score-view .frame-len-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.tai-score-view .len-chip {
+  border: 0; background: var(--bg); color: var(--text); cursor: pointer;
+  min-width: 34px; height: 30px; padding: 0 6px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.tai-score-view .len-chip.base { box-shadow: inset 0 0 0 1.5px var(--sep); }
+.tai-score-view .len-chip.active { background: var(--pink-btn); color: #fff; box-shadow: none; }
+.tai-score-view .len-chip:active { transform: scale(0.92); }
 .tai-score-view .frame-bpm-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .tai-score-view .frame-bpm-toggle {
   display: flex; align-items: center; gap: 8px; font-size: 12.5px;
@@ -632,6 +658,10 @@
   position: absolute; bottom: -9px; right: -4px; padding: 0 4px; border-radius: 999px; background: var(--blue); color: #fff;
   font-size: 9.5px; font-weight: 700; line-height: 15px;
 }
+.tai-score-view .sheet-len {
+  position: absolute; bottom: -9px; left: -4px; padding: 0 4px; border-radius: 999px; background: var(--text-2); color: var(--bg);
+  font-size: 9.5px; font-weight: 700; line-height: 15px;
+}
 .tai-score-view .sheet-body.size-s .sheet-idx { font-size: 9px; line-height: 13px; top: -8px; }
 .tai-score-view .sheet-rest-run {
   align-self: center; justify-self: center; display: inline-flex; align-items: center; justify-content: center; max-width: 100%; min-height: 24px; padding: 2px 6px;
@@ -788,6 +818,9 @@
   .tai-score-view .current-frame-head { margin-bottom: 8px; }
   .tai-score-view .current-frame-head .current-frame-label { display: none; }
   .tai-score-view .frame-bpm-row { margin-bottom: 8px; }
+  .tai-score-view .frame-len-row { margin-bottom: 8px; gap: 6px; }
+  .tai-score-view .len-chip { min-width: 0; flex: 1 0 auto; height: 30px; padding: 0 5px; font-size: 13px; }
+  .tai-score-view .frame-len-chips { flex-wrap: nowrap; flex: 1; gap: 3px; }
   .tai-score-view .big-grid { gap: 8px; max-width: 300px; }
   .tai-score-view .compose-input-area { margin-bottom: 8px; min-height: 120px; }
   .tai-score-view .compose-timeline-head { padding-bottom: 4px; }

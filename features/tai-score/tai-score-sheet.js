@@ -67,10 +67,12 @@ function frameLabel(frame) {
 function cellHtml(frame, fi) {
   const on = frame.map(i => `<i class="sheet-n${(i % 5) % 2 === 1 ? ' dia' : ''}" style="grid-area:${Math.floor(i / 5) + 1}/${(i % 5) + 1}"></i>`).join('');
   const bpmOv = S.frameBpmOverride(song, fi);
+  const len = S.frameLength(song, fi);
   return `<button type="button" class="sheet-cell${frame.length ? '' : ' rest'}${fi % 4 === 0 ? ' beat' : ''}${fi === selected ? ' selected' : ''}" id="sheetCell_${fi}" data-act="sheet-cell" data-frame="${fi}"
     aria-label="${escapeHtml(t('sheetCellAria', { n: fi + 1, notes: frameLabel(frame) }))}">`
     + `${fi % 4 === 0 ? `<span class="sheet-idx">${fi + 1}</span>` : ''}`
     + `${bpmOv !== null ? `<span class="sheet-bpm">♩${bpmOv}</span>` : ''}`
+    + `${len !== 1 ? `<span class="sheet-len">${escapeHtml(t('frameLenUnit', { len: S.lengthLabel(len) }))}</span>` : ''}`
     + `<span class="sheet-dots">${on}</span></button>`;
 }
 
@@ -87,8 +89,8 @@ function renderBody() {
     if (collapse && !frame.length && fi !== selected) {
       // 続いた休みを1枚の札にまとめる（選んでいるマスと、テンポが変わるマスはまとめない）
       let end = fi;
-      while (end + 1 < frames.length && !(frames[end + 1] || []).length && end + 1 !== selected && S.frameBpmOverride(song, end + 1) === null) end++;
-      if (end > fi && S.frameBpmOverride(song, fi) === null) {
+      while (end + 1 < frames.length && !(frames[end + 1] || []).length && end + 1 !== selected && S.frameBpmOverride(song, end + 1) === null && S.frameLength(song, end + 1) === 1) end++;
+      if (end > fi && S.frameBpmOverride(song, fi) === null && S.frameLength(song, fi) === 1) {
         html += `<span class="sheet-rest-run" id="sheetCell_${fi}" data-from="${fi}" data-to="${end}" title="${escapeHtml(t('sheetRestRunTitle', { from: fi + 1, to: end + 1 }))}">${escapeHtml(t('sheetRestRun', { n: end - fi + 1 }))}</span>`;
         fi = end;
         continue;
@@ -119,8 +121,7 @@ function renderHeader() {
   $('sheetTitle').textContent = song.name || t('untitledSong');
   const notes = S.songNoteCount(song);
   // 1マスの長さ（BPMはマスの速さ）から、だいたいの演奏時間を出す（テンポ変化も足し込む）
-  let sec = 0;
-  for (let i = 0; i < song.frames.length; i++) sec += 60 / S.effectiveBpmAtFrame(song, i);
+  const sec = S.songDurationSec(song); // マスの長さとテンポ変化も足し込む
   const mm = Math.floor(sec / 60), ss = String(Math.round(sec % 60)).padStart(2, '0');
   $('sheetMeta').textContent = t('sheetMeta', { frames: song.frames.length, notes, bpm: song.bpm, time: `${mm}:${ss}` });
 }
@@ -190,9 +191,9 @@ function play() {
     const el = $('sheetCell_' + i) || cellElFor(i);
     if (el) { el.classList.add('playing'); scrollToCell(i, true); }
     A.playFrame(song.frames[i] || [], song.pitch, song.instrument);
-    const bpm = S.effectiveBpmAtFrame(song, i);
+    const wait = S.frameDurationMs(song, i);
     i++;
-    timer = setTimeout(step, 60000 / bpm);
+    timer = setTimeout(step, wait);
   };
   step();
 }
@@ -268,9 +269,9 @@ function buildPrintHtml() {
   const frames = song.frames;
   for (let fi = 0; fi < frames.length; fi++) {
     const frame = frames[fi] || [];
-    if (collapse && !frame.length && S.frameBpmOverride(song, fi) === null) {
+    if (collapse && !frame.length && S.frameBpmOverride(song, fi) === null && S.frameLength(song, fi) === 1) {
       let end = fi;
-      while (end + 1 < frames.length && !(frames[end + 1] || []).length && S.frameBpmOverride(song, end + 1) === null) end++;
+      while (end + 1 < frames.length && !(frames[end + 1] || []).length && S.frameBpmOverride(song, end + 1) === null && S.frameLength(song, end + 1) === 1) end++;
       if (end > fi) { units.push({ rest: true, from: fi, to: end }); fi = end; continue; }
     }
     units.push({ fi, frame });
@@ -282,6 +283,7 @@ function buildPrintHtml() {
     return `<div class="sp-unit"><div class="sp-lbl">`
       + `<span>${u.fi % 4 === 0 ? u.fi + 1 : ''}</span>`
       + (bpmOv !== null ? `<span class="sp-bpm">♩${bpmOv}</span>` : '')
+      + (S.frameLength(song, u.fi) !== 1 ? `<span class="sp-bpm">${escapeHtml(t('frameLenUnit', { len: S.lengthLabel(S.frameLength(song, u.fi)) }))}</span>` : '')
       + `</div><div class="sp-cell${u.fi % 4 === 0 ? ' beat' : ''}">`
       + `<svg viewBox="0 0 50 30" aria-hidden="true"><use href="#spGrid" class="sp-off"/><g class="sp-on">${printNoteShapes(u.frame)}</g></svg></div></div>`;
   };

@@ -129,6 +129,43 @@ export function renderBigGrid() {
   renderPianoKeys();
   renderStaffPicker();
   renderFrameBpmRow();
+  renderFrameLengthRow();
+}
+
+/* ── マスの長さ（選んだ範囲があれば、その全部のマスに付ける） ── */
+export function renderFrameLengthRow() {
+  const song = RT.currentSong;
+  const wrap = document.getElementById('frameLengthChips');
+  if (!song || !wrap) return;
+  const range = editRange();
+  const lens = new Set();
+  for (let i = range.start; i <= range.end; i++) lens.add(S.frameLength(song, i));
+  const cur = lens.size === 1 ? [...lens][0] : null; // 範囲の中で長さがまちまちなら、どれも押されていない表示にする
+  wrap.innerHTML = S.FRAME_LENGTHS.map(len => `<button type="button" class="len-chip${len === cur ? ' active' : ''}${len === 1 ? ' base' : ''}" data-act="set-frame-length" data-len="${len}" aria-pressed="${len === cur}" title="${escapeHtml(t('frameLenChipTitle', { len: S.lengthLabel(len) }))}">${escapeHtml(S.lengthLabel(len))}</button>`).join('');
+}
+export function setFrameLengthForRange(len) {
+  const song = RT.currentSong;
+  if (!song || !S.FRAME_LENGTHS.includes(len)) return;
+  const range = editRange();
+  let changed = false;
+  for (let i = range.start; i <= range.end; i++) if (S.frameLength(song, i) !== len) changed = true;
+  if (!changed) return;
+  cancelAutoAdvance();
+  pushEditHistory();
+  for (let i = range.start; i <= range.end; i++) S.setFrameLength(song, i, len);
+  persistCurrentSong();
+  if (range.start === range.end) refreshFrameBox(range.start); else renderFrameStrip();
+  renderFrameLengthRow();
+  if (range.end > range.start) showToast(t('frameLenSetToast', { count: range.end - range.start + 1, len: S.lengthLabel(len) }));
+}
+// 1つ短く／長くする（キーボードの [ と ]）
+export function stepFrameLength(dir) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const list = S.FRAME_LENGTHS;
+  const cur = S.frameLength(song, editRange().start);
+  const next = list[Math.max(0, Math.min(list.length - 1, list.indexOf(cur) + dir))];
+  setFrameLengthForRange(next);
 }
 
 /* ================================================================
@@ -267,6 +304,7 @@ function frameBoxHtml(song, fi, view) {
   const columnMode = view === 'column';
   const staffMode = !columnMode && S.getInputMode() === 'staff';
   const bpmOv = S.frameBpmOverride(song, fi);
+  const len = S.frameLength(song, fi);
   const isSelected = fi === RT.selectedFrameIndex;
   const sel = RT.selection;
   const inSel = !!sel && fi >= Math.min(sel.anchor, sel.focus) && fi <= Math.max(sel.anchor, sel.focus);
@@ -277,9 +315,11 @@ function frameBoxHtml(song, fi, view) {
     frame.length === 0 && 'is-empty',
     fi % 4 === 0 && 'beat-start',
     staffMode && 'staff-mode',
-    columnMode && 'column-mode'].filter(Boolean).join(' ');
+    columnMode && 'column-mode',
+    len !== 1 && (len < 1 ? 'len-short' : 'len-long')].filter(Boolean).join(' ');
+  const lenStyle = columnMode && len !== 1 ? ` style="--len:${len}"` : '';
   return `
-    <div class="${cls}" id="frameBox_${fi}" data-act="select-frame" data-frame="${fi}">
+    <div class="${cls}" id="frameBox_${fi}" data-act="select-frame" data-frame="${fi}"${lenStyle}>
       ${showIndex ? `<span class="frame-index">${fi + 1}</span>` : ''}
       <button type="button" class="frame-del-btn" data-act="delete-frame" data-frame="${fi}"><svg class="inline-icon" width="12" height="12"><use href="#i-close"/></svg></button>
       <button type="button" class="frame-insert-btn" data-act="insert-frame-after" data-frame="${fi}" title="${escapeHtml(t('insertFrameAfterTitle'))}" aria-label="${escapeHtml(t('insertFrameAfterTitle'))}">＋</button>
@@ -290,6 +330,7 @@ function frameBoxHtml(song, fi, view) {
             const dotDiamond = (ni % 5) % 2 === 1;
             return `<div class="frame-dot${dotOn ? ' on' : ''}${dotDiamond ? ' diamond-shape' : ''}"></div>`;
           }).join('')}
+      ${len !== 1 ? `<span class="frame-len-badge" title="${escapeHtml(t('frameLenBadgeTitle', { len: S.lengthLabel(len) }))}">${escapeHtml(S.lengthLabel(len))}</span>` : ''}
       ${bpmOv !== null ? `<span class="frame-bpm-badge" title="${escapeHtml(t('frameBpmBadgeTitle', { bpm: bpmOv }))}"><svg class="inline-icon" width="10" height="10"><use href="#ts-i-clock"/></svg>${bpmOv}</span>` : ''}
     </div>
   `;
@@ -428,6 +469,8 @@ export function nextOrAddFrame(opts = {}) {
   if (RT.selectedFrameIndex >= song.frames.length - 1) {
     pushEditHistory();
     song.frames.push([]);
+    // 続けて書く時は同じ長さが続くことが多いので、新しいマスは今のマスの長さを引き継ぐ
+    S.setFrameLength(song, song.frames.length - 1, S.frameLength(song, RT.selectedFrameIndex));
     clearSelection();
     RT.selectedFrameIndex = song.frames.length - 1;
     persistCurrentSong();
@@ -467,6 +510,7 @@ function snapshotCurrentSong() {
   return {
     frames: JSON.parse(JSON.stringify(RT.currentSong.frames)),
     bpmOverrides: JSON.parse(JSON.stringify(RT.currentSong.bpmOverrides || {})),
+    frameLengths: JSON.parse(JSON.stringify(RT.currentSong.frameLengths || {})),
     selectedFrameIndex: RT.selectedFrameIndex,
   };
 }
@@ -477,6 +521,10 @@ function pushEditHistory() {
   RT.redoHistory = [];
   updateUndoButton();
   updateRedoButton();
+}
+function restoreFrameLengths(map) {
+  if (map && Object.keys(map).length) RT.currentSong.frameLengths = map;
+  else delete RT.currentSong.frameLengths;
 }
 export function clearEditHistory() {
   RT.editHistory = [];
@@ -497,6 +545,7 @@ export function undoEdit() {
   const prev = RT.editHistory.pop();
   RT.currentSong.frames = prev.frames;
   RT.currentSong.bpmOverrides = prev.bpmOverrides;
+  restoreFrameLengths(prev.frameLengths);
   RT.selectedFrameIndex = Math.min(prev.selectedFrameIndex, RT.currentSong.frames.length - 1);
   cancelAutoAdvance();
   clearSelection();
@@ -515,6 +564,7 @@ export function redoEdit() {
   const next = RT.redoHistory.pop();
   RT.currentSong.frames = next.frames;
   RT.currentSong.bpmOverrides = next.bpmOverrides;
+  restoreFrameLengths(next.frameLengths);
   RT.selectedFrameIndex = Math.min(next.selectedFrameIndex, RT.currentSong.frames.length - 1);
   cancelAutoAdvance();
   clearSelection();
@@ -546,6 +596,7 @@ export function toggleNote(noteIndex) {
 export function addFrame() {
   pushEditHistory();
   RT.currentSong.frames.push([]);
+  S.setFrameLength(RT.currentSong, RT.currentSong.frames.length - 1, S.frameLength(RT.currentSong, RT.currentSong.frames.length - 2));
   clearSelection();
   RT.selectedFrameIndex = RT.currentSong.frames.length - 1;
   persistCurrentSong();
@@ -613,6 +664,7 @@ export function insertBlankFrameAfter(fi) {
   cancelAutoAdvance();
   song.frames.splice(at, 0, []);
   S.shiftBpmOverridesForInsert(song, at, 1);
+  S.setFrameLength(song, at, S.frameLength(song, fi));
   clearSelection();
   RT.selectedFrameIndex = at;
   persistCurrentSong();
@@ -677,7 +729,12 @@ export function copyFrameRange(range = editRange()) {
       if (typeof v === 'number' && v > 0) bpmOverrides[i - range.start] = v;
     }
   }
-  RT.frameClipboard = { frames, bpmOverrides };
+  const frameLengths = {};
+  for (let i = range.start; i <= range.end; i++) {
+    const len = S.frameLength(song, i);
+    if (len !== 1) frameLengths[i - range.start] = len;
+  }
+  RT.frameClipboard = { frames, bpmOverrides, frameLengths };
   S.saveFrameClipboard(RT.frameClipboard);
   renderFrameClipboardHint();
   showToast(t('frameRangeCopiedToast', { count: frames.length }));
@@ -695,6 +752,9 @@ export function pasteFrameRange() {
   Object.keys(RT.frameClipboard.bpmOverrides || {}).forEach(k => {
     if (!song.bpmOverrides) song.bpmOverrides = {};
     song.bpmOverrides[at + parseInt(k, 10)] = RT.frameClipboard.bpmOverrides[k];
+  });
+  Object.keys(RT.frameClipboard.frameLengths || {}).forEach(k => {
+    S.setFrameLength(song, at + parseInt(k, 10), RT.frameClipboard.frameLengths[k]);
   });
   RT.selectedFrameIndex = at + copied.length - 1;
   persistCurrentSong();
@@ -788,8 +848,9 @@ function startPlaybackLoop() {
     highlightPlayingFrame(i);
     A.playFrame(song.frames[i], song.pitch, song.instrument);
     if (S.metronomeEnabled()) A.playMetronomeClick(false);
+    const wait = (60000 / bpm) * S.frameLength(song, i);
     i++;
-    RT.playbackTimer = setTimeout(step, 60000 / bpm);
+    RT.playbackTimer = setTimeout(step, wait);
   };
   step();
 }

@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.18.2',
-    title: { ja: '楽譜づくりの作曲を書きやすく、創作物の期限が近づいたらお知らせ', en: 'Easier composing in Sheet Music Maker, notices for expiring creations' },
+    version: '2026.11.18.3',
+    title: { ja: '楽譜づくりでマスごとの長さを決められるように、作曲を書きやすく、創作物の期限のお知らせ', en: 'Per-tile length and easier composing in Sheet Music Maker, notices for expiring creations' },
     date: '2026-11-18',
     items: [
+      { type: 'new', ja: '楽譜づくりで、マスごとの長さを決められるようにしました。音のボタンの上の「長さ」で ¼・½・¾・1・1½・2・3・4拍から選びます（1が今までどおりの長さ）。範囲を選んでいれば、その全部のマスにまとめて付けられます（パソコンでは [ と ] でも変えられます）。最後のマスで「次へ」を押して足したマスは、前のマスの長さを引き継ぎます。再生・譜面ビュー・演奏時間の計算・共有コードに反映され、Sky Music Nightly形式の書き出し・読み込みでも長さが残ります。', en: 'Sheet Music Maker: set each tile\'s length (¼, ½, ¾, 1, 1½, 2, 3 or 4 beats; 1 is the usual length) from "Length" above the note buttons. Applies to a whole selected range at once (keyboard: [ and ]). New tiles added with "Next" keep the previous tile\'s length. Playback, the sheet view, the play time, share codes and Sky Music Nightly export/import all respect it.', route: 'tai-score' },
       { type: 'improve', ja: '楽譜づくりの作曲画面を書きやすくしました。音のボタンの下に操作バーを置き、スマホでも前後のマスへの移動・元に戻す・やり直す・コピー・貼り付け・マスの挿入・音を消す・削除ができます。「入れたら次へ」をオンにすると、音を入れるたびに次のマスへ進みます（同時に押した音は同じマスの和音になります）。最後のマスで「次へ」を押すと新しいマスが足されます。「範囲」を押してから譜面のマスを押すと、そこまでをまとめて選べます（パソコンではShift＋クリックかShift＋←→）。パソコンでは、スペースで再生・停止、Enterで次へ、Ctrl+Z・Ctrl+Yで元に戻す・やり直す、Ctrl+C・Ctrl+Vでコピー・貼り付け、Backspaceで音を消す、Shift+Deleteでマスを削除できます。長い曲でも音を押した時に引っかからないようにし、譜面のマスの大きさがそろわない問題も直しました。', en: 'Sheet Music Maker: easier composing. A toolbar under the note buttons now works on phones too (previous/next, undo/redo, copy/paste, insert, clear, delete). Turn on "Auto-advance" to move to the next tile after each note (notes pressed together form a chord), and "Next" on the last tile adds a new one. Use "Range" (or Shift+click / Shift+←→) to select several tiles. Keyboard: Space play/stop, Enter next, Ctrl+Z/Y undo/redo, Ctrl+C/V copy/paste, Backspace clear, Shift+Delete delete. Entering notes is now smooth in long songs, and tile sizes in the sheet are consistent.', route: 'tai-score' },
       { type: 'improve', ja: '創作物管理ツールで消えるまで3日以内になった創作物を、画面下の「お知らせ」で知らせるようにしました（一時停止中のものは除きます）。いちばん早く消える創作物の名前と日にちが出て、「創作物管理ツール」を押すと期限間近の創作物だけを選んだ状態で開くので、そのまま一括で置き直せます。最終日にはもう一度お知らせします。', en: 'Creation Manager: creations within 3 days of disappearing now show up in Notices (paused ones excluded). Opening it from the notice selects just the expiring creations so you can re-place them in one go. You get another reminder on the last day.', route: 'share' },
     ],

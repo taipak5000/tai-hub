@@ -463,6 +463,10 @@ function renderComposeOverlay() {
             </div>
           </div>
         </div>
+        <div class="frame-len-row">
+          <span class="frame-len-label" title="${escapeHtml(t('frameLenHint'))}">${escapeHtml(t('frameLenLabel'))}</span>
+          <div class="frame-len-chips" id="frameLengthChips" role="group" aria-label="${escapeHtml(t('frameLenLabel'))}"></div>
+        </div>
         <div class="frame-bpm-row" id="frameBpmRow">
           <label class="frame-bpm-toggle">
             <input type="checkbox" id="frameBpmOverrideToggle">
@@ -1302,6 +1306,7 @@ function onContainerClick(e) {
     case 'toggle-range-mode': E.toggleRangeMode(); break;
     case 'insert-frame-here': E.insertBlankFrameAfter(RT.selectedFrameIndex); break;
     case 'clear-frame-range': E.clearFrameRange(); break;
+    case 'set-frame-length': E.setFrameLengthForRange(parseFloat(el.dataset.len)); break;
     case 'paste-frame-range': E.pasteFrameRange(); break;
     case 'tap-tempo': E.tapTempo(); break;
     case 'compose-tools-switch': {
@@ -1352,6 +1357,8 @@ function handleGlobalKeydown(e) {
     if (e.altKey) return;
     if (e.key === ' ') { e.preventDefault(); E.togglePlayback(); return; }
     if (e.key === 'Enter') { e.preventDefault(); E.nextOrAddFrame(); return; }
+    // [ ] でマスの長さを1段階短く／長く（キー割り当てに使っている時は音の入力を優先する）
+    if ((e.key === '[' || e.key === ']') && RT.keyBindings.indexOf(e.key) === -1) { e.preventDefault(); E.stepFrameLength(e.key === '[' ? -1 : 1); return; }
     if (e.key === 'Insert') { e.preventDefault(); E.insertBlankFrameAfter(RT.selectedFrameIndex); return; }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();

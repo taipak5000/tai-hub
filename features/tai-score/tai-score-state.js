@@ -40,7 +40,8 @@ export const LOOP_RANGE_KEY = () => nsKey('taiScoreLoopRangeEnabled_v1');
 /* ================================================================
    曲データの保存（localStorage）
    1曲 = { id, name, bpm, pitch, instrument, frames: [[noteIndex,...], ...],
-           bpmOverrides?: { [フレーム番号]: BPM }, updatedAt,
+           bpmOverrides?: { [フレーム番号]: BPM },
+           frameLengths?: { [フレーム番号]: 拍数（FRAME_LENGTHSのどれか。書いていないマスは1拍） }, updatedAt,
            practiceRangeStart?, practiceRangeEnd?: 練習・試験の範囲（1始まりのマス番号、
              未指定なら曲全体）、loopRangeEnabled?: その範囲をループ再生するか、
            lastPracticeResult?: { at }、lastTestResult?: { at, mistakes } }
@@ -214,28 +215,66 @@ export function effectiveBpmAtFrame(song, idx) {
   }
   return song ? song.bpm : 150;
 }
-// fi番目のマスを削除する時、それより後ろのテンポ変化のインデックスを1つずつ詰める
+// マス番号をキーにした表（テンポ変化 bpmOverrides・マスの長さ frameLengths）は、マスの削除・挿入に合わせて番号をずらす。
+// 下の2つの関数は名前に Bpm と付いているが、両方の表をまとめてずらす（呼び出し側を増やさないため）
+const PER_FRAME_MAPS = ['bpmOverrides', 'frameLengths'];
+// fi番目のマスを削除する時、それより後ろのインデックスを1つずつ詰める
 export function shiftBpmOverridesForDelete(song, fi) {
-  if (!song.bpmOverrides) return;
-  const next = {};
-  Object.keys(song.bpmOverrides).forEach(k => {
-    const idx = parseInt(k, 10);
-    if (idx === fi) return; // このマスごと削除される
-    next[idx > fi ? idx - 1 : idx] = song.bpmOverrides[k];
+  PER_FRAME_MAPS.forEach(key => {
+    if (!song[key]) return;
+    const next = {};
+    Object.keys(song[key]).forEach(k => {
+      const idx = parseInt(k, 10);
+      if (idx === fi) return; // このマスごと削除される
+      next[idx > fi ? idx - 1 : idx] = song[key][k];
+    });
+    song[key] = next;
   });
-  song.bpmOverrides = next;
 }
-// at番目の位置にcount個のマスを挿入する時、それ以降のテンポ変化のインデックスを
-// 後ろへずらして空ける（挿入されたマス自体には既存のテンポ変化は付かない）
+// at番目の位置にcount個のマスを挿入する時、それ以降のインデックスを後ろへずらして空ける
+// （挿入されたマス自体には既存のテンポ変化・長さは付かない）
 export function shiftBpmOverridesForInsert(song, at, count) {
-  if (!song.bpmOverrides || count <= 0) return;
-  const next = {};
-  Object.keys(song.bpmOverrides).forEach(k => {
-    const idx = parseInt(k, 10);
-    next[idx >= at ? idx + count : idx] = song.bpmOverrides[k];
+  if (count <= 0) return;
+  PER_FRAME_MAPS.forEach(key => {
+    if (!song[key]) return;
+    const next = {};
+    Object.keys(song[key]).forEach(k => {
+      const idx = parseInt(k, 10);
+      next[idx >= at ? idx + count : idx] = song[key][k];
+    });
+    song[key] = next;
   });
-  song.bpmOverrides = next;
 }
+
+/* ================================================================
+   マスごとの長さ（frameLengths）。1マス＝1拍（BPMの1拍）が基準で、
+   ½なら半分の時間で次のマスへ、2なら2拍ぶん待ってから次のマスへ進む。
+   ================================================================ */
+export const FRAME_LENGTHS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
+export function frameLength(song, fi) {
+  const v = song && song.frameLengths ? song.frameLengths[fi] : undefined;
+  return FRAME_LENGTHS.includes(v) ? v : 1;
+}
+export function setFrameLength(song, fi, len) {
+  if (!FRAME_LENGTHS.includes(len) || len === 1) {
+    if (song.frameLengths) delete song.frameLengths[fi];
+  } else {
+    if (!song.frameLengths) song.frameLengths = {};
+    song.frameLengths[fi] = len;
+  }
+  if (song.frameLengths && Object.keys(song.frameLengths).length === 0) delete song.frameLengths;
+}
+// fi番目のマスを鳴らしてから次のマスまでの時間（ミリ秒）
+export function frameDurationMs(song, fi) {
+  return (60000 / effectiveBpmAtFrame(song, fi)) * frameLength(song, fi);
+}
+export function songDurationSec(song) {
+  let ms = 0;
+  for (let i = 0; i < song.frames.length; i++) ms += frameDurationMs(song, i);
+  return ms / 1000;
+}
+const LENGTH_LABELS = { 0.25: '¼', 0.5: '½', 0.75: '¾', 1: '1', 1.5: '1½', 2: '2', 3: '3', 4: '4' };
+export function lengthLabel(len) { return LENGTH_LABELS[len] || String(len); }
 
 /* ================================================================
    フレーム範囲のコピー＆ペーストのクリップボード
@@ -287,9 +326,11 @@ export function loopRangeEnabled(song) {
 // 移植元と同じ挙動：出力ヘッダーの「曲名/BPM/調/楽器」ラベル自体は常に日本語）
 const INSTRUMENT_LABELS_JA_LOCAL = { Harp: '楽器A', Guitar: '楽器B', Bass: '楽器C', Flute: '楽器D', Bells: '楽器E' };
 export function songToTextSheet(song) {
-  const body = song.frames.map(frame => {
-    if (frame.length === 0) return '.';
-    return frame.slice().sort((a, b) => a - b).map(i => NOTE_ABC_CODES[i]).join('');
+  // テキスト譜面にはマスの長さを書く欄が無いので、2拍以上のマスは後ろに休み（.）を足して長さを残す
+  const body = [];
+  song.frames.forEach((frame, fi) => {
+    body.push(frame.length === 0 ? '.' : frame.slice().sort((a, b) => a - b).map(i => NOTE_ABC_CODES[i]).join(''));
+    for (let k = 1; k < Math.floor(frameLength(song, fi)); k++) body.push('.');
   });
   const lines = [];
   for (let i = 0; i < body.length; i += 8) lines.push(body.slice(i, i + 8).join(' '));
@@ -370,8 +411,25 @@ export function songToSpecyFormat(song) {
     instruments: [{ name: song.instrument || 'Harp', notes: [], volume: 100, pitch: song.pitch, baseNotes: [] }],
     breakpoints: [],
     reverb: false,
-    columns: song.frames.map(frame => [0, frame.map(idx => [idx, '1'])]),
+    columns: specyColumns(song),
   };
+}
+// Sky Music Nightly の列は「テンポの変え方」0=1拍・1=½・2=¼・3=¾ を持つ。1拍より長いマスは、
+// 1拍の列のあとに空の列を足して表す（1½なら 1拍＋空の½）
+const SPECY_TEMPO = { 1: 0, 0.5: 1, 0.25: 2, 0.75: 3 };
+const SPECY_TEMPO_LEN = [1, 0.5, 0.25, 0.75];
+function specyColumns(song) {
+  const cols = [];
+  song.frames.forEach((frame, fi) => {
+    const len = frameLength(song, fi);
+    const notes = frame.map(idx => [idx, '1']);
+    if (len <= 1) { cols.push([SPECY_TEMPO[len] || 0, notes]); return; }
+    cols.push([0, notes]);
+    let rest = len - 1;
+    while (rest >= 1) { cols.push([0, []]); rest -= 1; }
+    if (rest > 0) cols.push([SPECY_TEMPO[rest] || 0, []]);
+  });
+  return cols;
 }
 export function specyFormatToSong(data) {
   const columns = data.columns || [];
@@ -386,8 +444,17 @@ export function specyFormatToSong(data) {
       const indices = notes.map(n => (Array.isArray(n) ? n[0] : (n.index !== undefined ? n.index : n.key))).filter(n => typeof n === 'number' && n >= 0 && n < 15);
       return [...new Set(indices)];
     }),
+    ...specyFrameLengths(columns),
     updatedAt: Date.now(),
   };
+}
+function specyFrameLengths(columns) {
+  const map = {};
+  columns.forEach((col, fi) => {
+    const len = Array.isArray(col) ? SPECY_TEMPO_LEN[col[0]] : undefined;
+    if (len && len !== 1) map[fi] = len;
+  });
+  return Object.keys(map).length ? { frameLengths: map } : {};
 }
 export function isSpecyFormat(data) {
   return data && (data.type === 'composed' || data.type === 'recorded' || Array.isArray(data.columns) || Array.isArray(data.notes));
