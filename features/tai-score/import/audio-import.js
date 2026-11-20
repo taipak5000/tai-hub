@@ -11,7 +11,7 @@
    すべてブラウザ内だけで処理する。
    ================================================================ */
 import { NOTE_MIDI, PITCHES } from '../data/constants.js';
-import { quantizeNoteEventsToFrames } from '../tai-score-state.js';
+import { quantizeNoteEventsToFrames, importUseLengthsEnabled } from '../tai-score-state.js';
 
 // 窓かけ済みのサンプル列に対してGoertzelアルゴリズムを実行する。
 // ダイアトニック音階は「ミ→ファ」「シ→ド」の半音（隣の音との差が
@@ -120,6 +120,6 @@ export async function analyzeAudioFile(opts) {
   if (isCancelled && isCancelled()) return null;
   if (onProgress) onProgress(100, noteEvents.length);
 
-  const { frames, bpm } = quantizeNoteEventsToFrames(noteEvents, 150);
-  return { frames, bpm, noteCount: noteEvents.length };
+  const { frames, bpm, frameLengths, packedFrom } = quantizeNoteEventsToFrames(noteEvents, 150, { useLengths: importUseLengthsEnabled() });
+  return { frames, bpm, frameLengths, packedFrom, noteCount: noteEvents.length };
 }

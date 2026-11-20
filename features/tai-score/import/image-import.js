@@ -14,7 +14,7 @@
    これらはOMRとしては簡易的だが、音声解析と同様「下書き」を作ることが
    目的で、完璧な変換は狙っていない。
    ================================================================ */
-import { quantizeNoteEventsToFrames } from '../tai-score-state.js';
+import { quantizeNoteEventsToFrames, importUseLengthsEnabled } from '../tai-score-state.js';
 import { NOTE_MIDI } from '../data/constants.js';
 
 export function loadImageBitmapFromFile(file) {
@@ -409,6 +409,6 @@ export async function analyzeImageFiles(opts) {
   // スナップ後の1マスを100単位として十分大きくスケールしてから渡す
   const notesForQuantize = [];
   tickMap.forEach((indices, tick) => { indices.forEach(idx => notesForQuantize.push({ idx, time: tick * 100 })); });
-  const { frames, bpm } = quantizeNoteEventsToFrames(notesForQuantize, 150);
-  return { frames, bpm, pagesOk, firstFileName: sortedFiles[0] && sortedFiles[0].name };
+  const { frames, bpm, frameLengths, packedFrom } = quantizeNoteEventsToFrames(notesForQuantize, 150, { useLengths: importUseLengthsEnabled() });
+  return { frames, bpm, frameLengths, packedFrom, pagesOk, firstFileName: sortedFiles[0] && sortedFiles[0].name };
 }

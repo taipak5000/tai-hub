@@ -31,7 +31,6 @@ export const LIBRARY_SORT_KEY = () => nsKey('taiScoreLibrarySort_v1');
 export const INPUT_MODE_KEY = () => nsKey('taiScoreInputMode_v1');
 export const TIMELINE_VIEW_KEY = () => nsKey('taiScoreTimelineView_v1');
 export const AUTO_ADVANCE_KEY = () => nsKey('taiScoreAutoAdvance_v1');
-export const MIDI_USE_LENGTHS_KEY = () => nsKey('taiScoreMidiUseLengths_v1');
 export const FRAME_CLIPBOARD_KEY = () => nsKey('taiScoreFrameClipboard_v1');
 export const FREE_PLAY_INSTRUMENT_KEY = () => nsKey('taiScoreFreePlayInstrument_v1');
 export const METRONOME_KEY = () => nsKey('taiScoreMetronomeEnabled_v1');
@@ -197,13 +196,7 @@ export function setAutoAdvanceEnabled(on) {
   try { localStorage.setItem(AUTO_ADVANCE_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
 }
 
-/* ── MIDIの読み込みで、音の間隔をマスの長さで表すか（既定はオン。オフ＝空のマスで埋める） ── */
-export function midiUseLengthsEnabled() {
-  try { return localStorage.getItem(MIDI_USE_LENGTHS_KEY()) !== '0'; } catch (e) { return true; }
-}
-export function setMidiUseLengthsEnabled(on) {
-  try { localStorage.setItem(MIDI_USE_LENGTHS_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
-}
+
 
 /* ================================================================
    フレーム単位のテンポ変化（bpmOverrides）
@@ -485,7 +478,104 @@ export function gcdInt(a, b) {
 // notes = [{idx, time(ミリ秒)}] から、実際の間隔のGCD（最大公約数）で最も細かい
 // マス単位を自動検出し、マス目の配列(frames)とBPMに変換する共通処理。
 // Sky Studio形式のインポート、音声解析、楽譜画像OMRのインポートで共通して使う。
-export function quantizeNoteEventsToFrames(notes, fallbackBpmHint) {
+/* ── 格子にそろえた譜面を、マスの長さを使って詰める（読み込み全般で共通） ──
+   音のあるマスに「次の音までの拍数」を長さとして付け、長さの選択肢（最大4拍）に収まらない分は
+   休みのマスを足して表す。unitBeats は格子1マスぶんの拍数（¼・½・1・2のどれか）。
+   鳴るタイミングは格子のままと完全に同じになる。戻り値: { frames, frameLengths } */
+const LENGTHS_DESC = FRAME_LENGTHS.slice().sort((a, b) => b - a);
+function splitBeats(beats) {
+  const pieces = [];
+  let rest = Math.round(beats * 4) / 4; // 格子は¼拍の倍数なので、誤差を丸めて止まらないようにする
+  while (rest > 1e-9) {
+    const len = LENGTHS_DESC.find(l => l <= rest + 1e-9) || LENGTHS_DESC[LENGTHS_DESC.length - 1];
+    pieces.push(len);
+    rest = Math.round((rest - len) * 4) / 4;
+  }
+  return pieces;
+}
+export function compressWithLengths(gridFrames, unitBeats) {
+  const onsets = [];
+  gridFrames.forEach((f, i) => { if (f.length) onsets.push(i); });
+  const frames = [];
+  const frameLengths = {};
+  const push = (notes, len) => {
+    if (len !== 1) frameLengths[frames.length] = len;
+    frames.push(notes);
+  };
+  onsets.forEach((idx, k) => {
+    // 最後の音は1拍ぶん鳴らして終わる
+    const beats = k + 1 < onsets.length ? (onsets[k + 1] - idx) * unitBeats : 1;
+    const pieces = splitBeats(beats);
+    push(gridFrames[idx], pieces[0]);
+    for (let j = 1; j < pieces.length; j++) push([], pieces[j]);
+  });
+  if (!frames.length) frames.push([]);
+  return { frames, frameLengths };
+}
+// 実際の時刻（ms）で並んだ音を、マスの長さを使った譜面にする（音声・楽譜画像・Sky Studioの読み込みで使う）。
+// 格子（GCD）を経由しないのは、揺れのある記録では格子が20ms程度まで細かくなったり、曲が長いと粗くまとめられたりして、
+// 拍の長さを正しく推し量れないため。
+//   1. 音の間隔の中央値を1拍の仮の長さにする（BPMが40〜999に入るよう2倍・半分で直す）
+//   2. 隣の音との間隔を¼拍に丸めて足し上げ、各音の位置を決める。位置と時刻に直線を当てはめて¼拍の長さを求め直す（3回）
+//   3. 次の音までの拍数をマスの長さにする（同じ位置の音は和音にまとめる）
+// 間隔ごとのずれは最大⅛拍。BPMは整数に丸めるので、曲全体の速さが最大で0.4%ほど変わる（音の並びはずれない）。
+export function packNoteTimesWithLengths(notes) {
+  const byTime = new Map();
+  notes.forEach(n => {
+    if (!byTime.has(n.time)) byTime.set(n.time, new Set());
+    byTime.get(n.time).add(n.idx);
+  });
+  const times = [...byTime.keys()].sort((x, y) => x - y);
+  if (times.length < 2) return null;
+  const gaps = [];
+  for (let i = 1; i < times.length; i++) if (times[i] - times[i - 1] >= 40) gaps.push(times[i] - times[i - 1]); // 和音のばらつき（40ms未満）は数えない
+  if (!gaps.length) return null;
+  gaps.sort((x, y) => x - y);
+  let beat = gaps[Math.floor(gaps.length / 2)];
+  while (beat < 60000 / 999) beat *= 2;
+  while (beat > 60000 / 40) beat /= 2;
+  // 各音の位置（¼拍単位）は、隣の音との間隔を¼拍に丸めて足し上げて決める。曲の頭からの時刻で一度に丸めると、
+  // 拍の推定のわずかな誤差が後半ほど積み重なって位置がずれるが、間隔ごとなら誤差は1つの間隔の中で収まる
+  let quarter = beat / 4;
+  let qs = [];
+  for (let iter = 0; iter < 3; iter++) {
+    qs = [0];
+    for (let i = 1; i < times.length; i++) qs.push(qs[i - 1] + Math.round((times[i] - times[i - 1]) / quarter));
+    // 位置と時刻に直線を当てはめて、¼拍の長さを求め直す
+    const n = qs.length;
+    const mq = qs.reduce((x, y) => x + y, 0) / n, mt = times.reduce((x, y) => x + y, 0) / n;
+    let num = 0, den = 0;
+    qs.forEach((q, i) => { num += (q - mq) * (times[i] - mt); den += (q - mq) * (q - mq); });
+    if (den <= 0 || !(num / den > 0)) break;
+    quarter = num / den;
+  }
+  const bpm = Math.round(60000 / (quarter * 4));
+  if (bpm < 40 || bpm > 999) return null;
+  const snapped = new Map();
+  times.forEach((tm, i) => {
+    const q = qs[i]; // 和音のばらつき（¼拍の半分未満の間隔）は同じ位置になり、和音にまとまる
+    if (!snapped.has(q)) snapped.set(q, new Set());
+    byTime.get(tm).forEach(idx => snapped.get(q).add(idx));
+  });
+  const last = qs[qs.length - 1];
+  const grid = [];
+  for (let q = 0; q <= last; q++) grid.push(snapped.has(q) ? [...snapped.get(q)].sort((x, y) => x - y) : []);
+  const packed = compressWithLengths(grid, 0.25);
+  return { frames: packed.frames, frameLengths: packed.frameLengths, bpm };
+}
+
+/* ── 読み込みで、音の間隔をマスの長さで表すか（MIDI・音声・楽譜画像・Sky Studio共通。既定はオン） ──
+   キー名は最初にMIDIだけで使っていた時のまま */
+export const IMPORT_USE_LENGTHS_KEY = () => nsKey('taiScoreMidiUseLengths_v1');
+export function importUseLengthsEnabled() {
+  try { return localStorage.getItem(IMPORT_USE_LENGTHS_KEY()) !== '0'; } catch (e) { return true; }
+}
+export function setImportUseLengthsEnabled(on) {
+  try { localStorage.setItem(IMPORT_USE_LENGTHS_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
+}
+
+// opts.useLengths が true なら、量子化した後にマスの長さで詰める（戻り値に frameLengths・packedFrom が付く）
+export function quantizeNoteEventsToFrames(notes, fallbackBpmHint, opts = {}) {
   const fallbackBpm = Math.max(40, Math.round(fallbackBpmHint) || 150);
   if (notes.length === 0) {
     return { frames: [[]], bpm: fallbackBpm };
@@ -516,6 +606,14 @@ export function quantizeNoteEventsToFrames(notes, fallbackBpmHint) {
   for (let ti = 0; ti <= maxTick; ti++) {
     frames.push(frameNotes.has(ti) ? [...frameNotes.get(ti)].sort((a, b) => a - b) : []);
   }
+  if (opts.useLengths && frames.length > 1) {
+    const packed = packNoteTimesWithLengths(notes);
+    if (packed) {
+      const out = { frames: packed.frames, bpm: packed.bpm, packedFrom: frames.length };
+      if (Object.keys(packed.frameLengths).length) out.frameLengths = packed.frameLengths;
+      return out;
+    }
+  }
   const bpm = Math.max(40, Math.min(999, Math.round(60000 / unitMs)));
   return { frames, bpm };
 }
@@ -532,11 +630,13 @@ export function oldSkyStudioFormatToSong(data) {
     seen.add(dedupeKey);
     notes.push({ idx, time });
   });
-  const { frames, bpm } = quantizeNoteEventsToFrames(notes, Number(data.bpm));
+  const q = quantizeNoteEventsToFrames(notes, Number(data.bpm), { useLengths: importUseLengthsEnabled() });
   const pitch = PITCHES[Number.isInteger(data.pitchLevel) ? data.pitchLevel : 0] || 'C';
   let name = data.name || t('importedSongDefaultName');
   if (data.author) name += `（${data.author}）`;
-  return { id: genId(), name, bpm, pitch, instrument: 'Harp', frames, updatedAt: Date.now() };
+  const song = { id: genId(), name, bpm: q.bpm, pitch, instrument: 'Harp', frames: q.frames, updatedAt: Date.now() };
+  if (q.frameLengths) song.frameLengths = q.frameLengths;
+  return song;
 }
 
 // ファイルのバイト列からエンコーディング（BOM）を判定してデコードする。

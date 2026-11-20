@@ -16,7 +16,7 @@
      楽器のトラック名（「Acoustic Piano」など）は曲名にしない。
    ================================================================ */
 import { midiToSkyIndex } from './image-import.js';
-import { genId, FRAME_LENGTHS } from '../tai-score-state.js';
+import { genId, compressWithLengths } from '../tai-score-state.js';
 
 function midiError(msgKey) {
   const err = new Error(msgKey);
@@ -226,40 +226,7 @@ function songNameFor(midi, fileName, t) {
   return base || t('midiDefaultSongName');
 }
 
-// 格子にそろえた譜面（音の無いマスが並ぶ）を、マスの長さを使って詰める。
-// 音のあるマスに「次の音までの拍数」を長さとして付け、長さの選択肢（最大4拍）に収まらない分は
-// 休みのマスを足して表す。unitBeats は格子1マスぶんの拍数（16分音符なら0.25）。
-// 戻り値: { frames, frameLengths }（1拍のマスは frameLengths に書かない）
-const LENGTHS_DESC = FRAME_LENGTHS.slice().sort((a, b) => b - a);
-function splitBeats(beats) {
-  const pieces = [];
-  let rest = Math.round(beats * 4) / 4; // 格子は¼拍の倍数なので、誤差を丸めて止まらないようにする
-  while (rest > 1e-9) {
-    const len = LENGTHS_DESC.find(l => l <= rest + 1e-9) || LENGTHS_DESC[LENGTHS_DESC.length - 1];
-    pieces.push(len);
-    rest = Math.round((rest - len) * 4) / 4;
-  }
-  return pieces;
-}
-function compressWithLengths(gridFrames, unitBeats) {
-  const onsets = [];
-  gridFrames.forEach((f, i) => { if (f.length) onsets.push(i); });
-  const frames = [];
-  const frameLengths = {};
-  const push = (notes, len) => {
-    if (len !== 1) frameLengths[frames.length] = len;
-    frames.push(notes);
-  };
-  onsets.forEach((idx, k) => {
-    // 最後の音は1拍ぶん鳴らして終わる
-    const beats = k + 1 < onsets.length ? (onsets[k + 1] - idx) * unitBeats : 1;
-    const pieces = splitBeats(beats);
-    push(gridFrames[idx], pieces[0]);
-    for (let j = 1; j < pieces.length; j++) push([], pieces[j]);
-  });
-  return { frames, frameLengths };
-}
-
+// 音の間隔をマスの長さで詰める処理（compressWithLengths）は、ほかの読み込みと共通で tai-score-state.js にある
 function midiToSong(midi, fileName, t, partIds, opts = {}) {
   let ticksPerQuarter = midi.ticksPerQuarter;
   if (!ticksPerQuarter) {

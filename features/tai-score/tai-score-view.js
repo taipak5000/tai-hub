@@ -285,6 +285,17 @@ function renderShareModal() {
     </div>
   </div>`;
 }
+// 読み込みで「音の間隔をマスの長さで表す」チェック。4つの読み込み画面に同じ設定のチェックを置き、どれを変えても全部そろえる
+function importLengthsToggleHtml(labelKey) {
+  return `<label class="metronome-row import-lengths-row">
+        <input type="checkbox" class="import-lengths-toggle">
+        <span>${escapeHtml(t(labelKey))}</span>
+      </label>`;
+}
+function syncImportLengthsToggles() {
+  const on = S.importUseLengthsEnabled();
+  document.querySelectorAll('.import-lengths-toggle').forEach(el => { el.checked = on; });
+}
 function renderImportModal() {
   return `
   <div class="modal-overlay" id="importModal">
@@ -298,6 +309,7 @@ function renderImportModal() {
       <button type="button" class="action-btn secondary" data-act="import-from-code">${escapeHtml(t('loadFromCodeBtn'))}</button>
       <input type="file" id="importFileInput" accept=".json,.txt" style="display:none">
       <button type="button" class="action-btn secondary" data-act="trigger-file-input" data-target="importFileInput">${escapeHtml(t('loadFromFileBtn'))}</button>
+      ${importLengthsToggleHtml('importUseLengthsSkyStudioLabel')}
       <div id="importStatus" class="status-msg"></div>
     </div>
   </div>`;
@@ -314,6 +326,7 @@ function renderAudioImportModal() {
       <div id="audioImportStep1">
         <input type="file" id="audioFileInput" accept="video/*,audio/*">
       </div>
+      ${importLengthsToggleHtml('importUseLengthsLabel')}
       <div id="audioImportStep2" style="display:none;">
         <div class="hint" style="margin-top:10px;">${escapeHtml(t('audioDetectHint'))}</div>
         <div class="bpm-row" style="margin-top:8px;">
@@ -348,6 +361,7 @@ function renderImageImportModal() {
       <div id="imageImportStep1">
         <input type="file" id="imageFileInput" accept="image/*" multiple>
         <div id="imageImportFileList" class="hint" style="margin-top:8px;"></div>
+        ${importLengthsToggleHtml('importUseLengthsLabel')}
         <button type="button" class="action-btn primary" data-act="start-image-analysis">${escapeHtml(t('startImageAnalysisBtn'))}</button>
       </div>
       <div id="imageImportStep2" style="display:none;">
@@ -370,10 +384,7 @@ function renderMidiImportModal() {
       </div>
       <div class="hint">${escapeHtml(t('midiImportHint'))}</div>
       <!-- 端末によっては.midの種類（MIME）が分からず選べなくなるため、選べる種類は絞らない（中身の先頭で判定する） -->
-      <label class="metronome-row midi-lengths-row">
-        <input type="checkbox" id="midiUseLengthsToggle">
-        <span>${escapeHtml(t('midiUseLengthsLabel'))}</span>
-      </label>
+      ${importLengthsToggleHtml('importUseLengthsLabel')}
       <input type="file" id="midiFileInput">
       <div id="midiImportParts" class="midi-parts" style="display:none;">
         <div class="hint midi-parts-hint">${escapeHtml(t('midiPartsHint'))}</div>
@@ -1020,7 +1031,8 @@ async function startAudioAnalysis() {
     name: (RT.audioImportFile && RT.audioImportFile.name) ? RT.audioImportFile.name.replace(/\.[^.]+$/, '') : t('audioDefaultSongName'),
     bpm: result.bpm, pitch, instrument: 'Harp', frames: result.frames, updatedAt: Date.now(),
   };
-  finishImport(song, statusEl, t('autoAnalysisNote'), 'audioImportModal');
+  if (result.frameLengths) song.frameLengths = result.frameLengths;
+  finishImport(song, statusEl, t('autoAnalysisNote') + packedNote(result.packedFrom, song.frames.length), 'audioImportModal');
 }
 
 /* ================================================================
@@ -1089,7 +1101,8 @@ async function startImageAnalysis() {
     name: (result.firstFileName || t('imageDefaultSongName')).replace(/\.[^.]+$/, ''),
     bpm: result.bpm, pitch: 'C', instrument: 'Harp', frames: result.frames, updatedAt: Date.now(),
   };
-  finishImport(song, statusEl, t('imageAutoAnalysisNote'), 'imageImportModal');
+  if (result.frameLengths) song.frameLengths = result.frameLengths;
+  finishImport(song, statusEl, t('imageAutoAnalysisNote') + packedNote(result.packedFrom, song.frames.length), 'imageImportModal');
 }
 
 /* ================================================================
@@ -1106,7 +1119,6 @@ function resetMidiParts() {
 }
 function openMidiImportModal() {
   document.getElementById('midiFileInput').value = '';
-  document.getElementById('midiUseLengthsToggle').checked = S.midiUseLengthsEnabled();
   resetMidiParts();
   const statusEl = document.getElementById('midiImportStatus');
   statusEl.textContent = '';
@@ -1117,11 +1129,15 @@ function midiFail(statusEl, e) {
   statusEl.className = 'status-msg err';
   statusEl.textContent = t(e && e.midiUserMessage ? e.midiUserMessage : 'midiParseFailed');
 }
+// 「◯マスを◯マスに詰めました」の一言（詰めていない・減っていない時は何も出さない）
+function packedNote(from, to) {
+  return from && from > to ? t('midiPackedNote', { from, to }) : '';
+}
 function midiFinish(midi, fileName, partIds, statusEl) {
-  const useLengths = S.midiUseLengthsEnabled();
+  const useLengths = S.importUseLengthsEnabled();
   const { song, tempoAdjusted, packedFrom } = MidiImport.buildSongFromMidi(midi, fileName, t, partIds, { useLengths });
   const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '')
-    + (packedFrom && packedFrom > song.frames.length ? t('midiPackedNote', { from: packedFrom, to: song.frames.length }) : '');
+    + packedNote(packedFrom, song.frames.length);
   finishImport(song, statusEl, note, 'midiImportModal');
 }
 async function onMidiFileSelected(event) {
@@ -1205,7 +1221,11 @@ function wireStaticEvents() {
   $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value));
   $('frameBpmOverrideToggle').addEventListener('change', e => E.onFrameBpmOverrideToggle(e.target.checked));
   $('autoAdvanceToggle').addEventListener('change', e => E.setAutoAdvance(e.target.checked));
-  $('midiUseLengthsToggle').addEventListener('change', e => S.setMidiUseLengthsEnabled(e.target.checked));
+  RT.containerEl.querySelectorAll('.import-lengths-toggle').forEach(el => el.addEventListener('change', e => {
+    S.setImportUseLengthsEnabled(e.target.checked);
+    syncImportLengthsToggles();
+  }));
+  syncImportLengthsToggles();
   $('frameBpmOverrideValue').addEventListener('change', e => E.onFrameBpmOverrideValueChange(e.target.value));
   $('metronomeToggle').addEventListener('change', e => S.setMetronomeEnabled(e.target.checked));
   $('loopRangeToggle').addEventListener('change', e => {
