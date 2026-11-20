@@ -833,6 +833,15 @@
   .tai-score-view .edit-nav-btn { padding: 0 10px; }
 }
 
+/* なぞって範囲を選ぶ時に、長押しで文字の選択や画像のメニューが出ないようにする */
+.tai-score-view .frame-strip { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.tai-score-view .frame-strip.drag-selecting { cursor: crosshair; }
+.tai-score-view .frame-strip.drag-selecting .frame-box { transition: none; }
+.tai-score-view .frame-strip.drag-selecting .frame-box.in-sel { animation: tsSelPop 140ms ease-out; }
+@keyframes tsSelPop { from { transform: scale(0.96); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .tai-score-view .frame-strip.drag-selecting .frame-box.in-sel { animation: none; }
+}
 /* 範囲選択中のマス・4マスごとの区切り（番号の色を濃くする） */
 .tai-score-view .frame-box.in-sel { box-shadow: 0 0 0 2.5px var(--pink-btn); }
 .tai-score-view .frame-box.in-sel:not(.selected) { background: var(--pink-bg, rgba(255,45,85,0.10)); }

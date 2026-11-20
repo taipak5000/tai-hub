@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.20',
+    title: { ja: '楽譜づくりで、譜面をなぞって範囲を選べるように', en: 'Sheet Music Maker: drag across the sheet to select tiles' },
+    date: '2026-11-20',
+    items: [
+      { type: 'improve', ja: '楽譜づくりの作曲画面で、譜面のマスをなぞって範囲を選べるようにしました。スマホではマスを少し長押ししてから指を動かします（そのまま動かすと今までどおりスクロールします）。パソコンではマウスを押したまま別のマスへ動かします。譜面の端までなぞると、その先へ自動でスクロールします。選んだ範囲は、そのままコピー・音を消す・削除・長さの変更に使えます。', en: 'Sheet Music Maker: drag across tiles to select a range. On phones, press and hold a tile briefly, then drag (a plain swipe still scrolls). With a mouse, press and drag to another tile. The sheet scrolls automatically when you reach its edge. Use the selection to copy, clear, delete or change the length.', route: 'tai-score' },
+    ],
+  },
+  {
     version: '2026.11.18.3',
     title: { ja: '楽譜づくりでマスごとの長さを決められるように、作曲を書きやすく、創作物の期限のお知らせ', en: 'Per-tile length and easier composing in Sheet Music Maker, notices for expiring creations' },
     date: '2026-11-18',

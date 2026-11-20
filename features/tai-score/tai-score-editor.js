@@ -412,6 +412,158 @@ function clearSelection() {
   return true;
 }
 
+/* ================================================================
+   譜面を指（マウス）でなぞって範囲を選ぶ
+   - マウス・ペン: 押したまま別のマスへ動かすと、すぐ範囲選択になる。
+   - タッチ: 普通に動かすと譜面のスクロール。マスを少し長押し（300ms）してから
+     なぞると範囲選択になる（スクロールと区別するため）。
+   - なぞっている間に譜面の端へ近づくと、その方向へ自動でスクロールする。
+   - 描き直しは選択の印（クラス）だけにして、数千マスでも指に遅れずに付いてくる。
+   ================================================================ */
+const LONG_PRESS_MS = 300;
+const MOVE_TOLERANCE = 8;   // 長押しの判定中に、これ以上動いたらスクロールとみなす
+const EDGE_ZONE = 36;       // 譜面の端からこの距離に入ったら自動スクロール
+let drag = null;            // { pointerId, type, anchor, focus, startX, startY, x, y, active, timer, raf }
+let suppressClickUntil = 0; // なぞり終わり直後の click だけを無視する（時刻で判定。次に押した時まで持ち越さない）
+
+function frameIndexAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  const box = el && el.closest && el.closest('#frameStrip .frame-box');
+  if (box) return parseInt(box.dataset.frame, 10);
+  return null;
+}
+// 選択の印だけを付け直す（全体の描き直しはしない）
+function paintDragSelection() {
+  const strip = document.getElementById('frameStrip');
+  if (!strip || !drag) return;
+  const a = Math.min(drag.anchor, drag.focus), b = Math.max(drag.anchor, drag.focus);
+  strip.querySelectorAll('.frame-box.in-sel').forEach(el => {
+    const fi = parseInt(el.dataset.frame, 10);
+    if (fi < a || fi > b) el.classList.remove('in-sel');
+  });
+  for (let i = a; i <= b; i++) document.getElementById('frameBox_' + i)?.classList.add('in-sel');
+  strip.querySelector('.frame-box.selected')?.classList.remove('selected');
+  document.getElementById('frameBox_' + drag.focus)?.classList.add('selected');
+  RT.selection = { anchor: drag.anchor, focus: drag.focus };
+  RT.selectedFrameIndex = drag.focus;
+  updateEditPos();
+}
+function updateDragFocus() {
+  if (!drag || !drag.active) return;
+  const fi = frameIndexAt(drag.x, drag.y);
+  if (fi === null || fi === drag.focus) return;
+  drag.focus = fi;
+  paintDragSelection();
+}
+function beginDragSelect() {
+  if (!drag || drag.active) return;
+  drag.active = true;
+  try { document.getElementById('frameStrip')?.setPointerCapture(drag.pointerId); } catch (e) { /* 指が離れた後 */ }
+  drag.activeX = drag.x; drag.activeY = drag.y;
+  drag.moved = false;
+  cancelAutoAdvance();
+  // 範囲選択モード中に始めたなら、モードの起点を引き継ぐ（なぞって決めた範囲がそのまま残る）
+  if (RT.rangeMode && RT.selection) drag.anchor = RT.selection.anchor;
+  document.getElementById('frameStrip')?.classList.add('drag-selecting');
+  if (navigator.vibrate) { try { navigator.vibrate(8); } catch (e) { /* 対応していない端末 */ } }
+  paintDragSelection();
+  autoScrollLoop();
+}
+function autoScrollLoop() {
+  if (!drag || !drag.active) return;
+  const strip = document.getElementById('frameStrip');
+  // 長押ししただけ（まだ動かしていない）なら、端の近くでもスクロールしない
+  if (!drag.moved && Math.hypot(drag.x - drag.activeX, drag.y - drag.activeY) > 10) drag.moved = true;
+  if (strip && drag.moved) {
+    const r = strip.getBoundingClientRect();
+    const speed = d => Math.min(18, Math.max(0, (EDGE_ZONE - d) / EDGE_ZONE * 18));
+    let dx = 0, dy = 0;
+    if (strip.scrollHeight > strip.clientHeight) {
+      if (drag.y < r.top + EDGE_ZONE) dy = -speed(drag.y - r.top);
+      else if (drag.y > r.bottom - EDGE_ZONE) dy = speed(r.bottom - drag.y);
+    }
+    if (strip.scrollWidth > strip.clientWidth) {
+      if (drag.x < r.left + EDGE_ZONE) dx = -speed(drag.x - r.left);
+      else if (drag.x > r.right - EDGE_ZONE) dx = speed(r.right - drag.x);
+    }
+    if (dx || dy) {
+      strip.scrollBy(dx, dy);
+      // 指の位置が譜面の外でも、譜面の中の一番近い点でマスを探す
+      const cx = Math.min(r.right - 4, Math.max(r.left + 4, drag.x));
+      const cy = Math.min(r.bottom - 4, Math.max(r.top + 4, drag.y));
+      const fi = frameIndexAt(cx, cy);
+      if (fi !== null && fi !== drag.focus) { drag.focus = fi; paintDragSelection(); }
+    }
+  }
+  drag.raf = requestAnimationFrame(autoScrollLoop);
+}
+function endDrag(commit) {
+  if (!drag) return;
+  clearTimeout(drag.timer);
+  cancelAnimationFrame(drag.raf);
+  const wasActive = drag.active;
+  const strip = document.getElementById('frameStrip');
+  strip?.classList.remove('drag-selecting');
+  try { strip?.releasePointerCapture(drag.pointerId); } catch (e) { /* 捕まえていない */ }
+  drag = null;
+  if (!wasActive) return;
+  suppressClickUntil = performance.now() + 300; // なぞり終わりの click で選択が消えないように
+  if (!commit || !RT.selection) return;
+  // 1マスだけなぞって戻ってきた時は、範囲ではなく普通の選択にする
+  if (RT.selection.anchor === RT.selection.focus && !RT.rangeMode) {
+    const fi = RT.selection.focus;
+    RT.selection = null;
+    selectFrame(fi, { rerender: true });
+    return;
+  }
+  renderFrameStrip();
+  renderBigGrid();
+  if (RT.selection) showToast(t('dragSelectedToast', { count: editRange().end - editRange().start + 1 }));
+}
+export function consumeFrameClickAfterDrag() {
+  if (performance.now() > suppressClickUntil) return false;
+  suppressClickUntil = 0;
+  return true;
+}
+export function wireFrameStripDrag() {
+  const strip = document.getElementById('frameStrip');
+  if (!strip || strip.dataset.dragWired) return;
+  strip.dataset.dragWired = '1';
+  strip.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || drag) return;
+    if (e.target.closest('button')) return; // マスの×・＋、末尾の＋はそのまま押せるように
+    const box = e.target.closest('.frame-box');
+    if (!box || !RT.currentSong) return;
+    const fi = parseInt(box.dataset.frame, 10);
+    drag = { pointerId: e.pointerId, type: e.pointerType, anchor: fi, focus: fi, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, active: false, timer: null, raf: 0 };
+    // 指（ポインター）を捕まえるのは範囲選択が始まってから。先に捕まえると、普通に押した時の click が
+    // マスではなく譜面全体に届き、マスを選べなくなる
+    if (e.pointerType === 'touch') drag.timer = setTimeout(beginDragSelect, LONG_PRESS_MS);
+  });
+  strip.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    drag.x = e.clientX; drag.y = e.clientY;
+    if (!drag.active) {
+      if (drag.type === 'touch') {
+        // 長押しが決まる前に動いたらスクロール。範囲選択はやめる
+        if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) > MOVE_TOLERANCE) endDrag(false);
+        return;
+      }
+      // マウス・ペンは、別のマスへ入った時点で範囲選択を始める
+      const fi = frameIndexAt(e.clientX, e.clientY);
+      if (fi === null || fi === drag.anchor) return;
+      beginDragSelect();
+    }
+    updateDragFocus();
+  });
+  strip.addEventListener('pointerup', e => { if (drag && e.pointerId === drag.pointerId) endDrag(true); });
+  strip.addEventListener('pointercancel', e => { if (drag && e.pointerId === drag.pointerId) endDrag(drag.active); });
+  // 範囲選択に入った後は、指の動きで譜面がスクロールしないようにする（タッチは touchmove を止める）
+  strip.addEventListener('touchmove', e => { if (drag && drag.active) e.preventDefault(); }, { passive: false });
+  // 長押しで出るメニュー（画像の保存など）を止める
+  strip.addEventListener('contextmenu', e => { if (drag) e.preventDefault(); });
+}
+
 // 譜面のマスを押した時。範囲選択モード中かShiftを押しながらなら、範囲を広げる
 export function onFrameClick(fi, shift) {
   if (RT.rangeMode || shift) {

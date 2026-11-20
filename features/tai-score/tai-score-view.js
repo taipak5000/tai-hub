@@ -1219,6 +1219,7 @@ const COMPOSE_TOOLS_TARGETS = {
 
 function wireDelegatedEvents() {
   RT.containerEl.addEventListener('click', onContainerClick);
+  E.wireFrameStripDrag();
 }
 // モーダルの背景（.modal-overlay自身。中の.modal-cardではない）をクリックしたら閉じる
 // （移植元の each `onclick="if(event.target===this)closeXxx()"` に相当）。
@@ -1293,7 +1294,7 @@ function onContainerClick(e) {
     case 'set-timeline-view': E.setTimelineView(el.dataset.view); break;
     case 'set-input-mode': E.setInputMode(el.dataset.mode); break;
     case 'toggle-note': E.toggleNote(parseInt(el.dataset.note, 10)); break;
-    case 'select-frame': E.onFrameClick(parseInt(el.dataset.frame, 10), e.shiftKey); break;
+    case 'select-frame': if (!E.consumeFrameClickAfterDrag()) E.onFrameClick(parseInt(el.dataset.frame, 10), e.shiftKey); break;
     case 'delete-frame': e.stopPropagation(); E.deleteFrame(parseInt(el.dataset.frame, 10)); break;
     case 'insert-frame-after': e.stopPropagation(); E.insertBlankFrameAfter(parseInt(el.dataset.frame, 10)); break;
     case 'add-frame': E.addFrame(); break;
