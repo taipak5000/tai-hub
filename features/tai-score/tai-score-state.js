@@ -41,7 +41,9 @@ export const LOOP_RANGE_KEY = () => nsKey('taiScoreLoopRangeEnabled_v1');
    曲データの保存（localStorage）
    1曲 = { id, name, bpm, pitch, instrument, frames: [[noteIndex,...], ...],
            bpmOverrides?: { [フレーム番号]: BPM },
-           frameLengths?: { [フレーム番号]: 拍数（FRAME_LENGTHSのどれか。書いていないマスは1拍） }, updatedAt,
+           frameLengths?: { [フレーム番号]: 拍数（FRAME_LENGTHSのどれか。書いていないマスは1拍） },
+           sections?: [{ frame: 0始まりのマス番号, label: 20字まで }]（セクションの目印。frame昇順・最大50件・同じframeは1件。
+             無い曲は空として扱い、書き足さない。共有コード・ファイルには含めない）, updatedAt,
            practiceRangeStart?, practiceRangeEnd?: 練習・試験の範囲（1始まりのマス番号、
              未指定なら曲全体）、loopRangeEnabled?: その範囲をループ再生するか、
            lastPracticeResult?: { at }、lastTestResult?: { at, mistakes } }
@@ -313,6 +315,7 @@ export function insertClipAt(song, at, clip) {
   const copied = clip.frames.map(f => f.slice());
   song.frames.splice(at, 0, ...copied);
   shiftBpmOverridesForInsert(song, at, copied.length);
+  shiftSectionsForInsert(song, at, copied.length);
   Object.keys(clip.bpmOverrides || {}).forEach(k => {
     if (!song.bpmOverrides) song.bpmOverrides = {};
     song.bpmOverrides[at + parseInt(k, 10)] = clip.bpmOverrides[k];
@@ -336,6 +339,66 @@ export function overwriteClipAt(song, at, clip) {
     if (len !== undefined) setFrameLength(song, i, len);
   }
   return n;
+}
+
+/* ================================================================
+   セクションの目印（sections）。長い曲で「ここからサビ」のように場所に名前を付ける。
+   マスの挿入・削除に合わせて frame をずらす（bpmOverrides・frameLengths をずらす関数とは別に、
+   マスを増減する全部の経路から呼ぶ）。削除したマスに付いていた目印は一緒に消える。
+   ================================================================ */
+export const SECTION_LABEL_MAX = 20;
+export const SECTIONS_MAX = 50;
+// 表示・編集用に、正しい形の目印だけを frame 昇順で返す（曲データ自体は書き換えない）
+export function getSections(song) {
+  if (!song || !Array.isArray(song.sections)) return [];
+  const seen = new Set();
+  return song.sections
+    .filter(sec => sec && Number.isInteger(sec.frame) && sec.frame >= 0 && sec.frame < song.frames.length && typeof sec.label === 'string')
+    .sort((a, b) => a.frame - b.frame)
+    .filter(sec => (seen.has(sec.frame) ? false : (seen.add(sec.frame), true)));
+}
+function writeSections(song, list) {
+  if (list.length) song.sections = list.map(sec => ({ frame: sec.frame, label: sec.label }));
+  else delete song.sections;
+}
+// frame に目印を付ける（同じマスにあれば名前を差し替える）。戻り値: 'added' | 'renamed' | 'full' | 'empty'
+export function setSection(song, frame, label) {
+  const text = String(label || '').trim().slice(0, SECTION_LABEL_MAX);
+  if (!text) return 'empty';
+  const list = getSections(song);
+  const hit = list.find(sec => sec.frame === frame);
+  if (hit) { hit.label = text; writeSections(song, list); return 'renamed'; }
+  if (list.length >= SECTIONS_MAX) return 'full';
+  list.push({ frame, label: text });
+  list.sort((a, b) => a.frame - b.frame);
+  writeSections(song, list);
+  return 'added';
+}
+export function removeSection(song, frame) {
+  writeSections(song, getSections(song).filter(sec => sec.frame !== frame));
+}
+// at番目にcount個のマスを挿入した時、それ以降の目印を後ろへずらす
+export function shiftSectionsForInsert(song, at, count) {
+  if (!song || !Array.isArray(song.sections) || count <= 0) return;
+  song.sections = song.sections.map(sec => (sec && sec.frame >= at ? Object.assign({}, sec, { frame: sec.frame + count }) : sec));
+}
+// fi番目のマスを削除した時、そのマスの目印は消し、後ろの目印を1つずつ詰める
+export function shiftSectionsForDelete(song, fi) {
+  if (!song || !Array.isArray(song.sections)) return;
+  const next = song.sections.filter(sec => !(sec && sec.frame === fi)).map(sec => (sec && sec.frame > fi ? Object.assign({}, sec, { frame: sec.frame - 1 }) : sec));
+  if (next.length) song.sections = next; else delete song.sections;
+}
+// 指定のマスが入っているセクション（そのマス以前で一番近い目印）。無ければ null
+export function sectionAt(song, fi) {
+  let cur = null;
+  getSections(song).forEach(sec => { if (sec.frame <= fi) cur = sec; });
+  return cur;
+}
+
+/* ── 演奏時間の表示（譜面ビューと作曲画面で同じ書き方にする） ── */
+export function formatDuration(sec) {
+  const total = Math.max(0, Math.round(sec));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
 /* ── 作曲画面の細かな選択（貼り付け方・ずらし方・繰り返しの元）。曲データにも既存のキーにも混ぜず、専用のキーに置く ── */
@@ -834,5 +897,6 @@ export function stripPersonalPracticeData(song) {
   delete copy.loopRangeEnabled;
   delete copy.lastPracticeResult;
   delete copy.lastTestResult;
+  delete copy.sections; // セクションの目印は自分の作業用。共有の形は変えない
   return copy;
 }

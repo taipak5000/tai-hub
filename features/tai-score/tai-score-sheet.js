@@ -68,17 +68,21 @@ function cellHtml(frame, fi) {
   const on = frame.map(i => `<i class="sheet-n${(i % 5) % 2 === 1 ? ' dia' : ''}" style="grid-area:${Math.floor(i / 5) + 1}/${(i % 5) + 1}"></i>`).join('');
   const bpmOv = S.frameBpmOverride(song, fi);
   const len = S.frameLength(song, fi);
+  const secLabel = sectionLabels && sectionLabels.get(fi);
   return `<button type="button" class="sheet-cell${frame.length ? '' : ' rest'}${fi % 4 === 0 ? ' beat' : ''}${fi === selected ? ' selected' : ''}" id="sheetCell_${fi}" data-act="sheet-cell" data-frame="${fi}"
     aria-label="${escapeHtml(t('sheetCellAria', { n: fi + 1, notes: frameLabel(frame) }))}">`
     + `${fi % 4 === 0 ? `<span class="sheet-idx">${fi + 1}</span>` : ''}`
+    + `${secLabel ? `<span class="sheet-sec">${escapeHtml(secLabel)}</span>` : ''}`
     + `${bpmOv !== null ? `<span class="sheet-bpm">♩${bpmOv}</span>` : ''}`
     + `${len !== 1 ? `<span class="sheet-len">${escapeHtml(t('frameLenUnit', { len: S.lengthLabel(len) }))}</span>` : ''}`
     + `<span class="sheet-dots">${on}</span></button>`;
 }
 
+let sectionLabels = null; // マス番号→セクションの目印の名前（renderBody のたびに作る）
 function renderBody() {
   const body = $('sheetBody');
   if (!body || !song) return;
+  sectionLabels = new Map(S.getSections(song).map(sec => [sec.frame, sec.label]));
   const { size, collapse } = loadPrefs();
   body.className = 'sheet-body size-' + size;
   fitColumns();
@@ -89,8 +93,8 @@ function renderBody() {
     if (collapse && !frame.length && fi !== selected) {
       // 続いた休みを1枚の札にまとめる（選んでいるマスと、テンポが変わるマスはまとめない）
       let end = fi;
-      while (end + 1 < frames.length && !(frames[end + 1] || []).length && end + 1 !== selected && S.frameBpmOverride(song, end + 1) === null && S.frameLength(song, end + 1) === 1) end++;
-      if (end > fi && S.frameBpmOverride(song, fi) === null && S.frameLength(song, fi) === 1) {
+      while (end + 1 < frames.length && !(frames[end + 1] || []).length && end + 1 !== selected && S.frameBpmOverride(song, end + 1) === null && S.frameLength(song, end + 1) === 1 && !sectionLabels.has(end + 1)) end++;
+      if (end > fi && S.frameBpmOverride(song, fi) === null && S.frameLength(song, fi) === 1 && !sectionLabels.has(fi)) {
         html += `<span class="sheet-rest-run" id="sheetCell_${fi}" data-from="${fi}" data-to="${end}" title="${escapeHtml(t('sheetRestRunTitle', { from: fi + 1, to: end + 1 }))}">${escapeHtml(t('sheetRestRun', { n: end - fi + 1 }))}</span>`;
         fi = end;
         continue;
@@ -121,9 +125,8 @@ function renderHeader() {
   $('sheetTitle').textContent = song.name || t('untitledSong');
   const notes = S.songNoteCount(song);
   // 1マスの長さ（BPMはマスの速さ）から、だいたいの演奏時間を出す（テンポ変化も足し込む）
-  const sec = S.songDurationSec(song); // マスの長さとテンポ変化も足し込む
-  const mm = Math.floor(sec / 60), ss = String(Math.round(sec % 60)).padStart(2, '0');
-  $('sheetMeta').textContent = t('sheetMeta', { frames: song.frames.length, notes, bpm: song.bpm, time: `${mm}:${ss}` });
+  // マスの長さとテンポ変化も足し込む（作曲画面の表示と同じ書き方）
+  $('sheetMeta').textContent = t('sheetMeta', { frames: song.frames.length, notes, bpm: song.bpm, time: S.formatDuration(S.songDurationSec(song)) });
 }
 
 export function open(targetSong, startFrame, editHandler) {

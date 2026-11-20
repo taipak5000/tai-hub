@@ -345,6 +345,7 @@ export function renderFrameStrip() {
   strip.innerHTML = (view === 'column' ? frameColumnGutterHtml() : '')
     + song.frames.map((_, fi) => frameBoxHtml(song, fi, view)).join('')
     + `<button type="button" class="add-frame-btn" data-act="add-frame" title="${escapeHtml(t('addFrameTitle'))}" aria-label="${escapeHtml(t('addFrameTitle'))}">＋</button>`;
+  renderSectionChips();
   updateEditPos();
 }
 // 1マスだけ描き直す（音を1つ押すたびに数千マスを描き直さないため）。無ければ全体を描き直す
@@ -378,6 +379,111 @@ function updateEditPos() {
   }
   const nextLabel = document.getElementById('editNextLabel');
   if (nextLabel) nextLabel.textContent = RT.selectedFrameIndex >= song.frames.length - 1 ? t('addFrameShort') : t('nextFrameShort');
+  // 演奏時間: 全体と、今のマスが曲の頭から何分何秒の所か（譜面ビューと同じ songDurationSec・frameDurationMs の合計）
+  const timeEl = document.getElementById('editTime');
+  if (timeEl) {
+    const cum = timingTable();
+    timeEl.textContent = t('editTime', { now: S.formatDuration(cum[Math.min(RT.selectedFrameIndex, cum.length - 1)] / 1000), total: S.formatDuration(S.songDurationSec(song)) });
+  }
+  const cur = S.sectionAt(song, RT.selectedFrameIndex);
+  document.querySelectorAll('#sectionChips .section-chip').forEach(chip => chip.classList.toggle('active', !!cur && parseInt(chip.dataset.frame, 10) === cur.frame));
+}
+// 各マスが始まる時刻（ms）の表。保存のたびに作り直し、選ぶマスを変えるだけなら作り直さない（数千マスでも軽くするため）
+function timingTable() {
+  const song = RT.currentSong;
+  const key = song.id + ':' + (RT.songVersion || 0) + ':' + song.frames.length + ':' + song.bpm;
+  if (RT.timingCache && RT.timingCache.key === key) return RT.timingCache.cum;
+  const cum = new Float64Array(song.frames.length + 1);
+  for (let i = 0; i < song.frames.length; i++) cum[i + 1] = cum[i] + S.frameDurationMs(song, i);
+  RT.timingCache = { key, cum };
+  return cum;
+}
+
+/* ── セクションの目印（タイムライン上のチップ帯・作曲ツールの一覧） ── */
+export function renderSectionChips() {
+  const song = RT.currentSong;
+  const wrap = document.getElementById('sectionChips');
+  if (!song || !wrap) return;
+  const list = S.getSections(song);
+  wrap.hidden = list.length === 0;
+  wrap.innerHTML = list.map(sec => `<button type="button" class="section-chip" data-act="jump-section" data-frame="${sec.frame}" title="${escapeHtml(t('sectionChipTitle', { n: sec.frame + 1 }))}"><span class="section-chip-n">${sec.frame + 1}</span>${escapeHtml(sec.label)}</button>`).join('');
+}
+export function renderSectionList() {
+  const song = RT.currentSong;
+  if (!song) return;
+  const here = document.getElementById('sectionAddHere');
+  if (here) here.textContent = t('sectionAddHere', { n: RT.selectedFrameIndex + 1 });
+  const listEl = document.getElementById('sectionList');
+  if (!listEl) return;
+  const list = S.getSections(song);
+  listEl.innerHTML = list.length ? list.map(sec => `
+    <li class="section-row">
+      <span class="section-row-n">${sec.frame + 1}</span>
+      <span class="section-row-label">${escapeHtml(sec.label)}</span>
+      <button type="button" class="mini-btn" data-act="jump-section" data-frame="${sec.frame}" data-close="1">${escapeHtml(t('sectionJumpBtn'))}</button>
+      <button type="button" class="mini-btn danger-text" data-act="remove-section" data-frame="${sec.frame}" aria-label="${escapeHtml(t('sectionRemoveAria', { label: sec.label }))}">${escapeHtml(t('sectionRemoveBtn'))}</button>
+    </li>`).join('') : `<li class="section-empty">${escapeHtml(t('sectionEmpty'))}</li>`;
+}
+export function addSectionHere(label) {
+  const song = RT.currentSong;
+  if (!song) return false;
+  const text = String(label || '').trim();
+  if (!text) { showToast(t('sectionNeedLabel')); return false; }
+  const fi = RT.selectedFrameIndex;
+  const trial = JSON.parse(JSON.stringify({ frames: song.frames.map(() => 0), sections: song.sections }));
+  if (S.setSection(trial, fi, text) === 'full') { showToast(t('sectionFullToast', { max: S.SECTIONS_MAX })); return false; }
+  pushEditHistory();
+  const res = S.setSection(song, fi, text);
+  persistCurrentSong();
+  renderSectionChips();
+  renderSectionList();
+  updateEditPos();
+  showToast(t(res === 'renamed' ? 'sectionRenamedToast' : 'sectionAddedToast', { n: fi + 1, label: text.slice(0, S.SECTION_LABEL_MAX) }));
+  return true;
+}
+export function removeSectionAt(frame) {
+  const song = RT.currentSong;
+  if (!song) return;
+  pushEditHistory();
+  S.removeSection(song, frame);
+  persistCurrentSong();
+  renderSectionChips();
+  renderSectionList();
+  updateEditPos();
+}
+// マス番号（1始まり）を入れて移動する。範囲外は端に寄せる
+export function jumpToFrameNumber(raw) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n)) return;
+  jumpToFrame(Math.max(0, Math.min(song.frames.length - 1, n - 1)), false);
+}
+
+/* ── 空のマスをまとめて足す（履歴は1回。目印・長さ・テンポ変化の表も一度にずらす） ── */
+export function insertBlankFrames(rawCount, where) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const n = Math.max(1, Math.min(100, parseInt(rawCount, 10) || 1));
+  if (song.frames.length + n > MAX_FRAMES_BY_EDIT) { showToast(t('tooManyFramesToast', { max: MAX_FRAMES_BY_EDIT })); return; }
+  cancelAutoAdvance();
+  pushEditHistory();
+  const atEnd = where === 'end';
+  const at = atEnd ? song.frames.length : editRange().end + 1;
+  // 1つずつ足す時と同じく、元のマス（末尾なら最後のマス）の長さを引き継ぐ
+  const len = S.frameLength(song, atEnd ? song.frames.length - 1 : at - 1);
+  song.frames.splice(at, 0, ...Array.from({ length: n }, () => []));
+  if (!atEnd) { S.shiftBpmOverridesForInsert(song, at, n); S.shiftSectionsForInsert(song, at, n); }
+  for (let i = at; i < at + n; i++) S.setFrameLength(song, i, len);
+  clearSelection();
+  RT.selectedFrameIndex = at;
+  persistCurrentSong();
+  renderFrameStrip();
+  renderBigGrid();
+  revealSelectedFrame();
+  updatePracticeRangeBounds(false);
+  renderRangeTools();
+  showToast(t(atEnd ? 'blankAppendedToast' : 'blankInsertedToast', { count: n }));
 }
 
 // 選択範囲（範囲選択モード・Shift+クリック・Shift+矢印）。無ければ今のマス1つ
@@ -664,6 +770,7 @@ function snapshotCurrentSong() {
     frames: JSON.parse(JSON.stringify(RT.currentSong.frames)),
     bpmOverrides: JSON.parse(JSON.stringify(RT.currentSong.bpmOverrides || {})),
     frameLengths: JSON.parse(JSON.stringify(RT.currentSong.frameLengths || {})),
+    sections: JSON.parse(JSON.stringify(RT.currentSong.sections || [])),
     selectedFrameIndex: RT.selectedFrameIndex,
     // 曲全体のBPM・調・楽器も元に戻せるようにする（曲名は対象外）
     bpm: RT.currentSong.bpm,
@@ -678,6 +785,7 @@ function applySnapshot(snap) {
   if (snap.bpmOverrides && Object.keys(snap.bpmOverrides).length) song.bpmOverrides = snap.bpmOverrides;
   else delete song.bpmOverrides;
   restoreFrameLengths(snap.frameLengths);
+  if (Array.isArray(snap.sections)) { if (snap.sections.length) song.sections = snap.sections; else delete song.sections; }
   if (typeof snap.bpm === 'number') song.bpm = snap.bpm;
   if (typeof snap.pitch === 'string') song.pitch = snap.pitch;
   if (typeof snap.instrument === 'string') song.instrument = snap.instrument;
@@ -786,6 +894,7 @@ export function deleteFrame(fi) {
   clearSelection();
   RT.currentSong.frames.splice(fi, 1);
   S.shiftBpmOverridesForDelete(RT.currentSong, fi);
+  S.shiftSectionsForDelete(RT.currentSong, fi);
   if (fi < RT.selectedFrameIndex) RT.selectedFrameIndex--;
   if (RT.selectedFrameIndex >= RT.currentSong.frames.length) RT.selectedFrameIndex = RT.currentSong.frames.length - 1;
   persistCurrentSong();
@@ -803,6 +912,7 @@ export function deleteFrameRange(range = editRange()) {
   for (let i = 0; i < count; i++) {
     song.frames.splice(range.start, 1);
     S.shiftBpmOverridesForDelete(song, range.start);
+    S.shiftSectionsForDelete(song, range.start);
   }
   if (RT.selectedFrameIndex > range.end) RT.selectedFrameIndex -= count;
   else if (RT.selectedFrameIndex >= range.start) RT.selectedFrameIndex = range.start;
@@ -838,6 +948,7 @@ export function insertBlankFrameAfter(fi) {
   cancelAutoAdvance();
   song.frames.splice(at, 0, []);
   S.shiftBpmOverridesForInsert(song, at, 1);
+  S.shiftSectionsForInsert(song, at, 1);
   S.setFrameLength(song, at, S.frameLength(song, fi));
   clearSelection();
   RT.selectedFrameIndex = at;
@@ -948,6 +1059,7 @@ const MAX_FRAMES_BY_EDIT = 10000; // 編集操作で増やせる総マス数の�
 export function renderRangeTools() {
   const song = RT.currentSong;
   if (!song) return;
+  renderSectionList();
   const r = editRange();
   const target = document.getElementById('rangeToolsTarget');
   if (target) target.textContent = r.start === r.end ? t('rangeToolsTargetOne', { n: r.start + 1 }) : t('rangeToolsTargetRange', { a: r.start + 1, b: r.end + 1, count: r.end - r.start + 1 });
@@ -1190,6 +1302,7 @@ function announceNewTitles(newlyEarned) {
 export function persistCurrentSong() {
   const song = RT.currentSong;
   if (!song) return;
+  RT.songVersion = (RT.songVersion || 0) + 1; // 演奏時間の表を作り直す合図
   song.updatedAt = Date.now();
   const songs = S.loadSongs();
   const idx = songs.findIndex(s => s.id === song.id);

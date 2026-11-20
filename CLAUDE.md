@@ -195,6 +195,10 @@ const landingPoint = currentY + project(v);
   MIDI（`import/midi-import.js`）は16分音符などの格子にそろえた後`compressWithLengths()`で詰める（1拍＝4分音符。そのテンポが40〜999 BPMを外れる時は詰めない）。
   音声・楽譜画像・Sky Studioは`quantizeNoteEventsToFrames(notes, bpm, { useLengths })`→`packNoteTimesWithLengths()`で、元の時刻から直接詰める
   （1拍＝音の間隔の中央値。隣の音との間隔を¼拍に丸めて足し上げる。頭からの時刻で丸めると長い曲で誤差が積み重なる）。
+- **楽譜づくりのセクションの目印**（曲の任意項目`sections: [{frame, label}]`。frame昇順・50件まで・20字まで）: 読むのは`getSections()`（壊れた値を除いて並べる）。
+  マスの増減の経路（`deleteFrame`・`deleteFrameRange`・`insertBlankFrameAfter`・`insertBlankFrames`・`insertClipAt`）で`shiftSectionsForInsert/Delete()`を呼ぶ
+  （`shiftBpmOverridesForInsert/Delete()`には混ぜない）。マスの増減を新しく足したら、ここも呼ぶ。共有コード・書き出しには含めない（`stripPersonalPracticeData()`が消す）。
+  作曲画面の演奏時間は`timingTable()`（`persistCurrentSong()`のたびに作り直す）、書き方は`formatDuration()`で譜面ビューとそろえる。
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`）: 全ツールの称号をここに集める。各ツールの画面には`js/titles.js`の`titlesLinkHtml(ツール)`の
   小さな案内だけを出す。獲得の判定・記録は各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`（ツールに称号を足したらここにも足す）。
 - **試作中の機能**（`features/lab/`）: 今は無い。作る時はルートを`lab-*`で`hidden: true`にし、入口はデイリーチェックシート単体のページの「試作中の機能」だけにする。

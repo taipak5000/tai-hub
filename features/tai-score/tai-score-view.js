@@ -464,6 +464,13 @@ function renderComposeOverlay() {
         </div>
       </div>
     </div>
+    <div class="compose-nav-row">
+      <div class="section-chips" id="sectionChips" role="group" aria-label="${escapeHtml(t('sectionLabel'))}" hidden></div>
+      <div class="jump-box">
+        <input type="number" id="jumpFrameInput" min="1" inputmode="numeric" placeholder="${escapeHtml(t('jumpFramePlaceholder'))}" aria-label="${escapeHtml(t('jumpFrameAria'))}">
+        <button type="button" class="mini-btn" data-act="jump-frame">${escapeHtml(t('jumpFrameBtn'))}</button>
+      </div>
+    </div>
     <div class="frame-strip compose-timeline view-tile" id="frameStrip"></div>
 
     <div class="compose-input-row compose-input-area">
@@ -505,7 +512,10 @@ function renderComposeOverlay() {
     <div class="compose-edit-bar" role="toolbar" aria-label="${escapeHtml(t('editBarLabel'))}">
       <div class="edit-bar-nav">
         <button type="button" class="edit-nav-btn" data-act="select-prev-frame" title="${escapeHtml(t('railPrevFrameTitle'))} (←)" aria-label="${escapeHtml(t('railPrevFrameTitle'))}"><svg class="inline-icon" width="18" height="18"><use href="#i-chevron-left"/></svg></button>
-        <span class="edit-pos" id="editPos" aria-live="polite"></span>
+        <span class="edit-pos-stack">
+          <span class="edit-pos" id="editPos" aria-live="polite"></span>
+          <span class="edit-time" id="editTime"></span>
+        </span>
         <label class="auto-advance-toggle" title="${escapeHtml(t('autoAdvanceTitle'))}">
           <input type="checkbox" id="autoAdvanceToggle">
           <span>${escapeHtml(t('autoAdvanceLabel'))}</span>
@@ -583,6 +593,25 @@ function renderComposeToolsModal() {
         <div class="frame-clipboard-row" style="margin-top:10px; margin-bottom:0;">
           <button type="button" class="mini-btn paste-frame-btn" data-act="paste-frame-range" disabled>${escapeHtml(t('pasteFrameRangeBtn'))}</button>
           <span class="frame-clipboard-hint" id="frameClipboardHint"></span>
+        </div>
+      </div>
+
+      <div class="compose-tools-section section-tools">
+        <p class="compose-tools-section-label">${escapeHtml(t('sectionLabel'))}</p>
+        <div class="range-tools-btns">
+          <input type="text" id="sectionLabelInput" maxlength="20" placeholder="${escapeHtml(t('sectionLabelPlaceholder'))}" aria-label="${escapeHtml(t('sectionLabelAria'))}">
+          <button type="button" class="mini-btn" data-act="add-section" id="sectionAddHere"></button>
+        </div>
+        <ul class="section-list" id="sectionList"></ul>
+      </div>
+
+      <div class="compose-tools-section">
+        <p class="compose-tools-section-label">${escapeHtml(t('blankBulkLabel'))}</p>
+        <div class="range-tools-btns">
+          <input type="number" id="blankCountInput" min="1" max="100" value="4" aria-label="${escapeHtml(t('blankCountAria'))}">
+          <span class="range-unit">${escapeHtml(t('blankCountUnit'))}</span>
+          <button type="button" class="mini-btn" data-act="insert-blank-frames" data-where="after">${escapeHtml(t('blankInsertBtn'))}</button>
+          <button type="button" class="mini-btn" data-act="insert-blank-frames" data-where="end">${escapeHtml(t('blankAppendBtn'))}</button>
         </div>
       </div>
 
@@ -1274,6 +1303,10 @@ function wireStaticEvents() {
   $('bpmNumber').addEventListener('input', e => E.onBpmChange(e.target.value, 'number'));
   $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value, null, true));
   $('shiftModeSelect').addEventListener('change', e => E.setShiftMode(e.target.value));
+  // 入力欄でEnterを押したら、その欄のボタンと同じことをする
+  // （stopPropagation: 画面全体のショートカット「Enter＝次のマスへ」まで届かないようにする）
+  $('jumpFrameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); E.jumpToFrameNumber(e.target.value); e.target.blur(); } });
+  $('sectionLabelInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); if (E.addSectionHere(e.target.value)) e.target.value = ''; } });
   RT.containerEl.querySelectorAll('input[name="repeatSource"]').forEach(el => el.addEventListener('change', e => { if (e.target.checked) E.setRepeatSource(e.target.value); }));
   $('frameBpmOverrideToggle').addEventListener('change', e => E.onFrameBpmOverrideToggle(e.target.checked));
   $('autoAdvanceToggle').addEventListener('change', e => E.setAutoAdvance(e.target.checked));
@@ -1333,6 +1366,14 @@ function onContainerClick(e) {
       openModal(el.dataset.modal);
       break;
     case 'set-paste-mode': E.setPasteMode(el.dataset.mode); break;
+    case 'jump-section':
+      if (el.dataset.close) closeModal('composeToolsModal');
+      E.jumpToFrame(parseInt(el.dataset.frame, 10), false);
+      break;
+    case 'remove-section': E.removeSectionAt(parseInt(el.dataset.frame, 10)); break;
+    case 'add-section': if (E.addSectionHere(document.getElementById('sectionLabelInput').value)) document.getElementById('sectionLabelInput').value = ''; break;
+    case 'jump-frame': E.jumpToFrameNumber(document.getElementById('jumpFrameInput').value); break;
+    case 'insert-blank-frames': E.insertBlankFrames(document.getElementById('blankCountInput').value, el.dataset.where); break;
     case 'shift-range-notes': E.shiftRangeNotes(parseInt(el.dataset.delta, 10)); break;
     case 'reverse-range': E.reverseRangeFrames(); break;
     case 'invert-range': E.invertRangeNotes(); break;
