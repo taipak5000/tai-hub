@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.20',
-    title: { ja: '楽譜づくりで、譜面をなぞって範囲を選べるように', en: 'Sheet Music Maker: drag across the sheet to select tiles' },
+    version: '2026.11.20.2',
+    title: { ja: '楽譜づくりで、譜面をなぞって範囲を選べるように、MIDIの読み込みでマスの長さを使う', en: 'Sheet Music Maker: drag to select tiles, MIDI import uses tile lengths' },
     date: '2026-11-20',
     items: [
+      { type: 'improve', ja: '楽譜づくりの「MIDIから作る」で、音と音の間隔をマスの長さで表すようにしました。これまでは16分音符ごとに空のマスを並べていたため、4分音符が続く曲でも1拍に4マス使っていました。今は4分音符を1拍にして元のテンポのまま読み込み、次の音までの長さをマスに付けます（例: 60マス→12マス）。鳴るタイミングは今までと同じです。前の作り方にしたい時は、読み込みの画面のチェックを外してください。', en: 'Sheet Music Maker: MIDI import now uses tile lengths for the gaps between notes instead of filling every 16th note with empty tiles (e.g. 60 tiles → 12), keeping the original tempo with a quarter note as one beat. Timing is unchanged. Uncheck the option in the import screen to use the old layout.', route: 'tai-score' },
       { type: 'improve', ja: '楽譜づくりの作曲画面で、譜面のマスをなぞって範囲を選べるようにしました。スマホではマスを少し長押ししてから指を動かします（そのまま動かすと今までどおりスクロールします）。パソコンではマウスを押したまま別のマスへ動かします。譜面の端までなぞると、その先へ自動でスクロールします。選んだ範囲は、そのままコピー・音を消す・削除・長さの変更に使えます。', en: 'Sheet Music Maker: drag across tiles to select a range. On phones, press and hold a tile briefly, then drag (a plain swipe still scrolls). With a mouse, press and drag to another tile. The sheet scrolls automatically when you reach its edge. Use the selection to copy, clear, delete or change the length.', route: 'tai-score' },
     ],
   },

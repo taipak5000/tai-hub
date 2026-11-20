@@ -191,6 +191,8 @@ const landingPoint = currentY + project(v);
 - **楽譜づくりのマスの長さ**（`frameLengths`＝マス番号→拍数。`FRAME_LENGTHS`のどれかで、1拍のマスは書かない）: テンポ変化（`bpmOverrides`）と同じく
   マスの挿入・削除で番号をずらす（`shiftBpmOverridesForInsert/Delete`が両方の表をずらす）。再生の待ち時間は`frameDurationMs()`、演奏時間は`songDurationSec()`を使う。
   Sky Music Nightly形式は列ごとの「テンポの変え方」（0=1・1=½・2=¼・3=¾）に対応させ、1拍より長いマスは空の列を足して書き出す。
+  MIDIの読み込み（`import/midi-import.js`）は、16分音符などの格子にそろえた後`compressWithLengths()`で次の音までの拍数をマスの長さにする（1拍＝4分音符。
+  4分音符のテンポが40〜999 BPMを外れる時と、読み込み画面のチェック`taiScoreMidiUseLengths_v1`がオフの時は、従来どおり空のマスで埋める）。
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`）: 全ツールの称号をここに集める。各ツールの画面には`js/titles.js`の`titlesLinkHtml(ツール)`の
   小さな案内だけを出す。獲得の判定・記録は各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`（ツールに称号を足したらここにも足す）。
 - **試作中の機能**（`features/lab/`）: 今は無い。作る時はルートを`lab-*`で`hidden: true`にし、入口はデイリーチェックシート単体のページの「試作中の機能」だけにする。

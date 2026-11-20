@@ -31,6 +31,7 @@ export const LIBRARY_SORT_KEY = () => nsKey('taiScoreLibrarySort_v1');
 export const INPUT_MODE_KEY = () => nsKey('taiScoreInputMode_v1');
 export const TIMELINE_VIEW_KEY = () => nsKey('taiScoreTimelineView_v1');
 export const AUTO_ADVANCE_KEY = () => nsKey('taiScoreAutoAdvance_v1');
+export const MIDI_USE_LENGTHS_KEY = () => nsKey('taiScoreMidiUseLengths_v1');
 export const FRAME_CLIPBOARD_KEY = () => nsKey('taiScoreFrameClipboard_v1');
 export const FREE_PLAY_INSTRUMENT_KEY = () => nsKey('taiScoreFreePlayInstrument_v1');
 export const METRONOME_KEY = () => nsKey('taiScoreMetronomeEnabled_v1');
@@ -194,6 +195,14 @@ export function autoAdvanceEnabled() {
 }
 export function setAutoAdvanceEnabled(on) {
   try { localStorage.setItem(AUTO_ADVANCE_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
+}
+
+/* ── MIDIの読み込みで、音の間隔をマスの長さで表すか（既定はオン。オフ＝空のマスで埋める） ── */
+export function midiUseLengthsEnabled() {
+  try { return localStorage.getItem(MIDI_USE_LENGTHS_KEY()) !== '0'; } catch (e) { return true; }
+}
+export function setMidiUseLengthsEnabled(on) {
+  try { localStorage.setItem(MIDI_USE_LENGTHS_KEY(), on ? '1' : '0'); } catch (e) { /* noop */ }
 }
 
 /* ================================================================

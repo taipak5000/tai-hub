@@ -370,6 +370,10 @@ function renderMidiImportModal() {
       </div>
       <div class="hint">${escapeHtml(t('midiImportHint'))}</div>
       <!-- 端末によっては.midの種類（MIME）が分からず選べなくなるため、選べる種類は絞らない（中身の先頭で判定する） -->
+      <label class="metronome-row midi-lengths-row">
+        <input type="checkbox" id="midiUseLengthsToggle">
+        <span>${escapeHtml(t('midiUseLengthsLabel'))}</span>
+      </label>
       <input type="file" id="midiFileInput">
       <div id="midiImportParts" class="midi-parts" style="display:none;">
         <div class="hint midi-parts-hint">${escapeHtml(t('midiPartsHint'))}</div>
@@ -1102,6 +1106,7 @@ function resetMidiParts() {
 }
 function openMidiImportModal() {
   document.getElementById('midiFileInput').value = '';
+  document.getElementById('midiUseLengthsToggle').checked = S.midiUseLengthsEnabled();
   resetMidiParts();
   const statusEl = document.getElementById('midiImportStatus');
   statusEl.textContent = '';
@@ -1113,8 +1118,10 @@ function midiFail(statusEl, e) {
   statusEl.textContent = t(e && e.midiUserMessage ? e.midiUserMessage : 'midiParseFailed');
 }
 function midiFinish(midi, fileName, partIds, statusEl) {
-  const { song, tempoAdjusted } = MidiImport.buildSongFromMidi(midi, fileName, t, partIds);
-  const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '');
+  const useLengths = S.midiUseLengthsEnabled();
+  const { song, tempoAdjusted, packedFrom } = MidiImport.buildSongFromMidi(midi, fileName, t, partIds, { useLengths });
+  const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '')
+    + (packedFrom && packedFrom > song.frames.length ? t('midiPackedNote', { from: packedFrom, to: song.frames.length }) : '');
   finishImport(song, statusEl, note, 'midiImportModal');
 }
 async function onMidiFileSelected(event) {
@@ -1198,6 +1205,7 @@ function wireStaticEvents() {
   $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value));
   $('frameBpmOverrideToggle').addEventListener('change', e => E.onFrameBpmOverrideToggle(e.target.checked));
   $('autoAdvanceToggle').addEventListener('change', e => E.setAutoAdvance(e.target.checked));
+  $('midiUseLengthsToggle').addEventListener('change', e => S.setMidiUseLengthsEnabled(e.target.checked));
   $('frameBpmOverrideValue').addEventListener('change', e => E.onFrameBpmOverrideValueChange(e.target.value));
   $('metronomeToggle').addEventListener('change', e => S.setMetronomeEnabled(e.target.checked));
   $('loopRangeToggle').addEventListener('change', e => {

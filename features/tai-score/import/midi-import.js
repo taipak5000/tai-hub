@@ -16,7 +16,7 @@
      楽器のトラック名（「Acoustic Piano」など）は曲名にしない。
    ================================================================ */
 import { midiToSkyIndex } from './image-import.js';
-import { genId } from '../tai-score-state.js';
+import { genId, FRAME_LENGTHS } from '../tai-score-state.js';
 
 function midiError(msgKey) {
   const err = new Error(msgKey);
@@ -226,7 +226,41 @@ function songNameFor(midi, fileName, t) {
   return base || t('midiDefaultSongName');
 }
 
-function midiToSong(midi, fileName, t, partIds) {
+// 格子にそろえた譜面（音の無いマスが並ぶ）を、マスの長さを使って詰める。
+// 音のあるマスに「次の音までの拍数」を長さとして付け、長さの選択肢（最大4拍）に収まらない分は
+// 休みのマスを足して表す。unitBeats は格子1マスぶんの拍数（16分音符なら0.25）。
+// 戻り値: { frames, frameLengths }（1拍のマスは frameLengths に書かない）
+const LENGTHS_DESC = FRAME_LENGTHS.slice().sort((a, b) => b - a);
+function splitBeats(beats) {
+  const pieces = [];
+  let rest = Math.round(beats * 4) / 4; // 格子は¼拍の倍数なので、誤差を丸めて止まらないようにする
+  while (rest > 1e-9) {
+    const len = LENGTHS_DESC.find(l => l <= rest + 1e-9) || LENGTHS_DESC[LENGTHS_DESC.length - 1];
+    pieces.push(len);
+    rest = Math.round((rest - len) * 4) / 4;
+  }
+  return pieces;
+}
+function compressWithLengths(gridFrames, unitBeats) {
+  const onsets = [];
+  gridFrames.forEach((f, i) => { if (f.length) onsets.push(i); });
+  const frames = [];
+  const frameLengths = {};
+  const push = (notes, len) => {
+    if (len !== 1) frameLengths[frames.length] = len;
+    frames.push(notes);
+  };
+  onsets.forEach((idx, k) => {
+    // 最後の音は1拍ぶん鳴らして終わる
+    const beats = k + 1 < onsets.length ? (onsets[k + 1] - idx) * unitBeats : 1;
+    const pieces = splitBeats(beats);
+    push(gridFrames[idx], pieces[0]);
+    for (let j = 1; j < pieces.length; j++) push([], pieces[j]);
+  });
+  return { frames, frameLengths };
+}
+
+function midiToSong(midi, fileName, t, partIds, opts = {}) {
   let ticksPerQuarter = midi.ticksPerQuarter;
   if (!ticksPerQuarter) {
     const ticksPerSecond = midi.smpte.framesPerSecond * midi.smpte.ticksPerFrame;
@@ -281,9 +315,20 @@ function midiToSong(midi, fileName, t, partIds) {
     frames.push(frameNotes.has(i) ? [...frameNotes.get(i)].sort((a, b) => a - b) : []);
   }
 
+  const name = songNameFor(midi, fileName, t);
+
+  // マスの長さで詰める（既定）: 1拍＝4分音符にして、元のテンポのまま鳴らす。
+  // 4分音符のテンポが再生できる範囲（40〜999 BPM）を外れる時だけ、従来の詰めない作り方にする
+  const quarterBpm = 60000 / (usPerQuarter / 1000);
+  if (opts.useLengths !== false && quarterBpm >= BPM_MIN && quarterBpm <= BPM_MAX) {
+    const packed = compressWithLengths(frames, gridTicks / ticksPerQuarter);
+    const song = { id: genId(), name, bpm: Math.round(quarterBpm), pitch: 'C', instrument: 'Harp', frames: packed.frames, updatedAt: Date.now() };
+    if (Object.keys(packed.frameLengths).length) song.frameLengths = packed.frameLengths;
+    return { song, tempoAdjusted: false, packedFrom: frames.length };
+  }
+
   const tempoAdjusted = rawBpm > BPM_MAX || rawBpm < BPM_MIN;
   const bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(rawBpm)));
-  const name = songNameFor(midi, fileName, t);
 
   return {
     song: { id: genId(), name, bpm, pitch: 'C', instrument: 'Harp', frames, updatedAt: Date.now() },
@@ -310,13 +355,14 @@ export function inspectMidiFile(arrayBuffer, t) {
 }
 
 // inspectMidiFile() の結果から、選んだパートだけで楽譜を作る
-export function buildSongFromMidi(midi, fileName, t, partIds) {
-  return midiToSong(midi, fileName, t, partIds);
+// opts.useLengths: false で、音の間を空のマスで埋める従来の作り方にする（既定は長さで詰める）
+export function buildSongFromMidi(midi, fileName, t, partIds, opts) {
+  return midiToSong(midi, fileName, t, partIds, opts);
 }
 
 // t: i18n-score.jsのt(key,vars)（曲名デフォルト値の生成に使う）。
 // 戻り値: { song, tempoAdjusted } / 失敗時は err.midiUserMessage を持つErrorをthrowする
-export async function convertMidiFile(arrayBuffer, fileName, t) {
+export async function convertMidiFile(arrayBuffer, fileName, t, opts) {
   const midi = parseMidiFile(arrayBuffer);
-  return midiToSong(midi, fileName, t);
+  return midiToSong(midi, fileName, t, null, opts);
 }
