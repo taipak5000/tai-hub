@@ -199,6 +199,10 @@ const landingPoint = currentY + project(v);
   マスの増減の経路（`deleteFrame`・`deleteFrameRange`・`insertBlankFrameAfter`・`insertBlankFrames`・`insertClipAt`）で`shiftSectionsForInsert/Delete()`を呼ぶ
   （`shiftBpmOverridesForInsert/Delete()`には混ぜない）。マスの増減を新しく足したら、ここも呼ぶ。共有コード・書き出しには含めない（`stripPersonalPracticeData()`が消す）。
   作曲画面の演奏時間は`timingTable()`（`persistCurrentSong()`のたびに作り直す）、書き方は`formatDuration()`で譜面ビューとそろえる。
+- **楽譜づくりの「弾いて録音」**（`features/tai-score/tai-score-recorder.js`）: 作曲画面（`#recordPanel`）とフリー演奏（`#perfRecordPanel`）で共通。
+  パネルが開いている間は、作曲画面の音の入力（`E.setNoteInterceptor`）とフリー演奏の音（`onPerfKeyPress`）を`R.hit()`へ回し、曲は書き換えない。
+  止めた後に`quantizeNoteEventsToFrames()`で量子化し、「作る／追記する」まで保存しない（追記は`appendRecordedFrames()`、曲の速さに合わない時は`retimeForBpm()`→無理なら先頭にテンポ変化）。
+  ルートの移動・曲の切り替え・作曲画面や演奏画面を閉じた時は`R.discard()`で捨てる。録音中はモーダルとショートカット（音のキー以外）を止める。
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`）: 全ツールの称号をここに集める。各ツールの画面には`js/titles.js`の`titlesLinkHtml(ツール)`の
   小さな案内だけを出す。獲得の判定・記録は各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`（ツールに称号を足したらここにも足す）。
 - **試作中の機能**（`features/lab/`）: 今は無い。作る時はルートを`lab-*`で`hidden: true`にし、入口はデイリーチェックシート単体のページの「試作中の機能」だけにする。

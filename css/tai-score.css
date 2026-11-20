@@ -942,3 +942,56 @@
   position: absolute; top: -10px; left: 18px; z-index: 2; max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   padding: 0 6px; border-radius: 999px; background: var(--pink-btn); color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; pointer-events: none;
 }
+
+/* ── 弾いて録音 ── */
+.tai-score-view .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.tai-score-view .rec-open-btn { gap: 6px; }
+.tai-score-view .record-panel {
+  flex-shrink: 0; width: 100%; max-width: 680px; margin: 0 auto 10px; box-sizing: border-box;
+  background: var(--card); border-radius: var(--r); padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.tai-score-view .record-panel[hidden] { display: none; }
+.tai-score-view .rec-title { font-size: 13px; font-weight: 800; color: var(--text-2); letter-spacing: 0.04em; margin: 0; }
+.tai-score-view .rec-targets { display: flex; gap: 6px 16px; flex-wrap: wrap; }
+.tai-score-view .rec-target { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; min-height: 32px; cursor: pointer; }
+.tai-score-view .rec-target input { accent-color: var(--pink); width: 18px; height: 18px; margin: 0; }
+.tai-score-view .rec-bpm { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.tai-score-view .rec-bpm input { width: 76px; padding: 5px 8px; font-size: 16px; border-radius: 8px; border: 1.5px solid var(--sep); background: var(--bg); color: var(--text); }
+.tai-score-view .rec-hint { font-size: 12px; color: var(--text-2); line-height: 1.6; margin: 0; }
+.tai-score-view .rec-status { font-size: 16px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.tai-score-view .rec-status.live { color: var(--red-d); }
+.tai-score-view .rec-status.live .rec-dot { animation: tsRecBlink 1s ease-in-out infinite; }
+@keyframes tsRecBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.tai-score-view .rec-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tai-score-view .rec-btn {
+  border: 0; background: var(--bg); color: var(--text); cursor: pointer;
+  min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.tai-score-view .rec-btn.primary { background: var(--pink-btn); color: #fff; }
+.tai-score-view .rec-btn.primary .rec-dot { background: #fff; }
+.tai-score-view .rec-btn.primary .inline-icon { stroke: #fff; color: #fff; }
+.tai-score-view .rec-btn.danger { color: var(--red-d); }
+.tai-score-view .rec-btn:active { transform: scale(0.96); }
+/* 録音パネルが開いている間: 下の操作バーなどを隠し、譜面と他の操作は触れないようにする（音のボタンは使える） */
+.tai-score-view .compose-overlay.recording .compose-edit-bar,
+.tai-score-view .compose-overlay.recording .compose-nav-row,
+.tai-score-view .compose-overlay.recording .frame-len-row,
+.tai-score-view .compose-overlay.recording .frame-bpm-row,
+.tai-score-view .compose-overlay.recording .compose-bpm-footer { display: none; }
+.tai-score-view .compose-overlay.recording .frame-strip,
+.tai-score-view .compose-overlay.recording .compose-header-actions,
+.tai-score-view .compose-overlay.recording .compose-title-input,
+.tai-score-view .compose-overlay.recording .compose-timeline-actions { pointer-events: none; opacity: 0.45; }
+.tai-score-view .perf-overlay.recording #perfRecBtn,
+.tai-score-view .perf-overlay.recording .perf-instrument-row,
+.tai-score-view .perf-overlay.recording [data-act="open-key-bind-modal"] { pointer-events: none; opacity: 0.45; }
+.tai-score-view .perf-overlay .record-panel { margin-top: 10px; }
+/* 録音中に押した音のボタンを一瞬光らせる */
+.tai-score-view .rec-hit { animation: tsRecHit 180ms ease-out; }
+@keyframes tsRecHit { from { transform: scale(0.88); opacity: 0.6; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .tai-score-view .rec-status.live .rec-dot, .tai-score-view .rec-hit { animation: none; }
+}
+.tai-score-view .perf-close.rec-open-btn { display: inline-flex; align-items: center; gap: 6px; }

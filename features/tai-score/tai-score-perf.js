@@ -10,6 +10,7 @@ import * as S from './tai-score-state.js';
 import * as A from './tai-score-audio.js';
 import { RT, escapeHtml, showToast, trapPush, trapPop } from './tai-score-runtime.js';
 import { getPracticeRange, stopPlayback, renderLastResult, registerPerfKeyHintRefresher } from './tai-score-editor.js';
+import * as R from './tai-score-recorder.js';
 
 let titlesRenderer = null;
 export function registerTitlesRenderer(fn) { titlesRenderer = fn; }
@@ -49,6 +50,7 @@ function startPerfSession(mode) {
     : t('testModeTitle', { name: songName, range: rangeLabel });
   document.getElementById('perfCloseBtn').textContent = t('perfCloseEnd');
   document.getElementById('perfInstrumentRow').style.display = 'none';
+  document.getElementById('perfRecBtn').style.display = 'none';
   renderPerfGrid();
   RT.perfFrameIndex = RT.perfRangeStart - 1;
   openPerfOverlay();
@@ -77,6 +79,7 @@ export function openFreeMode() {
   document.getElementById('perfFooter').textContent = t('freePlayFooterHint');
   document.getElementById('perfCloseBtn').textContent = t('perfCloseClose');
   document.getElementById('perfInstrumentRow').style.display = 'flex';
+  document.getElementById('perfRecBtn').style.display = ''; // フリー演奏だけ「録音して曲にする」を出す
   renderFreePlayInstrumentRow();
   renderPerfGrid();
   clearPerfTargets();
@@ -100,6 +103,7 @@ function openPerfOverlay() {
   trapPush('perfOverlay', document.getElementById('perfOverlay'));
 }
 export function closePerformance() {
+  R.discard(); // フリー演奏の録音の途中で閉じたら、何も保存せずに捨てる
   A.cancelCountIn();
   RT.perfCountingIn = false;
   document.getElementById('perfOverlay').classList.remove('open');
@@ -150,6 +154,7 @@ export function onPerfKeyPress(idx) {
     el.classList.add('pressed-flash');
     setTimeout(() => el.classList.remove('pressed-flash'), 120);
   }
+  if (RT.perfMode === 'free') { R.hit(idx); return; } // フリー演奏の録音中は、弾いた音を記録する
   if (RT.perfCountingIn) return; // カウントイン中は判定しない（音のプレビューだけは鳴らす）
   if (RT.perfMode !== 'practice' && RT.perfMode !== 'test') return;
   const frame = song.frames[RT.perfFrameIndex];

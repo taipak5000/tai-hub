@@ -52,11 +52,24 @@ import * as AudioImport from './import/audio-import.js';
 import * as ImageImport from './import/image-import.js';
 import * as MidiImport from './import/midi-import.js';
 import * as Sheet from './tai-score-sheet.js';
+import * as R from './tai-score-recorder.js';
 
 const STYLE_LINK_ID = 'tai-score-view-styles';
 const ICON_SPRITE_ID = 'tai-score-icon-sprite';
 
 E.registerTitlesRenderer(() => renderTitles());
+// 「弾いて録音」: パネルが開いている間の音は録音へ回し、「作る」で新しい曲を登録する
+E.setNoteInterceptor(idx => R.hit(idx));
+R.registerSongCreator(song => {
+  const songs = S.loadSongs();
+  songs.unshift(song);
+  S.saveSongs(songs);
+  announceNewTitles(S.recordSongCreated());
+  announceNewTitles(S.recordNoteCount(S.songNoteCount(song)));
+  if (RT.perfMode) P.closePerformance();
+  openEditor(song.id);
+  showToast(t('recCreatedToast', { name: song.name }));
+});
 P.registerTitlesRenderer(() => renderTitles());
 
 /* ================================================================
@@ -103,6 +116,7 @@ function recoverFullSongCodeFromHash() {
 }
 
 export function unmount() {
+  R.discard(true); // 録音の途中で画面を離れたら、何も保存せずに捨てる
   Sheet.teardown();
   E.stopPlayback();
   A.cancelCountIn();
@@ -430,6 +444,7 @@ function renderPerfOverlay() {
       <div style="display:flex; gap:6px;">
         <button type="button" class="perf-close" id="perfCloseBtn" data-act="close-performance">${escapeHtml(t('perfCloseEnd'))}</button>
         <button type="button" class="perf-close" data-act="open-key-bind-modal" title="${escapeHtml(t('keySettingsBtn'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-keyboard"/></svg></button>
+        <button type="button" class="perf-close rec-open-btn" id="perfRecBtn" data-act="rec-open" data-host="free" title="${escapeHtml(t('recFreeOpenTitle'))}" style="display:none;"><span class="rec-dot" aria-hidden="true"></span>${escapeHtml(t('recFreeOpenBtn'))}</button>
       </div>
       <div class="perf-title" id="perfTitle"></div>
       <div class="perf-progress" id="perfProgress"></div>
@@ -437,6 +452,7 @@ function renderPerfOverlay() {
     <div class="perf-instrument-row" id="perfInstrumentRow" style="display:none;"></div>
     <div class="perf-grid" id="perfGrid"></div>
     <div class="perf-footer" id="perfFooter"></div>
+    <div class="record-panel" id="perfRecordPanel" role="region" aria-label="${escapeHtml(t('recTitle'))}" hidden></div>
   </div>`;
 }
 function renderComposeOverlay() {
@@ -448,6 +464,7 @@ function renderComposeOverlay() {
       <div class="compose-header-actions">
         <button type="button" class="transport-btn primary" id="playBtn" data-act="toggle-playback">${escapeHtml(t('playBtn'))}</button>
         <button type="button" class="transport-btn" id="stopBtn" data-act="stop-playback" style="display:none;">${escapeHtml(t('stopBtn'))}</button>
+        <button type="button" class="compose-tools-btn rec-open-btn" data-act="rec-open" data-host="compose" title="${escapeHtml(t('recOpenTitle'))}" aria-label="${escapeHtml(t('recOpenTitle'))}"><span class="rec-dot" aria-hidden="true"></span></button>
         <button type="button" class="compose-tools-btn" data-act="open-sheet-current" title="${escapeHtml(t('sheetOpenTitle'))}" aria-label="${escapeHtml(t('sheetOpenTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#i-sheet-music"/></svg></button>
         <button type="button" class="compose-tools-btn" data-act="open-modal" data-modal="composeToolsModal" title="${escapeHtml(t('composeToolsBtnTitle'))}" aria-label="${escapeHtml(t('composeToolsModalTitle'))}"><svg class="inline-icon" width="16" height="16"><use href="#ts-i-hammer"/></svg></button>
       </div>
@@ -534,6 +551,8 @@ function renderComposeOverlay() {
         <button type="button" class="edit-tool-btn danger" data-act="delete-frame-range" title="${escapeHtml(t('deleteEditRangeTitle'))} (Shift+Delete)" aria-label="${escapeHtml(t('deleteEditRangeTitle'))}"><svg class="inline-icon" width="17" height="17"><use href="#i-trash"/></svg></button>
       </div>
     </div>
+
+    <div class="record-panel" id="recordPanel" role="region" aria-label="${escapeHtml(t('recTitle'))}" hidden></div>
 
     <div class="compose-bpm-footer">
       <div class="compose-bpm-row bpm-row compact">
@@ -793,6 +812,7 @@ function createNewSong() {
   openEditor(RT.currentSong.id);
 }
 function openEditor(id, frameIndex) {
+  R.discard(true); // 曲を切り替える時は、録音の途中のものを捨てる
   const songs = S.loadSongs();
   const song = songs.find(s => s.id === id);
   if (!song) return;
@@ -880,7 +900,7 @@ function switchView(view) {
   document.getElementById('viewEditor').classList.toggle('active', view === 'editor');
   document.getElementById('tabLibraryBtn').classList.toggle('active', view === 'library');
   document.getElementById('tabEditorBtn').classList.toggle('active', view === 'editor');
-  if (view === 'library') { E.stopPlayback(); E.closeComposeMode(); RT.currentSong = null; renderLibrary(); return; }
+  if (view === 'library') { R.discard(); E.stopPlayback(); E.closeComposeMode(); RT.currentSong = null; renderLibrary(); return; }
   if (view === 'editor' && !RT.currentSong) {
     const songs = S.loadSongs();
     if (songs.length > 0) openEditor(S.sortSongs(songs, 'updated')[0].id);
@@ -1356,6 +1376,9 @@ function onContainerClick(e) {
   if (!el) return;
   const act = el.dataset.act;
   if (act.startsWith('sheet-') && Sheet.handleClick(act, el)) return;
+  if (act.startsWith('rec-') && R.handleClick(act, el)) return;
+  // 録音パネルが開いている間は、モーダルや別の画面を開く操作を受け付けない（作曲画面を閉じる×だけは、録音を捨てて閉じる）
+  if (R.isActive() && act !== 'toggle-note' && act !== 'set-input-mode' && act !== 'switch-view' && act !== 'close-performance' && act !== 'set-free-instrument') return;
   switch (act) {
     case 'open-sheet': openSheetForSong(el.dataset.id); break;
     case 'open-sheet-current': openSheetForCurrent(); break;
@@ -1473,6 +1496,15 @@ function handleGlobalKeydown(e) {
   const perfOpen = RT.perfMode && document.getElementById('perfOverlay').classList.contains('open');
   const composing = !perfOpen && RT.currentSong && document.getElementById('composeOverlay')?.classList.contains('open');
   if (isTyping || anyOverlayOpen()) return;
+  // 録音パネルが開いている間は、音のキーだけを受け付ける（再生・マスの移動などのショートカットは止める）
+  if (R.isActive()) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const ri = RT.keyBindings.indexOf(S.normalizeKeyEvent(e));
+    if (ri < 0) return;
+    e.preventDefault();
+    if (perfOpen) P.onPerfKeyPress(ri); else if (composing) E.toggleNote(ri);
+    return;
+  }
 
   // 作曲中のショートカット（ほかの楽譜作成サイトと同じ割り当て）
   if (composing) {

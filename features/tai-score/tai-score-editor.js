@@ -460,6 +460,39 @@ export function jumpToFrameNumber(raw) {
   jumpToFrame(Math.max(0, Math.min(song.frames.length - 1, n - 1)), false);
 }
 
+// 押した音のボタンを一瞬光らせる（録音中は曲を書き換えないので、押せたことをここで示す）
+function flashNote(idx) {
+  document.querySelectorAll(`#composeOverlay [data-act="toggle-note"][data-note="${idx}"]`).forEach(el => {
+    el.classList.remove('rec-hit');
+    void el.offsetWidth;
+    el.classList.add('rec-hit');
+  });
+}
+// 録音した譜面を曲の末尾に足す（履歴は1回。元に戻す1回で録音分が丸ごと消える）。戻り値は足したマス数
+export function appendRecordedFrames(rec) {
+  const song = RT.currentSong;
+  if (!song || !rec || !rec.frames.length) return 0;
+  const endBpm = S.effectiveBpmAtFrame(song, song.frames.length - 1);
+  if (song.frames.length + rec.frames.length > MAX_FRAMES_BY_EDIT) { showToast(t('tooManyFramesToast', { max: MAX_FRAMES_BY_EDIT })); return 0; }
+  // 曲の今の速さで¼拍の倍数に収まるなら、そのまま長さを数え直す。収まらなければ、足した先頭からテンポを録音の速さに変える
+  const fit = S.retimeForBpm(rec, endBpm);
+  const clip = fit
+    ? { frames: fit.frames, frameLengths: fit.frameLengths, bpmOverrides: {} }
+    : { frames: rec.frames, frameLengths: rec.frameLengths || {}, bpmOverrides: { 0: rec.bpm } };
+  cancelAutoAdvance();
+  pushEditHistory();
+  const at = song.frames.length;
+  S.insertClipAt(song, at, clip);
+  clearSelection();
+  RT.selectedFrameIndex = at;
+  persistCurrentSong();
+  renderFrameStrip();
+  renderBigGrid();
+  revealSelectedFrame();
+  updatePracticeRangeBounds(false);
+  return clip.frames.length;
+}
+
 /* ── 空のマスをまとめて足す（履歴は1回。目印・長さ・テンポ変化の表も一度にずらす） ── */
 export function insertBlankFrames(rawCount, where) {
   const song = RT.currentSong;
@@ -859,9 +892,17 @@ export function redoEdit() {
   showToast(t('redoneToast'));
 }
 
+// 「弾いて録音」のパネルが開いている間は、押した音を録音へ回す（曲は書き換えず、音だけ鳴らす）
+let noteInterceptor = null;
+export function setNoteInterceptor(fn) { noteInterceptor = fn; }
 export function toggleNote(noteIndex) {
   const song = RT.currentSong;
   if (!song) return;
+  if (noteInterceptor && noteInterceptor(noteIndex)) {
+    A.playNote(noteIndex, song.pitch, song.instrument);
+    flashNote(noteIndex);
+    return;
+  }
   if (RT.isPlaying) stopPlayback(); // 再生中に入力したら止めて、押したマスに入れる
   // 和音の受付中に押した音は、同じマスへの追加としてまとめて1回で元に戻せるようにする
   if (!RT.autoAdvanceTimer) pushEditHistory();

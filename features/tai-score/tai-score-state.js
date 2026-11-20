@@ -395,6 +395,43 @@ export function sectionAt(song, fi) {
   return cur;
 }
 
+/* ── 録音した譜面を、別のBPMの曲へ追記できる形に直す ──
+   rec = { bpm, frames, frameLengths? }。各マスの長さを toBpm の拍で数え直し、どれも¼拍の倍数になるなら
+   その形で返す（例: 録音が BPM 240・曲が BPM 120 なら、1拍のマスは½拍になる）。¼拍の倍数にならない時は null
+   （呼び出し側は、追記する先頭のマスにテンポ変化を付けてそのまま足す）。 */
+export function retimeForBpm(rec, toBpm) {
+  if (!rec || !rec.frames.length) return null;
+  if (rec.bpm === toBpm) return { frames: rec.frames.map(f => f.slice()), frameLengths: Object.assign({}, rec.frameLengths || {}) };
+  const ratio = toBpm / rec.bpm;
+  let pos = 0;
+  const onsets = [];
+  for (let i = 0; i < rec.frames.length; i++) {
+    const q = pos * 4;
+    if (Math.abs(q - Math.round(q)) > 1e-6) return null;
+    if (rec.frames[i].length) onsets.push({ q: Math.round(q), notes: rec.frames[i] });
+    pos += frameLength(rec, i) * ratio;
+  }
+  const endQ = pos * 4;
+  if (Math.abs(endQ - Math.round(endQ)) > 1e-6 || !onsets.length) return null;
+  const grid = Array.from({ length: Math.round(endQ) }, () => []);
+  onsets.forEach(o => { grid[o.q] = o.notes.slice(); });
+  // 最後の音の長さも数え直した値を残すため、最後の音の後ろの休みは grid の長さで表し、compress の「最後は1拍」を補正する
+  const packed = compressWithLengths(grid.slice(0, onsets[onsets.length - 1].q + 1), 0.25);
+  const lastLenBeats = (Math.round(endQ) - onsets[onsets.length - 1].q) / 4;
+  // 最後の音のマスの長さを、元の最後の音の長さ（拍に直した値）にする
+  const tail = [];
+  let rest = lastLenBeats;
+  for (const l of FRAME_LENGTHS.slice().sort((a, b) => b - a)) { while (rest + 1e-9 >= l) { tail.push(l); rest = Math.round((rest - l) * 4) / 4; } }
+  if (rest > 1e-9 || !tail.length) return null;
+  const lastIdx = packed.frames.length - 1;
+  const frameLengths = Object.assign({}, packed.frameLengths);
+  delete frameLengths[lastIdx];
+  if (tail[0] !== 1) frameLengths[lastIdx] = tail[0];
+  const frames = packed.frames.slice();
+  for (let k = 1; k < tail.length; k++) { if (tail[k] !== 1) frameLengths[frames.length] = tail[k]; frames.push([]); }
+  return { frames, frameLengths };
+}
+
 /* ── 演奏時間の表示（譜面ビューと作曲画面で同じ書き方にする） ── */
 export function formatDuration(sec) {
   const total = Math.max(0, Math.round(sec));
