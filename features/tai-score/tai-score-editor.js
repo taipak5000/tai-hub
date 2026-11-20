@@ -57,6 +57,7 @@ export function renderEditor() {
   const autoAdvanceToggle = document.getElementById('autoAdvanceToggle');
   if (autoAdvanceToggle) autoAdvanceToggle.checked = S.autoAdvanceEnabled();
   applyRangeModeButton();
+  renderRangeTools();
   applyInputMode();
   applyTimelineView();
   renderFrameStrip();
@@ -664,10 +665,37 @@ function snapshotCurrentSong() {
     bpmOverrides: JSON.parse(JSON.stringify(RT.currentSong.bpmOverrides || {})),
     frameLengths: JSON.parse(JSON.stringify(RT.currentSong.frameLengths || {})),
     selectedFrameIndex: RT.selectedFrameIndex,
+    // 曲全体のBPM・調・楽器も元に戻せるようにする（曲名は対象外）
+    bpm: RT.currentSong.bpm,
+    pitch: RT.currentSong.pitch,
+    instrument: RT.currentSong.instrument,
   };
+}
+// スナップショットを曲へ戻す。項目が無い古いスナップショットでは、その値は今のままにする
+function applySnapshot(snap) {
+  const song = RT.currentSong;
+  song.frames = snap.frames;
+  if (snap.bpmOverrides && Object.keys(snap.bpmOverrides).length) song.bpmOverrides = snap.bpmOverrides;
+  else delete song.bpmOverrides;
+  restoreFrameLengths(snap.frameLengths);
+  if (typeof snap.bpm === 'number') song.bpm = snap.bpm;
+  if (typeof snap.pitch === 'string') song.pitch = snap.pitch;
+  if (typeof snap.instrument === 'string') song.instrument = snap.instrument;
+  RT.selectedFrameIndex = Math.min(snap.selectedFrameIndex, song.frames.length - 1);
+  syncSongMetaInputs();
+}
+// BPM・調・楽器の入力欄を曲の値に合わせる（元に戻した時など）
+function syncSongMetaInputs() {
+  const song = RT.currentSong;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && String(el.value) !== String(v)) el.value = v; };
+  set('bpmSlider', song.bpm);
+  set('bpmNumber', song.bpm);
+  set('songPitchInput', song.pitch);
+  set('songInstrumentInput', song.instrument);
 }
 function pushEditHistory() {
   if (!RT.currentSong) return;
+  RT.bpmEditOpen = false; // ほかの編集をはさんだら、次のBPMの変更は別の1回として数える
   RT.editHistory.push(snapshotCurrentSong());
   if (RT.editHistory.length > EDIT_HISTORY_LIMIT) RT.editHistory.shift();
   RT.redoHistory = [];
@@ -695,10 +723,7 @@ export function undoEdit() {
   RT.redoHistory.push(snapshotCurrentSong());
   if (RT.redoHistory.length > EDIT_HISTORY_LIMIT) RT.redoHistory.shift();
   const prev = RT.editHistory.pop();
-  RT.currentSong.frames = prev.frames;
-  RT.currentSong.bpmOverrides = prev.bpmOverrides;
-  restoreFrameLengths(prev.frameLengths);
-  RT.selectedFrameIndex = Math.min(prev.selectedFrameIndex, RT.currentSong.frames.length - 1);
+  applySnapshot(prev);
   cancelAutoAdvance();
   clearSelection();
   persistCurrentSong();
@@ -714,10 +739,7 @@ export function redoEdit() {
   RT.editHistory.push(snapshotCurrentSong());
   if (RT.editHistory.length > EDIT_HISTORY_LIMIT) RT.editHistory.shift();
   const next = RT.redoHistory.pop();
-  RT.currentSong.frames = next.frames;
-  RT.currentSong.bpmOverrides = next.bpmOverrides;
-  restoreFrameLengths(next.frameLengths);
-  RT.selectedFrameIndex = Math.min(next.selectedFrameIndex, RT.currentSong.frames.length - 1);
+  applySnapshot(next);
   cancelAutoAdvance();
   clearSelection();
   persistCurrentSong();
@@ -835,36 +857,47 @@ export function renderFrameBpmRow() {
   const toggle = document.getElementById('frameBpmOverrideToggle');
   const valueInput = document.getElementById('frameBpmOverrideValue');
   if (!toggle || !valueInput) return;
-  const existing = S.frameBpmOverride(song, RT.selectedFrameIndex);
+  const target = bpmOverrideTarget();
+  const existing = S.frameBpmOverride(song, target);
   toggle.checked = existing !== null;
   valueInput.style.display = existing !== null ? '' : 'none';
   valueInput.value = existing !== null ? existing : song.bpm;
+  // 範囲を選んでいる時は、テンポ変化が付くのは範囲の先頭のマスだけだと示す（範囲の全マスには書かない）
+  const note = document.getElementById('frameBpmRangeNote');
+  if (note) {
+    note.hidden = !RT.selection;
+    if (RT.selection) note.textContent = t('frameBpmRangeNote', { n: target + 1 });
+  }
 }
+// テンポ変化を付けるマス: 範囲を選んでいればその先頭、無ければ選んでいるマス
+function bpmOverrideTarget() { return editRange().start; }
 export function onFrameBpmOverrideToggle(checked) {
   const song = RT.currentSong;
   if (!song) return;
+  const target = bpmOverrideTarget();
   pushEditHistory();
   if (checked) {
     if (!song.bpmOverrides) song.bpmOverrides = {};
-    song.bpmOverrides[RT.selectedFrameIndex] = song.bpm;
+    song.bpmOverrides[target] = song.bpm;
   } else if (song.bpmOverrides) {
-    delete song.bpmOverrides[RT.selectedFrameIndex];
+    delete song.bpmOverrides[target];
   }
   persistCurrentSong();
   renderFrameBpmRow();
-  refreshFrameBox(RT.selectedFrameIndex);
+  refreshFrameBox(target);
 }
 export function onFrameBpmOverrideValueChange(val) {
   const song = RT.currentSong;
   if (!song) return;
   const parsed = parseInt(val, 10);
   const bpm = Math.max(40, Math.min(999, isNaN(parsed) ? song.bpm : parsed));
+  const target = bpmOverrideTarget();
   pushEditHistory();
   if (!song.bpmOverrides) song.bpmOverrides = {};
-  song.bpmOverrides[RT.selectedFrameIndex] = bpm;
+  song.bpmOverrides[target] = bpm;
   persistCurrentSong();
   renderFrameBpmRow();
-  refreshFrameBox(RT.selectedFrameIndex);
+  refreshFrameBox(target);
 }
 
 /* ================================================================
@@ -873,48 +906,32 @@ export function onFrameBpmOverrideValueChange(val) {
 export function copyFrameRange(range = editRange()) {
   const song = RT.currentSong;
   if (!song) return;
-  const frames = song.frames.slice(range.start, range.end + 1).map(f => f.slice());
-  const bpmOverrides = {};
-  if (song.bpmOverrides) {
-    for (let i = range.start; i <= range.end; i++) {
-      const v = song.bpmOverrides[i];
-      if (typeof v === 'number' && v > 0) bpmOverrides[i - range.start] = v;
-    }
-  }
-  const frameLengths = {};
-  for (let i = range.start; i <= range.end; i++) {
-    const len = S.frameLength(song, i);
-    if (len !== 1) frameLengths[i - range.start] = len;
-  }
-  RT.frameClipboard = { frames, bpmOverrides, frameLengths };
+  RT.frameClipboard = S.clipFromRange(song, range.start, range.end);
   S.saveFrameClipboard(RT.frameClipboard);
   renderFrameClipboardHint();
-  showToast(t('frameRangeCopiedToast', { count: frames.length }));
+  showToast(t('frameRangeCopiedToast', { count: RT.frameClipboard.frames.length }));
 }
+// 貼り付け: 「挿入」（選んだ範囲の後ろへ差し込む。従来どおり）か「上書き」（選んだ範囲の先頭から置き換える）
 export function pasteFrameRange() {
   const song = RT.currentSong;
   if (!song || !RT.frameClipboard || RT.frameClipboard.frames.length === 0) return;
   cancelAutoAdvance();
+  const overwrite = S.loadUiState().pasteMode === 'overwrite';
+  const range = editRange();
+  const at = overwrite ? range.start : range.end + 1;
+  const n = RT.frameClipboard.frames.length;
+  if ((overwrite ? Math.max(song.frames.length, at + n) : song.frames.length + n) > MAX_FRAMES_BY_EDIT) { showToast(t('tooManyFramesToast', { max: MAX_FRAMES_BY_EDIT })); return; }
   pushEditHistory();
-  const at = editRange().end + 1;
   clearSelection();
-  const copied = RT.frameClipboard.frames.map(f => f.slice());
-  song.frames.splice(at, 0, ...copied);
-  S.shiftBpmOverridesForInsert(song, at, copied.length);
-  Object.keys(RT.frameClipboard.bpmOverrides || {}).forEach(k => {
-    if (!song.bpmOverrides) song.bpmOverrides = {};
-    song.bpmOverrides[at + parseInt(k, 10)] = RT.frameClipboard.bpmOverrides[k];
-  });
-  Object.keys(RT.frameClipboard.frameLengths || {}).forEach(k => {
-    S.setFrameLength(song, at + parseInt(k, 10), RT.frameClipboard.frameLengths[k]);
-  });
-  RT.selectedFrameIndex = at + copied.length - 1;
+  if (overwrite) S.overwriteClipAt(song, at, RT.frameClipboard);
+  else S.insertClipAt(song, at, RT.frameClipboard);
+  RT.selectedFrameIndex = at + n - 1;
   persistCurrentSong();
   renderFrameStrip();
   renderBigGrid();
   revealSelectedFrame();
   updatePracticeRangeBounds(false);
-  showToast(t('frameRangePastedToast', { count: copied.length }));
+  showToast(t(overwrite ? 'frameRangeOverwrittenToast' : 'frameRangePastedToast', { count: n }));
 }
 export function renderFrameClipboardHint() {
   const hint = document.getElementById('frameClipboardHint');
@@ -924,19 +941,125 @@ export function renderFrameClipboardHint() {
 }
 
 /* ================================================================
+   範囲を変える（作曲ツールの一括変換）。対象は editRange()（範囲が無ければ選んでいるマス1つ）。
+   どの操作も履歴は1回だけ積み、Ctrl+Z 1回で丸ごと戻せる。
+   ================================================================ */
+const MAX_FRAMES_BY_EDIT = 10000; // 編集操作で増やせる総マス数の上限（読み込みの上限とは別）
+export function renderRangeTools() {
+  const song = RT.currentSong;
+  if (!song) return;
+  const r = editRange();
+  const target = document.getElementById('rangeToolsTarget');
+  if (target) target.textContent = r.start === r.end ? t('rangeToolsTargetOne', { n: r.start + 1 }) : t('rangeToolsTargetRange', { a: r.start + 1, b: r.end + 1, count: r.end - r.start + 1 });
+  const ui = S.loadUiState();
+  const mode = document.getElementById('shiftModeSelect');
+  if (mode) mode.value = ui.shiftMode;
+  document.querySelectorAll('.paste-mode-btn').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.mode === ui.pasteMode)));
+  // 貼り付けボタンの文言・説明も、今の貼り付け方に合わせる
+  const ow = ui.pasteMode === 'overwrite';
+  document.querySelectorAll('.paste-frame-btn').forEach(btn => {
+    if (btn.classList.contains('mini-btn')) btn.textContent = t(ow ? 'pasteOverwriteBtn' : 'pasteFrameRangeBtn');
+    else { btn.title = t(ow ? 'pasteOverwriteBtn' : 'railPasteRangeTitle') + ' (Ctrl+V)'; btn.setAttribute('aria-label', t(ow ? 'pasteOverwriteBtn' : 'railPasteRangeTitle')); }
+  });
+  document.querySelectorAll('input[name="repeatSource"]').forEach(el => { el.checked = el.value === ui.repeatSource; });
+  const clipOpt = document.getElementById('repeatSourceClipboard');
+  if (clipOpt) clipOpt.disabled = !(RT.frameClipboard && RT.frameClipboard.frames.length);
+}
+function afterRangeEdit(keepSelection) {
+  if (!keepSelection) clearSelection();
+  persistCurrentSong();
+  renderFrameStrip();
+  renderBigGrid();
+  updatePracticeRangeBounds(false);
+  renderRangeTools();
+}
+export function shiftRangeNotes(delta) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const r = editRange();
+  const mode = S.loadUiState().shiftMode;
+  const res = S.shiftNotesInFrames(song.frames.slice(r.start, r.end + 1), delta, mode);
+  if (res.overflow && mode === 'abort') { showToast(t('shiftAbortedToast')); return; }
+  const changed = res.frames.some((f, i) => f.join() !== song.frames[r.start + i].join());
+  if (!changed) { showToast(t('rangeNoNotesToast')); return; }
+  cancelAutoAdvance();
+  pushEditHistory();
+  res.frames.forEach((f, i) => { song.frames[r.start + i] = f; });
+  afterRangeEdit(true); // 続けてもう一度ずらせるよう、範囲は残す
+  showToast(t('shiftDoneToast', { d: (delta > 0 ? '+' : '') + delta }) + (res.overflow ? t(mode === 'drop' ? 'shiftDroppedSuffix' : 'shiftWrappedSuffix') : ''));
+}
+export function invertRangeNotes() {
+  const song = RT.currentSong;
+  if (!song) return;
+  const r = editRange();
+  const next = S.invertNotesInFrames(song.frames.slice(r.start, r.end + 1));
+  if (!next.some((f, i) => f.join() !== song.frames[r.start + i].join())) { showToast(t('rangeNoNotesToast')); return; }
+  cancelAutoAdvance();
+  pushEditHistory();
+  next.forEach((f, i) => { song.frames[r.start + i] = f; });
+  afterRangeEdit(true);
+  showToast(t('invertDoneToast'));
+}
+export function reverseRangeFrames() {
+  const song = RT.currentSong;
+  if (!song) return;
+  const r = editRange();
+  if (r.end <= r.start) { showToast(t('reverseNeedsRangeToast')); return; }
+  cancelAutoAdvance();
+  pushEditHistory();
+  S.reverseFramesInSong(song, r.start, r.end);
+  afterRangeEdit(true);
+  showToast(t('reverseDoneToast', { count: r.end - r.start + 1 }));
+}
+export function setPasteMode(mode) {
+  S.saveUiState({ pasteMode: mode === 'overwrite' ? 'overwrite' : 'insert' });
+  renderRangeTools();
+}
+export function setShiftMode(mode) { S.saveUiState({ shiftMode: mode }); }
+export function setRepeatSource(src) { S.saveUiState({ repeatSource: src }); }
+// 範囲（またはコピーした内容）を、範囲の直後へ count 回くり返して挿入する
+export function repeatPaste(countRaw) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const count = Math.max(2, Math.min(16, parseInt(countRaw, 10) || 2));
+  const r = editRange();
+  const useClip = S.loadUiState().repeatSource === 'clipboard';
+  const clip = useClip ? RT.frameClipboard : S.clipFromRange(song, r.start, r.end);
+  if (!clip || !clip.frames.length) { showToast(t('repeatNoClipToast')); return; }
+  const added = clip.frames.length * count;
+  if (song.frames.length + added > MAX_FRAMES_BY_EDIT) { showToast(t('tooManyFramesToast', { max: MAX_FRAMES_BY_EDIT })); return; }
+  cancelAutoAdvance();
+  pushEditHistory();
+  let at = r.end + 1;
+  for (let k = 0; k < count; k++) at += S.insertClipAt(song, at, clip);
+  RT.selectedFrameIndex = at - 1;
+  afterRangeEdit(false);
+  revealSelectedFrame();
+  showToast(t('repeatDoneToast', { count, frames: added }));
+}
+
+/* ================================================================
    曲メタ情報・BPM・タップテンポ
    ================================================================ */
 export function onSongMetaChange() {
   const song = RT.currentSong;
   if (!song) return;
+  const pitch = document.getElementById('songPitchInput').value;
+  const instrument = document.getElementById('songInstrumentInput').value;
+  // 調・楽器の変更は元に戻せるようにする（曲名の入力は対象外）
+  if (pitch !== song.pitch || instrument !== song.instrument) pushEditHistory();
   song.name = document.getElementById('songNameInput').value || t('untitledSong');
-  song.pitch = document.getElementById('songPitchInput').value;
-  song.instrument = document.getElementById('songInstrumentInput').value;
+  song.pitch = pitch;
+  song.instrument = instrument;
   persistCurrentSong();
 }
-export function onBpmChange(val, source) {
+// commit=true は確定（スライダーを離した・数値欄から離れた）。ドラッグ中や数字を打っている間の変化は、
+// 確定までをまとめて1回の「元に戻す」にする
+export function onBpmChange(val, source, commit) {
   const parsed = parseInt(val, 10);
   const bpm = Math.max(40, Math.min(999, isNaN(parsed) ? 150 : parsed));
+  if (bpm !== RT.currentSong.bpm && !RT.bpmEditOpen) { pushEditHistory(); RT.bpmEditOpen = true; }
+  if (commit) RT.bpmEditOpen = false;
   RT.currentSong.bpm = bpm;
   document.getElementById('bpmSlider').value = bpm;
   if (source !== 'number') document.getElementById('bpmNumber').value = bpm;

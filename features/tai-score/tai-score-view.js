@@ -488,6 +488,7 @@ function renderComposeOverlay() {
             <span>${escapeHtml(t('frameBpmOverrideLabel'))}</span>
           </label>
           <input type="number" id="frameBpmOverrideValue" min="40" max="999" style="display:none;">
+          <span class="frame-bpm-range-note" id="frameBpmRangeNote" hidden></span>
         </div>
         <div class="big-grid" id="bigGrid"></div>
         <div class="piano-keys-wrap" id="pianoKeysWrap" style="display:none;">
@@ -582,6 +583,58 @@ function renderComposeToolsModal() {
         <div class="frame-clipboard-row" style="margin-top:10px; margin-bottom:0;">
           <button type="button" class="mini-btn paste-frame-btn" data-act="paste-frame-range" disabled>${escapeHtml(t('pasteFrameRangeBtn'))}</button>
           <span class="frame-clipboard-hint" id="frameClipboardHint"></span>
+        </div>
+      </div>
+
+      <div class="compose-tools-section range-tools">
+        <p class="compose-tools-section-label">${escapeHtml(t('rangeToolsLabel'))}</p>
+        <p class="range-tools-target" id="rangeToolsTarget"></p>
+
+        <div class="range-tools-group">
+          <span class="range-tools-sub">${escapeHtml(t('pasteModeLabel'))}</span>
+          <div class="seg" role="group" aria-label="${escapeHtml(t('pasteModeLabel'))}">
+            <button type="button" class="seg-btn paste-mode-btn" data-act="set-paste-mode" data-mode="insert" aria-pressed="true">${escapeHtml(t('pasteModeInsert'))}</button>
+            <button type="button" class="seg-btn paste-mode-btn" data-act="set-paste-mode" data-mode="overwrite" aria-pressed="false">${escapeHtml(t('pasteModeOverwrite'))}</button>
+          </div>
+        </div>
+
+        <div class="range-tools-group">
+          <span class="range-tools-sub">${escapeHtml(t('shiftNotesLabel'))}</span>
+          <div class="range-tools-btns">
+            <button type="button" class="mini-btn" data-act="shift-range-notes" data-delta="-7" title="${escapeHtml(t('shiftOctaveDownTitle'))}">−7</button>
+            <button type="button" class="mini-btn" data-act="shift-range-notes" data-delta="-1">−1</button>
+            <button type="button" class="mini-btn" data-act="shift-range-notes" data-delta="1">＋1</button>
+            <button type="button" class="mini-btn" data-act="shift-range-notes" data-delta="7" title="${escapeHtml(t('shiftOctaveUpTitle'))}">＋7</button>
+          </div>
+          <label class="range-tools-inline">${escapeHtml(t('shiftModeLabel'))}
+            <select id="shiftModeSelect">
+              <option value="wrap">${escapeHtml(t('shiftModeWrap'))}</option>
+              <option value="drop">${escapeHtml(t('shiftModeDrop'))}</option>
+              <option value="abort">${escapeHtml(t('shiftModeAbort'))}</option>
+            </select>
+          </label>
+          <p class="range-tools-hint">${escapeHtml(t('shiftNotesHint'))}</p>
+        </div>
+
+        <div class="range-tools-group">
+          <span class="range-tools-sub">${escapeHtml(t('rangeShapeLabel'))}</span>
+          <div class="range-tools-btns">
+            <button type="button" class="mini-btn" data-act="reverse-range">${escapeHtml(t('reverseRangeBtn'))}</button>
+            <button type="button" class="mini-btn" data-act="invert-range">${escapeHtml(t('invertRangeBtn'))}</button>
+          </div>
+        </div>
+
+        <div class="range-tools-group">
+          <span class="range-tools-sub">${escapeHtml(t('repeatPasteLabel'))}</span>
+          <div class="range-tools-btns">
+            <label class="range-tools-inline"><input type="radio" name="repeatSource" value="range" checked> ${escapeHtml(t('repeatSourceRange'))}</label>
+            <label class="range-tools-inline"><input type="radio" name="repeatSource" value="clipboard" id="repeatSourceClipboard"> ${escapeHtml(t('repeatSourceClipboard'))}</label>
+          </div>
+          <div class="range-tools-btns">
+            <input type="number" id="repeatCountInput" min="2" max="16" value="2" aria-label="${escapeHtml(t('repeatCountLabel'))}">
+            <span class="range-unit">${escapeHtml(t('repeatCountUnit'))}</span>
+            <button type="button" class="mini-btn" data-act="repeat-paste">${escapeHtml(t('repeatPasteBtn'))}</button>
+          </div>
         </div>
       </div>
 
@@ -1217,8 +1270,11 @@ function wireStaticEvents() {
   $('songPitchInput').addEventListener('change', () => E.onSongMetaChange());
   $('songInstrumentInput').addEventListener('change', () => E.onSongMetaChange());
   $('bpmSlider').addEventListener('input', e => E.onBpmChange(e.target.value));
+  $('bpmSlider').addEventListener('change', e => E.onBpmChange(e.target.value, null, true)); // 離した時点で1回の「元に戻す」にまとめる
   $('bpmNumber').addEventListener('input', e => E.onBpmChange(e.target.value, 'number'));
-  $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value));
+  $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value, null, true));
+  $('shiftModeSelect').addEventListener('change', e => E.setShiftMode(e.target.value));
+  RT.containerEl.querySelectorAll('input[name="repeatSource"]').forEach(el => el.addEventListener('change', e => { if (e.target.checked) E.setRepeatSource(e.target.value); }));
   $('frameBpmOverrideToggle').addEventListener('change', e => E.onFrameBpmOverrideToggle(e.target.checked));
   $('autoAdvanceToggle').addEventListener('change', e => E.setAutoAdvance(e.target.checked));
   RT.containerEl.querySelectorAll('.import-lengths-toggle').forEach(el => el.addEventListener('change', e => {
@@ -1272,7 +1328,15 @@ function onContainerClick(e) {
     case 'open-sheet-current': openSheetForCurrent(); break;
     case 'switch-view': switchView(el.dataset.view); break;
     case 'open-free-mode': P.openFreeMode(); break;
-    case 'open-modal': openModal(el.dataset.modal); break;
+    case 'open-modal':
+      if (el.dataset.modal === 'composeToolsModal') E.renderRangeTools(); // 対象の範囲と選択の状態を、開いた時点の値にする
+      openModal(el.dataset.modal);
+      break;
+    case 'set-paste-mode': E.setPasteMode(el.dataset.mode); break;
+    case 'shift-range-notes': E.shiftRangeNotes(parseInt(el.dataset.delta, 10)); break;
+    case 'reverse-range': E.reverseRangeFrames(); break;
+    case 'invert-range': E.invertRangeNotes(); break;
+    case 'repeat-paste': E.repeatPaste(document.getElementById('repeatCountInput').value); break;
     case 'close-modal': closeModal(el.dataset.modal); break;
     case 'export-library-text': exportLibraryAsTextSheets(); break;
     case 'create-new-song': createNewSong(); break;

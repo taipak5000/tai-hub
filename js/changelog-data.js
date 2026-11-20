@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.20.3',
-    title: { ja: '楽譜づくりで、譜面をなぞって範囲を選べるように、読み込みでマスの長さを使う', en: 'Sheet Music Maker: drag to select tiles, imports use tile lengths' },
+    version: '2026.11.20.4',
+    title: { ja: '楽譜づくりに「範囲を変える」、譜面をなぞって範囲を選べるように、読み込みでマスの長さを使う', en: 'Sheet Music Maker: transform ranges, drag to select tiles, imports use tile lengths' },
     date: '2026-11-20',
     items: [
+      { type: 'new', ja: '楽譜づくりの作曲ツール（金づちのボタン）に「範囲を変える」を足しました。選んだ範囲の音の位置を±1・±7（1オクターブ）ずらす、並びを逆にする、上下を反転する、2〜16回繰り返して貼る、ができます。15音の外に出る音は「折り返す・消す・ずらさない」から選べます。貼り付けは「挿入」と「上書き」を切り替えられます。どの操作も「元に戻す」1回で戻ります。あわせて、曲全体のBPM・調・楽器の変更も「元に戻す」で戻せるようにし、範囲を選んでいる時のテンポ変化は範囲の先頭のマスに付くと表示するようにしました。', en: 'Sheet Music Maker: new "Transform range" in the compose tools (hammer button). Shift the notes in a range by ±1 or ±7 (an octave), reverse the order, flip upside down, or repeat-paste 2–16 times. Choose whether out-of-range notes wrap, are removed, or block the shift. Paste can now insert or overwrite. Every operation undoes in one step. Changes to the song\'s BPM, key and instrument can now be undone too, and a tempo change with a range selected is shown to apply from the first tile of the range.', route: 'tai-score' },
       { type: 'improve', ja: '楽譜づくりで楽譜を読み込む時、音と音の間隔をマスの長さで表すようにしました（MIDI・音声や動画・楽譜画像・Sky Studioのファイル）。これまでは音の間を空のマスで埋めていたため、4分音符が続く曲でも1拍に何マスも使っていました。MIDIは4分音符を1拍にして元のテンポのまま読み込みます（例: 60マス→12マス）。音声・楽譜画像・Sky Studioのファイルは、いちばんよく出る音の間隔を1拍にして、各音を¼拍の位置にそろえます（200音の演奏で2,001マス→200マス）。音声から作る時、元の曲より遅く再生されることがあった問題もこれで直りました。前の作り方にしたい時は、読み込みの画面のチェックを外してください。', en: 'Sheet Music Maker: imports (MIDI, audio/video, sheet images, Sky Studio files) now use tile lengths for the gaps between notes instead of filling them with empty tiles. MIDI keeps its tempo with a quarter note as one beat (e.g. 60 tiles → 12); audio, images and Sky Studio files use the most common gap as one beat and align notes to quarter beats (a 200-note performance: 2,001 tiles → 200). This also fixes audio imports sometimes playing slower than the original. Uncheck the option in the import screen to use the old layout.', route: 'tai-score' },
       { type: 'improve', ja: '楽譜づくりの作曲画面で、譜面のマスをなぞって範囲を選べるようにしました。スマホではマスを少し長押ししてから指を動かします（そのまま動かすと今までどおりスクロールします）。パソコンではマウスを押したまま別のマスへ動かします。譜面の端までなぞると、その先へ自動でスクロールします。選んだ範囲は、そのままコピー・音を消す・削除・長さの変更に使えます。', en: 'Sheet Music Maker: drag across tiles to select a range. On phones, press and hold a tile briefly, then drag (a plain swipe still scrolls). With a mouse, press and drag to another tile. The sheet scrolls automatically when you reach its edge. Use the selection to copy, clear, delete or change the length.', route: 'tai-score' },
     ],

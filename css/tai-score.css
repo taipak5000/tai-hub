@@ -889,3 +889,19 @@
 
 /* 作曲中は、トーストを操作バーより上に出す（「次へ」などを隠さないように） */
 .tai-score-view:has(.compose-overlay.open) .toast { bottom: calc(170px + env(safe-area-inset-bottom)); }
+
+/* ── 作曲ツール「範囲を変える」 ── */
+.tai-score-view .range-tools-target { font-size: 13px; font-weight: 700; color: var(--pink-d); margin: -2px 0 10px; letter-spacing: 0.02em; }
+.tai-score-view .range-tools-group { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid var(--sep); }
+.tai-score-view .range-tools-sub { font-size: 12.5px; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
+.tai-score-view .range-tools-btns { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tai-score-view .range-tools-btns .mini-btn { min-height: 32px; min-width: 44px; }
+.tai-score-view .range-tools-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); }
+.tai-score-view .range-tools-inline select { font-size: 14px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--sep); background: var(--bg); color: var(--text); }
+.tai-score-view .range-tools-inline input[type=radio] { accent-color: var(--pink); width: 16px; height: 16px; margin: 0; }
+.tai-score-view .range-tools-hint { font-size: 12px; color: var(--text-2); line-height: 1.6; margin: 0; }
+.tai-score-view #repeatCountInput { width: 64px; padding: 5px 8px; font-size: 16px; border-radius: 8px; border: 1.5px solid var(--sep); background: var(--bg); color: var(--text); }
+.tai-score-view .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--bg); align-self: flex-start; }
+.tai-score-view .seg-btn { border: 0; background: transparent; color: var(--text-2); font-size: 13px; font-weight: 700; padding: 6px 16px; min-height: 30px; border-radius: 999px; cursor: pointer; }
+.tai-score-view .seg-btn[aria-pressed="true"] { background: var(--pink-btn); color: #fff; }
+.tai-score-view .frame-bpm-range-note { font-size: 12px; color: var(--pink-d); font-weight: 600; letter-spacing: 0.02em; }

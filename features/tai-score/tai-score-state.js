@@ -249,6 +249,117 @@ export function shiftBpmOverridesForInsert(song, at, count) {
 }
 
 /* ================================================================
+   範囲の一括変換（作曲ツールの「範囲を変える」）。どれも曲データを直接書き換える純粋な処理で、
+   履歴（Undo）・保存・再描画は呼び出し側（tai-score-editor.js）が受け持つ。
+   ================================================================ */
+const NOTE_MAX = 14; // 音番号は0〜14（5×3の15音）。7ずらすと1オクターブ
+// 音の位置をずらす（調の変更ではなく、指使い＝音番号の移動）。mode:
+//   'wrap'  … 0〜14に収まるまで∓7（オクターブ）で折り返す
+//   'drop'  … はみ出した音だけ消す（マスは休符として残る）
+//   'abort' … 1音でもはみ出すなら何もしない（戻り値の overflow が true）
+// 戻り値: { frames（新しい配列）, overflow（はみ出す音があったか） }。各マスは重複を除いて昇順にそろえる
+export function shiftNotesInFrames(frames, delta, mode = 'wrap') {
+  let overflow = false;
+  const out = frames.map(frame => {
+    const set = new Set();
+    frame.forEach(idx => {
+      let v = idx + delta;
+      if (v < 0 || v > NOTE_MAX) {
+        overflow = true;
+        if (mode === 'drop') return;
+        while (v > NOTE_MAX) v -= 7;
+        while (v < 0) v += 7;
+      }
+      set.add(v);
+    });
+    return [...set].sort((a, b) => a - b);
+  });
+  if (overflow && mode === 'abort') return { frames: frames.map(f => f.slice()), overflow };
+  return { frames: out, overflow };
+}
+// 上下反転（音域の中心で裏返す）: idx → 14 − idx
+export function invertNotesInFrames(frames) {
+  return frames.map(frame => [...new Set(frame.map(idx => NOTE_MAX - idx))].sort((a, b) => a - b));
+}
+// start〜endのマスの並びを逆にする。マスに付いた長さ（frameLengths）とテンポ変化（bpmOverrides）も、
+// そのマスの鳴り方としてマスと一緒に動かす
+export function reverseFramesInSong(song, start, end) {
+  const mirror = i => start + end - i;
+  song.frames.splice(start, end - start + 1, ...song.frames.slice(start, end + 1).reverse());
+  ['bpmOverrides', 'frameLengths'].forEach(key => {
+    if (!song[key]) return;
+    const next = {};
+    Object.keys(song[key]).forEach(k => {
+      const i = parseInt(k, 10);
+      next[i >= start && i <= end ? mirror(i) : i] = song[key][k];
+    });
+    song[key] = next;
+  });
+}
+// start〜endの範囲を、コピーと同じ形 { frames, bpmOverrides, frameLengths }（後2者は範囲先頭からの相対位置）で取り出す
+export function clipFromRange(song, start, end) {
+  const frames = song.frames.slice(start, end + 1).map(f => f.slice());
+  const bpmOverrides = {}, frameLengths = {};
+  for (let i = start; i <= end; i++) {
+    const v = song.bpmOverrides ? song.bpmOverrides[i] : undefined;
+    if (typeof v === 'number' && v > 0) bpmOverrides[i - start] = v;
+    const len = frameLength(song, i);
+    if (len !== 1) frameLengths[i - start] = len;
+  }
+  return { frames, bpmOverrides, frameLengths };
+}
+// at番目の位置へ clip を挿入する（後ろのマスとその表はずらす）。戻り値は挿入したマス数
+export function insertClipAt(song, at, clip) {
+  const copied = clip.frames.map(f => f.slice());
+  song.frames.splice(at, 0, ...copied);
+  shiftBpmOverridesForInsert(song, at, copied.length);
+  Object.keys(clip.bpmOverrides || {}).forEach(k => {
+    if (!song.bpmOverrides) song.bpmOverrides = {};
+    song.bpmOverrides[at + parseInt(k, 10)] = clip.bpmOverrides[k];
+  });
+  Object.keys(clip.frameLengths || {}).forEach(k => setFrameLength(song, at + parseInt(k, 10), clip.frameLengths[k]));
+  return copied.length;
+}
+// at番目から clip の内容で上書きする。曲の末尾を超える分は足す。上書きした範囲の長さ・テンポ変化は、
+// clip に無い位置は消す（貼った内容がそのまま再現されるように）
+export function overwriteClipAt(song, at, clip) {
+  const n = clip.frames.length;
+  for (let j = 0; j < n; j++) {
+    const i = at + j;
+    if (i < song.frames.length) song.frames[i] = clip.frames[j].slice();
+    else song.frames.push(clip.frames[j].slice());
+    if (song.bpmOverrides) delete song.bpmOverrides[i];
+    setFrameLength(song, i, 1);
+    const v = clip.bpmOverrides ? clip.bpmOverrides[j] : undefined;
+    if (typeof v === 'number' && v > 0) { if (!song.bpmOverrides) song.bpmOverrides = {}; song.bpmOverrides[i] = v; }
+    const len = clip.frameLengths ? clip.frameLengths[j] : undefined;
+    if (len !== undefined) setFrameLength(song, i, len);
+  }
+  return n;
+}
+
+/* ── 作曲画面の細かな選択（貼り付け方・ずらし方・繰り返しの元）。曲データにも既存のキーにも混ぜず、専用のキーに置く ── */
+export const UI_STATE_KEY = () => nsKey('taiScoreUiState_v1');
+const UI_STATE_DEFAULTS = { pasteMode: 'insert', shiftMode: 'wrap', repeatSource: 'range' };
+export function loadUiState() {
+  try {
+    const v = JSON.parse(localStorage.getItem(UI_STATE_KEY()));
+    const out = Object.assign({}, UI_STATE_DEFAULTS);
+    if (v && typeof v === 'object') {
+      if (v.pasteMode === 'insert' || v.pasteMode === 'overwrite') out.pasteMode = v.pasteMode;
+      if (['wrap', 'drop', 'abort'].includes(v.shiftMode)) out.shiftMode = v.shiftMode;
+      if (v.repeatSource === 'range' || v.repeatSource === 'clipboard') out.repeatSource = v.repeatSource;
+    }
+    return out;
+  } catch (e) { return Object.assign({}, UI_STATE_DEFAULTS); }
+}
+export function saveUiState(patch) {
+  const next = Object.assign(loadUiState(), patch);
+  try { localStorage.setItem(UI_STATE_KEY(), JSON.stringify(next)); } catch (e) { /* noop */ }
+  return next;
+}
+
+/* ================================================================
    マスごとの長さ（frameLengths）。1マス＝1拍（BPMの1拍）が基準で、
    ½なら半分の時間で次のマスへ、2なら2拍ぶん待ってから次のマスへ進む。
    ================================================================ */
