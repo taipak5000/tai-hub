@@ -16,6 +16,7 @@
      楽器のトラック名（「Acoustic Piano」など）は曲名にしない。
    ================================================================ */
 import { midiToSkyIndex } from './image-import.js';
+import { NOTE_MIDI, PITCHES } from '../data/constants.js';
 import { genId, compressWithLengths } from '../tai-score-state.js';
 
 function midiError(msgKey) {
@@ -227,7 +228,38 @@ function songNameFor(midi, fileName, t) {
 }
 
 // 音の間隔をマスの長さで詰める処理（compressWithLengths）は、ほかの読み込みと共通で tai-score-state.js にある
+/* ── 調のおすすめ ──
+   Skyの楽器は、調を P にすると15音が NOTE_MIDI＋（P の半音数）で鳴る。だから MIDI の音 m を調 P で置くと、
+   m −（P の半音数）を C の15音に当てはめることになる。12の調それぞれで
+     - fit: そのまま（半音の寄せなしで）音階に乗る音の割合
+     - folds: 15音の音域から外れて、オクターブで折り返す音の数
+   を数え、fit が高い順、同じなら folds が少ない順、それも同じなら C に近い順（PITCHES の並び）で並べる。
+   C の時の当てはめ方は従来と同じ（m をそのまま midiToSkyIndex に渡す）なので、C を選べば結果は変わらない。 */
+const DIATONIC = new Set([0, 2, 4, 5, 7, 9, 11]);
+function selectedNoteNumbers(midi, partIds) {
+  const parts = collectParts(midi);
+  const useIds = partIds ? new Set(partIds) : new Set(parts.filter(p => p.defaultOn).map(p => p.id));
+  return parts.filter(p => useIds.has(p.id)).flatMap(p => p.notes.map(n => n.note));
+}
+export function suggestKeys(midi, partIds) {
+  const notes = selectedNoteNumbers(midi, partIds);
+  const total = notes.length || 1;
+  const lo = NOTE_MIDI[0], hi = NOTE_MIDI[NOTE_MIDI.length - 1];
+  return PITCHES.map((pitch, offset) => {
+    let fit = 0, folds = 0;
+    notes.forEach(n => {
+      const m = n - offset;
+      if (DIATONIC.has(((m % 12) + 12) % 12)) fit++;
+      if (m < lo || m > hi) folds++;
+    });
+    return { pitch, offset, fit: fit / total, snaps: notes.length - fit, folds };
+  }).sort((a, b) => (b.fit - a.fit) || (a.folds - b.folds) || (a.offset - b.offset));
+}
+
 function midiToSong(midi, fileName, t, partIds, opts = {}) {
+  // 調（opts.pitch）。省略時は従来どおり C
+  const pitch = PITCHES.includes(opts.pitch) ? opts.pitch : 'C';
+  const keyOffset = PITCHES.indexOf(pitch);
   let ticksPerQuarter = midi.ticksPerQuarter;
   if (!ticksPerQuarter) {
     const ticksPerSecond = midi.smpte.framesPerSecond * midi.smpte.ticksPerFrame;
@@ -269,7 +301,7 @@ function midiToSong(midi, fileName, t, partIds, opts = {}) {
 
   const frameNotes = new Map();
   noteOnEvents.forEach(ev => {
-    const skyIndex = mapMidiNoteToSkyIndex(ev.note);
+    const skyIndex = mapMidiNoteToSkyIndex(ev.note - keyOffset);
     const frameIndex = Math.round((ev.tick - firstTick) / gridTicks);
     if (!frameNotes.has(frameIndex)) frameNotes.set(frameIndex, new Set());
     frameNotes.get(frameIndex).add(skyIndex);
@@ -289,7 +321,7 @@ function midiToSong(midi, fileName, t, partIds, opts = {}) {
   const quarterBpm = 60000 / (usPerQuarter / 1000);
   if (opts.useLengths !== false && quarterBpm >= BPM_MIN && quarterBpm <= BPM_MAX) {
     const packed = compressWithLengths(frames, gridTicks / ticksPerQuarter);
-    const song = { id: genId(), name, bpm: Math.round(quarterBpm), pitch: 'C', instrument: 'Harp', frames: packed.frames, updatedAt: Date.now() };
+    const song = { id: genId(), name, bpm: Math.round(quarterBpm), pitch, instrument: 'Harp', frames: packed.frames, updatedAt: Date.now() };
     if (Object.keys(packed.frameLengths).length) song.frameLengths = packed.frameLengths;
     return { song, tempoAdjusted: false, packedFrom: frames.length };
   }
@@ -298,7 +330,7 @@ function midiToSong(midi, fileName, t, partIds, opts = {}) {
   const bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(rawBpm)));
 
   return {
-    song: { id: genId(), name, bpm, pitch: 'C', instrument: 'Harp', frames, updatedAt: Date.now() },
+    song: { id: genId(), name, bpm, pitch, instrument: 'Harp', frames, updatedAt: Date.now() },
     tempoAdjusted,
   };
 }

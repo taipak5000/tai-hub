@@ -351,8 +351,10 @@ function renderAudioImportModal() {
           <label>${escapeHtml(t('sensitivityLabel'))}</label>
           <input type="range" id="audioSensitivity" min="10" max="80" value="30">
         </div>
-        <button type="button" class="action-btn primary" data-act="start-audio-analysis">${escapeHtml(t('startAudioAnalysisBtn'))}</button>
+        <button type="button" class="action-btn primary" data-act="start-audio-analysis" id="audioAnalyzeBtn">${escapeHtml(t('startAudioAnalysisBtn'))}</button>
+        <button type="button" class="action-btn secondary" data-act="audio-pick-again">${escapeHtml(t('pickAnotherFileBtn'))}</button>
       </div>
+      <div class="import-review" id="audioImportReview" hidden></div>
       <div id="audioImportStep3" style="display:none;">
         <div class="hint">${escapeHtml(t('audioAnalyzingHint'))}</div>
         <div class="video-progress-bar"><div class="video-progress-fill" id="audioProgressFill"></div></div>
@@ -384,6 +386,7 @@ function renderImageImportModal() {
         <div id="imageProgressText" class="hint"></div>
         <button type="button" class="action-btn secondary" data-act="cancel-image-analysis">${escapeHtml(t('cancelRetryBtn'))}</button>
       </div>
+      <div class="import-review" id="imageImportReview" hidden></div>
       <div id="imageImportStatus" class="status-msg"></div>
     </div>
   </div>`;
@@ -403,7 +406,13 @@ function renderMidiImportModal() {
       <div id="midiImportParts" class="midi-parts" style="display:none;">
         <div class="hint midi-parts-hint">${escapeHtml(t('midiPartsHint'))}</div>
         <div class="midi-parts-list" id="midiPartsList" role="group" aria-label="${escapeHtml(t('midiPartsHint'))}"></div>
-        <button type="button" class="action-btn primary" data-act="midi-build-song">${escapeHtml(t('midiBuildBtn'))}</button>
+        <div class="midi-key-row">
+          <label class="midi-key-label">${escapeHtml(t('midiKeyLabel'))}
+            <select id="midiKeySelect"></select>
+          </label>
+          <p class="midi-key-note" id="midiKeyNote"></p>
+        </div>
+        <div class="import-review" id="midiImportReview" hidden></div>
       </div>
       <div id="midiImportStatus" class="status-msg"></div>
     </div>
@@ -1061,13 +1070,74 @@ function finishImport(songOrSongs, statusEl, extraNote, modalId) {
 }
 
 /* ================================================================
+   読み込みの「確かめてから作る」（音声・MIDI・楽譜画像で共通）
+   解析が終わっても曲は作らず、要約と試聴を出す。「この内容で曲を作る」を押した時だけ
+   finishImport() で登録する（やめた時・条件を変えた時は、曲も称号の累計も増えない）。
+   ================================================================ */
+let pendingImport = null;   // { modalId, song, note }
+let importPreviewTimer = null;
+function stopImportPreview() {
+  clearTimeout(importPreviewTimer);
+  importPreviewTimer = null;
+  document.querySelectorAll('[data-act="import-preview"]').forEach(btn => { btn.textContent = t('importPreviewBtn'); });
+}
+function clearImportReview() {
+  stopImportPreview();
+  pendingImport = null;
+  document.querySelectorAll('.import-review').forEach(el => { el.hidden = true; el.innerHTML = ''; });
+}
+function showImportReview(modalId, reviewId, song, note, extraLine) {
+  stopImportPreview();
+  pendingImport = { modalId, song, note };
+  const box = document.getElementById(reviewId);
+  if (!box) return;
+  box.hidden = false;
+  box.innerHTML = `
+    <p class="import-review-summary">${escapeHtml(t('importSummary', { notes: S.songNoteCount(song), frames: song.frames.length, bpm: song.bpm, time: S.formatDuration(S.songDurationSec(song)) }))}</p>
+    ${extraLine ? `<p class="import-review-extra">${escapeHtml(extraLine)}</p>` : ''}
+    <div class="import-review-actions">
+      <button type="button" class="action-btn secondary" data-act="import-preview">${escapeHtml(t('importPreviewBtn'))}</button>
+      <button type="button" class="action-btn primary" data-act="import-create">${escapeHtml(t('importCreateBtn'))}</button>
+    </div>`;
+}
+function toggleImportPreview(btn) {
+  if (!pendingImport) return;
+  if (importPreviewTimer) { stopImportPreview(); return; }
+  const song = pendingImport.song;
+  let i = 0;
+  btn.textContent = t('importPreviewStop');
+  const step = () => {
+    if (!pendingImport || pendingImport.song !== song || i >= song.frames.length) { stopImportPreview(); return; }
+    A.playFrame(song.frames[i], song.pitch, song.instrument);
+    const wait = S.frameDurationMs(song, i);
+    i++;
+    importPreviewTimer = setTimeout(step, wait);
+  };
+  step();
+}
+function createFromImportReview() {
+  if (!pendingImport) return;
+  const { modalId, song, note } = pendingImport;
+  stopImportPreview();
+  pendingImport = null;
+  const statusEl = document.getElementById({ audioImportModal: 'audioImportStatus', imageImportModal: 'imageImportStatus', midiImportModal: 'midiImportStatus' }[modalId]);
+  document.querySelectorAll('.import-review').forEach(el => { el.hidden = true; el.innerHTML = ''; });
+  finishImport(song, statusEl, note, modalId);
+}
+
+/* ================================================================
    音声から楽譜を作成
    ================================================================ */
 function closeAudioImportModal() {
   RT.audioAnalysisCancelled = true;
+  RT.audioDecoded = null; // デコードした音声はモーダルを閉じるまで持つ
+  clearImportReview();
   closeModal('audioImportModal');
 }
 function openAudioImportModal() {
+  RT.audioDecoded = null;
+  clearImportReview();
+  resetAudioAnalyzeBtn();
   document.getElementById('audioImportStep1').style.display = 'block';
   document.getElementById('audioImportStep2').style.display = 'none';
   document.getElementById('audioImportStep3').style.display = 'none';
@@ -1076,10 +1146,28 @@ function openAudioImportModal() {
   statusEl.className = 'status-msg';
   openModal('audioImportModal');
 }
+function resetAudioAnalyzeBtn() {
+  const btn = document.getElementById('audioAnalyzeBtn');
+  if (btn) btn.textContent = t('startAudioAnalysisBtn');
+}
+// 別のファイルを選び直す（前のファイルとデコードした音声・結果は捨てる）
+function audioPickAgain() {
+  RT.audioDecoded = null;
+  RT.audioImportFile = null;
+  clearImportReview();
+  resetAudioAnalyzeBtn();
+  document.getElementById('audioImportStep2').style.display = 'none';
+  document.getElementById('audioImportStep1').style.display = 'block';
+  const statusEl = document.getElementById('audioImportStatus');
+  statusEl.textContent = ''; statusEl.className = 'status-msg';
+}
 function onAudioFileSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
   RT.audioImportFile = file;
+  RT.audioDecoded = null;
+  clearImportReview();
+  resetAudioAnalyzeBtn();
   document.getElementById('audioImportStep1').style.display = 'none';
   document.getElementById('audioImportStep2').style.display = 'block';
   event.target.value = '';
@@ -1091,6 +1179,7 @@ function cancelAudioAnalysis() {
 }
 async function startAudioAnalysis() {
   RT.audioAnalysisCancelled = false;
+  clearImportReview();
   document.getElementById('audioImportStep2').style.display = 'none';
   document.getElementById('audioImportStep3').style.display = 'block';
   const progressFill = document.getElementById('audioProgressFill');
@@ -1112,6 +1201,7 @@ async function startAudioAnalysis() {
   try {
     result = await AudioImport.analyzeAudioFile({
       file: RT.audioImportFile,
+      audioBuffer: RT.audioDecoded, // 2回目からは前回デコードした音声を使う（ファイルを選び直さずに再解析）
       pitch,
       sensitivityValue,
       onProgress: (pct, count) => {
@@ -1127,6 +1217,7 @@ async function startAudioAnalysis() {
     return;
   }
   if (RT.audioAnalysisCancelled || !result) return;
+  RT.audioDecoded = result.audioBuffer || null;
 
   const song = {
     id: S.genId(),
@@ -1134,7 +1225,14 @@ async function startAudioAnalysis() {
     bpm: result.bpm, pitch, instrument: 'Harp', frames: result.frames, updatedAt: Date.now(),
   };
   if (result.frameLengths) song.frameLengths = result.frameLengths;
-  finishImport(song, statusEl, t('autoAnalysisNote') + packedNote(result.packedFrom, song.frames.length), 'audioImportModal');
+  // すぐには作らない: 調・感度の欄に戻し、その下に結果の要約と試聴を出す
+  document.getElementById('audioImportStep3').style.display = 'none';
+  document.getElementById('audioImportStep2').style.display = 'block';
+  document.getElementById('audioAnalyzeBtn').textContent = t('reanalyzeBtn');
+  statusEl.className = 'status-msg'; statusEl.textContent = '';
+  if (!result.noteCount) { statusEl.className = 'status-msg err'; statusEl.textContent = t('audioNoNotesDetected'); return; }
+  showImportReview('audioImportModal', 'audioImportReview', song, t('autoAnalysisNote') + packedNote(result.packedFrom, song.frames.length),
+    t('audioReviewExtra', { count: result.noteCount, pitch }));
 }
 
 /* ================================================================
@@ -1142,9 +1240,11 @@ async function startAudioAnalysis() {
    ================================================================ */
 function closeImageImportModal() {
   RT.imageAnalysisCancelled = true;
+  clearImportReview();
   closeModal('imageImportModal');
 }
 function openImageImportModal() {
+  clearImportReview();
   RT.imageImportFiles = [];
   document.getElementById('imageFileInput').value = '';
   document.getElementById('imageImportFileList').textContent = '';
@@ -1204,16 +1304,20 @@ async function startImageAnalysis() {
     bpm: result.bpm, pitch: 'C', instrument: 'Harp', frames: result.frames, updatedAt: Date.now(),
   };
   if (result.frameLengths) song.frameLengths = result.frameLengths;
-  finishImport(song, statusEl, t('imageAutoAnalysisNote') + packedNote(result.packedFrom, song.frames.length), 'imageImportModal');
+  // すぐには作らない: 画像を選ぶ欄に戻し、結果の要約と試聴を出す（選び直してもう一度解析できる）
+  document.getElementById('imageImportStep2').style.display = 'none';
+  document.getElementById('imageImportStep1').style.display = 'block';
+  showImportReview('imageImportModal', 'imageImportReview', song, t('imageAutoAnalysisNote') + packedNote(result.packedFrom, song.frames.length));
 }
 
 /* ================================================================
    MIDIファイルから楽譜を作成
    ================================================================ */
 let midiPending = null; // パートを選んでいる間のファイル（{ midi, fileName }）
-function closeMidiImportModal() { midiPending = null; closeModal('midiImportModal'); }
+function closeMidiImportModal() { midiPending = null; clearImportReview(); closeModal('midiImportModal'); }
 function resetMidiParts() {
   midiPending = null;
+  clearImportReview();
   const box = document.getElementById('midiImportParts');
   if (box) box.style.display = 'none';
   const list = document.getElementById('midiPartsList');
@@ -1235,12 +1339,48 @@ function midiFail(statusEl, e) {
 function packedNote(from, to) {
   return from && from > to ? t('midiPackedNote', { from, to }) : '';
 }
-function midiFinish(midi, fileName, partIds, statusEl) {
-  const useLengths = S.importUseLengthsEnabled();
-  const { song, tempoAdjusted, packedFrom } = MidiImport.buildSongFromMidi(midi, fileName, t, partIds, { useLengths });
-  const note = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '')
-    + packedNote(packedFrom, song.frames.length);
-  finishImport(song, statusEl, note, 'midiImportModal');
+// 選んでいるパート（パートが1つだけのファイルでは null＝全部）
+function midiSelectedPartIds() {
+  if (!midiPending || midiPending.singlePart) return null;
+  return [...document.querySelectorAll('#midiPartsList input[type=checkbox]:checked')].map(el => el.value);
+}
+// 調の候補を出し直す（パートを選び直した時も）。手で調を選んでいなければ、おすすめに合わせる
+function refreshMidiKeys() {
+  if (!midiPending) return;
+  const ids = midiSelectedPartIds();
+  if (ids && !ids.length) return;
+  const list = MidiImport.suggestKeys(midiPending.midi, ids);
+  const byPitch = new Map(list.map(k => [k.pitch, k]));
+  const best = list[0];
+  midiPending.keys = byPitch;
+  midiPending.best = best.pitch;
+  if (!midiPending.keyChosenByUser) midiPending.pitch = best.pitch;
+  const sel = document.getElementById('midiKeySelect');
+  sel.innerHTML = PITCHES.map(p => {
+    const k = byPitch.get(p);
+    return `<option value="${p}"${p === midiPending.pitch ? ' selected' : ''}>${escapeHtml(t(p === best.pitch ? 'midiKeyOptionBest' : 'midiKeyOption', { key: p, pct: Math.round(k.fit * 100) }))}</option>`;
+  }).join('');
+  refreshMidiPreview();
+}
+// 今の選び方（パート・調・長さで詰めるか）で楽譜を作り直し、要約と試聴を出す（まだ保存しない）
+function refreshMidiPreview() {
+  if (!midiPending) return;
+  const statusEl = document.getElementById('midiImportStatus');
+  const ids = midiSelectedPartIds();
+  if (ids && !ids.length) { clearImportReview(); statusEl.className = 'status-msg err'; statusEl.textContent = t('midiNoPartSelected'); return; }
+  const k = midiPending.keys && midiPending.keys.get(midiPending.pitch);
+  const best = midiPending.keys && midiPending.keys.get(midiPending.best);
+  const note = document.getElementById('midiKeyNote');
+  if (note && k && best) {
+    note.textContent = t('midiKeyRecommend', { key: best.pitch, pct: Math.round(best.fit * 100) })
+      + ' ' + t('midiKeyDetail', { key: k.pitch, snaps: k.snaps, folds: k.folds });
+  }
+  try {
+    const { song, tempoAdjusted, packedFrom } = MidiImport.buildSongFromMidi(midiPending.midi, midiPending.fileName, t, ids, { useLengths: S.importUseLengthsEnabled(), pitch: midiPending.pitch });
+    const extra = t('midiAutoAnalysisNote') + (tempoAdjusted ? t('midiTempoAdjustedNote') : '') + packedNote(packedFrom, song.frames.length);
+    statusEl.className = 'status-msg'; statusEl.textContent = '';
+    showImportReview('midiImportModal', 'midiImportReview', song, extra, t('midiReviewExtra', { key: song.pitch }));
+  } catch (e) { clearImportReview(); midiFail(statusEl, e); }
 }
 async function onMidiFileSelected(event) {
   const file = event.target.files[0];
@@ -1254,10 +1394,9 @@ async function onMidiFileSelected(event) {
   try { buf = await file.arrayBuffer(); } catch (e) { midiFail(statusEl, e); return; }
   try {
     const { midi, parts } = MidiImport.inspectMidiFile(buf, t);
-    // パートが1つだけならそのまま作る（従来どおり）
-    if (parts.length === 1) { midiFinish(midi, file.name, null, statusEl); return; }
-    // 複数の楽器が入っている時は、使うパートを選んでもらう（低音のパートは既定で外す）
-    midiPending = { midi, fileName: file.name };
+    // パートが1つでも、すぐには作らない（調を選び、要約と試聴で確かめてから作る）。
+    // 複数の楽器が入っている時は、使うパートも選んでもらう（低音のパートは既定で外す）
+    midiPending = { midi, fileName: file.name, singlePart: parts.length === 1, keyChosenByUser: false };
     document.getElementById('midiPartsList').innerHTML = parts.map(p => `
       <label class="midi-part-row">
         <input type="checkbox" value="${escapeHtml(p.id)}" ${p.defaultOn ? 'checked' : ''}>
@@ -1265,16 +1404,11 @@ async function onMidiFileSelected(event) {
         <span class="midi-part-meta">${escapeHtml(t('midiPartNotes', { n: p.noteCount }))}${p.isBass ? escapeHtml(t('midiPartBass')) : ''}</span>
       </label>`).join('');
     document.getElementById('midiImportParts').style.display = '';
-    statusEl.textContent = t('midiPartsFound', { n: parts.length });
+    document.getElementById('midiPartsList').style.display = parts.length === 1 ? 'none' : '';
+    document.querySelector('#midiImportParts .midi-parts-hint').style.display = parts.length === 1 ? 'none' : '';
+    statusEl.textContent = parts.length === 1 ? '' : t('midiPartsFound', { n: parts.length });
+    refreshMidiKeys();
   } catch (e) { midiFail(statusEl, e); }
-}
-function onMidiBuildSong() {
-  if (!midiPending) return;
-  const statusEl = document.getElementById('midiImportStatus');
-  const ids = [...document.querySelectorAll('#midiPartsList input[type=checkbox]:checked')].map(el => el.value);
-  if (!ids.length) { statusEl.className = 'status-msg err'; statusEl.textContent = t('midiNoPartSelected'); return; }
-  try { midiFinish(midiPending.midi, midiPending.fileName, ids, statusEl); midiPending = null; }
-  catch (e) { midiFail(statusEl, e); }
 }
 
 /* ================================================================
@@ -1313,6 +1447,8 @@ function wireStaticEvents() {
   $('audioFileInput').addEventListener('change', onAudioFileSelected);
   $('imageFileInput').addEventListener('change', onImageFilesSelected);
   $('midiFileInput').addEventListener('change', onMidiFileSelected);
+  $('midiPartsList').addEventListener('change', () => refreshMidiKeys());
+  $('midiKeySelect').addEventListener('change', e => { if (!midiPending) return; midiPending.pitch = e.target.value; midiPending.keyChosenByUser = true; refreshMidiPreview(); });
   $('sheetCollapseToggle').addEventListener('change', e => Sheet.onCollapseChange(e.target.checked));
 
   $('songNameInput').addEventListener('input', () => E.onSongMetaChange());
@@ -1333,6 +1469,7 @@ function wireStaticEvents() {
   RT.containerEl.querySelectorAll('.import-lengths-toggle').forEach(el => el.addEventListener('change', e => {
     S.setImportUseLengthsEnabled(e.target.checked);
     syncImportLengthsToggles();
+    if (midiPending) refreshMidiPreview(); // MIDIは選び方を変えたらその場で作り直す（音声・画像は次の解析から）
   }));
   syncImportLengthsToggles();
   $('frameBpmOverrideValue').addEventListener('change', e => E.onFrameBpmOverrideValueChange(e.target.value));
@@ -1389,6 +1526,9 @@ function onContainerClick(e) {
       openModal(el.dataset.modal);
       break;
     case 'set-paste-mode': E.setPasteMode(el.dataset.mode); break;
+    case 'import-preview': toggleImportPreview(el); break;
+    case 'import-create': createFromImportReview(); break;
+    case 'audio-pick-again': audioPickAgain(); break;
     case 'jump-section':
       if (el.dataset.close) closeModal('composeToolsModal');
       E.jumpToFrame(parseInt(el.dataset.frame, 10), false);
@@ -1410,7 +1550,6 @@ function onContainerClick(e) {
     case 'close-audio-import': closeAudioImportModal(); break;
     case 'close-image-import': closeImageImportModal(); break;
     case 'close-midi-import': closeMidiImportModal(); break;
-    case 'midi-build-song': onMidiBuildSong(); break;
     case 'start-audio-analysis': startAudioAnalysis(); break;
     case 'cancel-audio-analysis': cancelAudioAnalysis(); break;
     case 'start-image-analysis': startImageAnalysis(); break;

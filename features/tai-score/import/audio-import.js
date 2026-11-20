@@ -43,18 +43,23 @@ function noteTargetFrequencies(pitch) {
 }
 
 // opts: { file, pitch, sensitivityRatio(0-70程度), onProgress(pct, count), isCancelled() }
-// 戻り値: { frames, bpm, noteCount }
+// opts.audioBuffer: 前回デコードした音声（あれば読み直さない）
+// 戻り値: { frames, bpm, noteCount, audioBuffer（再解析で使い回す） }
 export async function analyzeAudioFile(opts) {
   const { file, pitch, sensitivityValue, onProgress, isCancelled } = opts;
   const sensitivityRatio = 1 + sensitivityValue / 20; // 目安: 1.5〜5倍
 
-  const arrayBuffer = await file.arrayBuffer();
-  const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
-  let audioBuffer;
-  try {
-    audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
-  } finally {
-    decodeCtx.close();
+  // 再解析（調や感度だけを変えてもう一度）の時は、前回デコードした音声（opts.audioBuffer）をそのまま使う。
+  // 検出の処理そのものは同じで、ファイルの読み直しとデコードを省くだけ
+  let audioBuffer = opts.audioBuffer || null;
+  if (!audioBuffer) {
+    const arrayBuffer = await file.arrayBuffer();
+    const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
+    } finally {
+      decodeCtx.close();
+    }
   }
   if (isCancelled && isCancelled()) return null;
 
@@ -121,5 +126,5 @@ export async function analyzeAudioFile(opts) {
   if (onProgress) onProgress(100, noteEvents.length);
 
   const { frames, bpm, frameLengths, packedFrom } = quantizeNoteEventsToFrames(noteEvents, 150, { useLengths: importUseLengthsEnabled() });
-  return { frames, bpm, frameLengths, packedFrom, noteCount: noteEvents.length };
+  return { frames, bpm, frameLengths, packedFrom, noteCount: noteEvents.length, audioBuffer };
 }
