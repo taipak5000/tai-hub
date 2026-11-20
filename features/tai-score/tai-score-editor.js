@@ -58,6 +58,7 @@ export function renderEditor() {
   if (autoAdvanceToggle) autoAdvanceToggle.checked = S.autoAdvanceEnabled();
   applyRangeModeButton();
   renderRangeTools();
+  syncPlaybackRateSelect();
   applyInputMode();
   applyTimelineView();
   renderFrameStrip();
@@ -491,6 +492,59 @@ export function appendRecordedFrames(rec) {
   revealSelectedFrame();
   updatePracticeRangeBounds(false);
   return clip.frames.length;
+}
+
+/* ── チェック再生の速さ（作曲画面・譜面ビューの再生だけに効く。練習・試験には使わない） ── */
+export function playbackRate() { return S.loadUiState().playbackRate || 1; }
+export function setPlaybackRate(v) {
+  const rate = parseFloat(v);
+  if (!S.PLAYBACK_RATES.includes(rate)) return;
+  S.saveUiState({ playbackRate: rate });
+  syncPlaybackRateSelect();
+}
+export function syncPlaybackRateSelect() {
+  const sel = document.getElementById('playbackRateSelect');
+  if (sel) sel.value = String(playbackRate());
+}
+
+/* ── 和音をワンタップで入れる（根音＋2つ上＋4つ上の三和音。全部入っていれば取り除く） ── */
+export function toggleTriad(root) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const notes = S.triadNotes(root);
+  if (noteInterceptor && noteInterceptor(notes[0])) { // 録音中は、和音の3音を同時に弾いたものとして記録する
+    notes.slice(1).forEach(n => noteInterceptor(n));
+    notes.forEach(n => { A.playNote(n, song.pitch, song.instrument); flashNote(n); });
+    return;
+  }
+  if (RT.isPlaying) stopPlayback();
+  const frame = song.frames[RT.selectedFrameIndex];
+  const allOn = notes.every(n => frame.includes(n));
+  if (!RT.autoAdvanceTimer) pushEditHistory(); // 通常の音入力と同じ（和音の受付中なら同じ1回にまとめる）
+  if (allOn) song.frames[RT.selectedFrameIndex] = frame.filter(n => !notes.includes(n));
+  else song.frames[RT.selectedFrameIndex] = [...new Set([...frame, ...notes])].sort((a, b) => a - b);
+  persistCurrentSong();
+  renderBigGrid();
+  refreshFrameBox(RT.selectedFrameIndex);
+  if (!allOn) A.playFrame(notes, song.pitch, song.instrument);
+  if (!allOn && S.autoAdvanceEnabled() && !RT.selection) scheduleAutoAdvance();
+}
+
+/* ── 範囲の時間を2倍・½にする（マスの長さで。収まらないマスがあれば何もしない） ── */
+export function stretchRange(factor) {
+  const song = RT.currentSong;
+  if (!song) return;
+  const r = editRange();
+  const res = S.stretchedLengths(song, r.start, r.end, factor);
+  if (res.blocked !== undefined) {
+    showToast(t(factor > 1 ? 'stretchBlockedLongToast' : 'stretchBlockedShortToast', { n: res.blocked + 1, len: S.lengthLabel(S.frameLength(song, res.blocked)) }));
+    return;
+  }
+  cancelAutoAdvance();
+  pushEditHistory();
+  Object.keys(res.lengths).forEach(k => S.setFrameLength(song, parseInt(k, 10), res.lengths[k]));
+  afterRangeEdit(true);
+  showToast(t(factor > 1 ? 'stretchDoubleToast' : 'stretchHalfToast', { count: r.end - r.start + 1 }));
 }
 
 /* ── 空のマスをまとめて足す（履歴は1回。目印・長さ・テンポ変化の表も一度にずらす） ── */
@@ -1249,7 +1303,7 @@ export function togglePlayback() {
     const looping = S.loopRangeEnabled(song);
     const range = looping ? getPracticeRange() : null;
     const startIdx = (looping && (RT.selectedFrameIndex < range.start || RT.selectedFrameIndex > range.end)) ? range.start : RT.selectedFrameIndex;
-    A.runCountIn(S.effectiveBpmAtFrame(song, startIdx), null, startPlaybackLoop);
+    A.runCountIn(S.effectiveBpmAtFrame(song, startIdx) * playbackRate(), null, startPlaybackLoop);
     return;
   }
   startPlaybackLoop();
@@ -1276,7 +1330,7 @@ function startPlaybackLoop() {
     highlightPlayingFrame(i);
     A.playFrame(song.frames[i], song.pitch, song.instrument);
     if (S.metronomeEnabled()) A.playMetronomeClick(false);
-    const wait = (60000 / bpm) * S.frameLength(song, i);
+    const wait = (60000 / bpm) * S.frameLength(song, i) / playbackRate(); // チェック再生の速さ（曲のBPMは変えない）
     i++;
     RT.playbackTimer = setTimeout(step, wait);
   };

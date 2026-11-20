@@ -438,9 +438,25 @@ export function formatDuration(sec) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
+/* ── 範囲の時間の伸び縮み（マスの長さを2倍・½にする）。
+   全部のマスが FRAME_LENGTHS に収まる時だけ新しい長さの表を返す。収まらなければ { blocked: 最初に収まらないマス番号 }。
+   空のマスを挟んで調整する方式は使わない。 */
+export function stretchedLengths(song, start, end, factor) {
+  const next = {};
+  for (let i = start; i <= end; i++) {
+    const len = frameLength(song, i) * factor;
+    if (!FRAME_LENGTHS.includes(len)) return { blocked: i };
+    next[i] = len;
+  }
+  return { lengths: next };
+}
+/* ── 和音（三和音）: 根音 r に対して r・r+2・r+4（15音の上で1つ飛ばしに3つ重ねる） ── */
+export function triadNotes(root) { return [root, root + 2, root + 4].filter(i => i >= 0 && i <= 14); }
+
 /* ── 作曲画面の細かな選択（貼り付け方・ずらし方・繰り返しの元）。曲データにも既存のキーにも混ぜず、専用のキーに置く ── */
 export const UI_STATE_KEY = () => nsKey('taiScoreUiState_v1');
-const UI_STATE_DEFAULTS = { pasteMode: 'insert', shiftMode: 'wrap', repeatSource: 'range' };
+const UI_STATE_DEFAULTS = { pasteMode: 'insert', shiftMode: 'wrap', repeatSource: 'range', playbackRate: 1 };
+export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5]; // チェック再生の速さの倍率（曲のBPMは変えない）
 export function loadUiState() {
   try {
     const v = JSON.parse(localStorage.getItem(UI_STATE_KEY()));
@@ -449,6 +465,7 @@ export function loadUiState() {
       if (v.pasteMode === 'insert' || v.pasteMode === 'overwrite') out.pasteMode = v.pasteMode;
       if (['wrap', 'drop', 'abort'].includes(v.shiftMode)) out.shiftMode = v.shiftMode;
       if (v.repeatSource === 'range' || v.repeatSource === 'clipboard') out.repeatSource = v.repeatSource;
+      if (PLAYBACK_RATES.includes(v.playbackRate)) out.playbackRate = v.playbackRate;
     }
     return out;
   } catch (e) { return Object.assign({}, UI_STATE_DEFAULTS); }

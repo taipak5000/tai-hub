@@ -206,6 +206,8 @@ const landingPoint = currentY + project(v);
 - **楽譜づくりの読み込みの「確かめてから作る」**（`tai-score-view.js`の`showImportReview()`・`createFromImportReview()`）: 音声・MIDI・楽譜画像は解析後に要約と試聴だけを出し、
   「この内容で曲を作る」で初めて`finishImport()`する。音声はデコード済みの音声を`RT.audioDecoded`に持ち、`analyzeAudioFile({ audioBuffer })`で再解析する（検出の処理は同じ）。
   MIDIの調は`suggestKeys()`（12の調で、半音を寄せずに置ける音の割合→オクターブで折り返す音の少なさ→Cに近い順）。調Pでは`midiToSkyIndex(音 − Pの半音数)`で当てはめる（Cなら従来と同じ）。
+- **楽譜づくりの作曲画面の細かな選択**（`taiScoreUiState_v1`。`loadUiState()`/`saveUiState()`）: 貼り付け方・ずらし方・繰り返しの元・チェック再生の速さ（`playbackRate`）。
+  曲データや既存のキーには混ぜない。再生の速さは作曲画面と譜面ビューの再生だけに効かせ、練習・試験には使わない。
 - **称号一覧**（`#/titles`、`features/titles/titles-view.js`）: 全ツールの称号をここに集める。各ツールの画面には`js/titles.js`の`titlesLinkHtml(ツール)`の
   小さな案内だけを出す。獲得の判定・記録は各ツール。称号の定義は`features/tai-card/data/title-catalog.js`の`TITLE_CATALOG`（ツールに称号を足したらここにも足す）。
 - **試作中の機能**（`features/lab/`）: 今は無い。作る時はルートを`lab-*`で`hidden: true`にし、入口はデイリーチェックシート単体のページの「試作中の機能」だけにする。

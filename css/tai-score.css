@@ -907,11 +907,11 @@
 .tai-score-view .frame-bpm-range-note { font-size: 12px; color: var(--pink-d); font-weight: 600; letter-spacing: 0.02em; }
 
 /* ── セクションの目印・マスへ移動（タイムラインの上の帯） ── */
+.tai-score-view .compose-nav-row:has(.section-chips[hidden]) { display: none; }
 .tai-score-view .compose-nav-row { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 4px 6px; min-width: 0; }
 .tai-score-view .section-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 2px 0; }
 .tai-score-view .section-chips::-webkit-scrollbar { display: none; }
 .tai-score-view .section-chips[hidden] { display: none; }
-.tai-score-view .section-chips[hidden] + .jump-box { margin-left: auto; }
 .tai-score-view .section-chip {
   border: 0; background: var(--card); color: var(--text); cursor: pointer; flex-shrink: 0;
   display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 11px 0 5px; border-radius: 999px;
@@ -1007,3 +1007,20 @@
 .tai-score-view .midi-key-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
 .tai-score-view .midi-key-label select { flex: 1; min-width: 0; font-size: 15px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--sep); background: var(--bg); color: var(--text); }
 .tai-score-view .midi-key-note { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+/* ── 和音ワンタップ・再生の速さ ── */
+.tai-score-view .triad-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tai-score-view .triad-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.tai-score-view .triad-chip { font-size: 12.5px; }
+.tai-score-view .playback-rate { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--text-2); margin-left: 6px; letter-spacing: 0.02em; }
+.tai-score-view .playback-rate select { font-size: 14px; padding: 3px 4px; border-radius: 8px; border: 1px solid var(--sep); background: var(--card); color: var(--text); }
+@media (max-width: 600px) {
+  .tai-score-view .triad-row { margin-bottom: 8px; gap: 6px; }
+  .tai-score-view .triad-chips { flex-wrap: nowrap; flex: 1; gap: 3px; }
+  .tai-score-view .triad-chip { flex: 1 0 auto; min-width: 0; padding: 0 4px; }
+}
+.tai-score-view .compose-overlay.recording .playback-rate { display: none; }
+@media (max-width: 600px) {
+  .tai-score-view .big-grid { max-width: 270px; gap: 7px; }
+  .tai-score-view .jump-box input { width: 54px; }
+}

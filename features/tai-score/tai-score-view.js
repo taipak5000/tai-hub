@@ -38,7 +38,7 @@
 import { titlesSlotHtml, refreshTitleLinks } from '../../js/titles.js';
 import { CURRENT_LANG } from '../../js/i18n.js';
 import { t } from './data/i18n-score.js';
-import { PITCHES, INSTRUMENT_LABELS, instrumentLabel } from './data/constants.js';
+import { PITCHES, INSTRUMENT_LABELS, instrumentLabel, noteLabel } from './data/constants.js';
 import * as S from './tai-score-state.js';
 import * as A from './tai-score-audio.js';
 import {
@@ -484,6 +484,10 @@ function renderComposeOverlay() {
     <div class="compose-timeline-head">
       <span class="compose-timeline-label">${escapeHtml(t('frameSectionLabel'))}</span>
       <div class="compose-timeline-actions">
+        <div class="jump-box">
+          <input type="number" id="jumpFrameInput" min="1" inputmode="numeric" placeholder="${escapeHtml(t('jumpFramePlaceholder'))}" aria-label="${escapeHtml(t('jumpFrameAria'))}">
+          <button type="button" class="mini-btn" data-act="jump-frame">${escapeHtml(t('jumpFrameBtn'))}</button>
+        </div>
         <div class="timeline-view-tabs" role="group" aria-label="${escapeHtml(t('timelineViewGroupLabel'))}">
           <button type="button" class="timeline-view-tab" data-view="tile" data-act="set-timeline-view" title="${escapeHtml(t('timelineViewTileTitle'))}">${escapeHtml(t('timelineViewTile'))}</button>
           <button type="button" class="timeline-view-tab" data-view="column" data-act="set-timeline-view" title="${escapeHtml(t('timelineViewColumnTitle'))}">${escapeHtml(t('timelineViewColumn'))}</button>
@@ -492,10 +496,6 @@ function renderComposeOverlay() {
     </div>
     <div class="compose-nav-row">
       <div class="section-chips" id="sectionChips" role="group" aria-label="${escapeHtml(t('sectionLabel'))}" hidden></div>
-      <div class="jump-box">
-        <input type="number" id="jumpFrameInput" min="1" inputmode="numeric" placeholder="${escapeHtml(t('jumpFramePlaceholder'))}" aria-label="${escapeHtml(t('jumpFrameAria'))}">
-        <button type="button" class="mini-btn" data-act="jump-frame">${escapeHtml(t('jumpFrameBtn'))}</button>
-      </div>
     </div>
     <div class="frame-strip compose-timeline view-tile" id="frameStrip"></div>
 
@@ -514,6 +514,12 @@ function renderComposeOverlay() {
         <div class="frame-len-row">
           <span class="frame-len-label" title="${escapeHtml(t('frameLenHint'))}">${escapeHtml(t('frameLenLabel'))}</span>
           <div class="frame-len-chips" id="frameLengthChips" role="group" aria-label="${escapeHtml(t('frameLenLabel'))}"></div>
+        </div>
+        <div class="triad-row">
+          <span class="frame-len-label" title="${escapeHtml(t('triadHint'))}">${escapeHtml(t('triadLabel'))}</span>
+          <div class="triad-chips" role="group" aria-label="${escapeHtml(t('triadLabel'))}">
+            ${[0, 1, 2, 3, 4, 5, 6].map(r => `<button type="button" class="len-chip triad-chip" data-act="toggle-triad" data-root="${r}" title="${escapeHtml(t('triadChipTitle', { notes: [r, r + 2, r + 4].map(i => noteLabel(i)).join('・') }))}">${escapeHtml(noteLabel(r))}</button>`).join('')}
+          </div>
         </div>
         <div class="frame-bpm-row" id="frameBpmRow">
           <label class="frame-bpm-toggle">
@@ -568,6 +574,9 @@ function renderComposeOverlay() {
         <label>BPM</label>
         <input type="range" id="bpmSlider" min="40" max="999" value="150">
         <input type="number" id="bpmNumber" min="40" max="999" value="150">
+        <label class="playback-rate" title="${escapeHtml(t('playbackRateTitle'))}">${escapeHtml(t('playbackRateLabel'))}
+          <select id="playbackRateSelect">${S.PLAYBACK_RATES.map(r => `<option value="${r}">×${r}</option>`).join('')}</select>
+        </label>
       </div>
     </div>
   </div>`;
@@ -679,6 +688,15 @@ function renderComposeToolsModal() {
             <button type="button" class="mini-btn" data-act="reverse-range">${escapeHtml(t('reverseRangeBtn'))}</button>
             <button type="button" class="mini-btn" data-act="invert-range">${escapeHtml(t('invertRangeBtn'))}</button>
           </div>
+        </div>
+
+        <div class="range-tools-group">
+          <span class="range-tools-sub">${escapeHtml(t('stretchLabel'))}</span>
+          <div class="range-tools-btns">
+            <button type="button" class="mini-btn" data-act="stretch-range" data-factor="2">${escapeHtml(t('stretchDoubleBtn'))}</button>
+            <button type="button" class="mini-btn" data-act="stretch-range" data-factor="0.5">${escapeHtml(t('stretchHalfBtn'))}</button>
+          </div>
+          <p class="range-tools-hint">${escapeHtml(t('stretchHint'))}</p>
         </div>
 
         <div class="range-tools-group">
@@ -1459,6 +1477,7 @@ function wireStaticEvents() {
   $('bpmNumber').addEventListener('input', e => E.onBpmChange(e.target.value, 'number'));
   $('bpmNumber').addEventListener('change', e => E.onBpmChange(e.target.value, null, true));
   $('shiftModeSelect').addEventListener('change', e => E.setShiftMode(e.target.value));
+  $('playbackRateSelect').addEventListener('change', e => E.setPlaybackRate(e.target.value));
   // 入力欄でEnterを押したら、その欄のボタンと同じことをする
   // （stopPropagation: 画面全体のショートカット「Enter＝次のマスへ」まで届かないようにする）
   $('jumpFrameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); E.jumpToFrameNumber(e.target.value); e.target.blur(); } });
@@ -1515,7 +1534,7 @@ function onContainerClick(e) {
   if (act.startsWith('sheet-') && Sheet.handleClick(act, el)) return;
   if (act.startsWith('rec-') && R.handleClick(act, el)) return;
   // 録音パネルが開いている間は、モーダルや別の画面を開く操作を受け付けない（作曲画面を閉じる×だけは、録音を捨てて閉じる）
-  if (R.isActive() && act !== 'toggle-note' && act !== 'set-input-mode' && act !== 'switch-view' && act !== 'close-performance' && act !== 'set-free-instrument') return;
+  if (R.isActive() && act !== 'toggle-note' && act !== 'toggle-triad' && act !== 'set-input-mode' && act !== 'switch-view' && act !== 'close-performance' && act !== 'set-free-instrument') return;
   switch (act) {
     case 'open-sheet': openSheetForSong(el.dataset.id); break;
     case 'open-sheet-current': openSheetForCurrent(); break;
@@ -1527,6 +1546,8 @@ function onContainerClick(e) {
       break;
     case 'set-paste-mode': E.setPasteMode(el.dataset.mode); break;
     case 'import-preview': toggleImportPreview(el); break;
+    case 'toggle-triad': E.toggleTriad(parseInt(el.dataset.root, 10)); break;
+    case 'stretch-range': E.stretchRange(parseFloat(el.dataset.factor)); break;
     case 'import-create': createFromImportReview(); break;
     case 'audio-pick-again': audioPickAgain(); break;
     case 'jump-section':

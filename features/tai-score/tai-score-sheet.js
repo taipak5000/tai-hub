@@ -194,7 +194,7 @@ function play() {
     const el = $('sheetCell_' + i) || cellElFor(i);
     if (el) { el.classList.add('playing'); scrollToCell(i, true); }
     A.playFrame(song.frames[i] || [], song.pitch, song.instrument);
-    const wait = S.frameDurationMs(song, i);
+    const wait = S.frameDurationMs(song, i) / ((S.loadUiState().playbackRate) || 1); // チェック再生の速さ（作曲画面と共通の設定）
     i++;
     timer = setTimeout(step, wait);
   };
