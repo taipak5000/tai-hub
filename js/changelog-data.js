@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.21',
+    title: { ja: '精霊ツリー管理の一括操作を見直し（まとめての追いつきを外し、一括操作は元に戻せるように）', en: 'Spirit Tree Tracker bulk actions reworked (catch-up removed, tree actions can be undone)' },
+    date: '2026-11-21',
+    items: [
+      { type: 'improve', ja: '精霊ツリー管理の一覧から、絞り込んだ精霊やエリア・シーズンごとにまとめて解放済みにする「追いつき」のボタンを外しました。押し間違えると何十体分のツリーと所持キャンドルがまとめて変わってしまうためです。精霊の詳細の「このツリーを全部解放」「クエストを一括完了」「ハートを一括獲得」「ツリーをリセット」は残し、実行後に出る「元に戻す」を押すと、ツリーの解放状況・所持キャンドルとハート・アイテムやエモートの所持が操作の前に戻るようにしました（詳細を閉じるか、ほかのノードを押すまで有効です）。', en: 'Spirit Tree Tracker: removed the "catch up" buttons that marked every filtered spirit, area or season as complete at once, since a mis-tap could change dozens of trees and your candles together. The per-spirit actions (unlock the whole tree, complete quests, obtain hearts, reset the tree) remain, and now show an Undo button that restores the tree, your candles and hearts, and linked item and emote ownership (available until you close the spirit or tap another node).', route: 'spirit-catalog' },
+    ],
+  },
+  {
     version: '2026.11.20.8',
     title: { ja: '楽譜づくりの作曲機能を見直し（範囲を変える・セクション・弾いて録音・読み込みの確認・和音など）', en: 'Sheet Music Maker composing overhaul (transform ranges, sections, record by playing, import review, chords and more)' },
     date: '2026-11-20',

@@ -60,10 +60,8 @@ let markQuestsConfirming = false;
 let markHeartsConfirming = false;
 let resetTreeConfirming = false;
 
-let bulkScopeRegistry = {}; // scopeId -> spirit guid配列（renderGrid/renderGroupedViewが毎回更新）
-let bulkCatchUpConfirmingScope = null;
-let bulkQuestConfirmingScope = null;
-let bulkHeartConfirmingScope = null;
+// ↩️ 詳細の一括操作の取り消し用（メモリ上だけ。最新の1件。別の操作・詳細を閉じる・画面を離れると捨てる）
+let treeUndo = null;
 
 let revisitBadgeTimer = null;
 let renderGridDebounceTimer = null;
@@ -85,7 +83,7 @@ export function mount(container, sub) {
   currentDetailGuid = null;
   returnToRevisit = false;
   markAllConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false; resetTreeConfirming = false;
-  bulkScopeRegistry = {}; bulkCatchUpConfirmingScope = null; bulkQuestConfirmingScope = null; bulkHeartConfirmingScope = null;
+  treeUndo = null;
 
   container.innerHTML = renderShell();
   cacheEls();
@@ -125,6 +123,7 @@ export function unmount() {
   clearTimeout(scToastTimer);
   scToastQueue = [];
   scToastBusy = false;
+  treeUndo = null;
   document.getElementById('scDashModalOverlay')?.remove();
   eventDashboard.unmount();
   document.getElementById('scShareCustomizeOverlay')?.remove();
@@ -232,9 +231,6 @@ function renderShell() {
           </div>
           <div class="filter-stats" id="scFilterStats"></div>
           <div class="filter-remaining-cost" id="scFilterRemainingCost"></div>
-          <div class="bulk-catchup-row" id="scBulkCatchupFilteredRow"></div>
-          <div class="bulk-catchup-row" id="scBulkQuestCatchupFilteredRow"></div>
-          <div class="bulk-catchup-row" id="scBulkHeartCatchupFilteredRow"></div>
           <div class="sc-cost-toggle-row">
             <label><input type="checkbox" id="scCostToggle"> ${escapeHtml(t('filter.costDisplayLabel'))} <span class="sc-test-tag">${escapeHtml(t('filter.costDisplayTestTag'))}</span></label>
             <div class="sc-cost-toggle-hint">${escapeHtml(t('filter.costDisplayHint'))}</div>
@@ -308,9 +304,6 @@ function cacheEls() {
     clearFiltersBtn: q('scClearFiltersBtn'),
     filterStats: q('scFilterStats'),
     filterRemainingCost: q('scFilterRemainingCost'),
-    bulkCatchupFilteredRow: q('scBulkCatchupFilteredRow'),
-    bulkQuestCatchupFilteredRow: q('scBulkQuestCatchupFilteredRow'),
-    bulkHeartCatchupFilteredRow: q('scBulkHeartCatchupFilteredRow'),
     costToggle: q('scCostToggle'),
     overallPctCard: q('scOverallPctCard'),
     statsRow: q('scStatsRow'),
@@ -378,22 +371,6 @@ function wireEvents() {
 function handleGridClick(ev) {
   const card = ev.target.closest('.spirit-card');
   if (card && card.dataset.guid) { openDetail(card.dataset.guid); return; }
-  const btn = ev.target.closest('[data-sc-act]');
-  if (!btn) return;
-  const act = btn.dataset.scAct;
-  const scopeId = btn.dataset.scScope;
-  if (act === 'bulk-start') { bulkCatchUpConfirmingScope = scopeId; bulkQuestConfirmingScope = null; bulkHeartConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-cancel') { bulkCatchUpConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-confirm') { bulkCatchUpConfirmingScope = null; bulkCatchUpConfirm(scopeId); }
-  else if (act === 'bulk-quest-start') { bulkQuestConfirmingScope = scopeId; bulkHeartConfirmingScope = null; bulkCatchUpConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-quest-cancel') { bulkQuestConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-quest-confirm') { bulkQuestConfirmingScope = null; bulkQuestCatchUpConfirm(scopeId); }
-  else if (act === 'bulk-heart-start') { bulkHeartConfirmingScope = scopeId; bulkQuestConfirmingScope = null; bulkCatchUpConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-heart-cancel') { bulkHeartConfirmingScope = null; rerenderCurrentBrowseView(); }
-  else if (act === 'bulk-heart-confirm') { bulkHeartConfirmingScope = null; bulkHeartCatchUpConfirm(scopeId); }
-}
-function rerenderCurrentBrowseView() {
-  if (browseMode === 'grid') renderGrid(); else renderGrid();
 }
 
 /* ================================================================
@@ -414,7 +391,6 @@ function setBrowseMode(mode) {
   els.viewModeGridBtn.classList.toggle('active', mode === 'grid');
   els.viewModeAreaBtn.classList.toggle('active', mode === 'area');
   els.viewModeSeasonBtn.classList.toggle('active', mode === 'season');
-  bulkCatchUpConfirmingScope = null;
   renderGrid();
 }
 function renderGridDebounced() {
@@ -503,90 +479,6 @@ function renderGrandRemainingCost() {
 /* ================================================================
    一覧／エリア別／シーズン別 グループ表示
    ================================================================ */
-function bulkCatchUpControlHtml(scopeId) {
-  let trees = 0, nodes = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const sp = S.spiritByGuid[guid];
-    if (!sp) return;
-    const { done, total } = S.spiritProgress(sp);
-    if (done < total) { trees++; nodes += (total - done); }
-  });
-  if (trees <= 0) return '';
-  if (bulkCatchUpConfirmingScope !== scopeId) {
-    return `<button type="button" class="sc-block-btn" data-sc-act="bulk-start" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('browse.bulkCatchUpBtnTemplate', { count: trees }))}</button>`;
-  }
-  return `<div class="sc-confirm-row">
-    <span class="sc-confirm-text">${escapeHtml(t('browse.bulkCatchUpConfirmTemplate', { count: trees, nodes }))}</span>
-    <button type="button" class="sc-confirm-btn ok" data-sc-act="bulk-confirm" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('detail.markAllConfirmBtn'))}</button>
-    <button type="button" class="sc-confirm-btn cancel" data-sc-act="bulk-cancel">${escapeHtml(t('cancelBtn'))}</button>
-  </div>`;
-}
-function bulkQuestCatchUpControlHtml(scopeId) {
-  let trees = 0, nodes = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const sp = S.spiritByGuid[guid];
-    if (!sp) return;
-    const remaining = S.spiritNodesRemaining(sp, S.isQuestNode);
-    if (remaining > 0) { trees++; nodes += remaining; }
-  });
-  if (trees <= 0) return '';
-  if (bulkQuestConfirmingScope !== scopeId) {
-    return `<button type="button" class="sc-block-btn" data-sc-act="bulk-quest-start" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('browse.bulkQuestCatchUpBtnTemplate', { count: trees }))}</button>`;
-  }
-  return `<div class="sc-confirm-row">
-    <span class="sc-confirm-text">${escapeHtml(t('browse.bulkQuestCatchUpConfirmTemplate', { count: trees, nodes }))}</span>
-    <button type="button" class="sc-confirm-btn ok" data-sc-act="bulk-quest-confirm" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('detail.markAllConfirmBtn'))}</button>
-    <button type="button" class="sc-confirm-btn cancel" data-sc-act="bulk-quest-cancel">${escapeHtml(t('cancelBtn'))}</button>
-  </div>`;
-}
-function bulkHeartCatchUpControlHtml(scopeId) {
-  let trees = 0, nodes = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const sp = S.spiritByGuid[guid];
-    if (!sp) return;
-    const remaining = S.spiritNodesRemaining(sp, S.isHeartNode);
-    if (remaining > 0) { trees++; nodes += remaining; }
-  });
-  if (trees <= 0) return '';
-  if (bulkHeartConfirmingScope !== scopeId) {
-    return `<button type="button" class="sc-block-btn" data-sc-act="bulk-heart-start" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('browse.bulkHeartCatchUpBtnTemplate', { count: trees }))}</button>`;
-  }
-  return `<div class="sc-confirm-row">
-    <span class="sc-confirm-text">${escapeHtml(t('browse.bulkHeartCatchUpConfirmTemplate', { count: trees, nodes }))}</span>
-    <button type="button" class="sc-confirm-btn ok" data-sc-act="bulk-heart-confirm" data-sc-scope="${escapeHtml(scopeId)}">${escapeHtml(t('detail.markAllConfirmBtn'))}</button>
-    <button type="button" class="sc-confirm-btn cancel" data-sc-act="bulk-heart-cancel">${escapeHtml(t('cancelBtn'))}</button>
-  </div>`;
-}
-function afterBulkAction(msgKey, vars) {
-  renderGrid();
-  if (currentDetailGuid && els.detailOverlay.classList.contains('open')) renderDetail(currentDetailGuid);
-  showToast(t(msgKey, vars));
-}
-function bulkCatchUpConfirm(scopeId) {
-  let treesChanged = 0, nodesChanged = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const changed = S.markTreeCompleteCore(guid);
-    if (changed > 0) { treesChanged++; nodesChanged += changed; }
-  });
-  afterBulkAction('browse.bulkCatchUpDoneToast', { trees: treesChanged, nodes: nodesChanged });
-}
-function bulkQuestCatchUpConfirm(scopeId) {
-  let treesChanged = 0, nodesChanged = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const changed = S.markNodesByPredicateCore(guid, S.isQuestNode);
-    if (changed > 0) { treesChanged++; nodesChanged += changed; }
-  });
-  afterBulkAction('browse.bulkQuestCatchUpDoneToast', { trees: treesChanged, nodes: nodesChanged });
-}
-function bulkHeartCatchUpConfirm(scopeId) {
-  let treesChanged = 0, nodesChanged = 0;
-  (bulkScopeRegistry[scopeId] || []).forEach((guid) => {
-    const changed = S.markNodesByPredicateCore(guid, S.isHeartNode);
-    if (changed > 0) { treesChanged++; nodesChanged += changed; }
-  });
-  afterBulkAction('browse.bulkHeartCatchUpDoneToast', { trees: treesChanged, nodes: nodesChanged });
-}
-
 function renderGroupedView(mode, list) {
   const groups = S.computeGroups(mode, list);
   if (groups.length === 0) {
@@ -604,8 +496,6 @@ function renderGroupedView(mode, list) {
     });
     const pct = totalNodes > 0 ? Math.round((doneNodes / totalNodes) * 100) : 0;
     const costChips = remainingCostChipsHtml(S.sumRemainingCost(g.spirits));
-    const scopeId = 'grp_' + mode + '_' + g.key;
-    bulkScopeRegistry[scopeId] = g.spirits.map((s) => s.guid);
     const cardsHtml = g.spirits.map((s) => spiritCardHtml(s, mode === 'season' ? 'realm' : 'plain')).join('');
     return `
       <div class="area-group">
@@ -616,7 +506,6 @@ function renderGroupedView(mode, list) {
               <div class="area-group-badge">${icon('sc-i-tree', 11)} ${escapeHtml(t('browse.treesCompleteTemplate', { done: completeTrees, total: g.spirits.length }))} ・ ${escapeHtml(t('browse.nodesPctTemplate', { pct }))}</div>
               <div class="area-group-remaining-cost"><b>${escapeHtml(t('browse.groupRemainingCostLabel'))}</b>${escapeHtml(t('common.labelSep'))}${costChips || escapeHtml(t('filter.remainingCostZero'))}</div>
             </div>
-            ${bulkCatchUpControlHtml(scopeId)}
           </div>
           <div class="area-group-pct-bar"><div class="area-group-pct-fill ${pct === 100 ? 'complete' : ''}" style="width:${pct}%"></div></div>
         </div>
@@ -667,11 +556,6 @@ function renderGrid() {
 
   els.filterStats.textContent = t('filter.statsTemplate', { filtered: filtered.length, total: S.SPIRIT_TREE_DATA.length });
   renderFilterRemainingCost(filtered);
-
-  bulkScopeRegistry.filtered = filtered.map((s) => s.guid);
-  els.bulkCatchupFilteredRow.innerHTML = bulkCatchUpControlHtml('filtered');
-  els.bulkQuestCatchupFilteredRow.innerHTML = bulkQuestCatchUpControlHtml('filtered');
-  els.bulkHeartCatchupFilteredRow.innerHTML = bulkHeartCatchUpControlHtml('filtered');
 
   if (browseMode === 'grid') {
     els.spiritGrid.style.display = '';
@@ -761,6 +645,7 @@ function openDetail(guid) {
 function closeDetail() {
   els.detailOverlay.classList.remove('open');
   currentDetailGuid = null;
+  discardTreeUndo();
   markAllConfirming = false; resetTreeConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false;
   if (returnToRevisit) {
     returnToRevisit = false;
@@ -993,9 +878,38 @@ function renderDetail(guid) {
     </div>`;
 }
 
+// 詳細の一括操作を、実行前のスナップショット付きで行う。変化があった時だけ「元に戻す」付きのトーストを出す
+function runUndoableTreeAction(guid, run, toastKey) {
+  discardTreeUndo();
+  const snap = S.captureTreeUndo(guid);
+  const changed = run();
+  renderDetail(guid); renderGrid();
+  if (changed > 0 && snap) {
+    treeUndo = snap;
+    showToast(t(toastKey, { count: changed }), { label: t('detail.undoBtn'), onClick: () => undoTreeAction(snap) });
+  } else {
+    showToast(t(toastKey, { count: changed }));
+  }
+}
+function undoTreeAction(snap) {
+  if (!snap || treeUndo !== snap) return; // 別の操作の後や、捨てた後に押された
+  treeUndo = null;
+  S.applyTreeUndo(snap);
+  if (currentDetailGuid) renderDetail(currentDetailGuid);
+  renderGrid();
+  showToast(t('detail.undoDoneToast'));
+}
+function discardTreeUndo() {
+  if (!treeUndo) return;
+  treeUndo = null;
+  // 出ている「元に戻す」は押せなくする
+  els.toast?.querySelector('.sc-toast-action')?.remove();
+}
+
 function handleDetailClick(ev) {
   const toggleBtn = ev.target.closest('[data-sc-toggle-guid]');
   if (toggleBtn) {
+    discardTreeUndo();
     const result = S.toggleNode(currentDetailGuid, toggleBtn.dataset.scToggleGuid);
     if (result) { renderDetail(currentDetailGuid); renderGrid(); }
     return;
@@ -1009,30 +923,22 @@ function handleDetailClick(ev) {
   else if (act === 'mark-all-cancel') { markAllConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'mark-all-confirm') {
     markAllConfirming = false;
-    const changed = S.markTreeCompleteCore(guid);
-    renderDetail(guid); renderGrid();
-    showToast(t('detail.markAllDoneToast', { count: changed }));
+    runUndoableTreeAction(guid, () => S.markTreeCompleteCore(guid), 'detail.markAllDoneToast');
   } else if (act === 'mark-quests-start') { markQuestsConfirming = true; markHeartsConfirming = false; markAllConfirming = false; resetTreeConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'mark-quests-cancel') { markQuestsConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'mark-quests-confirm') {
     markQuestsConfirming = false;
-    const changed = S.markNodesByPredicateCore(guid, S.isQuestNode);
-    renderDetail(guid); renderGrid();
-    showToast(t('detail.markQuestsDoneToast', { count: changed }));
+    runUndoableTreeAction(guid, () => S.markNodesByPredicateCore(guid, S.isQuestNode), 'detail.markQuestsDoneToast');
   } else if (act === 'mark-hearts-start') { markHeartsConfirming = true; markQuestsConfirming = false; markAllConfirming = false; resetTreeConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'mark-hearts-cancel') { markHeartsConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'mark-hearts-confirm') {
     markHeartsConfirming = false;
-    const changed = S.markNodesByPredicateCore(guid, S.isHeartNode);
-    renderDetail(guid); renderGrid();
-    showToast(t('detail.markHeartsDoneToast', { count: changed }));
+    runUndoableTreeAction(guid, () => S.markNodesByPredicateCore(guid, S.isHeartNode), 'detail.markHeartsDoneToast');
   } else if (act === 'reset-start') { resetTreeConfirming = true; markAllConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'reset-cancel') { resetTreeConfirming = false; renderDetail(currentDetailGuid); }
   else if (act === 'reset-confirm') {
     resetTreeConfirming = false;
-    const changed = S.resetTreeToLocked(guid);
-    renderDetail(guid); renderGrid();
-    showToast(t('detail.resetAllDoneToast', { count: changed }));
+    runUndoableTreeAction(guid, () => S.resetTreeToLocked(guid), 'detail.resetAllDoneToast');
   }
 }
 
@@ -1092,20 +998,45 @@ function closeDashboardModal() {
 /* ================================================================
    トースト
    ================================================================ */
-function showToast(msg) {
-  scToastQueue.push(msg);
+function showToast(msg, action) {
+  scToastQueue.push({ msg, action: action || null });
   if (!scToastBusy) advanceToastQueue();
 }
 function advanceToastQueue() {
   const el = els.toast;
   if (!el || scToastQueue.length === 0) { scToastBusy = false; return; }
   scToastBusy = true;
-  const msg = scToastQueue.shift();
-  el.textContent = msg;
+  const { msg, action } = scToastQueue.shift();
+  el.textContent = '';
+  const text = document.createElement('span');
+  text.className = 'sc-toast-text';
+  text.textContent = msg;
+  el.appendChild(text);
+  el.classList.toggle('has-action', !!action);
+  if (action) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sc-toast-action';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => {
+      btn.remove();
+      action.onClick();
+      hideToastNow();
+    });
+    el.appendChild(btn);
+  }
   el.classList.add('show');
   clearTimeout(scToastTimer);
+  // 「元に戻す」付きは押す余裕を持たせて長めに出す
+  scToastTimer = setTimeout(hideToastNow, action ? 6000 : 2600);
+}
+function hideToastNow() {
+  const el = els.toast;
+  clearTimeout(scToastTimer);
+  if (!el) { scToastBusy = false; return; }
+  el.classList.remove('show');
   scToastTimer = setTimeout(() => {
-    el.classList.remove('show');
-    setTimeout(advanceToastQueue, 200);
-  }, 2600);
+    el.classList.remove('has-action');
+    advanceToastQueue();
+  }, 200);
 }

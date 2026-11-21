@@ -739,6 +739,50 @@ export function resetTreeToLocked(spiritGuid) {
 }
 
 /* ================================================================
+   ↩️ 詳細の一括操作（全部解放・クエスト・ハート・リセット）の取り消し用スナップショット。
+   メモリ上だけで持ち、保存はしない（view側が最新の1件だけを持つ）。
+   - 解放マップは丸ごとディープコピーして書き戻す（saveUnlockedMap）。
+   - 所持通貨はスナップショットの値へ戻す。書き込みは adjustOwnCurrency() に
+     「スナップショット値 − 今の値」を渡す形にして、増減の経路を1か所に保つ。
+   - item・emote・wings 側の所持は、操作の前後で表示上の解放状態が変わったノードだけ、
+     既存の sync 関数に「操作前の状態」を渡して戻す（他ツールのキーへ直接は書かない）。
+   ================================================================ */
+function readOwnCurrency() {
+  let cur;
+  try { cur = JSON.parse(localStorage.getItem(nsKey('wishOwnCurrency'))) || {}; } catch (_) { cur = {}; }
+  return { candle: cur.candle || 0, heart: cur.heart || 0 };
+}
+export function captureTreeUndo(spiritGuid) {
+  const spirit = spiritByGuid[spiritGuid];
+  if (!spirit) return null;
+  const before = {};
+  spirit.nodes.forEach((n) => { if (!isChecklistExcludedNode(n)) before[n.guid] = isNodeUnlocked(n); });
+  return {
+    spiritGuid,
+    unlocked: JSON.parse(JSON.stringify(getUnlockedMap())),
+    currency: readOwnCurrency(),
+    before,
+  };
+}
+export function applyTreeUndo(snap) {
+  const spirit = snap && spiritByGuid[snap.spiritGuid];
+  if (!spirit) return 0;
+  // 表示上の状態が変わったノードを、書き戻す前に洗い出しておく
+  const changed = spirit.nodes.filter((n) => (n.guid in snap.before) && isNodeUnlocked(n) !== snap.before[n.guid]);
+  saveUnlockedMap(JSON.parse(JSON.stringify(snap.unlocked)));
+  changed.forEach((n) => {
+    const was = snap.before[n.guid];
+    syncItemOwned(n, was);
+    syncEmoteOwned(n, was);
+    if (n.itemType === 'WingBuff') syncWingBuff(spirit, n, was);
+  });
+  const cur = readOwnCurrency();
+  adjustOwnCurrency(snap.currency.candle - cur.candle, snap.currency.heart - cur.heart);
+  invalidateExternalOwnCache();
+  return changed.length;
+}
+
+/* ================================================================
    統計スナップショット（他サイトが直接読めるようにする）
    ================================================================ */
 export function saveStatsSnapshot(totalNodes, doneNodes) {
