@@ -49,6 +49,7 @@ import { TITLES } from './data/titles.js';
 import { fmt, jpDate, weekdayLabel, monthYearLabel, formatDateValue, computeWeeklyMilestones } from './date-utils.js';
 import { CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, isSeasonStarted } from '../item/data/season-data.js';
 import * as Forecast from './star-candle-forecast.js';
+import { takeCalcHandoff, showHandoffBanner } from '../shared/calc-handoff.js';
 
 // 元のI18N辞書のうち、header/footer等「呼び出し箇所が少ない自前文言」向けの
 // 素朴なt(ja,en)パターン(js/chrome/*.jsと同じ流儀)。この2件以外は全てdata/
@@ -141,6 +142,30 @@ export function mount(container) {
   notifyCheckIntervalId = setInterval(notifyCheck, 60 * 1000);
   onVisibilityChangeNotify = () => { if (document.visibilityState === 'visible') notifyCheck(); };
   document.addEventListener('visibilitychange', onVisibilityChangeNotify);
+  offerSpiritTreeHandoff();
+}
+
+// 🌳 精霊ツリー管理から「残りの星のキャンドル」を受け取った時の取り込みバナー
+// （features/shared/calc-handoff.js。承諾した時だけ目標本数を書き換える）
+function offerSpiritTreeHandoff() {
+  const h = takeCalcHandoff('ascended');
+  if (!h) return;
+  const anchor = containerEl.querySelector('section.sc-card');
+  if (!anchor) return;
+  const amount = h.amount;
+  const prev = els.target.value;
+  showHandoffBanner(anchor, {
+    message: tt(`精霊ツリーの残り 星のキャンドル${amount.toLocaleString()}本を目標にしますか？${prev ? `（今の目標 ${prev}本を置き換えます）` : ''}`,
+      `Set the ${amount.toLocaleString()} star candles left in your spirit trees as your goal?${prev ? ` (Replaces your current goal of ${prev}.)` : ''}`),
+    acceptLabel: tt('目標にする', 'Set goal'),
+    dismissLabel: tt('やめる', 'No thanks'),
+    onAccept: () => {
+      els.target.value = String(amount);
+      update();
+      saveState();
+      showToast(tt(`目標本数を ${amount.toLocaleString()}本にしました`, `Goal set to ${amount.toLocaleString()}`));
+    },
+  });
 }
 
 export function unmount() {

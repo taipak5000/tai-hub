@@ -158,10 +158,49 @@
 }
 .spirit-catalog-view .overall-pct-num { font-size: 34px; font-weight: 800; color: var(--sc-green-d); font-variant-numeric: tabular-nums; line-height: 1.15; }
 .spirit-catalog-view .overall-pct-label { font-size: 12px; color: var(--sc-text-2); margin-top: 2px; }
-.spirit-catalog-view .stats-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-.spirit-catalog-view .stat-box { flex: 1; min-width: 100px; background: var(--sc-card); border-radius: var(--sc-r); padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0.5px 1px rgba(0,0,0,0.04); }
 .spirit-catalog-view .stat-num { font-size: 22px; font-weight: 800; color: var(--sc-green-d); font-variant-numeric: tabular-nums; }
 .spirit-catalog-view .stat-label { font-size: 11.5px; color: var(--sc-text-2); margin-top: 2px; }
+/* サマリーカード（達成率・解放数・コンプリート数・残りコスト・計算機への受け渡し） */
+.spirit-catalog-view .sc-summary-card { text-align: left; }
+.spirit-catalog-view .sc-summary-card .overall-pct-num, .spirit-catalog-view .sc-summary-card .overall-pct-label { text-align: center; }
+.spirit-catalog-view .sc-summary-card .overall-pct-num { letter-spacing: -0.02em; }
+.spirit-catalog-view .sc-sum-bar { height: 8px; border-radius: 999px; background: var(--sc-sep); overflow: hidden; margin: 12px 0 14px; }
+.spirit-catalog-view .sc-sum-bar-fill { height: 100%; border-radius: 999px; background: var(--sc-green-fill); }
+.spirit-catalog-view .sc-sum-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.spirit-catalog-view .sc-sum-stat { text-align: center; padding: 4px 0; }
+.spirit-catalog-view .sc-sum-stat .stat-num { font-size: 20px; letter-spacing: -0.02em; line-height: 1.15; }
+.spirit-catalog-view .sc-sum-stat .stat-num small { font-size: 13px; font-weight: 700; color: var(--sc-text-2); letter-spacing: 0; }
+.spirit-catalog-view .sc-sum-spent { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--sc-text-2); margin-top: 10px; line-height: 1.6; }
+.spirit-catalog-view .sc-sum-remaining { border-top: 0.5px solid var(--sc-sep); margin-top: 14px; padding-top: 12px; }
+.spirit-catalog-view .sc-sum-remaining-head { font-size: 12.5px; font-weight: 700; color: var(--sc-text-2); letter-spacing: 0.02em; }
+.spirit-catalog-view .sc-sum-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.spirit-catalog-view .sc-sum-chips .cost-chip { font-size: 12px; padding: 4px 9px; gap: 3px; }
+.spirit-catalog-view .sc-sum-chip-label { font-weight: 600; opacity: 0.85; margin-right: 2px; }
+.spirit-catalog-view .sc-sum-handoff { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.spirit-catalog-view .sc-handoff-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; text-align: left;
+  border: 0; background: var(--sc-blue-bg); color: var(--sc-blue); border-radius: var(--sc-r-sm);
+  padding: 10px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; line-height: 1.4;
+}
+.spirit-catalog-view .sc-handoff-btn span { flex: 1; min-width: 0; }
+.spirit-catalog-view .sc-handoff-btn .sc-inline-icon { stroke: currentColor; color: currentColor; flex: none; }
+.spirit-catalog-view .sc-handoff-btn:active { transform: scale(0.98); }
+
+/* 開催中の再訪精霊へのショートカット */
+.spirit-catalog-view .sc-revisit-now:empty { display: none; }
+.spirit-catalog-view .sc-revisit-now {
+  margin: -4px 0 12px; background: var(--sc-card); border: 1px solid var(--sc-sep); border-radius: var(--sc-r-sm); overflow: hidden;
+}
+.spirit-catalog-view .sc-revisit-now-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left;
+  border: 0; background: none; color: var(--sc-text); padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer; line-height: 1.45;
+}
+.spirit-catalog-view .sc-revisit-now-row + .sc-revisit-now-row { border-top: 0.5px solid var(--sc-sep); }
+.spirit-catalog-view .sc-revisit-now-row:active { background: var(--sc-sep); }
+.spirit-catalog-view .sc-revisit-now-text { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+.spirit-catalog-view .sc-revisit-now-label { font-size: 11px; font-weight: 700; color: var(--sc-green-d); letter-spacing: 0.04em; }
+.spirit-catalog-view .sc-revisit-now-detail { font-size: 12px; color: var(--sc-text-2); }
+
 .spirit-catalog-view .sync-refresh-row { display: flex; justify-content: center; margin-top: 10px; }
 .spirit-catalog-view .sync-refresh-btn { display: inline-flex; align-items: center; gap: 5px; }
 

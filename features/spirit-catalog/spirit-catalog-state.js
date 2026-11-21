@@ -1087,6 +1087,21 @@ export function pickRevisitStatus() {
   const upcoming = statuses.filter((s) => !s.active);
   return upcoming.length ? upcoming.sort((a, b) => a.target - b.target)[0] : null;
 }
+/** 今開催中の再訪（旅の精霊・精霊団）で来ている精霊。開催の判定は上の revisitScheduleStatus() と同じ。
+ *  名前は season-data.js の spiritJa／spiritsJa をそのまま使い、精霊ツリーのデータと nameJa で突き合わせる。 */
+export function activeRevisitSpirits() {
+  const out = [];
+  REVISIT_SPIRIT_SCHEDULES.forEach((sch) => {
+    const st = revisitScheduleStatus(sch);
+    if (!st || !st.active) return;
+    const names = Array.isArray(sch.spiritsJa) ? sch.spiritsJa : (sch.spiritJa ? [sch.spiritJa] : []);
+    names.forEach((nameJa) => {
+      const sp = SPIRIT_TREE_DATA.find((s) => s.nameJa === nameJa);
+      if (sp && !out.includes(sp)) out.push(sp);
+    });
+  });
+  return out;
+}
 export function formatCountdown(target) {
   const ms = target - new Date();
   if (ms <= 0) return '00:00:00';

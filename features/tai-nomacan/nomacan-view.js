@@ -48,6 +48,7 @@ import { t, L } from './data/i18n-nomacan.js';
 import { TITLES } from './data/titles.js';
 import * as S from './nomacan-state.js';
 import * as History from './nomacan-history.js';
+import { takeCalcHandoff, showHandoffBanner } from '../shared/calc-handoff.js';
 import {
   CURRENT_SEASON, EVENT_SCHEDULE, NEXT_UPDATE, REVISIT_SPIRIT_SCHEDULES, isSeasonStarted,
 } from '../item/data/season-data.js';
@@ -124,6 +125,45 @@ export function mount(container) {
   History.renderQuestLog();
   History.renderQuestStreak();
   renderOneYearAgoBanner();
+  offerSpiritTreeHandoff();
+}
+
+/* ================================================================
+   🌳 精霊ツリー管理から「残りキャンドル」を受け取った時の取り込みバナー
+   （features/shared/calc-handoff.js。承諾した時だけ目標を作る／書き換える）
+   ================================================================ */
+const SPIRIT_GOAL_NAMES = ['精霊ツリーの残り', 'Spirit trees left'];
+function offerSpiritTreeHandoff() {
+  const h = takeCalcHandoff('candle');
+  if (!h) return;
+  const anchor = containerEl.querySelector('section.card');
+  if (!anchor) return;
+  const amount = h.amount;
+  showHandoffBanner(anchor, {
+    message: tt(`精霊ツリーの残り ${amount.toLocaleString()}本を目標にしますか？（目標「精霊ツリーの残り」に入れます。今の目標はそのまま残ります）`,
+      `Set the ${amount.toLocaleString()} candles left in your spirit trees as a goal? (Saved to the goal "Spirit trees left"; your current goal stays as it is.)`),
+    acceptLabel: tt('目標にする', 'Set goal'),
+    dismissLabel: tt('やめる', 'No thanks'),
+    onAccept: () => applySpiritTreeGoal(amount),
+  });
+}
+function applySpiritTreeGoal(amount) {
+  saveState(); // 今の目標の入力を確定させてから切り替える
+  const data = S.goalEnsureInit();
+  let g = data.goals.find((x) => SPIRIT_GOAL_NAMES.includes(x.name));
+  if (g) g.target = String(amount);
+  else {
+    g = { id: S.goalGenId(), name: tt(SPIRIT_GOAL_NAMES[0], SPIRIT_GOAL_NAMES[1]), target: String(amount), plannedUsage: '', targetDate: '', dailyRateOverride: '' };
+    data.goals.push(g);
+  }
+  data.activeGoalId = g.id;
+  S.goalSaveData(data);
+  loadActiveGoalIntoFields();
+  update();
+  updateDateTriggerText();
+  goalRenderBar();
+  renderPaceSuggestion();
+  queueNomaToast(tt(`目標「${S.goalDisplayName(g)}」を ${amount.toLocaleString()}本にしました`, `Goal "${S.goalDisplayName(g)}" set to ${amount.toLocaleString()} candles`));
 }
 
 export function unmount() {

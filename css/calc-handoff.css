@@ -1,0 +1,19 @@
+/* 精霊ツリー管理から計算機へ「残り本数」を渡した時の取り込みバナー（features/shared/calc-handoff.js） */
+.hub-handoff-banner {
+  margin: 0 0 14px; padding: 12px 14px; border-radius: var(--hub-r-sm, 10px);
+  background: var(--hub-card); color: var(--hub-text); border: 1px solid var(--hub-sep);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px;
+  animation: hubHandoffIn 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.hub-handoff-text { flex: 1 1 220px; font-size: 13.5px; line-height: 1.6; font-weight: 600; }
+.hub-handoff-actions { display: flex; gap: 8px; flex: none; }
+.hub-handoff-btn {
+  border: 0; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.hub-handoff-btn.is-ok { background: var(--hub-accent); color: #fff; }
+.hub-handoff-btn.is-dismiss { background: var(--hub-accent-bg); color: var(--hub-accent-ink); }
+.hub-handoff-btn:active { transform: scale(0.96); }
+@keyframes hubHandoffIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hub-handoff-banner { animation: none; } }
+@media (prefers-contrast: more) { .hub-handoff-banner { border-color: var(--hub-text-2, currentColor); } }

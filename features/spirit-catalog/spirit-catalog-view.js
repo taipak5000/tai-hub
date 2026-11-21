@@ -40,6 +40,7 @@ import * as S from './spirit-catalog-state.js';
 import * as eventDashboard from '../shared/event-dashboard.js';
 import * as scShare from './spirit-catalog-share.js';
 import { REVISIT_DATA, NEVER_REVISITED_DATA } from '../tai-revisit/data/revisit-data.js';
+import { writeCalcHandoff } from '../shared/calc-handoff.js';
 
 const STYLE_LINK_ID = 'spirit-catalog-view-styles';
 const ICON_SPRITE_ID = 'spirit-catalog-icon-sprite';
@@ -84,6 +85,7 @@ export function mount(container, sub) {
   returnToRevisit = false;
   markAllConfirming = false; markQuestsConfirming = false; markHeartsConfirming = false; resetTreeConfirming = false;
   treeUndo = null;
+  revisitNowKey = '';
 
   container.innerHTML = renderShell();
   cacheEls();
@@ -194,6 +196,7 @@ function renderShell() {
         </header>
 
         <div class="revisit-badge" id="scRevisitBadge"></div>
+        <div class="sc-revisit-now" id="scRevisitNow"></div>
 
         <div class="sc-dash-open-row">
           <button type="button" class="sc-dash-open-btn" id="scDashOpenBtn">${icon('i-calendar', 14)} ${escapeHtml(t('dash.openBtn'))}</button>
@@ -237,10 +240,8 @@ function renderShell() {
           </div>
         </div>
 
-        <div class="overall-pct-card" id="scOverallPctCard"></div>
-        <div class="stats-row" id="scStatsRow"></div>
+        <div class="overall-pct-card sc-summary-card" id="scSummaryCard"></div>
         <div class="titles-panel" id="scTitlesPanel"></div>
-        <div class="filter-remaining-cost" id="scGrandRemainingCost" style="padding:10px 2px 0;"></div>
 
         <div class="sync-refresh-row">
           <button type="button" class="filter-reset-btn sync-refresh-btn" id="scSyncRefreshBtn" title="${escapeHtml(t('stats.syncRefreshHint'))}">
@@ -305,10 +306,9 @@ function cacheEls() {
     filterStats: q('scFilterStats'),
     filterRemainingCost: q('scFilterRemainingCost'),
     costToggle: q('scCostToggle'),
-    overallPctCard: q('scOverallPctCard'),
-    statsRow: q('scStatsRow'),
+    summaryCard: q('scSummaryCard'),
+    revisitNow: q('scRevisitNow'),
     titlesPanel: q('scTitlesPanel'),
-    grandRemainingCost: q('scGrandRemainingCost'),
     syncRefreshBtn: q('scSyncRefreshBtn'),
     shareTwitterBtn: q('scShareTwitterBtn'),
     shareCustomizeBtn: q('scShareCustomizeBtn'),
@@ -362,6 +362,11 @@ function wireEvents() {
   els.viewModeSeasonBtn.addEventListener('click', () => setBrowseMode('season'));
   els.dashOpenBtn.addEventListener('click', openDashboardModal);
 
+  els.summaryCard.addEventListener('click', handleSummaryClick);
+  els.revisitNow.addEventListener('click', (ev) => {
+    const row = ev.target.closest('[data-sc-open-guid]');
+    if (row) openDetail(row.dataset.scOpenGuid);
+  });
   els.spiritGrid.addEventListener('click', handleGridClick);
   els.groupedView.addEventListener('click', handleGridClick);
   els.detailOverlay.addEventListener('click', (ev) => { if (ev.target === els.detailOverlay) closeDetail(); });
@@ -470,10 +475,6 @@ function remainingCostChipsHtml(totals) {
 function renderFilterRemainingCost(filtered) {
   const chips = remainingCostChipsHtml(S.sumRemainingCost(filtered));
   els.filterRemainingCost.innerHTML = `<b>${escapeHtml(t('filter.remainingCostLabel'))}</b>${escapeHtml(t('common.labelSep'))}${chips || escapeHtml(t('filter.remainingCostZero'))}`;
-}
-function renderGrandRemainingCost() {
-  const chips = remainingCostChipsHtml(S.sumRemainingCost(S.SPIRIT_TREE_DATA));
-  els.grandRemainingCost.innerHTML = `<b>${escapeHtml(t('stats.grandRemainingCostLabel', { total: S.SPIRIT_TREE_DATA.length }))}</b>${escapeHtml(t('common.labelSep'))}${chips || escapeHtml(t('filter.remainingCostZero'))}`;
 }
 
 /* ================================================================
@@ -612,20 +613,83 @@ function renderStats() {
   const overallPct = totalNodes > 0 ? (doneNodes / totalNodes) * 100 : 0;
   S.saveStatsSnapshot(totalNodes, doneNodes);
 
-  els.overallPctCard.innerHTML = `
-    <div class="overall-pct-num">${totalNodes > 0 ? formatPct(overallPct) : '--%'}</div>
-    <div class="overall-pct-label">${escapeHtml(t('stats.overallPctLabel'))}</div>`;
-  els.statsRow.innerHTML = `
-    <div class="stat-box"><div class="stat-num">${doneNodes} / ${totalNodes}</div><div class="stat-label">${escapeHtml(t('stats.unlockedNodes'))}</div></div>
-    <div class="stat-box"><div class="stat-num">${completeSpirits} / ${S.SPIRIT_TREE_DATA.length}</div><div class="stat-label">${escapeHtml(t('stats.completeSpirits'))}</div></div>
-    <div class="stat-box cost-stat-box"><div class="stat-num">${icon('i-candle', 14)}${candleSpent}<br>${icon('i-heart', 14)}${heartSpent}</div><div class="stat-label">${escapeHtml(t('stats.candleHeartUsed'))}</div></div>
-    <div class="stat-box cost-stat-box"><div class="stat-num">${icon('i-candle', 14)}${seasonCandleSpent}<br>${icon('i-heart', 14)}${seasonHeartSpent}</div><div class="stat-label">${escapeHtml(t('stats.seasonCandleHeartUsed'))}</div></div>`;
+  renderSummaryCard({ overallPct, totalNodes, doneNodes, completeSpirits, candleSpent, heartSpent, seasonCandleSpent, seasonHeartSpent });
 
   const { earned, newlyEarned } = S.checkTitleUnlocks(doneNodes, totalNodes);
   renderTitlesPanel(earned);
   newlyEarned.forEach((def) => showToast(t('titles.unlockedToast', { name: t('titles.' + def.id + '.name') })));
 
-  renderGrandRemainingCost();
+  renderRevisitNow();
+}
+
+/* ================================================================
+   📊 サマリーカード（達成率・解放数・コンプリート数・残りコストを1枚に）
+   残りコストは spiritRemainingSummary()（中身は sumRemainingCost()）の和。計算式は変えない
+   ================================================================ */
+function grandRemaining() {
+  const out = { nodes: 0, cost: {}, money: 0, moneyCount: 0 };
+  S.SPIRIT_TREE_DATA.forEach((s) => {
+    const r = S.spiritRemainingSummary(s);
+    out.nodes += r.nodes;
+    Object.keys(r.cost).forEach((k) => { out.cost[k] = (out.cost[k] || 0) + r.cost[k]; });
+    out.money += r.money; out.moneyCount += r.moneyCount;
+  });
+  return out;
+}
+function renderSummaryCard(st) {
+  const r = grandRemaining();
+  const en = CURRENT_LANG === 'en';
+  const pctW = Math.max(0, Math.min(100, st.overallPct));
+  const order = ['c', 'h', 'ac', 'sc', 'sh', 'ec'];
+  const chips = order.filter((k) => r.cost[k]).map((k) => `<span class="cost-chip cost-${k}">${icon(S.COST_ICON[k], 10)}<span class="sc-sum-chip-label">${escapeHtml(t('summary.cost_' + k))}</span>${r.cost[k].toLocaleString()}</span>`).join('')
+    + (r.moneyCount ? `<span class="cost-chip cost-money"><span class="sc-sum-chip-label">${escapeHtml(t('summary.costMoney'))}</span>¥${r.money.toLocaleString()}</span>` : '');
+  const c = r.cost.c || 0, ac = r.cost.ac || 0;
+  const handoff = [
+    c > 0 ? `<button type="button" class="sc-handoff-btn" data-sc-handoff="candle" data-amount="${c}">${icon('i-candle', 13)}<span>${escapeHtml(t('summary.toNomacanTemplate', { n: c.toLocaleString() }))}</span>${icon('i-chevron-right', 12)}</button>` : '',
+    ac > 0 ? `<button type="button" class="sc-handoff-btn" data-sc-handoff="ascended" data-amount="${ac}">${icon('i-star-candle', 13)}<span>${escapeHtml(t('summary.toStarCandleTemplate', { n: ac.toLocaleString() }))}</span>${icon('i-chevron-right', 12)}</button>` : '',
+  ].join('');
+  els.summaryCard.innerHTML = `
+    <div class="overall-pct-num">${st.totalNodes > 0 ? formatPct(st.overallPct) : '--%'}</div>
+    <div class="overall-pct-label">${escapeHtml(t('stats.overallPctLabel'))}</div>
+    <div class="sc-sum-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pctW)}"><div class="sc-sum-bar-fill${pctW >= 100 ? ' complete' : ''}" style="width:${pctW}%"></div></div>
+    <div class="sc-sum-stats">
+      <div class="sc-sum-stat"><div class="stat-num">${st.doneNodes.toLocaleString()} <small>/ ${st.totalNodes.toLocaleString()}</small></div><div class="stat-label">${escapeHtml(t('stats.unlockedNodes'))}</div></div>
+      <div class="sc-sum-stat"><div class="stat-num">${st.completeSpirits} <small>/ ${S.SPIRIT_TREE_DATA.length}</small></div><div class="stat-label">${escapeHtml(t('stats.completeSpirits'))}</div></div>
+    </div>
+    <div class="sc-sum-spent cost-stat-box">
+      <span>${escapeHtml(t('stats.candleHeartUsed'))}${escapeHtml(t('common.labelSep'))}${icon('i-candle', 11)}${st.candleSpent.toLocaleString()} ${icon('i-heart', 11)}${st.heartSpent.toLocaleString()}</span>
+      <span>${escapeHtml(t('stats.seasonCandleHeartUsed'))}${escapeHtml(t('common.labelSep'))}${icon('i-candle', 11)}${st.seasonCandleSpent.toLocaleString()} ${icon('i-heart', 11)}${st.seasonHeartSpent.toLocaleString()}</span>
+    </div>
+    <div class="sc-sum-remaining">
+      <div class="sc-sum-remaining-head">${r.nodes ? escapeHtml(t('summary.remainingHeadTemplate', { n: r.nodes.toLocaleString() })) : escapeHtml(en ? 'Every tree is complete!' : 'すべてのツリーがコンプリート！')}</div>
+      ${chips ? `<div class="sc-sum-chips">${chips}</div>` : ''}
+      ${handoff ? `<div class="sc-sum-handoff">${handoff}</div>` : ''}
+    </div>`;
+}
+function handleSummaryClick(ev) {
+  const btn = ev.target.closest('[data-sc-handoff]');
+  if (!btn) return;
+  const currency = btn.dataset.scHandoff;
+  writeCalcHandoff(currency, Number(btn.dataset.amount) || 0);
+  location.hash = currency === 'ascended' ? '#/star-candle' : '#/tai-nomacan';
+}
+
+/* ================================================================
+   🕊️ 開催中の再訪精霊へのショートカット（未コンプリートの精霊だけ）
+   ================================================================ */
+let revisitNowKey = '';
+function renderRevisitNow() {
+  if (!els.revisitNow) return;
+  const rows = S.activeRevisitSpirits().map((sp) => ({ sp, r: S.spiritRemainingSummary(sp) })).filter((x) => x.r.nodes > 0);
+  revisitNowKey = rows.map((x) => x.sp.guid).join(',');
+  els.revisitNow.innerHTML = rows.map(({ sp, r }) => {
+    const c = r.cost.c || 0;
+    const detail = c > 0 ? t('revisitNow.leftWithCandleTemplate', { nodes: r.nodes, c: c.toLocaleString() }) : t('revisitNow.leftTemplate', { nodes: r.nodes });
+    return `<button type="button" class="sc-revisit-now-row" data-sc-open-guid="${escapeHtml(sp.guid)}">
+      <span class="sc-revisit-now-text"><span class="sc-revisit-now-label">${escapeHtml(t('revisitNow.label'))}</span><b>${escapeHtml(S.spiritName(sp))}</b><span class="sc-revisit-now-detail">${escapeHtml(detail)}</span></span>
+      ${icon('i-chevron-right', 14)}
+    </button>`;
+  }).join('');
 }
 // 称号の一覧は称号一覧（#/titles）へ移した（2026-11-06）。ここには獲得数の案内だけを出す
 function renderTitlesPanel() {
@@ -946,6 +1010,8 @@ function handleDetailClick(ev) {
    🕊️ 再訪連携バッジ
    ================================================================ */
 function renderRevisitBadge() {
+  const activeKey = S.activeRevisitSpirits().filter((sp) => S.spiritRemainingSummary(sp).nodes > 0).map((sp) => sp.guid).join(',');
+  if (activeKey !== revisitNowKey) renderRevisitNow(); // 来訪の始まり・終わりをまたいだ時だけ描き直す
   const rv = S.pickRevisitStatus();
   if (!rv) { els.revisitBadge.innerHTML = ''; return; }
   const countdown = S.formatCountdown(rv.target);
