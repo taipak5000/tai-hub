@@ -12,12 +12,13 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.21.2',
+    version: '2026.11.21.3',
     title: { ja: '精霊ツリー管理を見直し（集計を1枚に・残りを計算機の目標に・開催中の再訪へすぐ移動・一括操作を元に戻せるように）', en: 'Spirit Tree Tracker refresh (one summary card, send what is left to the calculators, jump to visiting spirits, undo for tree actions)' },
     date: '2026-11-21',
     items: [
       { type: 'new', ja: '精霊ツリー管理の達成率・解放済みノード・コンプリート済みの精霊・全ツリーを100%にするまでの残り（キャンドル・ハート・星のキャンドル・季節キャンドル・季節ハート・課金額）を、絞り込みの下の1枚にまとめました。残りの下のボタンから、キャンドルの本数をノマキャン計算機へ、星のキャンドルの本数を星キャン計算機へ渡せます。計算機では「目標にしますか？」と聞かれ、「目標にする」を押した時だけ入ります（ノマキャン計算機は目標「精霊ツリーの残り」を作るので、今の目標はそのまま残ります）。', en: 'Spirit Tree Tracker: completion, unlocked nodes, completed spirits and everything left to finish all trees (candles, hearts, ascended candles, season candles and hearts, paid) are now in one card under the filters. Buttons below send the candles left to the Candle Calculator and the ascended candles left to the Star Candle Calculator, which ask before setting it as a goal (the Candle Calculator adds a separate goal "Spirit trees left", so your current goal stays).', route: 'spirit-catalog' },
       { type: 'new', ja: '精霊ツリー管理の上に、今来ている旅の精霊・精霊団のうちツリーが残っている精霊を「残り11ノード / あとキャンドル195本」のように並べ、押すとその精霊のツリーを開くようにしました。', en: 'Spirit Tree Tracker: spirits visiting now whose trees are not finished are listed at the top (e.g. "11 nodes / 195 candles left"); tap one to open its tree.', route: 'spirit-catalog' },
+      { type: 'improve', ja: '精霊ツリー管理の並び替えに「残りノードが少ない順」（コンプリート済みは最後）と「残りキャンドルが多い順」を足しました。エリア別・シーズン別の見出しには「0 / 61 ノード解放済み ・ 残りキャンドル659本」のように、そのまとまりの進み具合を出します。コスト表示の「テスト機能」の印は外しました。', en: 'Spirit Tree Tracker: new sorts "Fewest nodes left" (completed trees last) and "Most candles left". Area and season headings now show progress such as "0 / 61 nodes unlocked · 659 candles left". The "Experimental" tag on Cost Display was removed.', route: 'spirit-catalog' },
       { type: 'improve', ja: '精霊ツリー管理の一覧から、絞り込んだ精霊やエリア・シーズンごとにまとめて解放済みにする「追いつき」のボタンを外しました。押し間違えると何十体分のツリーと所持キャンドルがまとめて変わってしまうためです。精霊の詳細の「このツリーを全部解放」「クエストを一括完了」「ハートを一括獲得」「ツリーをリセット」は残し、実行後に出る「元に戻す」を押すと、ツリーの解放状況・所持キャンドルとハート・アイテムやエモートの所持が操作の前に戻るようにしました（詳細を閉じるか、ほかのノードを押すまで有効です）。', en: 'Spirit Tree Tracker: removed the "catch up" buttons that marked every filtered spirit, area or season as complete at once, since a mis-tap could change dozens of trees and your candles together. The per-spirit actions (unlock the whole tree, complete quests, obtain hearts, reset the tree) remain, and now show an Undo button that restores the tree, your candles and hearts, and linked item and emote ownership (available until you close the spirit or tap another node).', route: 'spirit-catalog' },
     ],
   },

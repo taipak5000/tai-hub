@@ -126,7 +126,6 @@
 .spirit-catalog-view .filter-remaining-cost { font-size: 12.5px; color: var(--sc-text-2); padding: 6px 2px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .spirit-catalog-view .sc-cost-toggle-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--sc-sep); font-size: 12.5px; color: var(--sc-text-2); }
 .spirit-catalog-view .sc-cost-toggle-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.spirit-catalog-view .sc-test-tag { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--sc-bg); border: 1px solid var(--sc-sep); color: var(--sc-text-2); }
 .spirit-catalog-view .sc-cost-toggle-hint { font-size: 11px; color: var(--sc-text-3); line-height: 1.5; }
 
 /* 汎用のブロックボタン（一括操作等。chrome.cssの.pf-icon-btnと違い自ツールの緑パレット） */
@@ -254,6 +253,8 @@
 .spirit-catalog-view .area-group-title { font-size: 14.5px; font-weight: 800; color: var(--sc-text); }
 .spirit-catalog-view .area-group-badge { font-size: 12px; color: var(--sc-text-2); margin-top: 3px; }
 .spirit-catalog-view .area-group-badge b { color: var(--sc-green-d); }
+.spirit-catalog-view .area-group-nodes { font-size: 12px; color: var(--sc-text-2); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.spirit-catalog-view .area-group-nodes .sc-inline-icon { stroke: currentColor; color: currentColor; }
 .spirit-catalog-view .area-group-remaining-cost { font-size: 12px; color: var(--sc-text-2); margin-top: 3px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .spirit-catalog-view .area-group-remaining-cost b { color: var(--sc-text-2); }
 .spirit-catalog-view .area-group-pct-bar { height: 5px; border-radius: 2.5px; background: var(--sc-sep); margin-top: 10px; overflow: hidden; }

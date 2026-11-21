@@ -226,6 +226,8 @@ function renderShell() {
             <select class="filter-select" id="scSortFilter">
               <option value="default">${escapeHtml(t('filter.sortDefault'))}</option>
               <option value="nearestComplete">${escapeHtml(t('filter.sortNearestComplete'))}</option>
+              <option value="fewestLeft">${escapeHtml(t('filter.sortFewestLeft'))}</option>
+              <option value="mostCandlesLeft">${escapeHtml(t('filter.sortMostCandlesLeft'))}</option>
             </select>
           </div>
           <div class="filter-reset-row">
@@ -235,7 +237,7 @@ function renderShell() {
           <div class="filter-stats" id="scFilterStats"></div>
           <div class="filter-remaining-cost" id="scFilterRemainingCost"></div>
           <div class="sc-cost-toggle-row">
-            <label><input type="checkbox" id="scCostToggle"> ${escapeHtml(t('filter.costDisplayLabel'))} <span class="sc-test-tag">${escapeHtml(t('filter.costDisplayTestTag'))}</span></label>
+            <label><input type="checkbox" id="scCostToggle"> ${escapeHtml(t('filter.costDisplayLabel'))}</label>
             <div class="sc-cost-toggle-hint">${escapeHtml(t('filter.costDisplayHint'))}</div>
           </div>
         </div>
@@ -496,7 +498,9 @@ function renderGroupedView(mode, list) {
       if (total > 0 && done === total) completeTrees++;
     });
     const pct = totalNodes > 0 ? Math.round((doneNodes / totalNodes) * 100) : 0;
-    const costChips = remainingCostChipsHtml(S.sumRemainingCost(g.spirits));
+    const groupRemaining = S.sumRemainingCost(g.spirits);
+    const costChips = remainingCostChipsHtml(groupRemaining);
+    const groupCandles = groupRemaining.c || 0;
     const cardsHtml = g.spirits.map((s) => spiritCardHtml(s, mode === 'season' ? 'realm' : 'plain')).join('');
     return `
       <div class="area-group">
@@ -505,6 +509,7 @@ function renderGroupedView(mode, list) {
             <div>
               <div class="area-group-title">${groupIcon} ${escapeHtml(label)}</div>
               <div class="area-group-badge">${icon('sc-i-tree', 11)} ${escapeHtml(t('browse.treesCompleteTemplate', { done: completeTrees, total: g.spirits.length }))} ・ ${escapeHtml(t('browse.nodesPctTemplate', { pct }))}</div>
+              <div class="area-group-nodes">${escapeHtml(t('browse.nodesDoneTemplate', { done: doneNodes.toLocaleString(), total: totalNodes.toLocaleString() }))}${groupCandles > 0 ? ` ・ ${icon('i-candle', 11)}${escapeHtml(t('browse.candlesLeftTemplate', { n: groupCandles.toLocaleString() }))}` : ''}</div>
               <div class="area-group-remaining-cost"><b>${escapeHtml(t('browse.groupRemainingCostLabel'))}</b>${escapeHtml(t('common.labelSep'))}${costChips || escapeHtml(t('filter.remainingCostZero'))}</div>
             </div>
           </div>
@@ -553,6 +558,15 @@ function renderGrid() {
       const pctB = pb.total > 0 ? pb.done / pb.total : 0;
       return pctB - pctA;
     });
+  } else if (sortF === 'fewestLeft') {
+    // 残りノードが少ない順。コンプリート済み（残り0）は目標にならないので最後へ。同じ数なら既定の並び（sortは安定）
+    const left = new Map(filtered.map((s) => { const p = S.spiritProgress(s); return [s, p.total - p.done]; }));
+    const key = (s) => (left.get(s) > 0 ? left.get(s) : Infinity);
+    filtered.sort((a, b) => key(a) - key(b));
+  } else if (sortF === 'mostCandlesLeft') {
+    // 残りのキャンドル（通常のキャンドルc）が多い順。集計は sumRemainingCost() と同じ
+    const candles = new Map(filtered.map((s) => [s, S.sumRemainingCost([s]).c || 0]));
+    filtered.sort((a, b) => candles.get(b) - candles.get(a));
   }
 
   els.filterStats.textContent = t('filter.statsTemplate', { filtered: filtered.length, total: S.SPIRIT_TREE_DATA.length });
