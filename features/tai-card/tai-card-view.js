@@ -59,6 +59,8 @@ let toastTimer = null;
 // クロップドラッグの状態（アバター・背景画像で共通のロジックを使う）
 let avatarDrag = null;
 let bgDrag = null;
+let notePhotoUrl = null; // カスタム欄の画像がコーデ日記の写真の参照（photoRef）の時、IndexedDBから読んだ表示用URL
+let notePhotoMissing = false;
 const bgNaturalSizeCache = {};
 
 /* ================================================================
@@ -133,6 +135,7 @@ export function unmount() {
   state = null;
   avatarDrag = null;
   bgDrag = null;
+  releaseNotePhoto();
 }
 
 function injectStylesheet() {
@@ -586,7 +589,25 @@ function resizeImageDataUrl(dataUrl, maxDim, quality) {
   });
 }
 
-/* ── カスタム欄 ── */
+/* ── カスタム欄 ──
+   画像は data URL（src）か、コーデ日記の写真の参照（photoRef。tai-card-state.js の setCustomNotePhotoRef）のどちらか */
+function releaseNotePhoto() {
+  if (notePhotoUrl) { try { URL.revokeObjectURL(notePhotoUrl); } catch (e) { /* noop */ } }
+  notePhotoUrl = null;
+  notePhotoMissing = false;
+}
+async function resolveNotePhoto() {
+  releaseNotePhoto();
+  const ref = state.customNote && state.customNote.image && state.customNote.image.photoRef;
+  if (typeof ref !== 'string' || !ref) return;
+  try {
+    const { getPhoto } = await import('../friends/friends-state.js');
+    const blob = await getPhoto(ref);
+    if (blob instanceof Blob) notePhotoUrl = URL.createObjectURL(blob);
+    else notePhotoMissing = true; // コーデ日記で消された: カードには出さない
+  } catch (e) { notePhotoMissing = true; }
+}
+
 function wireCustomNote() {
   const titleEl = q('#tcInCustomNoteTitle'), textEl = q('#tcInCustomNoteText');
   const previewEl = q('#tcCustomNotePreview'), imgPreviewEl = q('#tcCustomNoteImgPreview');
@@ -598,6 +619,13 @@ function wireCustomNote() {
 
   function showPreview(src) { imgPreviewEl.src = src; previewEl.style.display = 'flex'; }
   if (state.customNote.image && state.customNote.image.src) showPreview(state.customNote.image.src);
+  // コーデ日記の写真の参照なら、読み終わってから見本と表示を出す
+  resolveNotePhoto().then(() => {
+    if (!containerEl) return;
+    if (notePhotoUrl) showPreview(notePhotoUrl);
+    else if (notePhotoMissing) { imgPreviewEl.removeAttribute('src'); previewEl.style.display = 'flex'; imgPreviewEl.alt = t('notePhotoMissing'); }
+    renderCard();
+  });
 
   q('#tcCustomNoteFileInput').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
@@ -606,6 +634,7 @@ function wireCustomNote() {
     reader.onload = ev => {
       resizeImageDataUrl(ev.target.result, 800, 0.85).then(resized => {
         state.customNote.image = { src: resized };
+        releaseNotePhoto();
         showPreview(resized);
         renderCard();
       });
@@ -614,6 +643,7 @@ function wireCustomNote() {
   });
   q('#tcRemoveCustomNoteImgBtn').addEventListener('click', () => {
     state.customNote.image = null;
+    releaseNotePhoto();
     previewEl.style.display = 'none';
     renderCard();
   });
@@ -1258,7 +1288,7 @@ function renderCard() {
 
   const noteEl = q('#tcCardCustomNoteWrap');
   const noteText = (state.customNote.text || '').trim();
-  const noteImgSrc = state.customNote.image && state.customNote.image.src;
+  const noteImgSrc = (state.customNote.image && state.customNote.image.src) || (state.customNote.image && state.customNote.image.photoRef ? notePhotoUrl : null);
   if (state.vis.customNote && (noteText || noteImgSrc)) {
     const noteTitle = (state.customNote.title || '').trim() || t('secCustomNoteTitle');
     const imgHtml = noteImgSrc ? `<img class="tc-card-custom-note-img" src="${escapeHtml(noteImgSrc)}" alt="">` : '';

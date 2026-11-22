@@ -223,6 +223,13 @@ const landingPoint = currentY + project(v);
 - **累計消費コスト・実額**（旧アイテム別コスト。`features/item/cost-view.js`、`#/item/cost`）: サマリー（残り＝塗りの面／かかった＝淡い面）→stickyなフィルターバー→季節ごとの一覧→課金の記録→「この集計について」の順。
   一覧の行は名前と価格だけで、入手経緯の切替などは行を押すと開く詳細（開いた行だけ中身を描く。`openItems`）。集計は`computeOwnedBreakdown()`／`computeRemainBreakdown()`が
   アイテムごとの寄与を記録し、季節の小計はその和（小計の和＝サマリーのアイテム分。プレゼント履歴・キャンドル課金は小計に入らない）。意味色は`--cost-*`（着せ替え中は`TOOL_MAPS`が上書き）。
+- **精霊ツリーの達成率の記録**（`js/spirit-history.js`、`spiritCatalogHistory_v1`）: 精霊ツリー管理の`renderStats()`（`spiritCatalogStats_v1`を保存する所）から
+  `scheduleSpiritHistory()`を呼び、1.5秒まとめてその日の分を1件だけ記録する（365日まで）。星紡ぎカードの「入手グラフ」の1本（`trendGraphsDefaults()`の`spiritcatalog`）。
+- **ほしいもの計画→ノマキャン計算機プロ**（`features/shared/wish-handoff.js`、`taiHubWishHandoff_v1`）: 先頭の「キャンドルが足りない」行のボタンで
+  `{ kind:'wish-goal', targetTotal, needCandle, itemName, at }`を書いて移る。Proはマウント時に読んで消し、キャンドル管理の先頭に到達予定日を出す（表示だけ・10分で無効）。
+  `taiHubCalcHandoff_v1`（calc-handoff.js）とは混ぜない（あちらの受け手は知らない kind を消す）。
+- **コーデ日記の写真→星紡ぎカード**: 写真はコピーせず、`taiCardState_v1`の`customNote.image`に`{ photoRef }`だけを持つ（`setCustomNotePhotoRef()`）。
+  表示時に`getPhoto`で読む（`resolveNotePhoto()`）。写真が消されていればカードには出さない。
 - **達成率の記録**（`js/collection-history.js`）: `saveCategoryState()`が送る`hub-collection-changed`で、その日の分を1件だけ記録（`collectionHistory_v1`、365日まで）。
   グラフは`features/item/history-chart.js`（自前のSVG）、ふりかえりにも伸びを出す。
 - **画像カード**（`js/share-card.js`）: 達成率・コーデをCanvasで描く（1200×630／1080×1080、色は`--hub-*`から）。外部の画像は`crossOrigin`で読めた物だけ描く。

@@ -232,7 +232,7 @@ function entryHtml(e) {
       <div class="fr-entry-date">${fmtDate(e.date)}${e.place ? `<span class="cd-place">${escapeHtml(placeName(e.place, CURRENT_LANG))}</span>` : ''}</div>
       ${items.length ? `<div class="cd-items">${items.map(it => `<span class="cd-item">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</span>`).join('')}</div>` : ''}
       ${e.memo ? `<p class="fr-entry-text">${escapeHtml(e.memo).replace(/\n/g, '<br>')}</p>` : ''}
-      <div class="cd-entry-actions"><button type="button" class="fun-btn small cd-post-btn" data-act="post" data-id="${e.id}">${X_ICON}${t('Xでポスト', 'Post on X')}</button><button type="button" class="fun-btn small" data-act="card" data-id="${e.id}"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-image"/></svg>${t('画像カード', 'Image card')}</button></div>
+      <div class="cd-entry-actions"><button type="button" class="fun-btn small cd-post-btn" data-act="post" data-id="${e.id}">${X_ICON}${t('Xでポスト', 'Post on X')}</button><button type="button" class="fun-btn small" data-act="card" data-id="${e.id}"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-image"/></svg>${t('画像カード', 'Image card')}</button>${e.photoId ? `<button type="button" class="fun-btn small" data-act="to-tai-card" data-id="${e.id}"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-sparkle"/></svg>${t('星紡ぎカードで使う', 'Use on Star Card')}</button>` : ''}</div>
     </div>
     <button type="button" class="fun-icon-btn fr-entry-edit" data-act="edit" data-id="${e.id}" aria-label="${t('編集', 'Edit')}"><svg class="inline-icon" width="15" height="15"><use href="#i-edit"/></svg></button>
   </article>`;
@@ -477,6 +477,16 @@ function onClick(e) {
   if (!btn || btn.disabled) return;
   const { act } = btn.dataset;
   if (act === 'new') { openForm(null); return; }
+  if (act === 'to-tai-card') {
+    // 写真はコピーせず、photoId の参照だけを星紡ぎカードのカスタム欄の画像に入れる（tai-card-state.js）
+    const entry = doc.entries.find(x => x.id === btn.dataset.id);
+    if (!entry || !entry.photoId) return;
+    import('../tai-card/tai-card-state.js').then((m) => {
+      const ok = m.setCustomNotePhotoRef(entry.photoId);
+      toast(ok ? t('星紡ぎカードのカスタム欄の画像にしました', 'Set as the custom section photo on your Star Card') : t('入れられませんでした', 'Could not set the photo'));
+    }).catch(() => toast(t('入れられませんでした', 'Could not set the photo')));
+    return;
+  }
   if (act === 'tab') {
     if (form) syncForm();
     tab = btn.dataset.tab === 'album' ? 'album' : 'diary';

@@ -115,6 +115,23 @@ export function defaultState() {
 }
 
 /* ================================================================
+   📷 コーデ日記の写真をカスタム欄の画像に使う（参照渡し）
+   写真そのものはコピーせず、customNote.image に { photoRef: <コーデ日記の photoId> } だけを持つ
+   （写真は IndexedDB tai-hub-photos。表示する時に getPhoto で読む＝tai-card-view.js の resolveNotePhoto）。
+   localStorage の容量を使わないので、容量超過時の段階的フォールバックとも衝突しない。
+   写真がコーデ日記で消された時は、カードにはカスタム欄の画像を出さない（文字だけ・または欄ごと出さない）。
+   ================================================================ */
+export function setCustomNotePhotoRef(photoId) {
+  if (typeof photoId !== 'string' || !photoId) return false;
+  const saved = loadState() || {};
+  const note = (saved.customNote && typeof saved.customNote === 'object') ? saved.customNote : {};
+  saved.customNote = { title: note.title || '', text: note.text || '', image: { photoRef: photoId.slice(0, 60) } };
+  // 欄を隠していたら出す（vis が保存されていない時は既定で出るので触らない）
+  if (saved.vis && typeof saved.vis === 'object') saved.vis.customNote = true;
+  try { localStorage.setItem(nsKey(STATE_KEY), JSON.stringify(saved)); return true; } catch (e) { return false; }
+}
+
+/* ================================================================
    状態の永続化（nsKey経由・400msデバウンス・容量超過時の段階的フォールバック）
    ================================================================ */
 let saveStateTimer = null;
