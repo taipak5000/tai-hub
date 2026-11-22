@@ -25,6 +25,7 @@ import { t } from './data/i18n-nomacan-pro.js';
 import { displayAreaName as displayAreaNameRaw } from './data/area-names-en.js';
 import * as S from './nomacan-pro-state.js';
 import * as N from './nomacan-pro-notify.js';
+import { takeWishHandoff } from '../shared/wish-handoff.js';
 
 const CANDLE_PROJECTION_MAX_DAYS = 60;
 const SHARD_PREDICTION_COUNT = 3;
@@ -37,6 +38,7 @@ let showBreakdown = false;
 let draggingGauge = false;
 let shardStatusText = '';
 let dailyStatusText = '';
+let wishGoal = null; // ほしいもの計画から受け取った目標ライン { targetTotal, needCandle, itemName }（表示だけ。保存しない）
 
 function esc(str) { return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function displayAreaName(ja) { return displayAreaNameRaw(CURRENT_LANG, ja); }
@@ -201,6 +203,14 @@ function refineHtml(v) {
    ================================================================ */
 function candleHtml(v) {
   return `
+    <div class="nmp-wish-goal" id="nmpWishGoal" role="status" hidden>
+      <div class="nmp-wish-goal-head">
+        <div class="nmp-wish-goal-title" id="nmpWishGoalTitle"></div>
+        <button type="button" class="nmp-wish-goal-close" id="nmpWishGoalClose" aria-label="${esc(t('candle.wishGoalClose'))}"><svg class="inline-icon" width="12" height="12"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="nmp-wish-goal-reach" id="nmpWishGoalReach"></div>
+      <div class="nmp-hint" style="padding:2px 0 0;">${esc(t('candle.wishGoalNote'))}</div>
+    </div>
     <div class="nmp-carry">
       <div style="display:flex; justify-content:space-between; width:100%;"><div>${esc(t('candle.carryOver'))}</div><div id="nmpCarryPct">0%</div></div>
       <div class="nmp-carry-gauge" id="nmpCarryGauge" role="slider" tabindex="0" aria-label="${esc(t('candle.carryGaugeAria'))}" aria-valuemin="0" aria-valuemax="99">
@@ -330,6 +340,7 @@ export function update() {
   }
   setText(candleEl, '#nmpEventDays', String(c.eventDays));
   renderNomacanGoal(v);
+  renderWishGoal(v, c);
   const projected = q(candleEl, '#nmpProjected');
   if (projected) { projected.textContent = fmtCandles(c.projected); projected.style.color = c.projected >= 0 ? '' : 'var(--npb-red)'; }
 
@@ -355,6 +366,34 @@ export function update() {
         ${c.eventDays > CANDLE_PROJECTION_MAX_DAYS ? `<div class="nmp-hint">${esc(t('candle.dailyBreakdownTruncatedNote', { days: CANDLE_PROJECTION_MAX_DAYS }))}</div>` : ''}`;
     }
   }
+}
+
+// ほしいもの計画から受け取った目標ライン。日割り見込みと同じ前提（今の選択で毎日精錬し、毎日ハートを送る）で、
+// 所持が targetTotal 以上になる最初の日を出す。見込みの計算そのもの（projection）には混ぜない
+function wishReach(v, c) {
+  if (v.currentCandles >= wishGoal.targetTotal) return { already: true };
+  if (c.calc.candles <= 0) return { noSelection: true };
+  const dailyDelta = c.calc.candles - c.dailyHeartCost;
+  if (dailyDelta <= 0) return null;
+  const d = Math.ceil((wishGoal.targetTotal - v.currentCandles) / dailyDelta);
+  if (d > CANDLE_PROJECTION_MAX_DAYS) return null;
+  const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() + d);
+  return { days: d, date };
+}
+function renderWishGoal(v, c) {
+  const el = q(candleEl, '#nmpWishGoal');
+  if (!el) return;
+  el.hidden = !wishGoal;
+  if (!wishGoal) return;
+  const setText = (sel, text) => { const x = q(candleEl, sel); if (x && x.textContent !== text) x.textContent = text; };
+  setText('#nmpWishGoalTitle', t('candle.wishGoalTitle', { name: wishGoal.itemName, need: fmtCandles(wishGoal.needCandle), total: fmtCandles(wishGoal.targetTotal) }));
+  const r = wishReach(v, c);
+  let text;
+  if (!r) text = t('candle.wishGoalNotWithin', { days: CANDLE_PROJECTION_MAX_DAYS });
+  else if (r.already) text = t('candle.wishGoalAlready');
+  else if (r.noSelection) text = t('candle.wishGoalNoSelection');
+  else text = t('candle.wishGoalReach', { m: r.date.getMonth() + 1, d: r.date.getDate(), days: r.days });
+  setText('#nmpWishGoalReach', text);
 }
 
 // 通常版ノマキャン計算機の進行中の目標（読むだけ）。目標が無い・読めない時は行ごと隠す
@@ -482,7 +521,8 @@ function wire() {
     update();
   });
   candleEl.addEventListener('click', (e) => {
-    if (e.target.closest('#nmpBreakdownToggle')) { showBreakdown = !showBreakdown; update(); }
+    if (e.target.closest('#nmpWishGoalClose')) { wishGoal = null; update(); } // 閉じたら受け渡しは破棄（キーはマウント時に消してある）
+    else if (e.target.closest('#nmpBreakdownToggle')) { showBreakdown = !showBreakdown; update(); }
     else if (e.target.closest('#nmpResetDataBtn')) ctx.requestResetData();
   });
 
@@ -520,6 +560,7 @@ export function mountTop(refineBody, candleBody, context) {
   draggingGauge = false;
   shardStatusText = '';
   dailyStatusText = '';
+  wishGoal = takeWishHandoff();
   const v = ctx.get();
   refineEl.innerHTML = refineHtml(v);
   candleEl.innerHTML = candleHtml(v);
@@ -530,5 +571,6 @@ export function mountTop(refineBody, candleBody, context) {
 }
 
 export function unmountTop() {
+  wishGoal = null;
   ctx = null; refineEl = null; candleEl = null;
 }

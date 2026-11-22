@@ -234,6 +234,14 @@
 .nmp-settle-title { font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--npb-text); margin-bottom: 4px; }
 .nomacan-pro-view #nmpDailyResetBtn:disabled { opacity: 0.45; cursor: default; }
 .nmp-hint[hidden] { display: none; }
+/* ほしいもの計画から受け取った目標ライン（キャンドル管理の先頭。表示だけ） */
+.nmp-wish-goal { background: var(--npb-stat-bg); border: 1px solid var(--npb-border); border-left: 3px solid var(--npb-orange); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.nmp-wish-goal[hidden] { display: none; }
+.nmp-wish-goal-head { display: flex; align-items: flex-start; gap: 8px; }
+.nmp-wish-goal-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; line-height: 1.5; }
+.nmp-wish-goal-close { flex: none; border: 0; background: transparent; padding: 4px; margin: -4px -4px 0 0; cursor: pointer; color: var(--npb-text-2); display: inline-flex; }
+.nomacan-pro-view .nmp-wish-goal-close .inline-icon { stroke: var(--npb-text-2); color: var(--npb-text-2); }
+.nmp-wish-goal-reach { font-size: 15px; font-weight: 700; color: var(--npb-orange); margin-top: 4px; }
 /* 通常版ノマキャン計算機の目標（読むだけ。押すと通常版へ） */
 .nmp-goal-manage { display: block; font-size: 11px; color: var(--npb-blue); text-decoration: none; margin-top: 2px; letter-spacing: 0.02em; }
 .nmp-goal-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--npb-border); color: var(--npb-text); text-decoration: none; font-size: 14px; }

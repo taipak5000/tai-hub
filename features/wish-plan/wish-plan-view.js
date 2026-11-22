@@ -22,6 +22,7 @@ import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { nsKey, getWishIds, removeWishItem, getCategoryState, saveCategoryState, recordItemAcquire } from '../../js/state.js';
 import { loadMusicSheetState, saveMusicSheetState } from '../item/data/music-sheet-state.js';
 import { navigate } from '../../js/router.js';
+import { writeWishHandoff } from '../shared/wish-handoff.js';
 import { CATEGORY_REGISTRY } from '../item/data/categories.js';
 import { CURRENT_SEASON } from '../item/data/season-data.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
@@ -219,6 +220,7 @@ function costLabel(c) {
   return t('価格不明', 'Unknown price');
 }
 
+let firstNeed = null; // 先頭の「キャンドルが足りない」行 { key, name, needCandle, current }（render()が毎回作り直す）
 function render() {
   const r = root();
   if (!r) return;
@@ -234,6 +236,8 @@ function render() {
   const covered = new Map();
   counted.forEach(row => { if (row.tree) row.plan.nodes.forEach(x => { if (x.node.itemCatKey && x.node.itemCostId) covered.set(`${x.node.itemCatKey}:${x.node.itemCostId}`, row); }); });
   const treeIdx = S ? itemTreeIndex(S) : null;
+  // 先頭の「キャンドルが足りない」行だけに、ノマキャン計算機プロで到達日を見るボタンを出す
+  firstNeed = null;
   const lines = vis.map((row, idx) => {
     let status = '', cls = '';
     const off = offSet().has(row.key);
@@ -251,6 +255,7 @@ function render() {
         const parts = [];
         cls = 'soon';
         if (needCandle) {
+          if (!firstNeed) firstNeed = { key: row.key, name: row.name, needCandle, current: cur.candle };
           const days = Math.ceil(needCandle / perDay);
           const when = new Date(now.getTime() + days * DAY);
           parts.push(t(`あと${needCandle}本・${fmtDate(when)}ごろ（${days}日後）`, `${needCandle} more · around ${fmtDate(when)} (${days}d)`));
@@ -280,6 +285,7 @@ function render() {
         <div class="wp-meta">${escapeHtml(CURRENT_LANG === 'en' ? row.cat.nameEn : row.cat.name)}・${escapeHtml(row.tree ? (costText(row.plan.cost) || t('交換するものなし', 'Nothing to pay')) : costLabel(row.cost))}</div>
         ${row.tree ? treeDetailHtml(row) : ''}
         <div class="wp-status">${escapeHtml(status)}</div>
+        ${firstNeed && firstNeed.key === row.key ? `<div class="wp-get-row"><button type="button" class="wp-path-btn" data-act="to-pro"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-calendar"/></svg>${t('ノマキャン計算機プロで到達日を見る', 'See the date in Candle Calculator Pro')}</button></div>` : ''}
         ${groupSel}
         ${row.tree ? `<div class="wp-get-row"><button type="button" class="wp-path-btn" data-act="tp-edit" data-key="${escapeHtml(row.key)}"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-edit"/></svg>${t('選び直す', 'Change')}</button><button type="button" class="wp-path-btn" data-act="tp-catalog" data-key="${escapeHtml(row.key)}"><svg class="inline-icon" width="12" height="12" aria-hidden="true"><use href="#i-tree"/></svg>${t('精霊ツリー管理で解放する', 'Unlock in Spirit Tree Catalog')}</button></div>`
         : `${pathHint ? `<div class="wp-get-row">${pathHint}</div>` : ''}
@@ -492,6 +498,12 @@ function onClick(e) {
   if (!btn || btn.disabled) return;
   const { act, key } = btn.dataset;
   if (act === 'go-item') { navigate('item', ''); return; }
+  if (act === 'to-pro') {
+    if (!firstNeed) return;
+    writeWishHandoff({ currentCandles: firstNeed.current, needCandle: firstNeed.needCandle, itemName: firstNeed.name });
+    navigate('tai-nomacan-pro', '');
+    return;
+  }
   if (onGroupAction(act, btn)) return;
   if (onPickAction(act, btn)) return;
   if (act === 'dl-season' || act === 'dl-date') {

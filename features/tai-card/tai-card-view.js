@@ -1346,7 +1346,7 @@ function renderCard() {
       <div class="tc-card-sec-title">ACQUISITION</div>
       <div class="tc-card-sec-heading">${t('secTrendTitle')}</div>`;
     visibleTrends.forEach(g => {
-      const series = S.getTrendSeriesFromTool(g.rawCurrentKey, g.rawHistoryKey);
+      const series = g.spiritHistory ? S.getSpiritTrendSeries() : S.getTrendSeriesFromTool(g.rawCurrentKey, g.rawHistoryKey);
       const body = series.length >= 2
         ? renderTrendSparklineHtml(series)
         : `<p class="tc-trend-empty">${escapeHtml(t('trendEmptyTemplate', { source: EN ? g.sourceEn : g.source }))}</p>`;

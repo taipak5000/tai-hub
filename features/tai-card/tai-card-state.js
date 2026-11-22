@@ -22,6 +22,7 @@
    なく nsKey('taiScoreSongs_v1') を読む（title-catalog.jsのREQUIRED FIX
    コメントと同じ理由）。
    ================================================================ */
+import { readSpiritHistory } from '../../js/spirit-history.js';
 import { nsKey, nsKeyFor, getActiveProfileId } from '../../js/state.js';
 import { TITLE_CATALOG } from './data/title-catalog.js';
 
@@ -82,6 +83,8 @@ export function trendGraphsDefaults() {
   return [
     { id: 'nomacan', icon: '🕯️', label: 'ノマキャンの入手推移', labelEn: 'Candle Calculator Trend', source: 'ノマキャン計算機', sourceEn: 'Candle Calculator', visible: false, rawCurrentKey: 'skyNomacanCalc_v1', rawHistoryKey: 'skyNomacanCalc_history_v1' },
     { id: 'starcandle', icon: '🕯️', label: '星のキャンドルの入手推移', labelEn: 'Star Candle Calculator Trend', source: '星のキャンドル計算機', sourceEn: 'Star Candle Calculator', visible: false, rawCurrentKey: 'skyStarCandleCalc_v1', rawHistoryKey: 'skyStarCandleCalc_history_v1' },
+    // 精霊ツリー管理の達成率（日ごとの記録 spiritCatalogHistory_v1＝js/spirit-history.js から。記録のある日だけを並べる）
+    { id: 'spiritcatalog', icon: '🌳', label: '精霊ツリーの達成率の推移', labelEn: 'Spirit Tree Completion Trend', source: '精霊ツリー管理', sourceEn: 'Spirit Tree Catalog', visible: false, spiritHistory: true },
   ];
 }
 
@@ -319,6 +322,10 @@ export function computeCape(total) {
    入手推移グラフ：ノマキャン計算機・星のキャンドル計算機のcomputeTrendPoints()
    と同じ再構築ロジック（現在値から履歴のamountを順に差し引いて遡る）
    ================================================================ */
+// 精霊ツリーの達成率（%）を記録のある日の順に。記録が無ければ []（線を引かない）
+export function getSpiritTrendSeries() {
+  return readSpiritHistory().map(r => Math.round((r.doneNodes / r.totalNodes) * 1000) / 10);
+}
 export function getTrendSeriesFromTool(rawCurrentKey, rawHistoryKey) {
   let currentData;
   try { currentData = JSON.parse(localStorage.getItem(nsKey(rawCurrentKey))); } catch (_) { currentData = null; }

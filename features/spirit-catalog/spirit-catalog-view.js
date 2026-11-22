@@ -41,6 +41,7 @@ import * as eventDashboard from '../shared/event-dashboard.js';
 import * as scShare from './spirit-catalog-share.js';
 import { REVISIT_DATA, NEVER_REVISITED_DATA } from '../tai-revisit/data/revisit-data.js';
 import { writeCalcHandoff } from '../shared/calc-handoff.js';
+import { scheduleSpiritHistory } from '../../js/spirit-history.js';
 
 const STYLE_LINK_ID = 'spirit-catalog-view-styles';
 const ICON_SPRITE_ID = 'spirit-catalog-icon-sprite';
@@ -597,7 +598,7 @@ function formatPct(pct) {
 }
 function renderStats() {
   const rawUnlocked = S.getUnlockedMap();
-  let totalNodes = 0, doneNodes = 0, completeSpirits = 0;
+  let totalNodes = 0, doneNodes = 0, completeSpirits = 0, totalSpirits = 0;
   let candleSpent = 0, heartSpent = 0, seasonCandleSpent = 0, seasonHeartSpent = 0;
   // 🕊️ 季節のペンダントを所持していて、かつアイテム別コスト（item機能）側で
   // 「季節中に入手（0扱い）」を選択済みのアイテムに対応するノードは、シーズン
@@ -622,10 +623,12 @@ function renderStats() {
         }
       }
     });
+    if (spiritTotal > 0) totalSpirits++;
     if (spiritDone === spiritTotal && spiritTotal > 0) completeSpirits++;
   });
   const overallPct = totalNodes > 0 ? (doneNodes / totalNodes) * 100 : 0;
   S.saveStatsSnapshot(totalNodes, doneNodes);
+  scheduleSpiritHistory({ doneNodes, totalNodes, doneSpirits: completeSpirits, totalSpirits }); // 日ごとの達成率（js/spirit-history.js）
 
   renderSummaryCard({ overallPct, totalNodes, doneNodes, completeSpirits, candleSpent, heartSpent, seasonCandleSpent, seasonHeartSpent });
 
