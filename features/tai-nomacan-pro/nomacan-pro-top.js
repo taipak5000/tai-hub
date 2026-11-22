@@ -245,7 +245,8 @@ function candleHtml(v) {
         <span class="nmp-dim" id="nmpHeartInfo"></span>
       </div>
     </div>
-    <div class="nmp-row"><div>${esc(t('candle.eventEndDate'))}</div><input type="date" id="nmpTargetDate" value="${esc(v.targetDate)}" style="width:140px; text-align:left;"></div>
+    <div class="nmp-row"><div>${esc(t('candle.eventEndDate'))}<a class="nmp-goal-manage" href="#/tai-nomacan">${esc(t('candle.nomacanGoalManage'))}</a></div><input type="date" id="nmpTargetDate" value="${esc(v.targetDate)}" style="width:140px; text-align:left;"></div>
+    <a class="nmp-goal-row" id="nmpNomacanGoal" href="#/tai-nomacan" hidden></a>
     <div class="nmp-row"><div>${esc(t('candle.remainingDays'))}</div><div style="font-weight:bold;"><span id="nmpEventDays">0</span> <span style="font-weight:normal; font-size:0.8em; color:var(--npb-text-2);">${esc(t('candle.remainingDaysUnit'))}</span></div></div>
     <div class="nmp-row"><div>${esc(t('candle.projectedRemaining'))}</div><div class="nmp-bold"><span id="nmpProjected">0</span> <span class="nmp-unit">${esc(t('refine.candlesUnit'))}</span></div></div>
 
@@ -328,6 +329,7 @@ export function update() {
       : '';
   }
   setText(candleEl, '#nmpEventDays', String(c.eventDays));
+  renderNomacanGoal(v);
   const projected = q(candleEl, '#nmpProjected');
   if (projected) { projected.textContent = fmtCandles(c.projected); projected.style.color = c.projected >= 0 ? '' : 'var(--npb-red)'; }
 
@@ -353,6 +355,28 @@ export function update() {
         ${c.eventDays > CANDLE_PROJECTION_MAX_DAYS ? `<div class="nmp-hint">${esc(t('candle.dailyBreakdownTruncatedNote', { days: CANDLE_PROJECTION_MAX_DAYS }))}</div>` : ''}`;
     }
   }
+}
+
+// 通常版ノマキャン計算機の進行中の目標（読むだけ）。目標が無い・読めない時は行ごと隠す
+function renderNomacanGoal(v) {
+  const el = q(candleEl, '#nmpNomacanGoal');
+  if (!el) return;
+  const g = S.readNomacanActiveGoal(v.currentCandles);
+  el.hidden = !g;
+  if (!g) return;
+  let detail;
+  if (g.remaining <= 0) detail = t('candle.nomacanGoalReached');
+  else {
+    detail = t('candle.nomacanGoalLeft', { n: fmtCandles(g.remaining) });
+    if (g.targetDate) {
+      const [, m, d] = g.targetDate.split('-').map(Number);
+      detail += t('candle.nomacanGoalBy', { m, d });
+    }
+  }
+  const html = `<span class="nmp-goal-label">${esc(t('candle.nomacanGoalLabel'))}</span>`
+    + `<span class="nmp-goal-body"><b>${esc(g.name || t('candle.nomacanGoalUnnamed'))}</b>（${esc(detail)}）</span>`
+    + `<span class="nmp-goal-arrow" aria-hidden="true">›</span>`;
+  if (el.innerHTML !== html) el.innerHTML = html;
 }
 
 // 入力欄の値を外部の変更（他タブ・共有通貨の同期）に合わせる。入力中の欄は触らない

@@ -74,6 +74,39 @@ export function getDefaultAreas(timeMult) {
   });
 }
 
+/* ================================================================
+   ⏱️ 所要時間の倍率（慣れ具合）
+   既定の所要時間（DEFAULT_AREAS）×倍率で初期化している。倍率を変えた時は、
+   「今の時間＝Math.round(既定の時間×旧倍率)」のもの（＝一度も直していない時間）だけを新しい倍率で掛け直す。
+   手で直した時間・ストップウォッチやルートの実測（sub.measured）と、既定データに無いエリア（自分で足したもの）には触らない。
+   ================================================================ */
+export const TIME_MULT_CHOICES = [0.8, 1.0, 1.2, 1.5, 1.7, 2.0];
+export const DEFAULT_TIME_MULT = 1.7;
+export function applyTimeMultChange(areas, oldMult, newMult) {
+  let changed = 0;
+  const retime = (item, base) => {
+    if (!item || base === undefined) return;
+    if (Number(item.time) !== Math.round(base * oldMult)) return;
+    const next = Math.round(base * newMult);
+    if (item.time !== next) { item.time = next; changed++; }
+  };
+  (areas || []).forEach((area) => {
+    const defArea = area && DEFAULT_AREAS.find((d) => d.name === area.name);
+    if (!defArea) return;
+    retime(area, Number(defArea.time) || 0);
+    (area.subAreas || []).forEach((sub) => {
+      const defSub = sub && (defArea.subAreas || []).find((d) => d.name === sub.name);
+      if (!defSub) return;
+      if (!sub.measured) retime(sub, Number(defSub.time) || 0);
+      (sub.spots || []).forEach((sp) => {
+        const defSpot = sp && (defSub.spots || []).find((d) => d.name === sp.name);
+        if (defSpot) retime(sp, Number(defSpot.time) || 0);
+      });
+    });
+  });
+  return changed;
+}
+
 export function getAreaMode(mainArea) {
   if (!mainArea || !Array.isArray(mainArea.subAreas) || mainArea.subAreas.length === 0) return 'main';
   return 'sub';
@@ -771,6 +804,40 @@ export function loadInitialData(timeMult) {
     lastDailyResetDate: '',
     visibleSections: { ...DEFAULT_VISIBLE_SECTIONS },
     myRoutes: [],
+  };
+}
+
+/* ================================================================
+   🎯 通常版ノマキャン計算機（#/tai-nomacan）の進行中の目標を読むだけ
+   目標の作成・編集は通常版の領分。ここからは通常版のキーへ一切書かない
+   （通常版のgoalEnsureInit()は空の目標を書き込むので使わず、自前で読む）。
+   ================================================================ */
+export const NOMACAN_GOALS_KEY = () => nsKey('skyNomacanGoals_v1');
+export const NOMACAN_CALC_KEY = () => nsKey('skyNomacanCalc_v1'); // 複数目標になる前の旧形式（目標1件ぶん）
+const NOMACAN_DEFAULT_GOAL_NAME = '目標'; // 通常版のGOAL_DEFAULT_NAME_MARKER（名前を付けていない目標）
+export function readNomacanActiveGoal(current) {
+  let goal = null;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(NOMACAN_GOALS_KEY()));
+    if (parsed && Array.isArray(parsed.goals)) {
+      const goals = parsed.goals.filter((g) => g && typeof g.name === 'string');
+      goal = goals.find((g) => g.id === parsed.activeGoalId) || goals[0] || null;
+    }
+  } catch (e) { goal = null; }
+  if (!goal) {
+    try {
+      const legacy = JSON.parse(localStorage.getItem(NOMACAN_CALC_KEY()));
+      if (legacy && typeof legacy === 'object') goal = { name: NOMACAN_DEFAULT_GOAL_NAME, target: legacy.target, plannedUsage: legacy.plannedUsage, targetDate: legacy.targetDate };
+    } catch (e) { goal = null; }
+  }
+  if (!goal) return null;
+  const effectiveTarget = Math.max(0, parseFloat(goal.target) || 0) + Math.max(0, parseFloat(goal.plannedUsage) || 0);
+  if (effectiveTarget <= 0) return null;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(goal.targetDate || '')) ? goal.targetDate : '';
+  return {
+    name: goal.name === NOMACAN_DEFAULT_GOAL_NAME ? '' : String(goal.name).slice(0, 60),
+    remaining: Math.max(0, Math.round((effectiveTarget - Math.max(0, Number(current) || 0)) * 100) / 100),
+    targetDate: date,
   };
 }
 

@@ -141,6 +141,7 @@ export function mount(container) {
   window.__nmpMainSelectedToggle = (mIdx, checked) => { areas[mIdx].isSelected = checked; persist(true); renderAreaList(); recomputeAndRenderTop(); };
   window.__nmpSubLightInput = (mIdx, sIdx, val) => { areas[mIdx].subAreas[sIdx].light = Math.max(0, Number(val) || 0); persist(true); recomputeAndRenderTop(); };
   window.__nmpConfirmResetData = () => { confirmResetData(); };
+  window.__nmpTimeMultChange = (val) => { changeTimeMult(val); };
   window.__nmpVisibleSectionToggle = (key, checked) => { visibleSections[key] = checked; persist(); applyVisibleSections(); };
 
   initRoutes(container, {
@@ -461,6 +462,24 @@ function escHtml(str) { return String(str == null ? '' : str).replace(/[&<>"']/g
 /* ================================================================
    🖼️ 描画: シェル全体
    ================================================================ */
+function timeMultOptionsHtml() {
+  const choices = S.TIME_MULT_CHOICES.includes(currentTimeMult) ? S.TIME_MULT_CHOICES : [...S.TIME_MULT_CHOICES, currentTimeMult].sort((a, b) => a - b);
+  return choices.map((m) => `<option value="${m}" ${m === currentTimeMult ? 'selected' : ''}>×${m.toFixed(1)}${m === S.DEFAULT_TIME_MULT ? escHtml(t('settings.timeMultDefault')) : ''}</option>`).join('');
+}
+// 倍率を変えた時は、一度も直していない時間だけを掛け直す（手で直した時間・実測には触らない）
+function changeTimeMult(val) {
+  const next = parseFloat(val);
+  if (!Number.isFinite(next) || next <= 0 || next === currentTimeMult) return;
+  const changed = S.applyTimeMultChange(areas, currentTimeMult, next);
+  currentTimeMult = next;
+  try { localStorage.setItem(S.TIME_MULT_KEY, String(next)); } catch (e) { /* noop */ }
+  persist(true);
+  renderAreaList();
+  recomputeAndRenderTop();
+  Extras.refreshStopwatchOptions();
+  showToast(t('settings.timeMultChanged', { mult: next.toFixed(1), n: changed }), 'success');
+}
+
 function renderShell() {
   return `
   <div class="nomacan-pro-view nmp-root">
@@ -475,6 +494,11 @@ function renderShell() {
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.timed ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('timed', this.checked)"> ${escHtml(t('settings.timed'))}</label>
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.efficiency ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('efficiency', this.checked)"> ${escHtml(t('settings.efficiency'))}</label>
           <label class="nmp-visibility-opt"><input type="checkbox" ${visibleSections.stopwatch ? 'checked' : ''} onchange="__nmpVisibleSectionToggle('stopwatch', this.checked)"> ${escHtml(t('settings.stopwatch'))}</label>
+          <div class="nmp-mult-row">
+            <label class="nmp-mult-label" for="nmpTimeMult">${escHtml(t('settings.timeMultLabel'))}</label>
+            <select id="nmpTimeMult" onchange="__nmpTimeMultChange(this.value)">${timeMultOptionsHtml()}</select>
+          </div>
+          <div class="nmp-hint" style="padding:0;">${escHtml(t('settings.timeMultNote'))}</div>
         </div>
       </details>
       <div class="nmp-grid">
