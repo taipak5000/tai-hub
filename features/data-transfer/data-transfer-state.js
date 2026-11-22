@@ -51,6 +51,8 @@ export const SITE_CATALOG = [
     'itemTitles_v1', 'itemCostMoneySum_v1',
     // 🩹 2026-11-05に追加: 楽譜の所持・お気に入り（旧キー musicSheets も）・ウィッシュリスト、コスト集計の個数
     'gameItems_music_sheet', 'musicSheets', 'wish_music_sheet', 'itemQuantity_v1',
+    // 🩹 2026-11-22に追加: 日ごとの達成率の記録（js/collection-history.js）。機種変更でグラフが途切れないように
+    'collectionHistory_v1',
   ] },
   { id: 'wings', label: '羽トラッカー', labelEn: 'Wing Tracker', namespaced: true, keys: [
     'wingTracker_v1', 'permWingTracker_v1', 'lightChildrenTracker_v1',
@@ -113,6 +115,8 @@ export const SITE_CATALOG = [
     'spiritCatalogUnlocked_v1',
     'catalogShareCustomize_v1',
     'spiritCatalogTitles_v1',
+    // 🩹 2026-11-22に追加: 日ごとの達成率の記録（js/spirit-history.js）
+    'spiritCatalogHistory_v1',
   ] },
   { id: 'score', label: '楽譜づくり', labelEn: 'Sheet Music Maker', namespaced: false, keys: [
     'taiScoreSongs_v1', 'taiScoreKeyBindings_v1', 'taiScoreInputMode_v1', 'taiScoreFreePlayInstrument_v1',

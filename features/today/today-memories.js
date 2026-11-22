@@ -110,10 +110,11 @@ export async function oneYearAgoHtml(now = new Date()) {
       ${photo(e.photoId)}
       <div class="td-ago-body">
         <div class="td-ago-kind"><svg class="inline-icon" width="13" height="13" aria-hidden="true"><use href="#i-hanger"/></svg>${t('コーデ日記', 'Outfit Diary')}</div>
-        ${e.items.length ? `<div class="td-ago-items">${e.items.map((x) => {
-          const it = names.get(`${x.cat}:${x.id}`);
-          return `<span class="td-ago-item">${it && it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it ? it.name : x.id)}</span>`;
-        }).join('')}</div>` : ''}
+        ${(() => {
+          // アイテムのデータに無いもの（IDだけでは意味が分からない）は出さない
+          const known = e.items.map(x => names.get(`${x.cat}:${x.id}`)).filter(Boolean);
+          return known.length ? `<div class="td-ago-items">${known.map(it => `<span class="td-ago-item">${it.img ? `<img src="${escapeHtml(it.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}${escapeHtml(it.name)}</span>`).join('')}</div>` : '';
+        })()}
         ${e.memo ? `<p class="td-ago-text">${escapeHtml(e.memo).replace(/\n/g, '<br>')}</p>` : ''}
       </div>
     </article>`).join('');

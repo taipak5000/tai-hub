@@ -240,7 +240,7 @@ const landingPoint = currentY + project(v);
 - **自動バックアップ**（`js/auto-backup.js`）: 起動の4秒後、前回から24時間以上たっていれば、引継ぎの書き出しと同じ範囲（プロフィール一覧＋`SITE_CATALOG`の全キー・全プロフィール）を
   IndexedDB`tai-hub-backups`（store`snapshots`）に1件とり、新しい順に3件残す。オン・オフも同じストアの`config`レコード（localStorageには持たない）。
   戻すのは「データ引継ぎ」の「自動バックアップ」から: 直前の状態を`before-restore`として1件とり、引継ぎの取り込みと同じ書き方（プロフィール一覧はマージ・各キーは上書き）で書き戻して再読み込みする。
-  `SITE_CATALOG`にキーを足せば、自動バックアップにも入る。「全データを削除」はこのDBも消す。
+  `SITE_CATALOG`にキーを足せば、自動バックアップにも入る（日ごとの達成率 `collectionHistory_v1`・`spiritCatalogHistory_v1` も2026-11-22から対象）。「全データを削除」はこのDBも消す。
 - **バックアップのリマインド**（`js/backup-reminder.js`）・**はじめての案内**（`js/onboarding.js`）: どちらもダッシュボードの先頭に出す。案内は記録が何も無いプロフィールにだけ。
 - **ピン留め**（`js/chrome/pin-bar.js`、`sky_hub_pinned_tools`、最大4つ）: 「他のツール」の一覧のピンで留め、`#app-root`の上に並べる。
 - アクセント色を**文字**に使う時は`--hub-accent`ではなく`--hub-accent-ink`を使う（着せ替え中は背景に対して4.5:1を保証した色が入る）。
