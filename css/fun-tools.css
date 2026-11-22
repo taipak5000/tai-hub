@@ -809,8 +809,52 @@
 .bingo-view.is-embedded { background: none; min-height: 0; }
 .bingo-view.is-embedded .fun-wrap { max-width: none; padding: 0; }
 .bingo-view .bg-embed-lead { margin: 0 2px 10px; }
+/* 📖 おみくじ帳（今日のおみくじの下の折りたたみ。features/today/today-memories.js） */
+.today-view .td-omibook { margin-top: 10px; border-radius: 16px; background: var(--hub-card); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); }
+.today-view .td-omibook-sum { display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; list-style: none; }
+.today-view .td-omibook-sum::-webkit-details-marker { display: none; }
+.today-view .td-omibook-sum .inline-icon { flex: none; stroke: currentColor; color: var(--hub-accent-ink); }
+.today-view .td-omibook-title { font-size: 14px; font-weight: 800; }
+.today-view .td-omibook-count { font-size: 12px; color: var(--hub-text-2); letter-spacing: 0.02em; }
+.today-view .td-omibook-chev { margin-left: auto; color: var(--hub-text-3) !important; transform: rotate(-90deg); transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1); }
+.today-view .td-omibook[open] .td-omibook-chev { transform: none; }
+.today-view .td-omibook[open] .td-omibook-body { animation: funRise 0.3s var(--fun-ease); }
+.today-view .td-omibook-body { padding: 0 14px 12px; max-height: 60vh; overflow-y: auto; }
+.today-view .td-ob-month + .td-ob-month { margin-top: 10px; }
+.today-view .td-ob-month-title { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 4px; font-size: 13px; font-weight: 800; color: var(--hub-text); }
+.today-view .td-ob-month-title span { font-size: 11px; font-weight: 600; color: var(--hub-text-2); letter-spacing: 0.04em; }
+.today-view .td-ob-row { border-top: 1px solid var(--hub-sep); }
+.today-view .td-ob-row > summary { display: grid; grid-template-columns: 5.8em 3em minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 2px; cursor: pointer; list-style: none; font-size: 13px; }
+.today-view .td-ob-row > summary::-webkit-details-marker { display: none; }
+.today-view .td-ob-row.is-today .td-ob-date { font-weight: 800; }
+.today-view .td-ob-date { color: var(--hub-text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today-view .td-ob-fortune { font-weight: 800; color: var(--hub-accent-ink); }
+.today-view .td-ob-realm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.today-view .td-ob-color { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--hub-text-2); }
+.today-view .td-ob-msg { margin: 0 2px 10px; padding: 8px 10px; border-radius: 10px; background: var(--hub-accent-bg); font-size: 13px; line-height: 1.7; }
+.today-view .td-ob-row[open] .td-ob-msg { animation: funRise 0.25s var(--fun-ease); }
+@media (max-width: 380px) { .today-view .td-ob-color-name { display: none; } }
+
+/* 🗓 1年前の今日（コーデ日記・フォト日記。features/today/today-memories.js） */
+.today-view .td-ago-date { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--hub-text-2); letter-spacing: 0.02em; }
+.today-view .td-ago-list { display: grid; gap: 10px; }
+.today-view .td-ago-card { border-radius: 16px; overflow: hidden; background: var(--hub-card); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); }
+.today-view .td-ago-photo { aspect-ratio: 4 / 3; background: var(--hub-sep); display: flex; align-items: center; justify-content: center; color: var(--hub-text-3); }
+.today-view .td-ago-photo .inline-icon { stroke: currentColor; }
+.today-view .td-ago-photo img { width: 100%; height: 100%; object-fit: cover; display: block; animation: iosFade 0.3s ease; }
+.today-view .td-ago-body { padding: 10px 14px 12px; }
+.today-view .td-ago-kind { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--hub-text-2); letter-spacing: 0.02em; }
+.today-view .td-ago-kind .inline-icon { stroke: currentColor; color: var(--hub-accent-ink); }
+.today-view .td-ago-with { margin-left: 4px; font-weight: 600; color: var(--hub-text); }
+.today-view .td-ago-items { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.today-view .td-ago-item { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border-radius: 999px; background: var(--hub-accent-bg); font-size: 12px; }
+.today-view .td-ago-item img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.today-view .td-ago-text { margin: 8px 0 0; font-size: 13.5px; line-height: 1.75; }
+
 @media (prefers-reduced-motion: reduce) {
   .today-view .td-fold-chev { transition: none; }
+  .today-view .td-omibook-chev { transition: none; }
+  .today-view .td-omibook[open] .td-omibook-body, .today-view .td-ob-row[open] .td-ob-msg { animation: iosFade 200ms ease; }
   .today-view .td-bingo-sec.is-open .td-bingo { animation: iosFade 200ms ease; }
 }
 @media (prefers-contrast: more) { .today-view .td-fold { border: 1px solid var(--hub-text-2); } }

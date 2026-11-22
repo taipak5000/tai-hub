@@ -171,7 +171,8 @@ const landingPoint = currentY + project(v);
 - **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: データは開いた時に読み込む（精霊ツリーのデータは大きいので起動時には読まない）。
 - **デイリーチェックシート**（`#/daily-check`。2026-11-22に正式なツールにした）: `features/today/today-view.js`が今日の要点・おみくじを出し、
   その下にチェックシート（`features/daily-check/`）を`mount(el, { embedded: true, labLinks: true })`で埋め込む。週替わりビンゴ（`features/bingo/`）も
-  この画面の中の折りたたみ。`#/today`と`#/bingo`は古いリンク用（hidden）。
+  この画面の中の折りたたみ。`#/today`と`#/bingo`は古いリンク用（hidden）。おみくじの下の「おみくじ帳」と、下の「1年前の今日」（コーデ日記・フォト日記の
+  ちょうど1年前の記録）は`features/today/today-memories.js`（どちらも読むだけ。日付は'YYYY-MM-DD'の年を1つ戻して単純比較）。
 - **フレンド記念日／フォト日記**（`features/friends/`。写真はIndexedDB`tai-hub-photos`）・**ふりかえり**（`features/recap/`、`#/recap/month`）。
   CSSは`css/fun-tools.css`、色は`--hub-*`トークンだけを使う。新しいツールに記録を足したら、ふりかえりにも数を足せるか考える。
 - **ほしいもの計画**（`features/wish-plan/`）: 欲しいもの`wish_<cat>`と所持通貨`wishOwnCurrency`は他ツールと共通。並び順・設定・グループ分けと

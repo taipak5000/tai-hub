@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.22.6',
+    version: '2026.11.22.7',
     title: { ja: 'デイリーチェックシートを正式公開・毎日の自動バックアップ、ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標・ルートの実測をエリアへ）', en: 'Daily Checklist is official, daily automatic backups; Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal, split times to areas)' },
     date: '2026-11-22',
     items: [
+      { type: 'new', ja: 'デイリーチェックシートの今日のおみくじの下に「おみくじ帳」を足しました。今まで引いたおみくじを月ごとに、日付・運勢・ラッキーエリア・色で並べ、日付を押すとその日のひとことが読めます。画面の下には「1年前の今日」として、ちょうど1年前の同じ日のコーデ日記（写真と着ていたアイテム）とフォト日記（写真・ひとこと・一緒にいたフレンド）を出します（記録がある日だけ）。', en: 'Daily Checklist: a "Fortune log" under today\'s fortune lists past fortunes by month (date, fortune, lucky area and color; tap a day for its message). "One year ago today" shows your Outfit Diary (photo and items) and Photo diary (photo, note and friends) from the same date last year, when there are any.', route: 'daily-check' },
       { type: 'new', ja: 'ほしいもの計画で、キャンドルが足りない一番上のアイテムに「ノマキャン計算機プロで到達日を見る」を付けました。押すとノマキャン計算機プロが開き、キャンドル管理の先頭に「『◯◯』まであと28本（合計68本）」と、今の選択で毎日集めた時の到達予定日が出ます（60日以内に届かない時はそう出ます）。', en: 'Wishlist Plan: the first item you still need candles for has "See the date in Candle Calculator Pro". It opens the Pro calculator with how many more candles you need and the expected date if you refine your current selection every day.', route: 'wish-plan' },
       { type: 'new', ja: 'コーデ日記の写真を、星紡ぎカードのカスタム欄の画像に使えるようにしました（日記の「星紡ぎカードで使う」）。写真はコピーせずに日記の写真を読むので、カードの保存容量を使いません。日記で写真を消すと、カードからも画像が外れます。', en: 'Outfit Diary photos can now be used as the custom section image on your Star Card ("Use on Star Card"). The photo is read from the diary rather than copied, so it takes no space in the card; deleting it in the diary removes it from the card.', route: 'coord-diary' },
       { type: 'new', ja: '精霊ツリー管理の達成率を日ごとに記録し、星紡ぎカードの「入手グラフ」に「精霊ツリーの達成率の推移」を足しました（編集画面でオンにすると出ます）。記録は、精霊ツリー管理を開いたり解放を変えたりした日の分からたまります。', en: 'Spirit Tree Catalog completion is now recorded per day, and the Star Card graphs have a new "Spirit Tree Completion Trend" (turn it on in the editor). Records start from the days you open or update the catalog.', route: 'tai-card' },

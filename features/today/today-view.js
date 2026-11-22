@@ -8,7 +8,8 @@
      シートの下には「試作中の機能」への入口も出す＝ labLinks: true）
    - 週替わりビンゴ（features/bingo。2026-11-06にこの画面の中の折りたたみへ移した。旧 #/bingo もこの画面を開いてビンゴを広げる）
    - 今日・明日のフレンドの記念日
-   - 1日1回のおみくじ（今日のラッキーエリア・エモート・色・ひとこと）
+   - 1日1回のおみくじ（今日のラッキーエリア・エモート・色・ひとこと）と、その下の「おみくじ帳」（今までの結果を月ごとに）
+   - 「1年前の今日」（コーデ日記・フォト日記のちょうど1年前の記録。features/today/today-memories.js）
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
 import { getActiveProfileId } from '../../js/state.js';
@@ -17,6 +18,7 @@ import { ptParts } from '../../js/pacific-time.js';
 import { injectStylesheet } from '../bingo/bingo-view.js';
 import { loadBingo, weekKeyAt, countLines, FREE } from '../bingo/bingo-state.js';
 import { loadFriendsDoc, upcomingAnniversaries } from '../friends/friends-state.js';
+import { omikujiBookHtml, oneYearAgoHtml, fillPhotos } from './today-memories.js';
 import { loadOmikuji, drawOmikuji, gameDayKey, mergeTodoIntoDailyCheck, FORTUNES, LUCKY_REALMS, LUCKY_COLORS, MESSAGES } from './today-state.js';
 
 const t = (ja, en) => (CURRENT_LANG === 'en' ? en : ja);
@@ -31,6 +33,8 @@ let lastDayKey = '';
 let token = 0;
 
 let bingoMod = null;
+let agoUrls = []; // 「1年前の今日」の写真のURL（描き直し・アンマウントで片付ける）
+let agoToken = 0;
 const BINGO_OPEN_KEY = 'sky_dc_bingo_open';
 function bingoOpen() { try { return localStorage.getItem(BINGO_OPEN_KEY) === '1'; } catch (e) { return false; } }
 
@@ -78,6 +82,8 @@ export function mount(container, sub) {
 
 export function unmount() {
   token++;
+  agoToken++;
+  releaseAgo();
   clearInterval(tickTimer); tickTimer = null;
   if (bingoMod) { bingoMod.unmount(); }
   if (dc) { dc.unmount(); dc = null; }
@@ -132,8 +138,26 @@ function render() {
       </div>
     </section>
 
-    ${omikujiHtml()}`;
-  r.querySelector('.td-after').innerHTML = extrasHtml();
+    ${omikujiHtml()}
+    ${omikujiBookHtml(gameDayKey())}`;
+  r.querySelector('.td-after').innerHTML = extrasHtml() + '<div class="td-ago-host"></div>';
+  renderOneYearAgo();
+}
+
+// 「1年前の今日」（features/today/today-memories.js）。記録が無い日は何も出さない
+function releaseAgo() { agoUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) { /* noop */ } }); agoUrls = []; }
+async function renderOneYearAgo() {
+  const my = ++agoToken;
+  releaseAgo();
+  let html = '';
+  try { html = await oneYearAgoHtml(); } catch (e) { html = ''; }
+  const host = root() && root().querySelector('.td-ago-host');
+  if (my !== agoToken || !host) return;
+  host.innerHTML = html;
+  if (!html) return;
+  const urls = await fillPhotos(host);
+  if (my !== agoToken || !containerEl) { urls.forEach(u => URL.revokeObjectURL(u)); return; }
+  agoUrls = urls;
 }
 
 function shardHtml(s) {
