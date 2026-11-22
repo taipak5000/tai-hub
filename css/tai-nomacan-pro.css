@@ -163,6 +163,9 @@
 .nmp-toast { padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.25); animation: nmpToastIn 0.2s ease-out; }
 .nmp-toast-success { background: var(--npb-green); }
 .nmp-toast-error { background: var(--npb-red); }
+.nmp-toast.has-action { display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 8px 8px 8px 16px; pointer-events: auto; }
+.nmp-toast-action { flex: none; border: 0; background: rgba(255,255,255,0.22); color: #fff; font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; letter-spacing: 0.02em; }
+.nmp-toast-action:active { transform: scale(0.96); }
 @keyframes nmpToastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── 確認モーダル（tai-hub共有の.modal-overlay/.modal-cardを使用） ── */
@@ -214,6 +217,12 @@
 /* ── 今日の精錬状況・キャンドル管理（nomacan-pro-top.js） ── */
 .nmp-card-header-split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .nmp-normal { font-weight: 400; }
+/* 前回の精算のあとの選択が残っている時の案内（今日の精錬状況の先頭） */
+.nmp-settle-banner { background: var(--npb-stat-bg); border: 1px solid var(--npb-orange); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.nmp-settle-banner[hidden] { display: none; }
+.nmp-settle-title { font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--npb-text); margin-bottom: 4px; }
+.nomacan-pro-view #nmpDailyResetBtn:disabled { opacity: 0.45; cursor: default; }
+.nmp-hint[hidden] { display: none; }
 .nmp-box { background: var(--npb-stat-bg); border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
 .nmp-box-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .nmp-box-label { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }

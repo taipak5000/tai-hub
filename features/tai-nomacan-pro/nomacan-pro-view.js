@@ -54,6 +54,8 @@ let candleMemo = '';
 let targetDate = '';
 let dailyBonusArea = 0;
 let dailyShard = 'none';
+let lastDailyResetDate = ''; // 最後にデイリーリセット（精算）したSkyの日付（pacificDateKey形式）。''＝記録なし
+let optimizeUndo = null; // 最適化の直前の選択状態（最新1件・保存しない。トーストが消えたら捨てる）
 let visibleSections = { ...S.DEFAULT_VISIBLE_SECTIONS }; // 表示するカード（キャンドル管理/効率自動最適化/マイルート）
 let currentTimeMult = 1.7;
 
@@ -100,6 +102,8 @@ export function mount(container) {
   targetDate = initial.targetDate || defaultTargetDate();
   dailyBonusArea = initial.dailyBonusArea;
   dailyShard = initial.dailyShard;
+  lastDailyResetDate = initial.lastDailyResetDate || '';
+  optimizeUndo = null;
   visibleSections = { ...S.DEFAULT_VISIBLE_SECTIONS, ...(initial.visibleSections || {}) };
 
   container.innerHTML = renderShell();
@@ -178,8 +182,9 @@ const extrasContext = {
 
 // 「今日の精錬状況」「キャンドル管理」カード(nomacan-pro-top.js)とのやり取り
 const topContext = {
-  get: () => ({ areas, carryOverPercent, carryOverGap, dailyBonusArea, dailyShard, currentCandles, plannedUsage, heartsToSend, targetDate, candleMemo }),
+  get: () => ({ areas, carryOverPercent, carryOverGap, dailyBonusArea, dailyShard, currentCandles, plannedUsage, heartsToSend, targetDate, candleMemo, lastDailyResetDate }),
   set: (patch) => {
+    if ('lastDailyResetDate' in patch) { lastDailyResetDate = patch.lastDailyResetDate; optimizeUndo = null; } // 精算の後は最適化前の選択に戻さない
     if ('carryOverPercent' in patch) carryOverPercent = patch.carryOverPercent;
     if ('carryOverGap' in patch) carryOverGap = patch.carryOverGap;
     if ('dailyBonusArea' in patch) dailyBonusArea = patch.dailyBonusArea;
@@ -197,6 +202,7 @@ const topContext = {
 };
 
 export function unmount() {
+  optimizeUndo = null;
   Top.unmountTop();
   Extras.unmountExtras();
   if (onCurrencyStorageListener) { window.removeEventListener('storage', onCurrencyStorageListener); onCurrencyStorageListener = null; }
@@ -227,7 +233,7 @@ function displayAreaName(jaName) { return displayAreaNameRaw(CURRENT_LANG, jaNam
 function persist(skip) {
   S.saveState({
     areas, myRoutes, carryOverPercent, carryOverGap, targetDate, currentCandles,
-    plannedUsage, heartsToSend, targetCandlesForOptimization, candleMemo, dailyBonusArea, dailyShard, visibleSections,
+    plannedUsage, heartsToSend, targetCandlesForOptimization, candleMemo, dailyBonusArea, dailyShard, lastDailyResetDate, visibleSections,
   });
 }
 // 👁️ 表示するカードのチェックボックスをトグルした直後、シェル全体を作り直さずに
@@ -370,23 +376,60 @@ function confirmResetData() {
   recomputeAndRenderTop();
   showToast(t('confirmModal.resetDataDone'), 'success');
 }
+// 最適化は今の選択を全部外してから選び直すので、直前の選択状態を写しておき、トーストの「元に戻す」で戻せるようにする
 function doOptimize() {
+  const before = S.captureSelections(areas);
   Top.runOptimize(targetCandlesForOptimization);
   persist(true);
+  const changed = S.countSelectionDiff(before, S.captureSelections(areas));
+  optimizeUndo = null;
+  if (changed === 0) { showToast(t('optimize.noChangeToast'), 'success'); return; }
+  const snap = before;
+  optimizeUndo = snap;
+  showToast(t('optimize.doneToast'), 'success', {
+    label: t('optimize.undoBtn'),
+    onClick: () => undoOptimize(snap),
+    onExpire: () => { if (optimizeUndo === snap) optimizeUndo = null; },
+  });
+}
+function undoOptimize(snap) {
+  if (!snap || optimizeUndo !== snap) return; // 別の最適化の後・捨てた後に押された
+  optimizeUndo = null;
+  S.restoreSelections(areas, snap);
+  persist(true);
+  renderAreaList();
+  recomputeAndRenderTop();
+  showToast(t('optimize.undoneToast'), 'success');
 }
 
 /* ================================================================
    🔔 トースト・確認モーダル
    ================================================================ */
-function showToast(msg, type) {
+// action: { label, onClick, onExpire } を渡すと、ボタン付きで長めに出す（押すか時間切れで消える）
+function showToast(msg, type, action) {
   if (!msg || !toastQueueEl) return;
   const id = ++toastSeq;
   const el = document.createElement('div');
   el.className = `nmp-toast nmp-toast-${type === 'error' ? 'error' : 'success'}`;
-  el.textContent = msg;
   el.dataset.toastId = id;
+  let done = false;
+  const finish = () => { if (done) return; done = true; el.remove(); if (action && action.onExpire) action.onExpire(); };
+  if (action && action.label) {
+    el.classList.add('has-action');
+    const text = document.createElement('span');
+    text.className = 'nmp-toast-text';
+    text.textContent = msg;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nmp-toast-action';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => { if (done) return; action.onClick(); finish(); });
+    el.append(text, btn);
+  } else {
+    el.textContent = msg;
+  }
   toastQueueEl.appendChild(el);
-  setTimeout(() => { el.remove(); }, type === 'error' ? 3400 : 2600);
+  setTimeout(finish, action ? 8000 : (type === 'error' ? 3400 : 2600));
 }
 function openConfirmModal(message, onConfirm) {
   confirmModalCb = onConfirm;

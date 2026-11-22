@@ -332,6 +332,52 @@ export function clearAllSelections(areas) {
   });
 }
 
+// 選択状態（エリア・サブエリア・スポットのisSelected）だけを、idをキーに写し取る／戻す。
+// 最適化の「元に戻す」用（所要時間・火種などの編集内容には触らない）
+export function captureSelections(areas) {
+  const snap = new Map();
+  (areas || []).forEach((area) => {
+    if (!area) return;
+    snap.set(area.id, !!area.isSelected);
+    (area.subAreas || []).forEach((sub) => {
+      if (!sub) return;
+      snap.set(sub.id, !!sub.isSelected);
+      (sub.spots || []).forEach((sp) => { if (sp) snap.set(sp.id, !!sp.isSelected); });
+    });
+  });
+  return snap;
+}
+export function restoreSelections(areas, snap) {
+  (areas || []).forEach((area) => {
+    if (!area) return;
+    if (snap.has(area.id)) area.isSelected = snap.get(area.id);
+    (area.subAreas || []).forEach((sub) => {
+      if (!sub) return;
+      if (snap.has(sub.id)) sub.isSelected = snap.get(sub.id);
+      (sub.spots || []).forEach((sp) => { if (sp && snap.has(sp.id)) sp.isSelected = snap.get(sp.id); });
+    });
+  });
+}
+// 2つのスナップショットで選択が異なる件数
+export function countSelectionDiff(a, b) {
+  let n = 0;
+  a.forEach((val, id) => { if (b.get(id) !== val) n++; });
+  return n;
+}
+
+// 選択が1つでもあるか（clearAllSelectionsと同じく、モードごとに実際に使われる印だけを見る）
+export function hasAnySelection(areas) {
+  return (areas || []).some((area) => {
+    if (!area) return false;
+    if (getAreaMode(area) === 'main') return !!area.isSelected;
+    return (area.subAreas || []).some((sub) => {
+      if (!sub) return false;
+      if (getSubMode(sub) === 'sub') return !!sub.isSelected;
+      return (sub.spots || []).some((sp) => sp && sp.isSelected);
+    });
+  });
+}
+
 export function optimize(areas, targetLightNeeded) {
   if (!Array.isArray(areas)) return;
   clearAllSelections(areas);
@@ -540,6 +586,14 @@ export function pacificDateKey(d) {
   const p = pacificDateParts(d || new Date());
   return `${p.year}-${p.month}-${p.day}`;
 }
+export function isPacificDateKey(key) {
+  return typeof key === 'string' && /^\d{4}-\d{1,2}-\d{1,2}$/.test(key);
+}
+// pacificDateKeyどうしを比べる（ゼロ埋めしない形式なので文字列のままでは比べられない）。a<bで負、a>bで正
+export function comparePacificDateKey(a, b) {
+  const pa = a.split('-').map(Number); const pb = b.split('-').map(Number);
+  return (pa[0] - pb[0]) || (pa[1] - pb[1]) || (pa[2] - pb[2]);
+}
 // 今日(PT)に黒シャードが発生するか
 export function isBlackShardToday() {
   const p = shardPredictionForDate(new Date());
@@ -590,6 +644,7 @@ export function saveState(state) {
       candleMemo: state.candleMemo,
       dailyBonusArea: state.dailyBonusArea,
       dailyShard: state.dailyShard,
+      lastDailyResetDate: state.lastDailyResetDate || '', // 最後にデイリーリセット（精算）した日（pacificDateKey形式）。未記録は''
       visibleSections: state.visibleSections,
       myRoutes: state.myRoutes.map((r) => ({
         id: r.id, name: r.name, memo: r.memo,
@@ -673,6 +728,8 @@ export function loadState() {
     targetCandlesForOptimization: Number(decoded.targetCandlesForOptimization) || 20,
     dailyBonusArea: normalizeDailyBonus(decoded.dailyBonusArea),
     dailyShard: decoded.dailyShard || 'none',
+    // 旧保存データには無い。''＝まだ記録が無い（「今日精算した」扱いにはせず、未精算の案内も出さない）
+    lastDailyResetDate: isPacificDateKey(decoded.lastDailyResetDate) ? decoded.lastDailyResetDate : '',
     // 旧保存データ（この設定が無かった頃）・一部キーだけ欠けた保存データのどちらでも
     // 全カード表示のデフォルトへフォールバックする（移植元のref({...})とwatchのマージと同じ考え方）
     visibleSections: { ...DEFAULT_VISIBLE_SECTIONS, ...(decoded.visibleSections && typeof decoded.visibleSections === 'object' ? decoded.visibleSections : {}) },
@@ -711,6 +768,7 @@ export function loadInitialData(timeMult) {
     targetCandlesForOptimization: 20,
     dailyBonusArea: 0,
     dailyShard: 'none',
+    lastDailyResetDate: '',
     visibleSections: { ...DEFAULT_VISIBLE_SECTIONS },
     myRoutes: [],
   };

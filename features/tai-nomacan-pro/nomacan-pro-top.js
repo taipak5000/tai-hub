@@ -119,11 +119,37 @@ function projectionDaily(v, c) {
 }
 
 /* ================================================================
+   精算（デイリーリセット）の記録
+   lastDailyResetDate＝最後に精算したSkyの日付（pacificDateKey形式）。
+   ・今日の日付なら精算済み: ボタンを押せなくする（2回目は火種0で計算され、繰越が0に潰れるため）
+   ・今日より前で、選択か大キャンドル群が残っていれば未精算: カードの先頭に案内を出す
+   ・''（旧データ・まだ1度も押していない）は判断できないので、どちらにもしない
+   ================================================================ */
+function settleState(v) {
+  const today = S.pacificDateKey();
+  const last = v.lastDailyResetDate;
+  if (!S.isPacificDateKey(last)) return { doneToday: false, pending: false };
+  const cmp = S.comparePacificDateKey(last, today);
+  if (cmp >= 0) return { doneToday: true, pending: false }; // 未来の日付（端末の時計のずれ）も精算済みとして扱う
+  const hasPlay = S.hasAnySelection(v.areas) || (Number(v.dailyBonusArea) || 0) > 0;
+  return { doneToday: false, pending: hasPlay, last };
+}
+function fmtDateKey(key) {
+  const [, m, d] = key.split('-').map(Number);
+  return t('refine.settleDate', { m, d });
+}
+
+/* ================================================================
    「今日の精錬状況」カード
    ================================================================ */
 function refineHtml(v) {
   const hit = S.predictUpcomingBlackShard(SHARD_PREDICTION_COUNT);
   return `
+    <div class="nmp-settle-banner" id="nmpSettleBanner" role="status" hidden>
+      <div class="nmp-settle-title" id="nmpSettleTitle"></div>
+      <div class="nmp-hint" id="nmpSettleNote" style="padding-bottom:0;"></div>
+      <button type="button" class="nmp-btn nmp-btn-orange nmp-btn-block" id="nmpSettleBtn" style="margin-top:10px;">${esc(t('refine.settleBannerBtn'))}</button>
+    </div>
     <div class="nmp-box">
       <div class="nmp-box-row" style="flex-wrap:nowrap;">
         <span class="nmp-box-label" style="font-weight:500;">${esc(t('refine.dailyBonusLabel'))}</span>
@@ -162,6 +188,7 @@ function refineHtml(v) {
     <div class="nmp-row"><div>${esc(t('refine.totalTime'))}</div><div class="nmp-bold" style="color:var(--npb-blue);" id="nmpTotalTime"></div></div>
     <div class="nmp-row" id="nmpNextRow"><div>${esc(t('refine.nextThreshold'))}</div><div style="color:var(--npb-text-2);" id="nmpNextReq">0</div></div>
     <button type="button" class="nmp-btn nmp-btn-blue nmp-btn-block" id="nmpDailyResetBtn">${esc(t('refine.dailyResetBtn'))}</button>
+    <div class="nmp-hint" id="nmpDailyResetDoneNote" style="text-align:center; padding:6px 0 0;" hidden>${esc(t('refine.dailyResetDoneNote'))}</div>
 
     <div class="nmp-box-sep" style="margin-top:12px;">
       <label class="nmp-check-sm"><input type="checkbox" id="nmpDailyNotify" ${N.isDailyResetNotifyEnabled() ? 'checked' : ''}> ${esc(t('refine.dailyResetNotifyLabel'))}</label>
@@ -258,6 +285,22 @@ export function update() {
   const nextRow = q(refineEl, '#nmpNextRow');
   if (nextRow) nextRow.style.display = c.calc.candles < S.THRESHOLDS.length ? '' : 'none';
   setText(refineEl, '#nmpNextReq', String(c.calc.nextReq));
+  const st = settleState(v);
+  const banner = q(refineEl, '#nmpSettleBanner');
+  if (banner) {
+    banner.hidden = !st.pending;
+    if (st.pending) {
+      setText(refineEl, '#nmpSettleTitle', t('refine.settleBannerTitle', { date: fmtDateKey(st.last) }));
+      setText(refineEl, '#nmpSettleNote', t('refine.settleBannerNote'));
+    }
+  }
+  const resetBtn = q(refineEl, '#nmpDailyResetBtn');
+  if (resetBtn) {
+    resetBtn.disabled = st.doneToday;
+    setText(refineEl, '#nmpDailyResetBtn', st.doneToday ? t('refine.dailyResetDoneBtn') : t('refine.dailyResetBtn'));
+  }
+  const doneNote = q(refineEl, '#nmpDailyResetDoneNote');
+  if (doneNote) doneNote.hidden = !st.doneToday;
   setText(refineEl, '#nmpShardNotifyStatus', shardStatusText);
   setText(refineEl, '#nmpDailyNotifyStatus', dailyStatusText);
 
@@ -343,6 +386,7 @@ export function syncDailyShardWithPrediction(force) {
 
 function dailyReset() {
   const v = ctx.get();
+  if (settleState(v).doneToday) return; // 同じ日の2回目は繰越が0に潰れるので受け付けない
   const c = compute(v);
   let leftoverPercent = 0;
   let gap = 94; // しきい値の段差は一定でないため、%算出に使った段差を保持して繰越時に再利用する
@@ -357,6 +401,7 @@ function dailyReset() {
     carryOverPercent: Math.min(99, Math.max(0, leftoverPercent * 100)),
     carryOverGap: gap,
     dailyBonusArea: 0,
+    lastDailyResetDate: S.pacificDateKey(),
   });
   syncDailyShardWithPrediction(true);
   ctx.onAreasChanged();
@@ -397,7 +442,7 @@ function wire() {
   });
   refineEl.addEventListener('click', (e) => {
     if (e.target.closest('#nmpShardSync')) { syncDailyShardWithPrediction(true); update(); }
-    else if (e.target.closest('#nmpDailyResetBtn')) dailyReset();
+    else if (e.target.closest('#nmpDailyResetBtn') || e.target.closest('#nmpSettleBtn')) dailyReset();
   });
 
   // ── キャンドル管理 ──
