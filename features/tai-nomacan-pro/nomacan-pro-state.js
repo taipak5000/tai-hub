@@ -950,6 +950,56 @@ export function getRouteAreaNames(areas, route, displayName) {
   return names.join(' → ');
 }
 
+// ルートの区間タイム（splitTimes＝スポットid→開始からの経過秒）から、サブエリアごとの実測秒数を求める。
+// 経由順に並べ、各「記録」の区間＝その記録の経過秒 − 1つ前の記録の経過秒 を、そのスポットのサブエリアに足す
+// （最初の記録はスタートからの移動も含む）。記録の無いスポットの時間は次の記録の区間に入るので、
+// 1つの区間が複数のサブエリアにまたがる時・経過秒が前の記録以下の時は、関わるサブエリアを丸ごと反映しない。
+export function routeSplitSubTimes(areas, route) {
+  const locate = (id) => {
+    for (let mIdx = 0; mIdx < areas.length; mIdx++) {
+      const area = areas[mIdx];
+      if (!area || !Array.isArray(area.subAreas)) continue;
+      for (let sIdx = 0; sIdx < area.subAreas.length; sIdx++) {
+        const sub = area.subAreas[sIdx];
+        if (!sub) continue;
+        if (sub.id === id || (Array.isArray(sub.spots) && sub.spots.some((sp) => sp && sp.id === id))) return { area, sub };
+      }
+    }
+    return null;
+  };
+  const splits = (route && route.splitTimes) || {};
+  const sums = new Map(); // sub.id -> { area, sub, sec }
+  const bad = new Map(); // sub.id -> { area, sub }
+  let prev = 0;
+  let pending = [];
+  (route && Array.isArray(route.selectedSpotIds) ? route.selectedSpotIds : []).forEach((id) => {
+    const loc = locate(id);
+    pending.push(loc);
+    const at = Number(splits[id]);
+    if (splits[id] == null || !Number.isFinite(at)) return;
+    const subs = new Map();
+    let unknown = false;
+    pending.forEach((l) => { if (l) subs.set(l.sub.id, l); else unknown = true; });
+    const seg = at - prev;
+    if (subs.size === 1 && !unknown && seg > 0) {
+      const l = [...subs.values()][0];
+      const cur = sums.get(l.sub.id) || { area: l.area, sub: l.sub, sec: 0 };
+      cur.sec += seg;
+      sums.set(l.sub.id, cur);
+    } else {
+      subs.forEach((l, sid) => bad.set(sid, l));
+    }
+    if (at > prev) prev = at;
+    pending = [];
+  });
+  const rows = [];
+  sums.forEach((v, sid) => {
+    if (bad.has(sid)) return;
+    rows.push({ area: v.area, sub: v.sub, oldTime: Number(v.sub.time) || 0, newTime: Math.max(1, Math.round(v.sec)) });
+  });
+  return { rows, skipped: [...bad.values()] };
+}
+
 export function getSpotNameById(areas, id, displayName, unknownLabel) {
   for (const area of areas) {
     if (!area) continue;

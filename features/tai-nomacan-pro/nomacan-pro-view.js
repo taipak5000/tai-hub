@@ -150,6 +150,7 @@ export function mount(container) {
     onChanged: (skipTopRerender) => { persist(true); if (!skipTopRerender) recomputeAndRenderTop(); },
     displayName: displayAreaName,
     showToast,
+    onAreaTimesChanged: () => { persist(true); renderAreaList(); recomputeAndRenderTop(); Extras.refreshStopwatchOptions(); },
   });
   seedTemplateRoute(); // 「20本ルート（ソロ・試練無し）」を最初から入れておく（プロフィールごとに1回）
 

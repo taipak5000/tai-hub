@@ -17,6 +17,8 @@ let getMyRoutes = null; // () => myRoutes配列
 let onChanged = null; // 状態が変わった時に親へ通知（save()＋親側の再描画）
 let displayName = null; // (jaName) => 表示名（言語切替対応）
 let showToast = null; // (msg, type) => void（親のトースト機構を共有）
+let onAreaTimesChanged = null; // エリアの所要時間を書き換えた後に親へ通知（保存・エリア一覧・ストップウォッチの再描画）
+let reflectingRouteId = null; // 「実測をエリアの所要時間に反映」の確認を出しているルート
 
 let runningRouteId = null;
 let runningSeconds = 0;
@@ -30,6 +32,8 @@ export function initRoutes(container, opts) {
   onChanged = opts.onChanged;
   displayName = opts.displayName;
   showToast = opts.showToast;
+  onAreaTimesChanged = opts.onAreaTimesChanged || (() => onChanged());
+  reflectingRouteId = null;
 
   window.__nmpRouteApply = (id) => { const r = findRoute(id); if (r) { S.applyRoute(getAreas(), r); onChanged(); } };
   window.__nmpRouteShare = (id) => { const r = findRoute(id); if (!r) return; shareRoute(r); };
@@ -46,6 +50,9 @@ export function initRoutes(container, opts) {
   window.__nmpRouteTimerReset = (id) => { resetTimer(id); };
   window.__nmpRouteLap = (id, spotId) => { recordSplit(id, spotId); };
   window.__nmpRouteHistoryClearReq = (id) => { requestClearRunHistory(id); };
+  window.__nmpRouteReflectReq = (id) => { reflectingRouteId = id; renderRoutes(); };
+  window.__nmpRouteReflectCancel = () => { reflectingRouteId = null; renderRoutes(); };
+  window.__nmpRouteReflectGo = (id) => { reflectSplitsToAreas(id); };
   window.__nmpSpellImportInput = (val) => { spellImportValue = val; };
   window.__nmpSpellImportGo = () => { doImportSpell(); };
   window.__nmpConfirmDeleteRoute = (id) => { confirmDeleteRoute(id); };
@@ -147,6 +154,7 @@ function renderRouteCard(route) {
               </div>
             </div>`).join('')}
         </div>
+        ${!isRunning && Object.keys(route.splitTimes || {}).length ? reflectHtml(route) : ''}
         <textarea class="nmp-route-memo" placeholder="${escT(t('route.memoPlaceholder'))}" oninput="__nmpRouteMemoInput('${route.id}', this.value)">${escapeHtml(route.memo || '')}</textarea>
         <div class="nmp-route-summary">
           <div class="nmp-route-summary-row"><span>${escT(t('route.idealTotal'))}</span><span>🔥${stats.light} / ⏱️${timeStr} / ${escT(t('route.efficiency'))} <b>${stats.eff.toFixed(1)}/s</b></span></div>
@@ -324,6 +332,37 @@ function recordSplit(id, spotId) {
   r.splitTimes[spotId] = runningSeconds;
   onChanged(true);
   renderRoutes();
+}
+// 区間タイムをエリアの所要時間に反映する（確認で対象のサブエリアと新旧の時間を見せてから）。
+// 置き換え方は実測ストップウォッチの保存と同じ（time＝実測秒・measured印）
+function reflectHtml(route) {
+  if (reflectingRouteId !== route.id) {
+    return `<button type="button" class="nmp-btn-outline-blue nmp-btn-block nmp-reflect-btn" onclick="__nmpRouteReflectReq('${route.id}')">${escT(t('route.reflectBtn'))}</button>`;
+  }
+  const { rows, skipped } = S.routeSplitSubTimes(getAreas(), route);
+  const subName = (r) => `${displayName(r.area.name)}・${displayName(r.sub.name)}`;
+  return `<div class="nmp-reflect-box">
+    <div class="nmp-reflect-title">${escT(t('route.reflectTitle'))}</div>
+    ${rows.length ? `<div class="nmp-reflect-list">${rows.map((r) => `
+      <div class="nmp-reflect-row"><span class="nmp-reflect-name">${escapeHtml(subName(r))}</span><span class="nmp-reflect-times">${escT(fmtMinSec(r.oldTime))} → <b>${escT(fmtMinSec(r.newTime))}</b></span></div>`).join('')}</div>`
+      : `<div class="nmp-hint" style="padding:4px 0;">${escT(t('route.reflectNone'))}</div>`}
+    ${skipped.length ? `<div class="nmp-hint" style="padding:6px 0 0;">${escT(t('route.reflectSkipped', { names: skipped.map(subName).join('、') }))}</div>` : ''}
+    <div class="nmp-hint" style="padding:6px 0 0;">${escT(t('route.reflectUndoNote'))}</div>
+    <div class="nmp-confirm-inline-actions" style="margin-top:10px;">
+      ${rows.length ? `<button type="button" class="nmp-btn nmp-btn-blue nmp-btn-sm" onclick="__nmpRouteReflectGo('${route.id}')">${escT(t('route.reflectGo', { n: rows.length }))}</button>` : ''}
+      <button type="button" class="nmp-btn nmp-btn-outline nmp-btn-sm" onclick="__nmpRouteReflectCancel()">${escT(t('confirmModal.cancel'))}</button>
+    </div>
+  </div>`;
+}
+function reflectSplitsToAreas(id) {
+  const r = findRoute(id);
+  reflectingRouteId = null;
+  if (!r) { renderRoutes(); return; }
+  const { rows } = S.routeSplitSubTimes(getAreas(), r);
+  rows.forEach((row) => { row.sub.time = row.newTime; row.sub.measured = true; });
+  onAreaTimesChanged();
+  renderRoutes();
+  if (rows.length) showToast(t('route.reflectDone', { n: rows.length }), 'success');
 }
 function getRunHistoryStats(route) {
   const hist = route.runHistory;

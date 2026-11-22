@@ -12,14 +12,15 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.22.2',
-    title: { ja: 'ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標を表示）', en: 'Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal)' },
+    version: '2026.11.22.3',
+    title: { ja: 'ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標を表示・ルートの実測をエリアへ）', en: 'Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal, split times to areas)' },
     date: '2026-11-22',
     items: [
       { type: 'fix', ja: 'ノマキャン計算機プロの「デイリーリセット」を同じ日に2回押すと、2回目が火種0として計算され、繰越が0%に戻ってしまう問題を直しました。押した日を記録し、その日のうちはボタンが「本日分は精算済みです」になって押せなくなります。前回のリセットのあとに選んだ分が残ったまま日付が変わっていると、「今日の精錬状況」の先頭に「前回の精算（11月20日）のあとに選んだ分が、まだ精算されていません」と出し、そこから精算できます。何日空いていても精算するのは1日分です。', en: 'Candle Calculator Pro: pressing Daily Reset twice on the same day counted the second press as 0 light and reset your carry-over to 0%. The reset day is now recorded and the button reads "Today\'s reset is done" until the next Sky day. If spots picked after your last reset are still there on a later day, a notice at the top of "Today\'s Refining Status" lets you settle them (one day only, however many days have passed).', route: 'tai-nomacan-pro' },
       { type: 'improve', ja: 'ノマキャン計算機プロの「高効率エリアを自動選択」は今の選択を全部外して選び直すため、実行後のお知らせに「元に戻す」を付けました。押すと、自分で選んでいたエリア・スポットの選択が実行前に戻ります（所要時間などの編集はそのままです）。', en: 'Candle Calculator Pro: auto-select clears your current picks before choosing again, so its message now has an Undo button that brings back your previous selection (edited times stay as they are).', route: 'tai-nomacan-pro' },
       { type: 'improve', ja: 'ノマキャン計算機プロの「各窓の表示・非表示設定」で、所要時間の倍率（慣れ具合）を×0.8〜×2.0から選べるようにしました（既定は×1.7）。変えると、一度も直していないエリアの時間だけが掛け直されます。手で直した時間や、ストップウォッチ・ルートで測った時間はそのままです。', en: 'Candle Calculator Pro: choose a time multiplier (×0.8–×2.0, default ×1.7) under "Show/Hide Each Panel". Only times you have never changed are recalculated; edited and measured times stay as they are.', route: 'tai-nomacan-pro' },
       { type: 'new', ja: 'ノマキャン計算機プロのキャンドル管理に、ノマキャン計算機で選んでいる目標を「目標（あと400本・12月31日まで）」のように出し、押すとノマキャン計算機を開くようにしました。目標の作成・変更はノマキャン計算機で行います（プロからは変更しません）。', en: 'Candle Calculator Pro: Candle Management now shows your active Candle Calculator goal (e.g. "Goal (400 left · by 12/31)"); tap it to open the Candle Calculator, where goals are created and edited.', route: 'tai-nomacan-pro' },
+      { type: 'new', ja: 'ノマキャン計算機プロのマイルートで、各スポットの「記録」から求めた区間タイムを、サブエリアの所要時間に反映できるようにしました（ルートを開いて「実測をエリアの所要時間に反映」）。反映の前に、置き換えるサブエリアと「1分42秒 → 1分35秒」のような新旧の時間を一覧で確かめられます。戻す時は実測ストップウォッチの「目安の時間に戻す」か、エリアの編集から直せます。', en: 'Candle Calculator Pro: in My Routes, "Use split times as area times" turns your splits into sub-area times, after showing each sub-area with its old and new time. Undo with "Restore the preset time" in the stopwatch or by editing the area.', route: 'tai-nomacan-pro' },
     ],
   },
   {

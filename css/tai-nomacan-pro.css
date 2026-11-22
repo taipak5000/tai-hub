@@ -210,6 +210,14 @@
 .nmp-reorder-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .nmp-split-time { font-family: monospace; font-size: 10px; color: var(--npb-green); font-weight: 700; }
 .nmp-route-memo { width: 100%; height: 44px; margin-top: 10px; resize: vertical; }
+.nmp-reflect-btn { margin-top: 10px; }
+.nmp-reflect-box { margin-top: 10px; border: 1px solid var(--npb-border); border-radius: 8px; padding: 10px; background: var(--npb-stat-bg); }
+.nmp-reflect-title { font-size: 13px; font-weight: 700; line-height: 1.5; margin-bottom: 6px; }
+.nmp-reflect-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--npb-border); }
+.nmp-reflect-row:last-child { border-bottom: 0; }
+.nmp-reflect-name { min-width: 0; }
+.nmp-reflect-times { flex: none; color: var(--npb-text-2); }
+.nmp-reflect-times b { color: var(--npb-text); }
 .nmp-route-summary { margin-top: 10px; background: var(--npb-input-bg); border-radius: 8px; padding: 8px 10px; }
 .nmp-route-summary-row { display: flex; justify-content: space-between; font-size: 12px; }
 
