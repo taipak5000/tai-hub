@@ -164,7 +164,7 @@ export const ROUTES = {
   titles: lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'),
   // 旧スタンプ帳（2026-11-06に称号一覧へ置き換えた）。古いリンク用に称号一覧を開く
   stamps: { ...lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'), hidden: true },
-  // 🧪 デイリーチェックシート（2026-11-08にテスト機能として公開。関連ツールの一覧の「テスト中のツール」に載せる＝js/site-links.js）
+  // デイリーチェックシート（2026-11-08にテスト機能として公開し、2026-11-22に正式なツールにした。一覧での位置は js/site-links.js）
   // 画面は features/today/today-view.js（今日の要点＋チェックシート＋試作中の機能への入口）
   'daily-check': lazyToolEntry(() => import('../features/today/today-view.js'), 'デイリーチェックシート', 'Daily Checklist'),
 };

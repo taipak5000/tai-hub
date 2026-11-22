@@ -10,5 +10,10 @@
   "icons": [
     { "src": "icons/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icons/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "デイリーチェックシート", "short_name": "今日", "description": "今日の要点と毎日やることのチェック", "url": "./#/daily-check", "icons": [{ "src": "icons/app-icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "ノマキャン計算機プロ", "short_name": "ノマキャンPro", "description": "キャンドル集めのエリア・精錬の計算", "url": "./#/tai-nomacan-pro", "icons": [{ "src": "icons/app-icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "精霊ツリー管理", "short_name": "精霊ツリー", "description": "精霊ごとのツリーの解放状況", "url": "./#/spirit-catalog", "icons": [{ "src": "icons/app-icon-192.png", "sizes": "192x192", "type": "image/png" }] }
   ]
 }

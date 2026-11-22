@@ -1,7 +1,7 @@
 /* ================================================================
    ☀️ デイリーチェックシートの画面（#/daily-check。以前の「今日やること」#/today も同じ画面）。
    チェックシートの上に、その日の要点をまとめて見せる（2026-11-06に「今日やること」をチェックシート側へまとめ、
-   関連ツールの一覧からは外した。2026-11-08に #/daily-check をテスト機能として公開。#/today は古いリンク用で hidden のまま）。
+   関連ツールの一覧からは外した。2026-11-08に #/daily-check をテスト機能として公開し、2026-11-22に正式なツールにした。#/today は古いリンク用で hidden のまま）。
    - デイリーリセット（太平洋時間0時）までの時間・大キャンドル・クエストキャンドル・闇の破片・ウニ焼きなど
      （計算は features/shared/event-dashboard.js の getTodayBrief() に任せる）
    - デイリーチェックシート（features/daily-check）をそのまま埋め込む（シートの切替・編集・着せ替え・印刷もここでできる。
@@ -116,7 +116,7 @@ function render() {
   const p = ptParts(Date.now());
   r.querySelector('.td-top').innerHTML = `
     <header class="fun-head">
-      <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-sparkle"/></svg>${t('デイリーチェックシート', 'Daily Checklist')}<span class="lab-badge">${t('試作', 'Preview')}</span></h1>
+      <h1 class="fun-h1"><svg class="inline-icon" width="22" height="22" aria-hidden="true"><use href="#i-sparkle"/></svg>${t('デイリーチェックシート', 'Daily Checklist')}</h1>
       <p class="fun-lead">${t(`ゲームの日付で${p.month}月${p.day}日。デイリーリセットまで`, `Game day ${p.month}/${p.day}. Daily reset in`)} <b class="td-reset" data-cd="reset">${cd(b.nextReset)}</b></p>
     </header>
 

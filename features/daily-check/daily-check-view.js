@@ -1,5 +1,5 @@
 /* ================================================================
-   デイリーチェックシート（2026-11-08にテスト機能として公開。関連ツールの一覧の「テスト中のツール」から開く）。
+   デイリーチェックシート（2026-11-08にテスト機能として公開し、2026-11-22に正式なツールにした。関連ツールの一覧の本体から開く）。
    関連ツールの一覧・サイドバー・「起動時に開くツール」には出さない
    （router-registry.js の hidden フラグ。公開する時に site-links へ足す）。
 
@@ -452,7 +452,7 @@ function render() {
   root.innerHTML = `
     <div class="dc-wrap">
       ${embedded ? '' : `<header class="dc-head">
-        <h1 class="dc-h1"><svg class="inline-icon dc-h1-ic" width="20" height="20" aria-hidden="true"><use href="#i-sparkle"/></svg>${escapeHtml(t('デイリーチェックシート', 'Daily Checklist'))}<span class="dc-beta">${escapeHtml(t('試作', 'Preview'))}</span></h1>
+        <h1 class="dc-h1"><svg class="inline-icon dc-h1-ic" width="20" height="20" aria-hidden="true"><use href="#i-sparkle"/></svg>${escapeHtml(t('デイリーチェックシート', 'Daily Checklist'))}</h1>
         <p class="dc-lead">${escapeHtml(t('印刷して紙でも使えます。', 'A checklist for your daily routine. You can also print it and keep a paper log.'))}</p>
       </header>`}
       ${tabsHtml(sheet)}

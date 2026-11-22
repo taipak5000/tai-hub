@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.22.3',
-    title: { ja: 'ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標を表示・ルートの実測をエリアへ）', en: 'Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal, split times to areas)' },
+    version: '2026.11.22.4',
+    title: { ja: 'デイリーチェックシートを正式公開、ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標・ルートの実測をエリアへ）', en: 'Daily Checklist is official; Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal, split times to areas)' },
     date: '2026-11-22',
     items: [
+      { type: 'improve', ja: 'デイリーチェックシートのテストを終え、正式なツールにしました。関連ツールの一覧では「テスト中のツール」から外れ、ほかのツールと並びます。ホーム画面に追加したアプリのアイコンを長押しすると、「デイリーチェックシート」「ノマキャン計算機プロ」「精霊ツリー管理」をすぐ開けます（対応している端末のみ）。', en: 'The Daily Checklist is now a regular tool and is listed with the others instead of under "Tools in testing". Long-press the installed app icon to jump straight to the Daily Checklist, Candle Calculator Pro or Spirit Tree Catalog (on supported devices).', route: 'daily-check' },
       { type: 'fix', ja: 'ノマキャン計算機プロの「デイリーリセット」を同じ日に2回押すと、2回目が火種0として計算され、繰越が0%に戻ってしまう問題を直しました。押した日を記録し、その日のうちはボタンが「本日分は精算済みです」になって押せなくなります。前回のリセットのあとに選んだ分が残ったまま日付が変わっていると、「今日の精錬状況」の先頭に「前回の精算（11月20日）のあとに選んだ分が、まだ精算されていません」と出し、そこから精算できます。何日空いていても精算するのは1日分です。', en: 'Candle Calculator Pro: pressing Daily Reset twice on the same day counted the second press as 0 light and reset your carry-over to 0%. The reset day is now recorded and the button reads "Today\'s reset is done" until the next Sky day. If spots picked after your last reset are still there on a later day, a notice at the top of "Today\'s Refining Status" lets you settle them (one day only, however many days have passed).', route: 'tai-nomacan-pro' },
       { type: 'improve', ja: 'ノマキャン計算機プロの「高効率エリアを自動選択」は今の選択を全部外して選び直すため、実行後のお知らせに「元に戻す」を付けました。押すと、自分で選んでいたエリア・スポットの選択が実行前に戻ります（所要時間などの編集はそのままです）。', en: 'Candle Calculator Pro: auto-select clears your current picks before choosing again, so its message now has an Undo button that brings back your previous selection (edited times stay as they are).', route: 'tai-nomacan-pro' },
       { type: 'improve', ja: 'ノマキャン計算機プロの「各窓の表示・非表示設定」で、所要時間の倍率（慣れ具合）を×0.8〜×2.0から選べるようにしました（既定は×1.7）。変えると、一度も直していないエリアの時間だけが掛け直されます。手で直した時間や、ストップウォッチ・ルートで測った時間はそのままです。', en: 'Candle Calculator Pro: choose a time multiplier (×0.8–×2.0, default ×1.7) under "Show/Hide Each Panel". Only times you have never changed are recalculated; edited and measured times stay as they are.', route: 'tai-nomacan-pro' },
