@@ -42,7 +42,8 @@
      tai-hubの共有chromeにはフッターを描画する仕組み自体が存在しない）。
    ================================================================ */
 import { CURRENT_LANG, escapeHtml } from '../../js/i18n.js';
-import { pfDisplayName } from '../../js/state.js';
+import { pfDisplayName, loadProfiles } from '../../js/state.js';
+import * as AB from '../../js/auto-backup.js';
 import { t } from './data/i18n-data-transfer.js';
 import * as S from './data-transfer-state.js';
 
@@ -90,6 +91,7 @@ export function mount(container, sub) {
   S.refreshSiteSnapshots();
   renderExportSiteList();
   renderTransferHistory();
+  renderAutoBackups();
 
   if (sub) loadCodeFromSub(sub);
 }
@@ -101,7 +103,66 @@ export function unmount() {
   els = {};
 }
 
+/* ================================================================
+   💾 自動バックアップ（js/auto-backup.js）の一覧と「この時点に戻す」
+   ================================================================ */
+let autoBackupConfirmId = null;
+let autoBackupBusy = false;
+function fmtBackupAt(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  try {
+    return new Intl.DateTimeFormat(CURRENT_LANG === 'en' ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(d);
+  } catch (e) { return d.toLocaleString(); }
+}
+async function renderAutoBackups() {
+  const listEl = containerEl && containerEl.querySelector('#dtAutoBackupList');
+  if (!listEl) return;
+  const [snaps, enabled] = await Promise.all([AB.listSnapshots(), AB.isAutoBackupEnabled()]);
+  if (!containerEl || !listEl.isConnected) return;
+  const profiles = loadProfiles() || [];
+  const offNote = enabled ? '' : `<div class="hint" style="margin-bottom:8px;">${escapeHtml(tt('いまは自動バックアップがオフです（表示設定でオンにできます）。下の世代は残っています。', 'Automatic backups are off (turn them on in Display Settings). Existing backups are kept.'))}</div>`;
+  if (!snaps.length) {
+    listEl.innerHTML = offNote + `<div class="hint" style="margin:0;">${escapeHtml(tt('まだありません。次にアプリを開いた時から、1日1回たまっていきます。', 'None yet. One is saved per day from the next time you open the app.'))}</div>`;
+    return;
+  }
+  listEl.innerHTML = offNote + `<div class="ab-list">${snaps.map((s) => {
+    const p = profiles.find((x) => x.id === s.profileId);
+    const kind = s.kind === 'before-restore' ? tt('戻す直前の状態', 'Before a restore') : tt('自動', 'Auto');
+    const confirming = autoBackupConfirmId === s.id;
+    return `<div class="ab-row">
+      <div class="ab-row-main">
+        <div class="ab-at">${escapeHtml(fmtBackupAt(s.at))}</div>
+        <div class="ab-meta">${escapeHtml(kind)} ・ ${escapeHtml(tt(`${s.keyCount}件の記録`, `${s.keyCount} records`))}${p ? ` ・ ${escapeHtml(tt('使っていたプロフィール: ', 'Profile: '))}${escapeHtml(pfDisplayName(p))}` : ''}</div>
+      </div>
+      ${confirming ? '' : `<button type="button" class="list-select-btn" data-act="ab-restore-ask" data-id="${escapeHtml(s.id)}">${escapeHtml(tt('この時点に戻す', 'Restore'))}</button>`}
+      ${confirming ? `<div class="ab-confirm">
+        <div class="hint" style="margin:0 0 8px;">${escapeHtml(tt('全部のツールの記録を、この時点の内容で上書きします。いまの状態は「戻す直前の状態」として1件残すので、あとで取り消せます。戻したあとはページを読み込み直します。', 'All tool records will be overwritten with this backup. The current state is saved first as "Before a restore", so you can undo it. The page reloads afterwards.'))}</div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="action-btn danger" style="margin-top:0;" data-act="ab-restore-go" data-id="${escapeHtml(s.id)}">${escapeHtml(tt('戻す', 'Restore'))}</button>
+          <button type="button" class="action-btn secondary" style="margin-top:0;" data-act="ab-restore-cancel">${escapeHtml(tt('やめる', 'Cancel'))}</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+async function restoreAutoBackup(id) {
+  if (autoBackupBusy) return;
+  autoBackupBusy = true;
+  const statusEl = containerEl && containerEl.querySelector('#dtAutoBackupStatus');
+  try {
+    const res = await AB.restoreSnapshot(id);
+    if (statusEl) { statusEl.className = res.failedKeys.length ? 'status-msg err' : 'status-msg ok'; statusEl.textContent = tt(`${res.count}件の記録を戻しました。読み込み直します…`, `Restored ${res.count} records. Reloading…`); }
+    setTimeout(() => location.reload(), 600);
+  } catch (e) {
+    autoBackupBusy = false;
+    if (statusEl) { statusEl.className = 'status-msg err'; statusEl.textContent = tt('戻せませんでした。', 'Could not restore.'); }
+  }
+}
+
 function resetModuleState() {
+  autoBackupConfirmId = null;
+  autoBackupBusy = false;
   transferHistoryOpen = false;
   exportProfileFilters = {};
   lastExportCode = null;
@@ -207,6 +268,13 @@ function renderShell() {
           <div id="dtImportStatus" class="status-msg"></div>
         </div>
 
+        <p class="sec-label" id="dtAutoBackupSection">${escapeHtml(tt('自動バックアップ', 'Automatic backups'))}</p>
+        <div class="card">
+          <div class="hint">${escapeHtml(tt('1日1回、アプリを開いた時に、この端末の中へ全部のツールの記録を保存しています（新しい順に3件まで）。記録がおかしくなった時は、ここから前の状態に戻せます。写真と、ほかの端末への引継ぎは対象外です。', 'Once a day when you open the app, all tool records are saved inside this device (the latest 3). If something goes wrong, restore an earlier state here. Photos are not included, and this does not move data to other devices.'))}</div>
+          <div id="dtAutoBackupList"></div>
+          <div id="dtAutoBackupStatus" class="status-msg"></div>
+        </div>
+
         <footer>
           <span>${escapeHtml(tt('このサイトはSky 星を紡ぐ子どもたちの非公式ファンサイトです。thatgamecompanyは一切関与していません。', 'This is an unofficial fan site for Sky: Children of the Light. thatgamecompany is not involved in any way.'))}</span><br>
           <span>${escapeHtml(t('footer.creditLabel'))}</span> <a href="https://x.com/Skyzztai" target="_blank" rel="noopener noreferrer">@Skyzztai</a>　／
@@ -265,6 +333,9 @@ function onContainerClick(ev) {
     case 'import-restore-clicked': importRestoreClicked(); break;
     case 'confirm-import': confirmImport(); break;
     case 'cancel-overwrite': importCancelOverwriteConfirm(); break;
+    case 'ab-restore-ask': autoBackupConfirmId = btn.dataset.id; renderAutoBackups(); break;
+    case 'ab-restore-cancel': autoBackupConfirmId = null; renderAutoBackups(); break;
+    case 'ab-restore-go': restoreAutoBackup(btn.dataset.id); break;
     default: break;
   }
 }

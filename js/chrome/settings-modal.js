@@ -136,6 +136,13 @@ function renderMain() {
           <input type="checkbox" id="settingsShowTitlesCheckbox"${getShowTitlesEnabled() ? ' checked' : ''}>
         </label>
       </div>
+      <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:2px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+          <span>${t('毎日の自動バックアップ', 'Daily automatic backup')}</span>
+          <input type="checkbox" id="settingsAutoBackupCheckbox" checked>
+        </label>
+        <span style="font-size:11.5px;color:var(--hub-text-2);">${t('1日1回、この端末の中に記録を保存します（3件まで）。戻す時は「データ引継ぎ」の「自動バックアップ」から。', 'Saves your records inside this device once a day (up to 3). Restore from "Automatic backups" in Data Transfer.')}</span>
+      </div>
       <div class="settings-row settings-backup-row" id="settingsBackupRow" style="flex-direction:column;align-items:stretch;gap:8px;">
         <span>${t('データのバックアップ', 'Data Backup')}</span>
         <div style="display:flex;gap:8px;">
@@ -161,6 +168,13 @@ function renderMain() {
   document.getElementById('settingsSideToolsCheckbox').addEventListener('change', e => { setSidePanelEnabled('tools', e.target.checked); sidePanels.sync(); });
   document.getElementById('settingsSideDashCheckbox').addEventListener('change', e => { setSidePanelEnabled('dash', e.target.checked); sidePanels.sync(); });
   document.getElementById('settingsShowTitlesCheckbox').addEventListener('change', e => setShowTitlesEnabled(e.target.checked));
+  // 自動バックアップのオン・オフはIndexedDB側に持つ（js/auto-backup.js。使える環境でなければ行ごと隠す）
+  const abBox = document.getElementById('settingsAutoBackupCheckbox');
+  import('../auto-backup.js').then(async (AB) => {
+    if (typeof indexedDB === 'undefined') { abBox.closest('.settings-row').style.display = 'none'; return; }
+    abBox.checked = await AB.isAutoBackupEnabled();
+    abBox.addEventListener('change', e => { AB.setAutoBackupEnabled(e.target.checked); });
+  }).catch(() => { abBox.closest('.settings-row').style.display = 'none'; });
   document.getElementById('settingsExportBtn').addEventListener('click', () => {
     const count = exportAllData();
     recordBackup();
@@ -173,6 +187,8 @@ function renderMain() {
       wipeWallpapers();
       // フォト日記の写真（features/friends/friends-state.js。IndexedDB）も一緒に消す
       try { if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase('tai-hub-photos'); } catch (e) { /* noop */ }
+      // 自動バックアップ（js/auto-backup.js）も消す（残すと「全データを削除」にならない）
+      try { if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase('tai-hub-backups'); } catch (e) { /* noop */ }
       location.reload();
     }
   });

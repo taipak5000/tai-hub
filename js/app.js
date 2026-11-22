@@ -77,6 +77,12 @@ try {
 if (!initAppUpdate()) showRefreshedToastIfNeeded(CURRENT_LANG === 'en' ? 'Updated to the latest version' : '最新の状態にしました');
 initCollectionHistory(); // 所持チェックを変えた日ごとに達成率を記録する（js/collection-history.js）
 
+// 💾 自動バックアップ（js/auto-backup.js）: 起動を遅くしないよう、読み込みが落ち着いてから後で読み込む。
+// 24時間以上空いていれば1件とる。失敗しても何もしない
+setTimeout(() => {
+  import('./auto-backup.js').then(m => m.maybeAutoBackup()).catch(() => {});
+}, 4000);
+
 // 📲 Service Worker（オフライン対応・起動の高速化。service-worker.js、stale-while-revalidate方式）。
 // 開発中に「更新したのに古い画面が出る」混乱を避けるため、localhost系では ?sw=1 を付けた時だけ登録する。
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
