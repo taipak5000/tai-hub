@@ -12,10 +12,11 @@
    ================================================================ */
 export const CHANGELOG = [
   {
-    version: '2026.11.24',
-    title: { ja: 'アイテム所持管理で、下までスクロールしても一覧へすぐ戻れるように', en: 'Item Tracker: go back to the list without scrolling up' },
+    version: '2026.11.24.2',
+    title: { ja: '精霊同行ツールの入手をアイテム所持管理・精霊ツリー管理と連動、アイテム所持管理で下からでも一覧へ戻れるように', en: 'Spirit Companion syncs with Item Tracker and Spirit Tree Catalog; go back to the list without scrolling up' },
     date: '2026-11-24',
     items: [
+      { type: 'new', ja: '精霊同行ツールで「入手」にしたアイテムが、アイテム所持管理（楽譜を含む）・エモート所持率管理・精霊ツリー管理のツリーにも反映されるようにしました。逆に、精霊ツリー管理で解放・解除したノードや、アイテム所持管理で所持にした遥かなる真珠の季節のアイテムも、精霊同行ツールの「入手」に反映されます。これまでに付けていた入手の印は、どちらか一方にしか無いものも消さずに両方へそろえます。', en: 'Items you mark as obtained in the Spirit Companion Tool now also count in the Item Tracker (including music sheets), Emote tracker and Spirit Tree Catalog. Nodes unlocked or locked in the Spirit Tree Catalog, and Season of Pearl items owned in the Item Tracker, show up in the Companion Tool too. Marks you already had on only one side are kept and copied to the other.', route: 'companion' },
       { type: 'improve', ja: 'アイテム所持管理のカテゴリ・楽譜・全アイテム・累計消費コストの画面で、上端の「← カテゴリ一覧へ戻る」がスクロールで見えなくなると、画面の左下（メニューの上）に同じボタンが浮かんで出るようにしました。上まで戻さずに一覧へ戻れます。', en: 'Item Tracker: once the "← Back to Category List" link at the top scrolls out of view (categories, music sheets, all items, cost), the same button floats at the bottom left above the menu, so you can go back without scrolling up.', route: 'item' },
     ],
   },

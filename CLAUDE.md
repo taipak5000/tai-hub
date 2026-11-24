@@ -168,6 +168,11 @@ const landingPoint = currentY + project(v);
   複数の精霊が一緒に来る時は`spiritsJa`/`spiritsEn`（配列）に並べる（お知らせ・ダッシュボードに顔ぶれを出し、`spiritsEn`で「待っている」印と照合する）。
   あわせて再訪精霊データベース（`features/tai-revisit/data/revisit-data.js`）の各精霊の`visits`末尾にも、精霊団なら`{"date","endDate","type":"SV"}`、旅の精霊なら`type:"TS"`の来訪を足す（日付は日本時間）。
   **どの精霊が来るか分かった時点で、イベントの開始前でも足す**（開始前は「進行中・次回の特別来訪」に「次回予定」として載り、始まると「進行中」に変わる）。
+- **精霊同行ツール⇔精霊ツリー管理の連動**（対応表`features/companion/data/tree-link.js`、処理は`spirit-catalog-state.js`の「精霊同行ツールとの連動」）:
+  同行ツールの枠→ツリーのノードを結び、ノード経由でアイテム所持管理・エモートにも反映する。同行ツールで入手/解除→`setNodeOwnedFromCompanion()`、
+  ツリーで解放/解除→`saveUnlockedMap()`から`syncCompanionFromCatalog()`が同行ツールの保存データを書き換える。両方の「入手済み」は、同行ツールを開いた時と
+  季節ごとの初回（`companionTreeLink_v1`）に合流させる（消さずに足す）。**同行ツールの季節（`tree-data.js`）を差し替えたら`tree-link.js`も新しい精霊・ノードに書き換える**
+  （`season`が`CURRENT_SEASON_NAME`と違う間は連動しない）。各精霊の`_em1`は最初から入手扱いなので対応に入れない。
 - **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: データは開いた時に読み込む（精霊ツリーのデータは大きいので起動時には読まない）。
 - **デイリーチェックシート**（`#/daily-check`。2026-11-22に正式なツールにした）: `features/today/today-view.js`が今日の要点・おみくじを出し、
   その下にチェックシート（`features/daily-check/`）を`mount(el, { embedded: true, labLinks: true })`で埋め込む。週替わりビンゴ（`features/bingo/`）も

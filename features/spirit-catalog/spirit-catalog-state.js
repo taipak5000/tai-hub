@@ -45,6 +45,7 @@ import { GENERIC_ITEM_IMG } from './data/node-image-map.js';
 import { EMOTES } from '../emote/data/emotes.js';
 import { MUSIC_SHEETS } from '../item/data/music-sheets-data.js';
 import { cycleIndexAt, cycleBounds } from '../../js/pacific-time.js';
+import { COMPANION_LINK, companionLinkEntries, readCompanionChecks, writeCompanionChecks } from '../companion/data/tree-link.js';
 
 /* ================================================================
    季節名・種別のJA/EN対応表
@@ -216,6 +217,9 @@ export function getUnlockedMap() {
 export function saveUnlockedMap(map) {
   localStorage.setItem(nsKey(UNLOCK_KEY_RAW), JSON.stringify(map));
   unlockedMapCache = map;
+  // 精霊同行ツールの「入手」へ反映する。呼び出し元が続けて item/emote の同期と
+  // キャッシュの破棄を済ませてから判定したいので、今の処理が終わった直後（マイクロタスク）に回す
+  if (!companionPushing) queueCompanionSync();
 }
 export function invalidateUnlockedMapCache() { unlockedMapCache = null; }
 
@@ -581,6 +585,85 @@ export function syncEmoteOwned(node, nowUnlocked) {
   const arr = Array.from(owned).sort((a, b) => a - b);
   if (arr.length === 0) { delete data[node.emoteId]; } else { data[node.emoteId] = arr; }
   localStorage.setItem(key, JSON.stringify(data));
+}
+
+/* ================================================================
+   🤝 精霊同行ツールとの連動（対応表は features/companion/data/tree-link.js）
+   ・同行ツールで入手/解除 → setNodeOwnedFromCompanion() でツリーの解放と item/emote の所持を合わせる
+     （同行ツールは季節キャンドルを自前で数えているので、ここでは所持通貨を増減しない）。
+   ・ツリーで解放/解除（単体・一括・リセット・取り消し）→ saveUnlockedMap() から
+     syncCompanionFromCatalog() が走り、保存済みの同行ツールのデータを書き換える。
+   ・はじめて連動する時（季節ごとに1回）は reconcileCompanion() で両方の「入手済み」を合流させる
+     （片方だけで付けていた印を消さないため）。同行ツールを開いた時も毎回合流させる
+     （アイテム所持管理だけで所持にしたアイテムを、同行ツールにも出すため）。
+   ================================================================ */
+const COMPANION_LINK_KEY_RAW = 'companionTreeLink_v1';
+let companionPushing = false;
+let companionSyncQueued = false;
+function findLinkedNode(spiritGuid, nodeGuid) {
+  const spirit = spiritByGuid[spiritGuid];
+  return spirit ? spirit.nodes.find((n) => n.guid === nodeGuid) : null;
+}
+export function setNodeOwnedFromCompanion(spiritGuid, nodeGuid, owned) {
+  const spirit = spiritByGuid[spiritGuid];
+  const node = findLinkedNode(spiritGuid, nodeGuid);
+  if (!node) return;
+  const unlocked = getUnlockedMap();
+  if (owned) { if (!unlocked[nodeGuid]) unlocked[nodeGuid] = true; } else { delete unlocked[nodeGuid]; }
+  companionPushing = true;
+  try { saveUnlockedMap(unlocked); } finally { companionPushing = false; }
+  if (node.itemType === 'WingBuff') syncWingBuff(spirit, node, owned);
+  syncItemOwned(node, owned);
+  syncEmoteOwned(node, owned);
+  invalidateExternalOwnCache();
+}
+/** checks = { 同行ツールの枠id: 入手済みか }。同行ツールだけで入手のものはツリーへ書き、
+    ツリー（アイテム所持管理・エモートの所持を含む）だけで解放済みのものは、同行ツールで入手にすべき枠idとして返す */
+export function reconcileCompanion(checks) {
+  const toCheck = [];
+  if (!checks) return toCheck;
+  companionLinkEntries().forEach(({ companionId, spiritGuid, nodeGuid }) => {
+    if (!(companionId in checks)) return;
+    const node = findLinkedNode(spiritGuid, nodeGuid);
+    if (!node) return;
+    const catalogOwned = isNodeUnlocked(node);
+    if (checks[companionId] && !catalogOwned) setNodeOwnedFromCompanion(spiritGuid, nodeGuid, true);
+    else if (!checks[companionId] && catalogOwned) toCheck.push(companionId);
+  });
+  try { localStorage.setItem(nsKey(COMPANION_LINK_KEY_RAW), COMPANION_LINK.season); } catch (_) { /* noop */ }
+  return toCheck;
+}
+function companionReconciled() {
+  try { return localStorage.getItem(nsKey(COMPANION_LINK_KEY_RAW)) === COMPANION_LINK.season; } catch (_) { return false; }
+}
+/** まだ合流させていない季節なら、保存済みの同行ツールのデータと合流させる（このモジュールを読んだ時に1回呼ぶ。
+    ツリーで最初に操作した時に合流すると、その操作で外した印が同行ツール側の印で戻ってしまうため、操作の前に済ませる） */
+export function ensureCompanionReconciled() {
+  if (!companionLinkEntries().length || companionReconciled()) return;
+  const checks = readCompanionChecks();
+  if (checks) {
+    const up = {};
+    reconcileCompanion(checks).forEach((id) => { up[id] = true; });
+    writeCompanionChecks(up);
+  }
+  try { localStorage.setItem(nsKey(COMPANION_LINK_KEY_RAW), COMPANION_LINK.season); } catch (_) { /* noop */ }
+}
+export function syncCompanionFromCatalog() {
+  const entries = companionLinkEntries();
+  if (!entries.length) return;
+  if (!companionReconciled()) { ensureCompanionReconciled(); return; }
+  invalidateExternalOwnCache();
+  const updates = {};
+  entries.forEach(({ companionId, spiritGuid, nodeGuid }) => {
+    const node = findLinkedNode(spiritGuid, nodeGuid);
+    if (node) updates[companionId] = isNodeUnlocked(node);
+  });
+  writeCompanionChecks(updates);
+}
+function queueCompanionSync() {
+  if (companionSyncQueued) return;
+  companionSyncQueued = true;
+  queueMicrotask(() => { companionSyncQueued = false; try { syncCompanionFromCatalog(); } catch (e) { console.error(e); } });
 }
 
 /* ================================================================
@@ -1181,3 +1264,6 @@ export function saveShareCustomize(theme) {
 
 /* nsKeyFor/getActiveProfileId を再exportしておく（view側で直接使うことがあるため） */
 export { nsKeyFor, getActiveProfileId };
+
+// 🤝 精霊同行ツールとの最初の合流（上の「精霊同行ツールとの連動」参照）。読み込み時に1回だけ
+try { ensureCompanionReconciled(); } catch (e) { console.error(e); }

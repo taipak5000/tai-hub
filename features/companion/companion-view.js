@@ -95,6 +95,7 @@ import {
   TRANSLATIONS_ZH_TW, TRANSLATIONS_KO, NAME_ZH_TW, NAME_KO, TYPE_LABELS_ZH_TW, TYPE_LABELS_KO,
   FORECAST_TIER_LABELS_ZH_TW, FORECAST_TIER_LABELS_KO, FIRST_UNLOCK_SUFFIX_I18N, DATE_LOCALE_I18N,
 } from './data/i18n-zh-ko.js';
+import { companionLinkEntries } from './data/tree-link.js';
 import {
   createDefaultSpiritsData, TIER_TOTAL_OVERRIDES,
   CURRENT_SEASON_NAME, SEASON_START, SEASON_END,
@@ -2070,11 +2071,51 @@ function buildSetup(Vue) {
       try { oneYearBannerDismissedToday.value = localStorage.getItem(nsKey(ONEYEAR_BANNER_DISMISS_KEY)) === pfLocalDateStr(); } catch (e) { oneYearBannerDismissedToday.value = false; }
     };
 
+    /* ================================================================
+       🤝 精霊ツリー管理（→アイテム所持管理・エモート）との連動
+       対応表: data/tree-link.js。精霊ツリーのデータは大きいので、開いた後に読み込む。
+       ・開いた時: 両方の「入手済み」を合流させる（ツリー・アイテム所持管理だけで入手済みの物は、ここでも入手に）。
+       ・その後: 入手の切り替え（単体・プリセット・リセットを含む）を、変わった枠だけツリーへ送る。
+       ================================================================ */
+    let linkState = null;
+    let linkSnapshot = null;
+    const linkedChecks = () => {
+      const out = {};
+      spirits.value.forEach(sp => Object.values(sp.treeData).forEach(tier => tier.forEach(item => { out[item.id] = !!item.checked; })));
+      return out;
+    };
+    const startTreeLink = async () => {
+      const entries = companionLinkEntries();
+      if (!entries.length) return;
+      let st;
+      try { st = await import('../spirit-catalog/spirit-catalog-state.js'); } catch (e) { console.error(e); return; }
+      if (!linkAlive) return;
+      const toCheck = new Set(st.reconcileCompanion(linkedChecks()));
+      if (toCheck.size) {
+        spirits.value.forEach(sp => Object.values(sp.treeData).forEach(tier => tier.forEach(item => { if (toCheck.has(item.id)) item.checked = true; })));
+      }
+      linkState = { st, byId: Object.fromEntries(entries.map(e => [e.companionId, e])) };
+      linkSnapshot = linkedChecks();
+    };
+    let linkAlive = true;
+    watch(spirits, () => {
+      if (!linkState) return;
+      const now = linkedChecks();
+      Object.keys(linkState.byId).forEach(id => {
+        if (!(id in now) || now[id] === linkSnapshot[id]) return;
+        const e = linkState.byId[id];
+        try { linkState.st.setNodeOwnedFromCompanion(e.spiritGuid, e.nodeGuid, now[id]); } catch (err) { console.error(err); }
+      });
+      linkSnapshot = now;
+    }, { deep: true });
+
     onMounted(() => {
       load();
+      startTreeLink();
       seasonCountdownTimer = setInterval(() => { nowForCountdown.value = new Date(); }, 1000);
     });
     onUnmounted(() => {
+      linkAlive = false;
       if (seasonCountdownTimer) clearInterval(seasonCountdownTimer);
       clearTimeout(toastHideTimer);
       eventDashboard.unmount();
