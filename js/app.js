@@ -9,6 +9,7 @@ import { initShortcuts } from './shortcuts.js';
 import * as siteDock from './chrome/site-dock.js';
 import * as sidePanels from './chrome/side-panels.js';
 import { initPinBar } from './chrome/pin-bar.js';
+import { initBackFloat } from './chrome/back-float.js';
 import { initTheme } from './theme.js';
 import { initSheetEngine } from './sheet-engine.js';
 import { showRefreshedToastIfNeeded } from './refresh.js';
@@ -37,6 +38,7 @@ siteDock.refreshProfileLabel(pfDisplayName(activeProfile));
 applyProfileTint(activeProfile && activeProfile.color); // 🎨 起動時、選択中プロフィールのアカウントカラーを反映
 
 initRouter(document.getElementById('app-root'));
+initBackFloat(document.getElementById('app-root')); // 上端の「← 一覧へ戻る」が見えなくなったら左下に浮かぶボタンを出す
 startRouter();
 
 // 🔁 別タブ・別サイトでの変更に追従する（storageイベントは変更した当のタブでは発火しない）。

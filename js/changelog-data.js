@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.24',
+    title: { ja: 'アイテム所持管理で、下までスクロールしても一覧へすぐ戻れるように', en: 'Item Tracker: go back to the list without scrolling up' },
+    date: '2026-11-24',
+    items: [
+      { type: 'improve', ja: 'アイテム所持管理のカテゴリ・楽譜・全アイテム・累計消費コストの画面で、上端の「← カテゴリ一覧へ戻る」がスクロールで見えなくなると、画面の左下（メニューの上）に同じボタンが浮かんで出るようにしました。上まで戻さずに一覧へ戻れます。', en: 'Item Tracker: once the "← Back to Category List" link at the top scrolls out of view (categories, music sheets, all items, cost), the same button floats at the bottom left above the menu, so you can go back without scrolling up.', route: 'item' },
+    ],
+  },
+  {
     version: '2026.11.22.8',
     title: { ja: 'デイリーチェックシートを正式公開・毎日の自動バックアップ、ノマキャン計算機プロを見直し（デイリーリセットを安全に・自動最適化を元に戻せる・所要時間の倍率・通常版の目標・ルートの実測をエリアへ）', en: 'Daily Checklist is official, daily automatic backups; Candle Calculator Pro refresh (safer daily reset, undo for auto-optimize, time multiplier, Candle Calculator goal, split times to areas)' },
     date: '2026-11-22',

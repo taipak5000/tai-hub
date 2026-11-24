@@ -590,3 +590,37 @@
 .hi-save { width: 100%; padding: 12px; border: 0; border-radius: 12px; background: var(--hub-accent); color: #fff; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
 .hi-reset { width: 100%; margin-top: 8px; padding: 10px; border: 0; border-radius: 12px; background: var(--hub-sep); color: var(--hub-text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .hi-status { min-height: 1.4em; margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--hub-text-2); }
+
+/* ── 浮かぶ「戻る」ボタン（js/chrome/back-float.js）──
+   画面上端の .back-link がスクロールで見えなくなった間だけ、左下（ドックの上）に出す。
+   並行して見える小さな操作なので、スクリムなし＋半透明の面。 */
+.back-float {
+  position: fixed; left: calc(var(--side-left-w, 0px) + 14px); bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 900;
+  display: inline-flex; align-items: center; gap: 4px; max-width: calc(100vw - 28px);
+  padding: 10px 16px 10px 10px; border: 0; border-radius: 999px;
+  background: var(--hub-card-glass); color: var(--hub-accent-ink, var(--hub-text));
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14), 0 0 0 0.5px var(--hub-sep);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.2; text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: backFloatIn 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.back-float[hidden] { display: none; }
+.back-float.closing { animation: backFloatOut 0.2s ease forwards; pointer-events: none; }
+.back-float:active { transform: scale(0.95); }
+.back-float .inline-icon { stroke-width: 2.4; flex: none; }
+.back-float-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes backFloatIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes backFloatOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(12px) scale(0.96); } }
+@media (prefers-reduced-motion: reduce) {
+  .back-float { animation: iosFade 200ms ease; }
+  .back-float.closing { animation: backFloatFade 160ms ease forwards; }
+}
+@keyframes backFloatFade { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-transparency: reduce) {
+  .back-float { background: var(--hub-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .back-float { background: var(--hub-card); border: 1px solid var(--hub-text-2); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media print { .back-float { display: none !important; } }
