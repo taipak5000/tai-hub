@@ -71,4 +71,5 @@ export const EVENT_DATES = [
   { en: "Days of Moonlight", ja: "月灯りの日々", start: '2026-09-19', end: '2026-10-09' },
   { en: "Days of Mischief", ja: "いたずらな日々", start: '2026-10-23', end: '2026-11-12' },
   { en: "Days of Style", ja: "お洒落な日々", start: '2026-11-27', end: '2026-12-10' },
+  { en: "Days of Feast", ja: "聖なる星の日々", start: '2026-12-18', end: '2027-01-07' },
 ];

@@ -120,6 +120,7 @@ const DASH_EVENT_NAME_EN = {
   '月灯りの日々': 'Days of Moonlight',
   'いたずらな日々': 'Days of Mischief',
   'お洒落な日々': 'Days of Style',
+  '聖なる星の日々': 'Days of Feast',
   'ハート2倍キャンペーン': 'Double Hearts Event',
 };
 function dashEventName(name) {

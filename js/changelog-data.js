@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.25',
+    title: { ja: '聖なる星の日々の開催期間を追加', en: 'Added Days of Feast dates' },
+    date: '2026-11-25',
+    items: [
+      { type: 'improve', ja: 'ダッシュボードとお知らせに、聖なる星の日々（12/18 17:00〜2027/1/8 16:59）を追加しました。期間中はアイテム検索の「現在開催中」にも入ります。', en: 'Added Days of Feast (Dec 18 – Jan 8, JST) to the dashboard and notices. During the event it is also included in "Currently running" in item search.' },
+    ],
+  },
+  {
     version: '2026.11.24.2',
     title: { ja: '精霊同行ツールの入手をアイテム所持管理・精霊ツリー管理と連動、アイテム所持管理で下からでも一覧へ戻れるように', en: 'Spirit Companion syncs with Item Tracker and Spirit Tree Catalog; go back to the list without scrolling up' },
     date: '2026-11-24',
