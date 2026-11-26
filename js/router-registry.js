@@ -162,7 +162,8 @@ export const ROUTES = {
   // 開くと起動時に開くツールへ移ってからポップアップを出す
   changelog: { ...lazyToolEntry(() => import('../features/changelog/changelog-view.js'), '更新履歴', 'Changelog'), hidden: true },
   titles: lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'),
-  'sky-mbti': lazyToolEntry(() => import('../features/sky-mbti/sky-mbti-view.js'), 'Sky MBTI診断', 'Sky MBTI Quiz'),
+  // Sky MBTI診断: 公開前（URLを知っている人だけが開ける）。公開する時は hidden を外し、site-links.js・build-tool-pages.py・更新履歴に足す
+  'sky-mbti': { ...lazyToolEntry(() => import('../features/sky-mbti/sky-mbti-view.js'), 'Sky MBTI診断', 'Sky MBTI Quiz'), hidden: true },
   // 旧スタンプ帳（2026-11-06に称号一覧へ置き換えた）。古いリンク用に称号一覧を開く
   stamps: { ...lazyToolEntry(() => import('../features/titles/titles-view.js'), '称号一覧', 'Titles'), hidden: true },
   // デイリーチェックシート（2026-11-08にテスト機能として公開し、2026-11-22に正式なツールにした。一覧での位置は js/site-links.js）

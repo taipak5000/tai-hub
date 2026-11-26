@@ -176,6 +176,8 @@ const landingPoint = currentY + project(v);
 - **Sky MBTI診断**（`#/sky-mbti`、`features/sky-mbti/`・`css/sky-mbti.css`。2026-11-26に単体ページから取り込み）: 文言は`data/mbti-data.js`に、作者の data.json と元ページの
   AXES・相性の理由から機械的に書き出したもの。**利用者が校正済みなので一字一句変えない**（「フレンド」「アウトフィット」「ノマキャン」など）。採点は同点なら軸の先の文字（E/S/T/J）。
   図鑑は`#/sky-mbti/types`、詳細は`#/sky-mbti/type-XXXX`。保存は最後の結果だけ（`skyMbtiResult_v1`＝`{ type, scores, at }`、データ引継ぎの対象）。
+  **今は公開前**（ルートは`hidden: true`、関連ツール一覧・紹介ページ・更新履歴に載せない。URLを知っている人だけが開ける）。公開する時は、`router-registry.js`の`hidden`を外し、
+  `site-links.js`のコメントにしてある1行を戻し、`tools/build-tool-pages.py`の`TOOLS`に足して実行し、データ引継ぎの`hidden`を外し、更新履歴に書く。
 - **まとめてさがす**（`js/chrome/search-modal.js`。関連ツール一覧の先頭・キー`/`）: データは開いた時に読み込む（精霊ツリーのデータは大きいので起動時には読まない）。
 - **デイリーチェックシート**（`#/daily-check`。2026-11-22に正式なツールにした）: `features/today/today-view.js`が今日の要点・おみくじを出し、
   その下にチェックシート（`features/daily-check/`）を`mount(el, { embedded: true, labLinks: true })`で埋め込む。週替わりビンゴ（`features/bingo/`）も

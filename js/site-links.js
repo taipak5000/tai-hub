@@ -19,8 +19,8 @@ const HUB_ONLY_TOOLS = [
   { id: 'friends', afterId: 'tai-card', icon: 'i-heart', ja: 'フレンド記念日', en: 'Friend Anniversaries', child: true },
   { id: 'recap', afterId: 'friends', icon: 'i-calendar', ja: 'ふりかえり', en: 'Recap', child: true },
   { id: 'titles', afterId: 'recap', icon: 'i-trophy', ja: '称号一覧', en: 'Titles', child: true },
-  // Sky MBTI診断（2026-11-26。元は単体ページ。星紡ぎカードの兄弟機能として称号一覧の下に並べる）
-  { id: 'sky-mbti', afterId: 'titles', icon: 'i-sparkle', ja: 'Sky MBTI診断', en: 'Sky MBTI Quiz', child: true },
+  // Sky MBTI診断は公開前のため一覧に出さない。公開する時は次の1行を戻す（星紡ぎカードの兄弟機能として称号一覧の下）
+  // { id: 'sky-mbti', afterId: 'titles', icon: 'i-sparkle', ja: 'Sky MBTI診断', en: 'Sky MBTI Quiz', child: true },
   // 第2弾（2026-11-06）
   // child: true＝親（afterIdのツール）の兄弟機能として、親のすぐ下に少し字下げして並べる（testの印があっても最後へ回さない）
   { id: 'coord-diary', afterId: 'item', icon: 'i-hanger', ja: 'コーデ日記', en: 'Outfit Diary', child: true },
