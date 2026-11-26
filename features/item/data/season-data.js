@@ -120,12 +120,13 @@ export const REVISIT_SPIRIT_SCHEDULES = [
   },
   {
     // 特別な再訪: 「舞い踊る表現者」（夢かなう季節）が1週間だけ来る（日本時間 2026/11/26 17:00 〜 12/3 16:59:59）。
-    // items は精霊ツリーでキャンドルで買えるアイテム（hairstyle_069＝ヘアスタイル, mask_037＝マスク, cape_046＝ケープ）
+    // items は精霊ツリーでキャンドルで買えるアイテム（hairstyle_069＝ヘアスタイル, mask_037＝マスク, portable_item_018＝リュート, cape_046＝ケープ）
     spiritJa: '舞い踊る表現者',
     spiritEn: 'Dancing Performer',
     items: [
       { catKey: 'hairstyle', id: 'hairstyle_069' },
       { catKey: 'mask', id: 'mask_037' },
+      { catKey: 'portable_item', id: 'portable_item_018' },
       { catKey: 'cape', id: 'cape_046' },
     ],
     start: '2026-11-26T00:00:00-08:00',
