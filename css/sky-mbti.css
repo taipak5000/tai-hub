@@ -18,9 +18,7 @@
 @keyframes mbRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* ── スタート ── */
-.sky-mbti-view .mb-hero { margin: 0 0 18px; border-radius: 22px; overflow: hidden; aspect-ratio: 3 / 2; background: var(--hub-sep); }
-.sky-mbti-view .mb-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.sky-mbti-view .mb-intro { text-align: center; padding: 0 4px; }
+.sky-mbti-view .mb-intro { text-align: center; padding: 18px 4px 0; }
 .sky-mbti-view .mb-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--hub-accent-ink); }
 .sky-mbti-view .mb-h1 { margin: 4px 0 10px; font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
 .sky-mbti-view .mb-h1-sm { font-size: 24px; margin-top: 10px; }

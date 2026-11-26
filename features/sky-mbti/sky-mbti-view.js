@@ -110,7 +110,6 @@ function renderStart() {
     </button>` : '';
   paint(`
     <section class="mb-screen">
-      <div class="mb-hero"><img src="${new URL('../../images/sky-mbti/hero.webp', import.meta.url).href}" alt="金色の光に包まれた雲海の上に、草原の浮島と小さな古代遺跡が静かに浮かぶ、柔らかくミニマルな空の風景" width="1200" height="800"></div>
       <div class="mb-intro">
         <p class="mb-eyebrow">FANMADE QUIZ</p>
         <h1 class="mb-h1" tabindex="-1">Sky MBTI診断</h1>
