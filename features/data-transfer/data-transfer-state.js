@@ -100,6 +100,8 @@ export const SITE_CATALOG = [
   { id: 'wish-plan', label: 'ほしいもの計画', labelEn: 'Wishlist Plan', namespaced: true, keys: ['wishPlanOrder_v1', 'wishPlanSettings_v1', 'wishPlanGroups_v1', 'wishPlanTrees_v1'] },
   // コーデ日記の写真もIndexedDB（バックアップには含めない）
   { id: 'coord-diary', label: 'コーデ日記', labelEn: 'Outfit Diary', namespaced: true, keys: ['coordDiary_v1'] },
+  // Sky MBTI診断: 最後の結果だけ（features/sky-mbti/sky-mbti-view.js）
+  { id: 'sky-mbti', label: 'Sky MBTI診断', labelEn: 'Sky MBTI Quiz', namespaced: true, keys: ['skyMbtiResult_v1'] },
   // 🧪 試作中の機能（非公開のため hidden。データは静かに引き継ぐ）
   { id: 'photo-gacha', label: '撮影お題ガチャ（コーデ日記）', labelEn: 'Photo prompts (Outfit Diary)', namespaced: true, hidden: true, keys: ['photoGacha_v1'] },
   // 称号一覧（js/titles.js）: お知らせ用に、前に開いた時の獲得数だけを持つ（称号そのものは各ツールのキー）

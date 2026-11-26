@@ -343,7 +343,7 @@ const VIEW_ROOTS = [
   '.item-view', '.emote-view', '.share-view', '.nomacan-view', '.nomacan-pro-view', '.star-candle-view',
   '.wings-view', '.companion-view', '.spirit-catalog-view', '.tai-revisit-view', '.tai-score-view',
   '.tai-card-view', '.data-transfer-view', '.tai-info-view', '.profile-view', '.daily-check-view',
-  '.bingo-view', '.friends-view', '.recap-view',
+  '.bingo-view', '.friends-view', '.recap-view', '.sky-mbti-view',
   '.today-view', '.wish-plan-view', '.coord-diary-view', '.titles-view', '.changelog-view',
 ];
 

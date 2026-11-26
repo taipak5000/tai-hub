@@ -1,0 +1,177 @@
+/* ================================================================
+   Sky MBTI診断（.sky-mbti-view。features/sky-mbti/sky-mbti-view.js）。
+   色はハブ共通のトークン（--hub-*）だけを使う＝着せ替え（js/theme.js）にそのまま追従する。
+   元の単体ページの金色・星空の飾りは使わず、ほかのツールと同じカード・ボタン・文字の詰めにそろえた。
+   ================================================================ */
+.sky-mbti-view {
+  color: var(--hub-text); background: var(--hub-bg); min-height: 100%;
+  --mb-ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+:where(.sky-mbti-view *, .sky-mbti-view *::before, .sky-mbti-view *::after) { box-sizing: border-box; }
+.sky-mbti-view .mb-wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 32px; }
+.sky-mbti-view .inline-icon { stroke: currentColor; flex-shrink: 0; }
+.sky-mbti-view p { margin: 0; }
+.sky-mbti-view [tabindex="-1"]:focus { outline: none; }
+
+/* 画面の切り替え（開く動きだけ。中身を描き替えるたびに1回流れる） */
+.sky-mbti-view .mb-screen { animation: mbRise 0.34s var(--mb-ease); }
+@keyframes mbRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ── スタート ── */
+.sky-mbti-view .mb-hero { margin: 0 0 18px; border-radius: 22px; overflow: hidden; aspect-ratio: 3 / 2; background: var(--hub-sep); }
+.sky-mbti-view .mb-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sky-mbti-view .mb-intro { text-align: center; padding: 0 4px; }
+.sky-mbti-view .mb-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-h1 { margin: 4px 0 10px; font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+.sky-mbti-view .mb-h1-sm { font-size: 24px; margin-top: 10px; }
+.sky-mbti-view .mb-lead { font-size: 14px; line-height: 1.8; color: var(--hub-text-2); }
+.sky-mbti-view .mb-meta {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 6px 12px; border-radius: 999px;
+  background: var(--hub-accent-bg); color: var(--hub-accent-ink); font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+}
+.sky-mbti-view .mb-how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0; }
+.sky-mbti-view .mb-how > div {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 16px;
+  background: var(--hub-card); border: 0.5px solid var(--hub-sep); text-align: center;
+  font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--hub-text-2);
+}
+.sky-mbti-view .mb-how .inline-icon { color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-last {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 0; border-radius: 16px;
+  background: var(--hub-accent-bg); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer;
+}
+.sky-mbti-view .mb-last:active { transform: scale(0.98); }
+.sky-mbti-view .mb-last-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-last-code { font-size: 17px; font-weight: 800; letter-spacing: 0.02em; }
+.sky-mbti-view .mb-last-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--hub-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sky-mbti-view .mb-last .inline-icon { color: var(--hub-text-3); }
+.sky-mbti-view .mb-start-card { display: flex; flex-direction: column; gap: 10px; text-align: center; }
+.sky-mbti-view .mb-start-note { margin-bottom: 6px; font-size: 14px; font-weight: 600; line-height: 1.8; }
+.sky-mbti-view .mb-note { margin: 14px 4px 0; font-size: 12px; line-height: 1.7; color: var(--hub-text-2); text-align: center; }
+
+/* ── 共通の部品 ── */
+.sky-mbti-view .mb-card { padding: 20px 18px; border-radius: 22px; background: var(--hub-card); border: 0.5px solid var(--hub-sep); }
+.sky-mbti-view .mb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 48px; padding: 12px 16px;
+  border: 1px solid var(--hub-sep); border-radius: 999px; background: var(--hub-card); color: var(--hub-text);
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.sky-mbti-view .mb-btn .inline-icon { color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-btn.primary { border-color: transparent; background: var(--hub-accent); color: #fff; }
+.sky-mbti-view .mb-btn.primary .inline-icon { color: #fff; }
+.sky-mbti-view .mb-btn:active { transform: scale(0.97); }
+.sky-mbti-view .mb-back {
+  display: inline-flex; align-items: center; gap: 3px; padding: 8px 4px; border: 0; background: none;
+  color: var(--hub-accent-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.sky-mbti-view .mb-back[hidden] { display: none; }
+.sky-mbti-view .mb-back:active { opacity: 0.6; }
+
+/* ── 質問 ── */
+.sky-mbti-view .mb-qhead {
+  display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--hub-text-2); font-variant-numeric: tabular-nums;
+}
+.sky-mbti-view .mb-dots { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; margin: 12px 0 8px; }
+.sky-mbti-view .mb-dots i { height: 6px; border-radius: 3px; background: var(--hub-sep); }
+.sky-mbti-view .mb-dots i.on { background: var(--hub-accent); }
+.sky-mbti-view .mb-dots i.now { background: var(--hub-accent-bg); box-shadow: inset 0 0 0 1.5px var(--hub-accent); }
+.sky-mbti-view .mb-progress { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sky-mbti-view .mb-q { animation: mbRise 0.3s var(--mb-ease); }
+.sky-mbti-view .mb-qarea {
+  display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 999px; background: var(--hub-accent-bg);
+  color: var(--hub-accent-ink); font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+}
+.sky-mbti-view .mb-qtext { margin: 12px 0 16px; font-size: 18px; font-weight: 700; line-height: 1.6; }
+.sky-mbti-view .mb-choices { display: flex; flex-direction: column; gap: 10px; }
+.sky-mbti-view .mb-choice {
+  display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 15px 16px; border: 1.5px solid var(--hub-sep); border-radius: 16px;
+  background: var(--hub-bg); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer;
+}
+.sky-mbti-view .mb-choice-t { font-size: 15px; font-weight: 600; line-height: 1.6; }
+.sky-mbti-view .mb-choice small { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.sky-mbti-view .mb-choice:active { transform: scale(0.98); }
+.sky-mbti-view .mb-choice.picked { border-color: var(--hub-accent); background: var(--hub-accent-bg); }
+.sky-mbti-view .mb-choice.picked small { color: var(--hub-accent-ink); }
+@media (hover: hover) {
+  .sky-mbti-view .mb-choice:hover { border-color: var(--hub-accent); }
+}
+.sky-mbti-view .mb-quiz .mb-back { margin-top: 10px; }
+
+/* ── 結果・タイプの詳細 ── */
+.sky-mbti-view .mb-result { text-align: center; }
+.sky-mbti-view .mb-result-lead {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--hub-text-2);
+}
+.sky-mbti-view .mb-result-lead .inline-icon { color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-code {
+  margin-top: 4px; font-size: 56px; font-weight: 800; line-height: 1; letter-spacing: 0.02em; color: var(--hub-accent-ink);
+  animation: mbPop 0.5s var(--mb-ease);
+}
+@keyframes mbPop { from { opacity: 0; transform: scale(0.86); } to { opacity: 1; transform: none; } }
+.sky-mbti-view .mb-title { margin-top: 10px; font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; }
+.sky-mbti-view .mb-catch { margin-top: 6px; font-size: 14px; font-weight: 600; line-height: 1.7; color: var(--hub-text-2); }
+.sky-mbti-view .mb-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.sky-mbti-view .mb-tags span {
+  padding: 4px 10px; border-radius: 999px; background: var(--hub-bg); border: 0.5px solid var(--hub-sep);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--hub-text-2);
+}
+.sky-mbti-view .mb-section { margin-top: 22px; padding-top: 18px; border-top: 0.5px solid var(--hub-sep); text-align: left; }
+.sky-mbti-view .mb-h2 { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 15px; font-weight: 800; line-height: 1.2; }
+.sky-mbti-view .mb-h2 .inline-icon { color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-section > p { font-size: 14px; line-height: 1.85; }
+.sky-mbti-view .mb-area { margin-top: 10px; }
+.sky-mbti-view .mb-hint { margin-top: 10px; font-size: 12px; line-height: 1.7; color: var(--hub-text-2); }
+
+.sky-mbti-view .mb-axis + .mb-axis { margin-top: 14px; }
+.sky-mbti-view .mb-axis-top { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: end; font-size: 12px; line-height: 1.4; color: var(--hub-text-2); }
+.sky-mbti-view .mb-axis-top > span:last-child { text-align: right; }
+.sky-mbti-view .mb-axis-top b { font-size: 13px; }
+.sky-mbti-view .mb-axis-top .win { color: var(--hub-text); font-weight: 700; }
+.sky-mbti-view .mb-axis-top .dim { display: block; font-size: 11px; font-weight: 500; color: var(--hub-text-3); }
+.sky-mbti-view .mb-axis-pct { font-size: 13px; font-weight: 800; color: var(--hub-accent-ink); font-variant-numeric: tabular-nums; }
+.sky-mbti-view .mb-bar { height: 8px; margin-top: 6px; border-radius: 4px; background: var(--hub-sep); overflow: hidden; }
+.sky-mbti-view .mb-bar i { display: block; height: 100%; border-radius: 4px; background: var(--hub-accent); transform-origin: left center; animation: mbBar 0.7s var(--mb-ease) 0.15s both; }
+@keyframes mbBar { from { transform: scaleX(0); } to { transform: none; } }
+
+.sky-mbti-view .mb-compats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 460px) { .sky-mbti-view .mb-compats { grid-template-columns: 1fr; } }
+.sky-mbti-view .mb-compat {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px; border: 0.5px solid var(--hub-sep); border-radius: 16px;
+  background: var(--hub-bg); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer;
+}
+.sky-mbti-view .mb-compat.good { background: var(--hub-accent-bg); border-color: transparent; }
+.sky-mbti-view .mb-compat:active { transform: scale(0.98); }
+.sky-mbti-view .mb-compat-label { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; color: var(--hub-text-2); }
+.sky-mbti-view .mb-compat.good .mb-compat-label { color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-compat-code { font-size: 24px; font-weight: 800; line-height: 1.1; letter-spacing: 0.02em; }
+.sky-mbti-view .mb-compat b { font-size: 13px; line-height: 1.5; }
+.sky-mbti-view .mb-compat-reason { font-size: 13px; line-height: 1.7; color: var(--hub-text-2); }
+.sky-mbti-view .mb-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
+
+/* ── 図鑑 ── */
+.sky-mbti-view .mb-gallery-head { margin-bottom: 14px; }
+.sky-mbti-view .mb-gallery-head .mb-lead { font-size: 13px; }
+.sky-mbti-view .mb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.sky-mbti-view .mb-type {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 12px; border: 0.5px solid var(--hub-sep); border-radius: 16px;
+  background: var(--hub-card); color: var(--hub-text); font: inherit; text-align: left; cursor: pointer;
+}
+.sky-mbti-view .mb-type:active { transform: scale(0.97); }
+.sky-mbti-view .mb-type b { display: flex; align-items: center; gap: 4px; font-size: 18px; font-weight: 800; letter-spacing: 0.02em; color: var(--hub-accent-ink); }
+.sky-mbti-view .mb-type-title { font-size: 13px; font-weight: 700; line-height: 1.4; }
+.sky-mbti-view .mb-type-catch { font-size: 11.5px; line-height: 1.5; color: var(--hub-text-2); }
+.sky-mbti-view .mb-type.mine { border: 1.5px solid var(--hub-accent); background: var(--hub-accent-bg); }
+
+/* ── アクセシビリティ ── */
+@media (prefers-reduced-motion: reduce) {
+  .sky-mbti-view .mb-screen, .sky-mbti-view .mb-q { animation: iosFade 200ms ease; }
+  .sky-mbti-view .mb-code { animation: none; }
+  .sky-mbti-view .mb-bar i { animation: none; }
+}
+@media (prefers-contrast: more) {
+  .sky-mbti-view .mb-card, .sky-mbti-view .mb-how > div, .sky-mbti-view .mb-type, .sky-mbti-view .mb-compat,
+  .sky-mbti-view .mb-choice, .sky-mbti-view .mb-tags span { border: 1px solid var(--hub-text-2); }
+  .sky-mbti-view .mb-lead, .sky-mbti-view .mb-catch, .sky-mbti-view .mb-note, .sky-mbti-view .mb-hint,
+  .sky-mbti-view .mb-compat-reason, .sky-mbti-view .mb-type-catch, .sky-mbti-view .mb-axis-top .dim { color: var(--hub-text); }
+}

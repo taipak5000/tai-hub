@@ -12,6 +12,14 @@
    ================================================================ */
 export const CHANGELOG = [
   {
+    version: '2026.11.26',
+    title: { ja: 'Sky MBTI診断を追加', en: 'Added the Sky MBTI Quiz' },
+    date: '2026-11-26',
+    items: [
+      { type: 'new', ja: 'Sky MBTI診断を追加しました。キャンマラの回り方や原罪での立ち回りなど、Skyの場面で答える16問の2択から、16タイプのどれに近いかを診断します。結果では4つのものさしの割合、おすすめの過ごし方とエリア、相性のいいタイプ・ちょっとぶつかるタイプがわかり、全16タイプ図鑑も見られます。最後の結果はプロフィールごとに残り、データ引継ぎにも入ります。', en: 'Added the Sky MBTI Quiz: 16 two-choice questions set in Sky scenes tell you which of 16 types you are closest to, with your four-axis balance, suggested play style and areas, and the types you get along with. Browse all 16 types too. Your last result is kept per profile and included in Data Transfer. (Quiz text is in Japanese.)', route: 'sky-mbti' },
+    ],
+  },
+  {
     version: '2026.11.25',
     title: { ja: '聖なる星の日々の開催期間を追加', en: 'Added Days of Feast dates' },
     date: '2026-11-25',
