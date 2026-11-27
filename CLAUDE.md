@@ -168,6 +168,8 @@ const landingPoint = currentY + project(v);
   複数の精霊が一緒に来る時は`spiritsJa`/`spiritsEn`（配列）に並べる（お知らせ・ダッシュボードに顔ぶれを出し、`spiritsEn`で「待っている」印と照合する）。
   あわせて再訪精霊データベース（`features/tai-revisit/data/revisit-data.js`）の各精霊の`visits`末尾にも、精霊団なら`{"date","endDate","type":"SV"}`、旅の精霊なら`type:"TS"`の来訪を足す（日付は日本時間）。
   **どの精霊が来るか分かった時点で、イベントの開始前でも足す**（開始前は「進行中・次回の特別来訪」に「次回予定」として載り、始まると「進行中」に変わる）。
+  公式発表の前の予想（「最有力候補」）は`visits`に入れず、`revisit-data.js`の`PREDICTED_VISITS`（`{ nameJa, date, endDate, type, confirmDate }`、日付は日本時間）に書く。
+  「進行中・次回の特別来訪」と精霊のカードに点線の「最有力候補」として出し、来訪回数・最終来訪からの日数には数えない。確定したら`PREDICTED_VISITS`から消して`visits`と`season-data.js`へ移す。
 - **精霊同行ツール⇔精霊ツリー管理の連動**（対応表`features/companion/data/tree-link.js`、処理は`spirit-catalog-state.js`の「精霊同行ツールとの連動」）:
   同行ツールの枠→ツリーのノードを結び、ノード経由でアイテム所持管理・エモートにも反映する。同行ツールで入手/解除→`setNodeOwnedFromCompanion()`、
   ツリーで解放/解除→`saveUnlockedMap()`から`syncCompanionFromCatalog()`が同行ツールの保存データを書き換える。両方の「入手済み」は、同行ツールを開いた時と

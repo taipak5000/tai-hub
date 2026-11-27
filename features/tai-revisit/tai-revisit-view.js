@@ -42,7 +42,7 @@
    ================================================================ */
 import { CURRENT_LANG, escapeHtml, trEvent } from '../../js/i18n.js';
 import { t } from './data/i18n-revisit.js';
-import { REVISIT_DATA, NEVER_REVISITED_DATA } from './data/revisit-data.js';
+import { REVISIT_DATA, NEVER_REVISITED_DATA, PREDICTED_VISITS } from './data/revisit-data.js';
 import { SPIRIT_ITEMS_MAP } from './data/spirit-items-map.js';
 import { SPIRIT_YOMI } from './data/spirit-yomi.js';
 import { AREA_JA, areaJa, SEASON_ORDER } from './data/revisit-meta.js';
@@ -199,6 +199,14 @@ function computeOverdueRanks() {
   const ranks = new Map();
   sorted.forEach((s, i) => ranks.set(s.nameJa, i + 1));
   return ranks;
+}
+
+// 公式発表前の「最有力候補」の来訪を、来訪履歴の後ろに点線のチップで足す（来訪回数には数えない）
+function predictedChipHtml(nameJa) {
+  const p = predictionFor(nameJa);
+  if (!p) return '';
+  const title = t('predictedChipTitle', { date: formatDate(p.confirmDate) });
+  return `<span class="visit-chip predicted" title="${escapeHtml(title)}">${formatDate(p.date)}<span class="visit-chip-tag">${escapeHtml(t('predictedBadge'))}</span></span>`;
 }
 
 function isOngoingVisit(v) {
@@ -393,12 +401,23 @@ function getUpcomingRevisits() {
       items.push({ spirit: s, visit: v, ongoing: v.date <= todayStr });
     });
   });
+  // 公式発表前の「最有力候補」（終わった予想は出さない）
+  activePredictions().forEach((p) => {
+    const s = REVISIT_DATA.find((r) => r.nameJa === p.nameJa);
+    if (s) items.push({ spirit: s, visit: p, ongoing: p.date <= todayStr, predicted: true });
+  });
   items.sort((a, b) => {
     if (a.ongoing !== b.ongoing) return a.ongoing ? -1 : 1;
     return a.visit.date.localeCompare(b.visit.date);
   });
   return items;
 }
+
+function activePredictions() {
+  const todayStr = getTodayStr();
+  return PREDICTED_VISITS.filter((p) => (p.endDate || p.date) >= todayStr);
+}
+function predictionFor(nameJa) { return activePredictions().find((p) => p.nameJa === nameJa) || null; }
 
 function renderUpcomingRevisits() {
   const container = els.upcomingList;
@@ -407,11 +426,12 @@ function renderUpcomingRevisits() {
     container.innerHTML = `<div class="empty-state">${escapeHtml(t('upcomingEmptyState'))}</div>`;
     return;
   }
-  container.innerHTML = items.map(({ spirit: s, visit: v, ongoing }) => {
+  container.innerHTML = items.map(({ spirit: s, visit: v, ongoing, predicted }) => {
     const dateLabel = `${formatDate(v.date)}–${formatDate(v.endDate)}`;
-    const badge = ongoing
+    const badge = (predicted ? `<span class="spirit-badge predicted">${escapeHtml(t('predictedBadge'))}</span>` : '') + (ongoing
       ? `<span class="spirit-badge ongoing">${escapeHtml(t('calendarOngoingBadge'))}</span>`
-      : `<span class="spirit-badge">${escapeHtml(t('calendarNextBadge'))}</span>`;
+      : `<span class="spirit-badge">${escapeHtml(t('calendarNextBadge'))}</span>`);
+    const note = predicted ? `<p class="tr-predicted-note">${escapeHtml(t('predictedNote', { date: formatDate(v.confirmDate) }))}</p>` : '';
     return `
       <div class="spirit-card">
         <div class="spirit-icon">
@@ -427,7 +447,8 @@ function renderUpcomingRevisits() {
             <span class="spirit-badge area">${escapeHtml(areaLabel(s.area))}</span>
           </div>
           ${spiritItemsHtml(s.nameEn)}
-          <div class="visit-list"><span class="visit-chip sv">${dateLabel}</span></div>
+          <div class="visit-list"><span class="visit-chip ${predicted ? 'predicted' : 'sv'}">${dateLabel}</span></div>
+          ${note}
           ${treeSlotHtml(s.nameJa)}
         </div>
       </div>`;
@@ -543,11 +564,12 @@ function render() {
       const ongoing = isOngoingVisit(v);
       const titleText = ongoing ? t('visitOngoingTitle', { type: label }) : label;
       return `<span class="visit-chip ${cls}" title="${escapeHtml(titleText)}">${dateLabel}${ongoing ? ' <span class="ongoing-dot"></span>' : ''}</span>`;
-    }).join('');
+    }).join('') + predictedChipHtml(s.nameJa);
     const rankBadge = overdueRanks
       ? `<span class="spirit-rank-badge" title="${escapeHtml(t('rankTitle'))}">${escapeHtml(t('rankLabel', { rank: overdueRanks.get(s.nameJa) }))}</span>`
       : '';
-    const ongoingBadge = hasOngoingVisit(s) ? `<span class="spirit-badge ongoing">${escapeHtml(t('ongoingBadge'))}</span>` : '';
+    const ongoingBadge = (hasOngoingVisit(s) ? `<span class="spirit-badge ongoing">${escapeHtml(t('ongoingBadge'))}</span>` : '')
+      + (predictionFor(s.nameJa) ? `<span class="spirit-badge predicted">${escapeHtml(t('predictedBadge'))}</span>` : '');
     return `
       <div class="spirit-card" data-spirit-name="${escapeHtml(s.nameJa)}">
         <div class="spirit-icon">
